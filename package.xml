@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>reseq_ros2</name>
+  <version>0.0.0</version>
+  <description>ROS2 code for ReseQ robot</description>
+  <maintainer email="team.isaac@polito.it">Team ISAAC</maintainer>
+  <license>GNU GPL v3.0</license>
+  <author email="marcofincato777@gmail.com">Marco Fincato</author>
+  <author email="milenayahya@gmail.com">Milena Yahya</author>
+  <author email="guglielmo.bergatto@gmail.com">Guglielmo Bergatto</author>
+
+  <exec_depend>rclpy</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
