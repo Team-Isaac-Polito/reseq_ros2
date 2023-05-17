@@ -1,4 +1,4 @@
-# CAN bus package identifiers
+# CAN bus packet identifiers
 
 BATTERY_CHARGE = 0x11
 BATTERY_VOLTAGE = 0x12
@@ -16,4 +16,11 @@ JOINT_PITCH_FEEDBACK = 0x34
 JOINT_ROLL_SETPOINT = 0x35
 JOINT_ROLL_FEEDBACK = 0x36
 
-#TODO: consider using two dictionaries topic_hex->topic and topic_name->hex instead
+id_to_topic = {
+    0x11: 'battery_percent',
+    0x21: 'motor_setpoint',
+}
+
+topic_to_id = {
+    'battery_voltage': 0x11,
+}

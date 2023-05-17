@@ -1,0 +1,11 @@
+---
+modules:
+- address: 17
+  hasJoint: true
+  hasEndEffector: true
+- address: 18
+  hasJoint: true
+  hasEndEffector: false
+- address: 19
+  hasJoint: true
+  hasEndEffector: false
