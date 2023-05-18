@@ -1,11 +1,13 @@
 ---
+canbus:
+  channel: "vcan0"
 modules:
-- address: 17
-  hasJoint: true
-  hasEndEffector: true
-- address: 18
-  hasJoint: true
-  hasEndEffector: false
-- address: 19
-  hasJoint: true
-  hasEndEffector: false
+  - address: 0x11
+    hasJoint: false
+    hasEndEffector: true
+  - address: 0x12
+    hasJoint: true
+    hasEndEffector: false
+  - address: 0x13
+    hasJoint: false
+    hasEndEffector: false
