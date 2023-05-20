@@ -1,4 +1,4 @@
-# Translation between CAN packet identifiers and ROS topics
+### Translation between CAN packet identifiers and ROS topics ###
 # ROS topics will be created based on this file
 
 # From CAN to ROS = ROS publishers
@@ -26,3 +26,8 @@ topic_to_id = {
     "joint/pitch/setpoint": 0x33,
     "joint/roll/setpoint": 0x35,
 }
+
+### Agevar ###
+
+freq = 50        # [Hz] Transmission rate of the remote controller
+Ts = 1/freq      # [s] Sampling time of the data acquired from the remote controller

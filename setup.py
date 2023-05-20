@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'communication = reseq_ros2.communication:main'
+            'communication = reseq_ros2.communication:main',
+            'remote_test = reseq_ros2.remote_test:main',
         ],
     },
 )
