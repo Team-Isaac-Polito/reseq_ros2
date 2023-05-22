@@ -107,7 +107,7 @@ def main(args=None):
     try:
         communication = Communication()
     except Exception as err:
-        print("Error while starting the node: " + str(err))
+        print("Error while starting Communication node: " + str(err))
         rclpy.shutdown()
     else:
         rclpy.spin(communication)
