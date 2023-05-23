@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'communication = reseq_ros2.communication:main',
+            'agevar = reseq_ros2.agevar:main',
             'remote_test = reseq_ros2.remote_test:main',
         ],
     },

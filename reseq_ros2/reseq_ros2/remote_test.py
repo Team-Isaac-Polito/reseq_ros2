@@ -3,7 +3,6 @@ import reseq_ros2.constants as rc
 
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
-from std_msgs.msg import String
 
 T_IN = 2
 T_STEP = 4
@@ -13,7 +12,7 @@ T_SIM = 8
 class RemoteTest(Node):
     def __init__(self):
         super().__init__('remote_test')
-        self.publisher = self.create_publisher(Twist, 'remote/joystick', 10)
+        self.publisher = self.create_publisher(Twist, '/cmd_vel', 10)
         timer_period = rc.Ts
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.t = 0
