@@ -5,6 +5,7 @@ import struct
 import yaml
 from can import Message
 from rclpy.node import Node
+from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32  # deprecated?
 from yaml.loader import SafeLoader
 
@@ -45,7 +46,7 @@ class Communication(Node):
                 continue
 
             d[subtopic] = self.create_publisher(
-                Float32,
+                Motors if subtopic.split("/")[0] == "motor" else Float32,
                 f"reseq/module{info['address']}/{subtopic}",
                 10,
             )
@@ -59,11 +60,11 @@ class Communication(Node):
                 continue
 
             d[subtopic] = self.create_subscription(
-                Float32,
+                Motors if subtopic.split("/")[0] == "motor" else Float32,
                 f"reseq/module{info['address']}/{subtopic}",
                 # use lamba function to pass extra arguments to the callback
-                lambda msg: self.ros_listener_callback(
-                    msg, info["address"], subtopic),
+                lambda msg, s=subtopic: self.ros_listener_callback(
+                    msg, info["address"], s),
                 10,
             )
 
@@ -72,27 +73,41 @@ class Communication(Node):
     # publish data received from CAN to ROS topic
     def can_callback(self, msg):
         decoded_aid = struct.unpack(
-            "bbbb", msg.arbitration_id.to_bytes(4, "big"))
+            "4b", msg.arbitration_id.to_bytes(4, "big"))
         module_id = decoded_aid[3] - 17
         topic_name = rc.id_to_topic[decoded_aid[1]]
 
-        # TODO: unpack and publish different types of data
-        m = Float32()
-        data = struct.unpack('2f', msg.data)
         print(f"Publishing to {topic_name} on module{module_id+17}")
-        print(data)
-        m.data = data[0]
 
-        self.pubs[module_id][topic_name].publish(m)
+        # check if the message contains one or two floats
+        if len(msg.data) == 4:
+            m = Float32()
+            data = struct.unpack('f', msg.data)
+            m.data = data[0]
+        elif len(msg.data) == 8:
+            m = Motors()
+            data = struct.unpack('ff', msg.data)
+            print(data)
+            m.left = data[0]
+            m.right = data[1]
+
+        try:
+            self.pubs[module_id][topic_name].publish(m)
+        except TypeError as e:
+            # the type of ROS message doesn't match the publisher
+            print("TypeError", e)
 
     # send data received from ROS to CAN
     def ros_listener_callback(self, msg, module_num, topic_name):
         identifier = rc.topic_to_id[topic_name]
         aid = struct.pack("bbbb", 00, identifier, module_num, 0x00)
 
-        print(f"Sending {msg.data} to module{module_num} via CAN")
-        # TODO: read and package different types of data
-        data = struct.pack('f', msg.data)
+        print(f"Sending {type(msg)} to module{module_num} via CAN")
+
+        if type(msg) is Float32:
+            data = struct.pack('f', msg.data)
+        elif type(msg) is Motors:
+            data = struct.pack('ff', msg.left, msg.right)
 
         m = can.Message(
             arbitration_id=int.from_bytes(aid, byteorder="big", signed=False),
