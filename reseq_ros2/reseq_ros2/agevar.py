@@ -56,12 +56,9 @@ class Agevar(Node):
             self.motors_pubs.append(p)
 
     def remote_callback(self, msg):
-        self.get_logger().info(f"Twist x:{msg.linear.x}, y:{msg.linear.x}")
-
-        # TODO: read data from Twist (parsed by teleop_twist_joy)
-        linear_vel = msg.lin_vel
-        angular_vel = msg.ang_vel
-        sign = msg.sign
+        linear_vel = msg.linear.x
+        angular_vel = msg.angular.z
+        sign = linear_vel > 0
 
         modules = list(range(self.n_mod))
         if sign == 0:  # going backwards
@@ -73,6 +70,7 @@ class Agevar(Node):
             if mod_id != modules[-1]:  # for every module except the last one
                 linear_vel, angular_vel = self.kinematic(
                     linear_vel, angular_vel, self.yaw_angles[mod_id])
+                self.get_logger().info(f"Output lin:{linear_vel}, ang:{angular_vel}")
 
     # set yaw angle of a joint
     def yaw_feedback_callback(self, msg, module_num):
