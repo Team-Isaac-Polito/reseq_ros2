@@ -3,6 +3,7 @@ import rclpy
 import reseq_ros2.constants as rc
 import struct
 import yaml
+from math import cos, sin, sqrt
 from can import Message
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
@@ -70,7 +71,7 @@ class Agevar(Node):
             # TODO: compute and publish motor setpoints
 
             if mod_id != modules[-1]:  # for every module except the last one
-                linear_vel, angular_vel = kinematic(
+                linear_vel, angular_vel = self.kinematic(
                     linear_vel, angular_vel, self.yaw_angles[mod_id])
 
     # set yaw angle of a joint
@@ -81,7 +82,7 @@ class Agevar(Node):
         self.yaw_angles[module_num-17] = angle
 
     # given data of a module, compute linear and angular velocities of the next one
-    def kinematic(linear_vel, angular_vel, yaw_angle):
+    def kinematic(self, linear_vel, angular_vel, yaw_angle):
         delta_dot = -(angular_vel * (rc.b + rc.a * cos(yaw_angle)) +
                       linear_vel * sin(yaw_angle)) / rc.b
         yaw_angle = yaw_angle + delta_dot * rc.Ts
