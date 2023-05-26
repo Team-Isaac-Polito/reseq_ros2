@@ -42,3 +42,6 @@ b = 0.18        # [m] Distance between the center of every module and the follow
 d = 0.21        # [m] Distance between pair of equivalent wheels
 r_eq = 0.05     # [m] Radius of the equivalent wheels
 delta_max = 35  # [°] Maximum delta (relative angle between two modules) achievable
+
+rpm2rads = 2*pi/60
+rads2rpm = 60/(2*pi)

@@ -41,8 +41,8 @@ class Agevar(Node):
                 s = self.create_subscription(
                     Float32,
                     f"reseq/module{info['address']}/joint/yaw/feedback",
-                    lambda msg: self.robot_feedback_callback(
-                        msg, info["address"]),
+                    lambda msg, x=info["address"]: self.yaw_feedback_callback(
+                        msg, x),
                     10,
                 )
                 self.joint_subs.append(s)
@@ -58,7 +58,7 @@ class Agevar(Node):
     def remote_callback(self, msg):
         linear_vel = msg.linear.x
         angular_vel = msg.angular.z
-        sign = linear_vel > 0
+        sign = (linear_vel > 0)
 
         modules = list(range(self.n_mod))
         if sign == 0:  # going backwards
@@ -66,15 +66,25 @@ class Agevar(Node):
 
         for mod_id in modules:
             # TODO: compute and publish motor setpoints
+            wdx, wsw = self.vel_motors(linear_vel, angular_vel, sign)
+
+            # publish to ROS motor topics
+            m = Motors()
+            m.right = wdx
+            m.left = wsw
+            self.motors_pubs[mod_id].publish(m)
 
             if mod_id != modules[-1]:  # for every module except the last one
                 linear_vel, angular_vel = self.kinematic(
                     linear_vel, angular_vel, self.yaw_angles[mod_id])
-                self.get_logger().info(f"Output lin:{linear_vel}, ang:{angular_vel}")
+
+                self.get_logger().info(
+                    f"Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}")
 
     # set yaw angle of a joint
     def yaw_feedback_callback(self, msg, module_num):
         angle = msg.data
+
         if angle >= 180:
             angle -= 360
         self.yaw_angles[module_num-17] = angle
@@ -93,6 +103,20 @@ class Agevar(Node):
         linear_out = sqrt(linear_out_x**2 + linear_out_y**2)
 
         return linear_out, angular_out
+
+    # compute motors velocity for each module
+    def vel_motors(self, lin_vel, ang_vel, sign):
+        wdx = (lin_vel+ang_vel*rc.d/2) / rc.r_eq
+        wsx = (lin_vel-ang_vel*rc.d/2) / rc.r_eq
+
+        if sign == 0:  # backwards
+            wsx, wdx = -wsx, -wdx
+
+        # from radiants to rmp
+        wdx = wdx*rc.rads2rpm
+        wsx = wsx*rc.rads2rpm
+
+        return wdx, wsx
 
 
 def main(args=None):
