@@ -31,17 +31,11 @@ topic_to_id = {
 
 ### Agevar ###
 
-# DATA TRANSMISSION
-freq = 50        # [Hz] Transmission rate of the remote controller
-Ts = 1/freq      # [s] Sampling time of the data acquired from the remote controller
-
 # GEOMETRIC CONSTANTS
-N_mod = 3       # [-] Number of modules of the robot
 a = 0.18        # [m] Distance between the center of every module and the previous yaw joint
 b = 0.18        # [m] Distance between the center of every module and the following yaw joint
 d = 0.21        # [m] Distance between pair of equivalent wheels
 r_eq = 0.05     # [m] Radius of the equivalent wheels
-delta_max = 35  # [°] Maximum delta (relative angle between two modules) achievable
 
 rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
