@@ -89,7 +89,7 @@ class Agevar(Node):
 
         if angle >= 180:
             angle -= 360
-        self.yaw_angles[module_num-17] = angle
+        self.yaw_angles[module_num-17] = angle*math.pi/180.0
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
