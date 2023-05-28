@@ -93,17 +93,9 @@ class Agevar(Node):
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
-        delta_dot = -(angular_vel * (rc.b + rc.a * cos(yaw_angle)) +
-                      linear_vel * sin(yaw_angle)) / rc.b
-        yaw_angle = yaw_angle + delta_dot * rc.Ts
-
-        angular_out = angular_vel + delta_dot
-
-        linear_out_x = linear_vel + rc.b * sin(yaw_angle) * angular_out
-        linear_out_y = -angular_vel * rc.a - \
-            rc.b * cos(yaw_angle) * angular_out
-        linear_out = sqrt(linear_out_x**2 + linear_out_y**2)
-
+        linear_out = linear_vel * cos(yaw_angle) + rc.a * angular_vel * sin(yaw_angle)
+        angular_out = (linear_vel * sin(yaw_angle) - rc.a * angular_vel * cos(yaw_angle)) / rc.b
+        
         return linear_out, angular_out
 
     # compute motors velocity for each module
