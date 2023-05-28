@@ -63,6 +63,8 @@ class Agevar(Node):
         modules = list(range(self.n_mod))
         if sign == 0:  # going backwards
             modules.reverse()
+            linear_vel = -linear_vel
+            angular_vel = -angular_vel
 
         for mod_id in modules:
             # TODO: compute and publish motor setpoints
