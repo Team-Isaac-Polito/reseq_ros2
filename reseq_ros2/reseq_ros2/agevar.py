@@ -48,7 +48,7 @@ class Agevar(Node):
 
             # create publisher for the motor topics
             p = self.create_publisher(
-                Motors,
+                Twist,
                 f"diff_cont_{info['address']}/cmd_vel_unstamped",
                 10
             )
