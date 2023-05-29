@@ -1,0 +1,66 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 30
+    use_sim_time: true
+
+    # wheel speed controller
+    diff_cont_1:
+      type: diff_drive_controller/DiffDriveController
+    diff_cont_2:
+      type: diff_drive_controller/DiffDriveController
+    diff_cont_3:
+      type: diff_drive_controller/DiffDriveController
+    diff_cont_4:
+      type: diff_drive_controller/DiffDriveController
+
+    joint_broad:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+diff_cont_1:
+  ros__parameters:
+    publish_rate: 50.0
+
+    base_frame_id: base_link
+
+    left_wheel_names: ["left_front_wheel_1_joint", "left_back_wheel_1_joint"]
+    right_wheel_names: ["right_front_wheel_1_joint", "right_back_wheel_1_joint"]
+    wheel_separation: 0.13
+    wheel_radius: 0.12
+
+    use_stamped_vel: false
+diff_cont_2:
+  ros__parameters:
+    publish_rate: 50.0
+
+    base_frame_id: base_link
+
+    left_wheel_names: ["left_front_wheel_2_joint", "left_back_wheel_2_joint"]
+    right_wheel_names: ["right_front_wheel_2_joint", "right_back_wheel_2_joint"]
+    wheel_separation: 0.13
+    wheel_radius: 0.12
+
+    use_stamped_vel: false
+diff_cont_3:
+  ros__parameters:
+    publish_rate: 50.0
+
+    base_frame_id: base_link
+
+    left_wheel_names: ["left_front_wheel_3_joint", "left_back_wheel_3_joint"]
+    right_wheel_names: ["right_front_wheel_3_joint", "right_back_wheel_3_joint"]
+    wheel_separation: 0.13
+    wheel_radius: 0.12
+
+    use_stamped_vel: false
+diff_cont_4:
+  ros__parameters:
+    publish_rate: 50.0
+
+    base_frame_id: base_link
+
+    left_wheel_names: ["left_front_wheel_4_joint", "left_back_wheel_4_joint"]
+    right_wheel_names: ["right_front_wheel_4_joint", "right_back_wheel_4_joint"]
+    wheel_separation: 0.13
+    wheel_radius: 0.12
+
+    use_stamped_vel: false
