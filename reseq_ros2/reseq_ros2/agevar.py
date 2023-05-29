@@ -1,10 +1,9 @@
-import can
 import rclpy
 import reseq_ros2.constants as rc
 import struct
 import yaml
+import rospy
 from math import cos, sin, sqrt
-from can import Message
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
@@ -75,6 +74,19 @@ class Agevar(Node):
             m.right = wdx
             m.left = wsw
             self.motors_pubs[mod_id].publish(m)
+            # publish to ROS diff_drive_controller topics
+            if mod_id == modules[0]:  # for the first module
+                pub = rospy.Publisher('/diff_cont_1/cmd_vel_unstamped', Twist, queue_size=10)
+            if mod_id == modules[1]:  # for the first module
+                pub = rospy.Publisher('/diff_cont_2/cmd_vel_unstamped', Twist, queue_size=10)
+            if mod_id == modules[2]:  # for the first module
+                pub = rospy.Publisher('/diff_cont_3/cmd_vel_unstamped', Twist, queue_size=10)
+            if mod_id == modules[3]:  # for the first module
+                pub = rospy.Publisher('/diff_cont_4/cmd_vel_unstamped', Twist, queue_size=10)    
+
+            msg.linear.x = linear_vel
+            msg.angular.z = angular_vel
+            pub_.publish(msg)
 
             if mod_id != modules[-1]:  # for every module except the last one
                 linear_vel, angular_vel = self.kinematic(
