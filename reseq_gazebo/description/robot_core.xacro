@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="reseq">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="reseq_gazebo">
 
   <!-- This is a parametric description of reseq with 4 modules -->
   <!-- See 'Parameters.pdf' pdf for parameters meaning (when it will exist ;) ) -->

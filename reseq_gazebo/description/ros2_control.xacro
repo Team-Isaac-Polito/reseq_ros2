@@ -151,8 +151,8 @@
 
     <gazebo>
         <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
-            <parameters>$(find reseq)/config/my_controllers.yaml</parameters>
-            <parameters>$(find reseq)/config/gaz_ros2_ctl_use_sim.yaml</parameters>
+            <parameters>$(find reseq_gazebo)/config/my_controllers.yaml</parameters>
+            <parameters>$(find reseq_gazebo)/config/gaz_ros2_ctl_use_sim.yaml</parameters>
         </plugin>
     </gazebo>
 

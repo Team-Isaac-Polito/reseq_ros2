@@ -30,7 +30,7 @@ open 2 or 3 terminal (remember one time at the opening of the terminal to do `so
 In terminal 1 (to launch many scripts)
 
 ```
-ros2 launch reseq launch_sim.launch.py
+ros2 launch reseq_gazebo launch_sim.launch.py
 ```
 
 In terminal 2 (to launch the controller. You must select this terminal and type in keyboard to control the robot)

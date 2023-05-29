@@ -14,7 +14,7 @@ def generate_launch_description():
 
     # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
 
-    package_name = 'reseq'
+    package_name = 'reseq_gazebo'
 
     rsp = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
@@ -37,7 +37,7 @@ def generate_launch_description():
     # Run the spawner node from the gazebo_ros package. The entity name doesn't really matter if you only have a single robot.
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description',
-                                   '-entity', 'reseq'],
+                                   '-entity', 'reseq_gazebo'],
                         output='screen')
     
     
