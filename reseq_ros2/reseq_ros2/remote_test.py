@@ -40,12 +40,12 @@ class RemoteTest(Node):
             self.destroy_node()
             exit()
 
-        msg.linear.y = float(linear_vel)
-        msg.linear.x = float(turn_radius)
+        msg.linear.x = float(linear_vel)
+        msg.angular.z = float(turn_radius)
 
         self.publisher.publish(msg)
         self.get_logger().info(
-            f"Linear velocity: {msg.linear.y}\t Turn radius: {msg.linear.x}")
+            f"Linear velocity: {msg.linear.x}\t Turn radius: {msg.angular.z}")
         self.t += rc.Ts
 
 
