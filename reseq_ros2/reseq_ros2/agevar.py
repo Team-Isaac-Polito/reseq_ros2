@@ -49,7 +49,7 @@ class Agevar(Node):
             # create publisher for the motor topics
             p = self.create_publisher(
                 Motors,
-                f"reseq/module{info['address']}/motor/setpoint",
+                f"diff_cont_{info['address']}/cmd_vel_unstamped",
                 10
             )
             self.motors_pubs.append(p)
@@ -69,25 +69,12 @@ class Agevar(Node):
             # TODO: compute and publish motor setpoints
             wdx, wsw = self.vel_motors(linear_vel, angular_vel, sign)
 
-            # publish to ROS motor topics
-            m = Motors()
-            m.right = wdx
-            m.left = wsw
-            self.motors_pubs[mod_id].publish(m)
             # publish to ROS diff_drive_controller topics
-            if mod_id == modules[0]:  # for the first module
-                pub = rospy.Publisher('diff_cont_1/cmd_vel_unstamped', Twist, queue_size=10)
-            if mod_id == modules[1]:  # for the first module
-                pub = rospy.Publisher('diff_cont_2/cmd_vel_unstamped', Twist, queue_size=10)
-            if mod_id == modules[2]:  # for the first module
-                pub = rospy.Publisher('diff_cont_3/cmd_vel_unstamped', Twist, queue_size=10)
-            if mod_id == modules[3]:  # for the first module
-                pub = rospy.Publisher('diff_cont_4/cmd_vel_unstamped', Twist, queue_size=10)    
-
+            m = Twist()
             msg.linear.x = linear_vel
             msg.angular.z = angular_vel
-            pub_.publish(msg)
-
+            self.motors_pubs[mod_id].publish(m)
+        
             if mod_id != modules[-1]:  # for every module except the last one
                 linear_vel, angular_vel = self.kinematic(
                     linear_vel, angular_vel, self.yaw_angles[mod_id])
