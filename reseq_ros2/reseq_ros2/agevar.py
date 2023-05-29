@@ -61,17 +61,16 @@ class Agevar(Node):
         modules = list(range(self.n_mod))
         if sign == 0:  # going backwards
             modules.reverse()
-            linear_vel = -linear_vel
+#            linear_vel = -linear_vel
             angular_vel = -angular_vel
 
         for mod_id in modules:
             # TODO: compute and publish motor setpoints
-            wdx, wsw = self.vel_motors(linear_vel, angular_vel, sign)
 
             # publish to ROS diff_drive_controller topics
             m = Twist()
-            msg.linear.x = linear_vel
-            msg.angular.z = angular_vel
+            m.linear.x = linear_vel
+            m.angular.z = angular_vel
             self.motors_pubs[mod_id].publish(m)
         
             if mod_id != modules[-1]:  # for every module except the last one
@@ -95,21 +94,6 @@ class Agevar(Node):
         angular_out = (linear_vel * sin(yaw_angle) - rc.a * angular_vel * cos(yaw_angle)) / rc.b
         
         return linear_out, angular_out
-
-    # compute motors velocity for each module
-    def vel_motors(self, lin_vel, ang_vel, sign):
-        wdx = (lin_vel+ang_vel*rc.d/2) / rc.r_eq
-        wsx = (lin_vel-ang_vel*rc.d/2) / rc.r_eq
-
-        if sign == 0:  # backwards
-            wsx, wdx = -wsx, -wdx
-
-        # from radiants to rmp
-        wdx = wdx*rc.rads2rpm
-        wsx = wsx*rc.rads2rpm
-
-        return wdx, wsx
-
 
 def main(args=None):
     rclpy.init(args=args)
