@@ -32,8 +32,8 @@ topic_to_id = {
 ### Agevar ###
 
 # GEOMETRIC CONSTANTS
-a = 0.15        # [m] Distance between the center of every module and the previous yaw joint
-b = 0.1         # [m] Distance between the center of every module and the following yaw joint
+a = 0.2         # [m] Distance between the center of every module and the previous yaw joint
+b = 0.15        # [m] Distance between the center of every module and the following yaw joint
 d = 0.13        # [m] Distance between pair of equivalent wheels
 r_eq = 0.06     # [m] Radius of the equivalent wheels
 
