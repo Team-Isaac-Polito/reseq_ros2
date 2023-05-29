@@ -50,14 +50,12 @@ remember that you have to select this terminal to give commands to the robot in 
 /cmd_vel:=/diff_cont_4/cmd_vel_unstamped # module 4
 ```
 
-> :warning: The correct way would be to send the twist command to AGEVAR and AGEVAR should send the twist command for each module.
+> The correct way would be to send the twist command to AGEVAR and AGEVAR should send the twist command for each module. :warning:
 
 In terminal 3 (if you want to see the robot in Rviz too)
 
 ```
-
 rviz2
-
 ```
 
 - set "fixed frame" from "map" to "base link" (to refer to the robot body)
