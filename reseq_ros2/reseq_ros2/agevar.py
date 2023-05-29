@@ -2,7 +2,6 @@ import rclpy
 import reseq_ros2.constants as rc
 import struct
 import yaml
-import rospy
 from math import cos, sin, sqrt
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
