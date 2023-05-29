@@ -25,34 +25,27 @@ sudo apt-get install ros-humble-rviz2
 
 ## To launch the simulation
 
-open 2 or 3 terminal (remember one time at the opening of the terminal to do `source install/setup.bash` from `dev_ws` folder)
+open 3 or 4 terminal (remember one time at the opening of the terminal to do `source install/setup.bash` from `dev_ws` folder)
 
-In terminal 1 (to launch many scripts)
+In terminal 1 (to launch AGEVAR)
+
+```
+ros2 run reseq_ros2 agevar
+```
+
+In terminal 2 (to launch many scripts related to gazebo)
 
 ```
 ros2 launch reseq_gazebo launch_sim.launch.py
 ```
 
-In terminal 2 (to launch the controller. You must select this terminal and type in keyboard to control the robot)
+In terminal 3 (to launch the controller. You must select this terminal and type in keyboard to control the robot)
 
 ```
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/diff_cont_17/cmd_vel_unstamped
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-remember that you have to select this terminal to give commands to the robot in Gazebo
-
-> :warning: In this way you are only controlling the first module, the 3 module behing are "trying to stop" it. This because currently there are 4 differential drive controller (one for each module) that expect to read the linear and angular speed from
-
-```
-/cmd_vel:=/diff_cont_17/cmd_vel_unstamped # module 1
-/cmd_vel:=/diff_cont_18/cmd_vel_unstamped # module 2
-/cmd_vel:=/diff_cont_19/cmd_vel_unstamped # module 3
-/cmd_vel:=/diff_cont_20/cmd_vel_unstamped # module 4
-```
-
-> The correct way would be to send the twist command to AGEVAR and AGEVAR should send the twist command for each module. :warning:
-
-In terminal 3 (if you want to see the robot in Rviz too)
+In terminal 4 (if you want to see the robot in Rviz too)
 
 ```
 rviz2
@@ -64,3 +57,10 @@ rviz2
 - a final ctr-s wil save your configuration for next time you will use Rviz2
 
 To terminate the process type ctrl-c (there are many running services, not only Gazebo client).
+
+---
+
+## Known issues
+
+- At this stage the robot trajectory is controlled in open-loop. The yaw angle from `/joint_states` (joint_b_1_joint,joint_b_2_joint,joint_b_3_joint) should be feed back in AGEVAR controller to close the loop.
+- Another problem is probably related to friction, tests still need to be done to determinate best settings for the urdf of the robot.
