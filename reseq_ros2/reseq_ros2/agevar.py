@@ -76,13 +76,13 @@ class Agevar(Node):
             self.motors_pubs[mod_id].publish(m)
             # publish to ROS diff_drive_controller topics
             if mod_id == modules[0]:  # for the first module
-                pub = rospy.Publisher('/diff_cont_1/cmd_vel_unstamped', Twist, queue_size=10)
+                pub = rospy.Publisher('diff_cont_1/cmd_vel_unstamped', Twist, queue_size=10)
             if mod_id == modules[1]:  # for the first module
-                pub = rospy.Publisher('/diff_cont_2/cmd_vel_unstamped', Twist, queue_size=10)
+                pub = rospy.Publisher('diff_cont_2/cmd_vel_unstamped', Twist, queue_size=10)
             if mod_id == modules[2]:  # for the first module
-                pub = rospy.Publisher('/diff_cont_3/cmd_vel_unstamped', Twist, queue_size=10)
+                pub = rospy.Publisher('diff_cont_3/cmd_vel_unstamped', Twist, queue_size=10)
             if mod_id == modules[3]:  # for the first module
-                pub = rospy.Publisher('/diff_cont_4/cmd_vel_unstamped', Twist, queue_size=10)    
+                pub = rospy.Publisher('diff_cont_4/cmd_vel_unstamped', Twist, queue_size=10)    
 
             msg.linear.x = linear_vel
             msg.angular.z = angular_vel
