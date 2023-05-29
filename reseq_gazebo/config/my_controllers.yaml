@@ -4,19 +4,19 @@ controller_manager:
     use_sim_time: true
 
     # wheel speed controller
-    diff_cont_1:
+    diff_cont_17:
       type: diff_drive_controller/DiffDriveController
-    diff_cont_2:
+    diff_cont_18:
       type: diff_drive_controller/DiffDriveController
-    diff_cont_3:
+    diff_cont_19:
       type: diff_drive_controller/DiffDriveController
-    diff_cont_4:
+    diff_cont_20:
       type: diff_drive_controller/DiffDriveController
 
     joint_broad:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-diff_cont_1:
+diff_cont_17:
   ros__parameters:
     publish_rate: 50.0
 
@@ -28,7 +28,7 @@ diff_cont_1:
     wheel_radius: 0.12
 
     use_stamped_vel: false
-diff_cont_2:
+diff_cont_18:
   ros__parameters:
     publish_rate: 50.0
 
@@ -40,7 +40,7 @@ diff_cont_2:
     wheel_radius: 0.12
 
     use_stamped_vel: false
-diff_cont_3:
+diff_cont_19:
   ros__parameters:
     publish_rate: 50.0
 
@@ -52,7 +52,7 @@ diff_cont_3:
     wheel_radius: 0.12
 
     use_stamped_vel: false
-diff_cont_4:
+diff_cont_20:
   ros__parameters:
     publish_rate: 50.0
 

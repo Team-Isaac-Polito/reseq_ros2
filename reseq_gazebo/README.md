@@ -8,10 +8,10 @@
 
 ## Prerequisites:
 
-- install gazebo and other packages as shown below
+- install gazebo
+- install other packages as shown below
 
 ```
-curl -sSL http://get.gazebosim.org | sh # not quite sure that this is the correct way, if something does not work try other methods ad report the mistake
 sudo apt-get install ros-humble-gazebo-ros2-control
 sudo apt-get install ros-humble-xacro
 sudo apt-get install ros-humble-diff-drive-controller
@@ -36,7 +36,7 @@ ros2 launch reseq_gazebo launch_sim.launch.py
 In terminal 2 (to launch the controller. You must select this terminal and type in keyboard to control the robot)
 
 ```
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/diff_cont_1/cmd_vel_unstamped
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/diff_cont_17/cmd_vel_unstamped
 ```
 
 remember that you have to select this terminal to give commands to the robot in Gazebo
@@ -44,10 +44,10 @@ remember that you have to select this terminal to give commands to the robot in 
 > :warning: In this way you are only controlling the first module, the 3 module behing are "trying to stop" it. This because currently there are 4 differential drive controller (one for each module) that expect to read the linear and angular speed from
 
 ```
-/cmd_vel:=/diff_cont_1/cmd_vel_unstamped # module 1
-/cmd_vel:=/diff_cont_2/cmd_vel_unstamped # module 2
-/cmd_vel:=/diff_cont_3/cmd_vel_unstamped # module 3
-/cmd_vel:=/diff_cont_4/cmd_vel_unstamped # module 4
+/cmd_vel:=/diff_cont_17/cmd_vel_unstamped # module 1
+/cmd_vel:=/diff_cont_18/cmd_vel_unstamped # module 2
+/cmd_vel:=/diff_cont_19/cmd_vel_unstamped # module 3
+/cmd_vel:=/diff_cont_20/cmd_vel_unstamped # module 4
 ```
 
 > The correct way would be to send the twist command to AGEVAR and AGEVAR should send the twist command for each module. :warning:
