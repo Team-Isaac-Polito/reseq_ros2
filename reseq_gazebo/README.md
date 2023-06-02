@@ -20,14 +20,17 @@ sudo apt-get install ros-humble-controller-manager
 sudo apt-get install ros-humble-diff-drive-controller
 sudo apt-get install ros-humble-joint-state-broadcaster
 sudo apt-get install ros-humble-teleop-twist-keyboard
+sudo apt-get install ros-humble-teleop-twist-joy # only if yow want to use a controller :video_game:
 sudo apt-get install ros-humble-rviz2
 ```
+
+see <a href="https://index.ros.org/p/teleop_twist_joy/github-ros2-teleop_twist_joy/">ros2 wiki</a> for joystick settings
 
 ---
 
 ## To launch the simulation
 
-open 3 or 4 terminal (remember one time at the opening of the terminal to do `source install/setup.bash` from `dev_ws` folder)
+> :heavy_exclamation_mark: remember one time at the opening of the terminal to do `source install/setup.bash` from `dev_ws` folder
 
 In terminal 1 (to launch AGEVAR)
 
@@ -41,11 +44,13 @@ In terminal 2 (to launch many scripts related to gazebo)
 ros2 launch reseq_gazebo launch_sim.launch.py
 ```
 
-In terminal 3 (to launch the controller. You must select this terminal and type in keyboard to control the robot)
+In terminal 3 (to control the robot trough keyboard. You must select this terminal and type in keyboard to control the robot)
 
 ```
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
+
+(alternately use `ros2 launch teleop_twist_joy teleop-launch.py` to control the robot trough the controller :video_game: )
 
 In terminal 4 (if you want to see the robot in Rviz too)
 
