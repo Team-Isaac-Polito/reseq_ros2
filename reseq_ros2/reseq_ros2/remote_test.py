@@ -1,9 +1,8 @@
 import rclpy
-import reseq_ros2.constants as rc
-
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
 
+TS = 1/50  # sampling time
 T_IN = 2
 T_STEP = 4
 T_SIM = 8
@@ -13,8 +12,7 @@ class RemoteTest(Node):
     def __init__(self):
         super().__init__('remote_test')
         self.publisher = self.create_publisher(Twist, '/cmd_vel', 10)
-        timer_period = rc.Ts
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.timer = self.create_timer(TS, self.timer_callback)
         self.t = 0
 
     def timer_callback(self):
@@ -46,7 +44,7 @@ class RemoteTest(Node):
         self.publisher.publish(msg)
         self.get_logger().info(
             f"Linear velocity: {msg.linear.x}\t Turn radius: {msg.angular.z}")
-        self.t += rc.Ts
+        self.t += TS
 
 
 def main(args=None):
