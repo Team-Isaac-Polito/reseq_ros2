@@ -20,7 +20,7 @@ sudo apt-get install ros-humble-controller-manager
 sudo apt-get install ros-humble-diff-drive-controller
 sudo apt-get install ros-humble-joint-state-broadcaster
 sudo apt-get install ros-humble-teleop-twist-keyboard
-sudo apt-get install ros-humble-teleop-twist-joy # only if yow want to use a controller :video_game:
+sudo apt-get install ros-humble-teleop-twist-joy # only if yow want to use a controller
 sudo apt-get install ros-humble-rviz2
 ```
 
