@@ -8,15 +8,17 @@
 
 ## Prerequisites:
 
-- install gazebo
+- keep your system updated with: `sudo apt-get update && sudo apt-get upgrade -y`
+- <a href="https://docs.teamisaac.it/s/a9fc1d45-3830-400f-943f-88d75b56df82">instal ros2 humble</a> (internal link, just follow the <a href="https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html">official documentation</a> if not accessible)
+- <a href="https://classic.gazebosim.org/tutorials?tut=install_ubuntu">install gazebo</a>
 - install other packages as shown below
 
 ```
-sudo apt-get install ros-humble-gazebo-ros2-control
 sudo apt-get install ros-humble-xacro
+sudo apt-get install ros-humble-gazebo-ros2-control
+sudo apt-get install ros-humble-controller-manager
 sudo apt-get install ros-humble-diff-drive-controller
 sudo apt-get install ros-humble-joint-state-broadcaster
-#sudo apt-get install ros-humble-position-controllers !!! NOT CURRENTLY USED !!!
 sudo apt-get install ros-humble-teleop-twist-keyboard
 sudo apt-get install ros-humble-rviz2
 ```

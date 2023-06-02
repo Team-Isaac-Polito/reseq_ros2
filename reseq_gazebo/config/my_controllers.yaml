@@ -13,6 +13,7 @@ controller_manager:
     diff_cont_20:
       type: diff_drive_controller/DiffDriveController
 
+    # joint feedback
     joint_broad:
       type: joint_state_broadcaster/JointStateBroadcaster
 

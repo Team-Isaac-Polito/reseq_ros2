@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="reseq_gazebo">
 
-  <!-- This is a parametric description of reseq with 4 modules -->
-  <!-- See 'Parameters.pdf' pdf for parameters meaning (when it will exist ;) ) -->
-  <!-- All values are in meters -->
+  <!-- 
+  This is a parametric description of reseq with 4 modules
+  See 'Parameters.pdf' pdf for parameters meaning (when it will exist ;) )
+  All values are in meters
+  -->
   <xacro:property name="WheelBase" value="0.25"/>
   <xacro:property name="EquivalentWheelDiameter" value="0.12"/>
   <xacro:property name="ModuleWidth" value="0.2"/>
@@ -966,6 +968,7 @@
   <gazebo reference="right_back_wheel_4_link">
     <material>Gazebo/Black</material>
   </gazebo>
+
 
   <!-- Arm mK1 -->
   <joint name="arm_mK1_joint" type="revolute">

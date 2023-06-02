@@ -8,6 +8,7 @@
         <hardware>
             <plugin>gazebo_ros2_control/GazeboSystem</plugin>
         </hardware>
+
         <joint name="left_front_wheel_1_joint">
             <command_interface name="velocity">
                 <param name="min">${-WheelSpeed}</param>
@@ -36,6 +37,7 @@
             </command_interface> 
             <state_interface name="position"/>
         </joint>
+
         <joint name="joint_a_1_joint">
             <state_interface name="position"/>
         </joint>
@@ -45,6 +47,7 @@
         <joint name="chassis2_joint">
             <state_interface name="position"/>
         </joint>
+
         <joint name="left_front_wheel_2_joint"> 
             <command_interface name="velocity">
                 <param name="min">${-WheelSpeed}</param>
@@ -73,6 +76,7 @@
             </command_interface> 
             <state_interface name="position"/>
         </joint>
+
         <joint name="joint_a_2_joint">
             <state_interface name="position"/>
         </joint>
@@ -82,6 +86,7 @@
         <joint name="chassis3_joint">
             <state_interface name="position"/>
         </joint>
+
         <joint name="left_front_wheel_3_joint"> 
             <command_interface name="velocity">
                 <param name="min">${-WheelSpeed}</param>
@@ -110,6 +115,7 @@
             </command_interface> 
             <state_interface name="position"/>
         </joint>
+
         <joint name="joint_a_3_joint">
             <state_interface name="position"/>
         </joint>
@@ -119,6 +125,7 @@
         <joint name="chassis4_joint">
             <state_interface name="position"/>
         </joint>
+
         <joint name="left_front_wheel_4_joint"> 
             <command_interface name="velocity">
                 <param name="min">${-WheelSpeed}</param>
@@ -147,10 +154,12 @@
             </command_interface> 
             <state_interface name="position"/>
         </joint>
+
         <joint name="arm_mK1_joint">
             <state_interface name="position"/>
         </joint>
-    </ros2_control>
+
+    </ros2_control> 
 
     <gazebo>
         <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
