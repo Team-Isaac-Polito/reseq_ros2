@@ -147,6 +147,9 @@
             </command_interface> 
             <state_interface name="position"/>
         </joint>
+        <joint name="arm_mK1_joint">
+            <state_interface name="position"/>
+        </joint>
     </ros2_control>
 
     <gazebo>

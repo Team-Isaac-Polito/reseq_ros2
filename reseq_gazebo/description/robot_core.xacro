@@ -10,14 +10,18 @@
   <xacro:property name="TrackWidth" value="0.075"/>
   <xacro:property name="ChassisTopAndBottomClearance" value="0.02"/>
   <xacro:property name="JointDiameter" value="0.06"/>
-  <xacro:property name="toll" value="0.005"/>
+  <xacro:property name="toll" value="0.01"/>
   <xacro:property name="JointA" value="0.15"/>
   <xacro:property name="JointB" value="0.2"/>
   <xacro:property name="JointABottomClearance" value="0.04"/>
+  <xacro:property name="ForkThickness" value="0.01"/>
+  <xacro:property name="ForkHeight" value="0.04"/>
+  <xacro:property name="JetsonHolderLength" value="0.2"/>
+  <xacro:property name="JetsonHolderWidth" value="0.1"/>
   <!-- All values are in radiants -->
-  <xacro:property name="pitch" value="2.0944"/>
-  <xacro:property name="roll" value="1.74533"/>
-  <xacro:property name="yaw" value="0.523599"/>
+  <xacro:property name="pitch" value="${pi/2}"/>
+  <xacro:property name="roll" value="${pi*3/4}"/>
+  <xacro:property name="yaw" value="${pi/4}"/>
   <!-- All values are in kg -->
   <xacro:property name="WheelMass" value="0.1"/>
   <xacro:property name="ChassisMass" value="2.5"/>
@@ -912,6 +916,104 @@
 
   <gazebo reference="right_back_wheel_4_link">
     <material>Gazebo/Black</material>
+  </gazebo>
+
+    <!-- Arm mK1 -->
+  <joint name="arm_mK1_joint" type="revolute">
+    <parent link="chassis1_link"/>
+    <child link="arm_mK1_link"/>
+    <!-- Effort in Nm, angle in radians -->
+    <limit effort="10.0" lower="-${pi/4}" upper="${pi/2}" velocity="0.5"/>
+    <origin xyz="${WheelBase/2} 0 0" rpy="${pi/2} 0 0" />
+    <axis xyz="0 0 -1"/>
+  </joint>
+
+  <link name="arm_mK1_link">
+    <!-- cylinder to the right -->
+    <visual>
+      <origin xyz="0 0 ${ForkThickness/2+toll+ModuleWidth/2}" />
+      <geometry>
+        <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
+      </geometry>
+      <material name="JointColor"/>
+    </visual>
+    <!-- cylinder to the left -->
+    <visual>
+      <origin xyz="0 0 -${ForkThickness/2+toll+ModuleWidth/2}" />
+      <geometry>
+        <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
+      </geometry>
+      <material name="JointColor"/>
+    </visual>
+    <!-- right side of the fork -->
+    <visual>
+      <origin xyz="0 -${(toll+EquivalentWheelDiameter/2)/2} ${ForkThickness/2+toll+ModuleWidth/2}" />
+      <geometry>
+        <box size="${ForkHeight} ${toll+EquivalentWheelDiameter/2} ${ForkThickness}"/>
+      </geometry>
+      <material name="JointColor"/>
+    </visual>
+    <!-- left side of the fork -->
+    <visual>
+      <origin xyz="0 -${(toll+EquivalentWheelDiameter/2)/2} -${ForkThickness/2+toll+ModuleWidth/2}" />
+      <geometry>
+        <box size="${ForkHeight} ${toll+EquivalentWheelDiameter/2} ${ForkThickness}"/>
+      </geometry>
+      <material name="JointColor"/>
+    </visual>
+    <!-- front side of the fork -->
+    <visual>
+      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2} 0" />
+      <geometry>
+        <box size="${ForkHeight} ${ForkThickness} ${ModuleWidth+(toll+ForkThickness)*2}"/>
+      </geometry>
+      <material name="JointColor"/>
+    </visual>
+    <!-- Jetson holder -->
+    <visual>
+      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0" />
+      <geometry>
+        <box size="${ForkHeight} ${JetsonHolderLength} ${JetsonHolderWidth}"/>
+      </geometry>
+      <material name="JointColor"/>
+    </visual>
+
+    <!-- cylinder to the right -->
+    <collision>
+      <origin xyz="0 0 ${ForkThickness/2+toll+ModuleWidth/2}" />
+      <geometry>
+        <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
+      </geometry>
+    </collision>
+    <!-- cylinder to the left -->
+    <collision>
+      <origin xyz="0 0 -${ForkThickness/2+toll+ModuleWidth/2}" />
+      <geometry>
+        <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
+      </geometry>
+    </collision>
+    <!-- front side of the fork -->
+    <collision>
+      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2} 0" />
+      <geometry>
+        <box size="${ForkHeight} ${ForkThickness} ${ModuleWidth+(toll+ForkThickness)*2}"/>
+      </geometry>
+    </collision>
+    <!-- Jetson holder -->
+    <collision>
+      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0" />
+      <geometry>
+        <box size="${ForkHeight} ${JetsonHolderLength} ${JetsonHolderWidth}"/>
+      </geometry>
+    </collision>
+
+    <xacro:inertial_box mass="${0.5}" x="${ForkHeight}" y="${JetsonHolderLength}" z="${JetsonHolderWidth}">
+      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0" rpy="0 0 0"/>
+    </xacro:inertial_box>
+  </link>
+
+  <gazebo reference="arm_mK1_link">
+    <material>Gazebo/Grey</material>
   </gazebo>
 
 </robot>
