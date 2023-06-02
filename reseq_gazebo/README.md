@@ -8,7 +8,7 @@
 
 ## Prerequisites:
 
-- keep your system updated with: `sudo apt-get update && sudo apt-get upgrade -y`
+- keep your system updated with: `sudo apt-get update && sudo apt-get upgrade`
 - <a href="https://docs.teamisaac.it/s/a9fc1d45-3830-400f-943f-88d75b56df82">instal ros2 humble</a> (internal link, just follow the <a href="https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html">official documentation</a> if not accessible)
 - <a href="https://classic.gazebosim.org/tutorials?tut=install_ubuntu">install gazebo</a>
 - install other packages as shown below

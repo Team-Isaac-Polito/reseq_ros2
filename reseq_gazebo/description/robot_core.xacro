@@ -22,7 +22,7 @@
   <xacro:property name="JetsonHolderWidth" value="0.1"/>
   <!-- All values are in radiants -->
   <xacro:property name="pitch" value="${pi/2}"/>
-  <xacro:property name="roll" value="${pi*3/4}"/>
+  <xacro:property name="roll" value="${pi*0.9}"/>
   <xacro:property name="yaw" value="${pi/4}"/>
   <!-- All values are in kg -->
   <xacro:property name="WheelMass" value="0.1"/>
@@ -282,14 +282,7 @@
       </geometry>
       <material name="JointColor"/>
     </visual>
-    
-    <collision>
-      <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" />
-      <geometry>
-        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}"/>
-      </geometry>
-    </collision>
-    
+
     <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
       <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" rpy="0 0 0"/>
     </xacro:inertial_cylinder>
@@ -537,14 +530,7 @@
       </geometry>
       <material name="JointColor"/>
     </visual>
-    
-    <collision>
-      <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" />
-      <geometry>
-        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}"/>
-      </geometry>
-    </collision>
-    
+        
     <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
       <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" rpy="0 0 0"/>
     </xacro:inertial_cylinder>
@@ -793,13 +779,6 @@
       <material name="JointColor"/>
     </visual>
     
-    <collision>
-      <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" />
-      <geometry>
-        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}"/>
-      </geometry>
-    </collision>
-    
     <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
       <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" rpy="0 0 0"/>
     </xacro:inertial_cylinder>
@@ -975,9 +954,9 @@
     <parent link="chassis1_link"/>
     <child link="arm_mK1_link"/>
     <!-- Effort in Nm, angle in radians -->
-    <limit effort="10.0" lower="-${pi/4}" upper="${pi/2}" velocity="0.5"/>
+    <limit effort="10.0" lower="-${pi*0.001}" upper="${pi/2}" velocity="0.5"/>
     <origin xyz="${WheelBase/2} 0 0" rpy="${pi/2} 0 0" />
-    <axis xyz="0 0 -1"/>
+    <axis xyz="0 0 1"/>
   </joint>
 
   <link name="arm_mK1_link">
@@ -987,7 +966,7 @@
       <geometry>
         <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
       </geometry>
-      <material name="JointColor"/>
+      <material name="ArmColor"/>
     </visual>
     <!-- cylinder to the left -->
     <visual>
@@ -995,39 +974,39 @@
       <geometry>
         <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
       </geometry>
-      <material name="JointColor"/>
+      <material name="ArmColor"/>
     </visual>
     <!-- right side of the fork -->
     <visual>
-      <origin xyz="0 -${(toll+EquivalentWheelDiameter/2)/2} ${ForkThickness/2+toll+ModuleWidth/2}" />
+      <origin xyz="${(toll+EquivalentWheelDiameter/2)/2} 0 ${ForkThickness/2+toll+ModuleWidth/2}" />
       <geometry>
-        <box size="${ForkHeight} ${toll+EquivalentWheelDiameter/2} ${ForkThickness}"/>
+        <box size="${toll+EquivalentWheelDiameter/2} ${ForkHeight} ${ForkThickness}"/>
       </geometry>
-      <material name="JointColor"/>
+      <material name="ArmColor"/>
     </visual>
     <!-- left side of the fork -->
     <visual>
-      <origin xyz="0 -${(toll+EquivalentWheelDiameter/2)/2} -${ForkThickness/2+toll+ModuleWidth/2}" />
+      <origin xyz="${(toll+EquivalentWheelDiameter/2)/2} 0 -${ForkThickness/2+toll+ModuleWidth/2}" />
       <geometry>
-        <box size="${ForkHeight} ${toll+EquivalentWheelDiameter/2} ${ForkThickness}"/>
+        <box size="${toll+EquivalentWheelDiameter/2} ${ForkHeight} ${ForkThickness}"/>
       </geometry>
-      <material name="JointColor"/>
+      <material name="ArmColor"/>
     </visual>
     <!-- front side of the fork -->
     <visual>
-      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2} 0" />
+      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2} 0 0" />
       <geometry>
-        <box size="${ForkHeight} ${ForkThickness} ${ModuleWidth+(toll+ForkThickness)*2}"/>
+        <box size="${ForkThickness} ${ForkHeight} ${ModuleWidth+(toll+ForkThickness)*2}"/>
       </geometry>
-      <material name="JointColor"/>
+      <material name="ArmColor"/>
     </visual>
     <!-- Jetson holder -->
     <visual>
-      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0" />
+      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" />
       <geometry>
-        <box size="${ForkHeight} ${JetsonHolderLength} ${JetsonHolderWidth}"/>
+        <box size="${JetsonHolderLength} ${ForkHeight} ${JetsonHolderWidth}"/>
       </geometry>
-      <material name="JointColor"/>
+      <material name="ArmColor"/>
     </visual>
 
     <!-- cylinder to the right -->
@@ -1046,21 +1025,21 @@
     </collision>
     <!-- front side of the fork -->
     <collision>
-      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2} 0" />
+      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2} 0 0" />
       <geometry>
-        <box size="${ForkHeight} ${ForkThickness} ${ModuleWidth+(toll+ForkThickness)*2}"/>
+        <box size="${ForkThickness} ${ForkHeight} ${ModuleWidth+(toll+ForkThickness)*2}"/>
       </geometry>
     </collision>
     <!-- Jetson holder -->
     <collision>
-      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0" />
+      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" />
       <geometry>
-        <box size="${ForkHeight} ${JetsonHolderLength} ${JetsonHolderWidth}"/>
+        <box size="${JetsonHolderLength} ${ForkHeight} ${JetsonHolderWidth}"/>
       </geometry>
     </collision>
 
     <xacro:inertial_box mass="${0.5}" x="${ForkHeight}" y="${JetsonHolderLength}" z="${JetsonHolderWidth}">
-      <origin xyz="0 -${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0" rpy="0 0 0"/>
+      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" rpy="0 0 0"/>
     </xacro:inertial_box>
   </link>
 
