@@ -28,6 +28,7 @@ diff_cont_17:
 
     use_stamped_vel: false
     enable_odom_tf: false
+    enable_odom: false
 
 diff_cont_18:
   ros__parameters:
@@ -40,6 +41,7 @@ diff_cont_18:
 
     use_stamped_vel: false
     enable_odom_tf: false
+    enable_odom: false
 
 diff_cont_19:
   ros__parameters:
@@ -52,6 +54,7 @@ diff_cont_19:
 
     use_stamped_vel: false
     enable_odom_tf: false
+    enable_odom: false
 
 diff_cont_20:
   ros__parameters:
@@ -64,3 +67,4 @@ diff_cont_20:
 
     use_stamped_vel: false
     enable_odom_tf: false
+    enable_odom: false
