@@ -21,19 +21,17 @@ diff_cont_17:
   ros__parameters:
     publish_rate: 50.0
 
-    base_frame_id: base_link
-
     left_wheel_names: ["left_front_wheel_1_joint", "left_back_wheel_1_joint"]
     right_wheel_names: ["right_front_wheel_1_joint", "right_back_wheel_1_joint"]
     wheel_separation: 0.13
     wheel_radius: 0.12
 
     use_stamped_vel: false
+    enable_odom_tf: false
+
 diff_cont_18:
   ros__parameters:
     publish_rate: 50.0
-
-    base_frame_id: base_link
 
     left_wheel_names: ["left_front_wheel_2_joint", "left_back_wheel_2_joint"]
     right_wheel_names: ["right_front_wheel_2_joint", "right_back_wheel_2_joint"]
@@ -41,11 +39,11 @@ diff_cont_18:
     wheel_radius: 0.12
 
     use_stamped_vel: false
+    enable_odom_tf: false
+
 diff_cont_19:
   ros__parameters:
     publish_rate: 50.0
-
-    base_frame_id: base_link
 
     left_wheel_names: ["left_front_wheel_3_joint", "left_back_wheel_3_joint"]
     right_wheel_names: ["right_front_wheel_3_joint", "right_back_wheel_3_joint"]
@@ -53,11 +51,11 @@ diff_cont_19:
     wheel_radius: 0.12
 
     use_stamped_vel: false
+    enable_odom_tf: false
+
 diff_cont_20:
   ros__parameters:
     publish_rate: 50.0
-
-    base_frame_id: base_link
 
     left_wheel_names: ["left_front_wheel_4_joint", "left_back_wheel_4_joint"]
     right_wheel_names: ["right_front_wheel_4_joint", "right_back_wheel_4_joint"]
@@ -65,3 +63,4 @@ diff_cont_20:
     wheel_radius: 0.12
 
     use_stamped_vel: false
+    enable_odom_tf: false

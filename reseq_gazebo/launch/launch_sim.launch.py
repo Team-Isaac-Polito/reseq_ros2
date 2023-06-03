@@ -1,14 +1,9 @@
 import os
-
 from ament_index_python.packages import get_package_share_directory
-
-
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-
 from launch_ros.actions import Node
-
 
 def generate_launch_description():
 
@@ -38,8 +33,7 @@ def generate_launch_description():
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description',
                                    '-entity', 'reseq_gazebo'],
-                        output='screen')
-    
+                        output='screen')    
     
     diff_drive_1_spawner = Node(
         package="controller_manager",
