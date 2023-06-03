@@ -10,20 +10,20 @@
   <xacro:property name="WheelBase" value="0.25"/>
   <xacro:property name="EquivalentWheelDiameter" value="0.12"/>
   <xacro:property name="ModuleWidth" value="0.2"/>
-  <xacro:property name="TrackWidth" value="0.075"/>
+  <xacro:property name="TrackWidth" value="0.08"/>
   <xacro:property name="ChassisTopAndBottomClearance" value="0.02"/>
   
   <xacro:property name="WheelMass" value="0.1"/>
   <xacro:property name="ChassisMass" value="2.5"/>
 
   <!-- joint related -->
-  <xacro:property name="JointDiameter" value="0.06"/>
-  <xacro:property name="JointA" value="0.15"/>
-  <xacro:property name="JointB" value="0.2"/>
+  <xacro:property name="JointDiameter" value="0.07"/>
+  <xacro:property name="JointA" value="${0.05+EquivalentWheelDiameter/2}"/>
+  <xacro:property name="JointB" value="${0.03+EquivalentWheelDiameter/2}"/>
   <xacro:property name="JointABottomClearance" value="0.04"/>
 
   <xacro:property name="pitch" value="${pi/2}"/>
-  <xacro:property name="roll" value="${pi*0.9}"/>
+  <xacro:property name="roll" value="${pi/2}"/>
   <xacro:property name="yaw" value="${pi/4}"/>
 
   <xacro:property name="JointAMass" value="0.1"/>
@@ -31,9 +31,9 @@
 
   <!-- arm related -->
   <xacro:property name="ForkThickness" value="0.01"/>
-  <xacro:property name="ForkHeight" value="0.04"/>
-  <xacro:property name="JetsonHolderLength" value="0.2"/>
-  <xacro:property name="JetsonHolderWidth" value="0.1"/>
+  <xacro:property name="ForkHeight" value="0.03"/>
+  <xacro:property name="JetsonHolderLength" value="0.158"/>
+  <xacro:property name="JetsonHolderWidth" value="0.09"/>
 
   <!-- Colors (from 0 to 1) -->
   <material name="ChassisColor">
