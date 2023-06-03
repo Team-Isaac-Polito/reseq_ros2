@@ -48,5 +48,8 @@
   <material name="ArmColor">
     <color rgba="0.5 0.5 0.5 1" />
   </material>
+  <material name="LidarColor">
+    <color rgba="0.5 0.5 0.5 1" />
+  </material>
 
 </robot>

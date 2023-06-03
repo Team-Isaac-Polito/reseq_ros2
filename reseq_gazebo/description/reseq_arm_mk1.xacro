@@ -91,7 +91,7 @@
       </geometry>
     </collision>
 
-    <xacro:inertial_box mass="${0.5}" x="${ForkHeight}" y="${JetsonHolderLength}" z="${JetsonHolderWidth}">
+    <xacro:inertial_box mass="${0.5}" x="${JetsonHolderLength}" y="${ForkHeight}" z="${JetsonHolderWidth}">
       <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" rpy="0 0 0"/>
     </xacro:inertial_box>
   </link>

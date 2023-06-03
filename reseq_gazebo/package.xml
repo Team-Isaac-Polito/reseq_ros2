@@ -4,8 +4,9 @@
   <name>reseq_gazebo</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="my_email@email.com">ISAAC</maintainer>
-  <license>TODO: License declaration</license>
+  <maintainer email="team.isaac@polito.it">Team ISAAC</maintainer>
+  <license>GNU GPL v3.0</license>
+  <author email="gugliandolosergio@gmail.com">Sergio Gugliandolo</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

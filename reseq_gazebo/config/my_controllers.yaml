@@ -21,6 +21,9 @@ diff_cont_17:
   ros__parameters:
     publish_rate: 50.0
 
+    odom_frame_id: odom
+    base_frame_id: base_link
+
     left_wheel_names: ["left_front_wheel_1_joint", "left_back_wheel_1_joint"]
     right_wheel_names: ["right_front_wheel_1_joint", "right_back_wheel_1_joint"]
     wheel_separation: 0.13
