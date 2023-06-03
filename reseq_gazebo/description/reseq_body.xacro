@@ -235,14 +235,14 @@
 
   <link name="joint_b_1_link">
     <visual>
-      <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" />
+      <origin xyz="0 0 -${JointB/2}" />
       <geometry>
-        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}"/>
+        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB}"/>
       </geometry>
       <material name="JointColor"/>
     </visual>
 
-    <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
+    <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
       <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" rpy="0 0 0"/>
     </xacro:inertial_cylinder>
   </link>
@@ -257,8 +257,7 @@
     <child link="chassis2_link"/>
     <!-- Effort in Nm -->
     <limit effort="2.0" lower="${-roll}" upper="${roll}" velocity="0.5"/>
-    <!-- leaving 1/3 of the EquivalentWheelDiameter from front (origin is in the center of eq wheel, at the bottom of the chassis) -->
-    <origin xyz="0 0 ${-JointB}" rpy="${-pi/2} ${-pi/2} 0"/>
+    <origin xyz="0 0 -${JointB+WheelBase/2}" rpy="${-pi/2} ${-pi/2} 0"/>
     <axis xyz="1 0 0"/>
   </joint>
 
@@ -483,14 +482,14 @@
 
   <link name="joint_b_2_link">
     <visual>
-      <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" />
+      <origin xyz="0 0 -${JointB/2}" />
       <geometry>
-        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}"/>
+        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB}"/>
       </geometry>
       <material name="JointColor"/>
     </visual>
         
-    <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
+    <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
       <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" rpy="0 0 0"/>
     </xacro:inertial_cylinder>
   </link>
@@ -506,7 +505,7 @@
     <!-- Effort in Nm -->
     <limit effort="2.0" lower="${-roll}" upper="${roll}" velocity="0.5"/>
     <!-- leaving 1/3 of the EquivalentWheelDiameter from front (origin is in the center of eq wheel, at the bottom of the chassis) -->
-    <origin xyz="0 0 ${-JointB}" rpy="${-pi/2} ${-pi/2} 0"/>
+    <origin xyz="0 0 -${JointB+WheelBase/2}" rpy="${-pi/2} ${-pi/2} 0"/>
     <axis xyz="1 0 0"/>
   </joint>
 
@@ -731,14 +730,14 @@
 
   <link name="joint_b_3_link">
     <visual>
-      <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" />
+      <origin xyz="0 0 -${JointB/2}" />
       <geometry>
-        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}"/>
+        <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB}"/>
       </geometry>
       <material name="JointColor"/>
     </visual>
     
-    <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB-WheelBase/2-EquivalentWheelDiameter/6}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
+    <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
       <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" rpy="0 0 0"/>
     </xacro:inertial_cylinder>
   </link>
@@ -754,7 +753,7 @@
     <!-- Effort in Nm -->
     <limit effort="2.0" lower="${-roll}" upper="${roll}" velocity="0.5"/>
     <!-- leaving 1/3 of the EquivalentWheelDiameter from front (origin is in the center of eq wheel, at the bottom of the chassis) -->
-    <origin xyz="0 0 ${-JointB}" rpy="${-pi/2} ${-pi/2} 0"/>
+    <origin xyz="0 0 -${JointB+WheelBase/2}" rpy="${-pi/2} ${-pi/2} 0"/>
     <axis xyz="1 0 0"/>
   </joint>
 
