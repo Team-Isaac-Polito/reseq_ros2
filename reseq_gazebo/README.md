@@ -72,3 +72,5 @@ To terminate the process type ctrl-c (there are many running services, not only 
 
 - At this stage the robot trajectory is controlled in open-loop. The yaw angle from `/joint_states` (joint_b_1_joint,joint_b_2_joint,joint_b_3_joint) should be feed back in AGEVAR controller to close the loop.
 - Another problem is probably related to friction, tests still need to be done to determinate best settings for the urdf of the robot.
+- The lidar provide information (you can see them typing `ctr-T` in gazebo and selecting the correct topic) but the gazebo plugin does not publish them in a topic external to gazebo, seeable from ros
+- All the joint should have position control
