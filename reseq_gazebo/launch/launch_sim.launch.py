@@ -38,25 +38,25 @@ def generate_launch_description():
     diff_drive_1_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["diff_cont_17"],
+        arguments=["diff_cont_33"],
     )
     
     diff_drive_2_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["diff_cont_18"],
+        arguments=["diff_cont_34"],
     )
     
     diff_drive_3_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["diff_cont_19"],
+        arguments=["diff_cont_35"],
     )
     
     diff_drive_4_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["diff_cont_20"],
+        arguments=["diff_cont_36"],
     )
 
     pos_cont_arm_mk1 = Node(

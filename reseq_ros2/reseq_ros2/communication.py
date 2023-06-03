@@ -14,7 +14,7 @@ class Communication(Node):
     def __init__(self):
         super().__init__("communication")
         # TODO: read file passed as ROS argument
-        with open("src/reseq_ros2/reseq_ros2/config.yaml") as f:
+        with open("src/reseq_ros2/reseq_ros2/config_mk2.yaml") as f:
             self.config = yaml.load(f, Loader=SafeLoader)
             print(self.config)
 

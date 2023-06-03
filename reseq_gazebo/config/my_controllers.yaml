@@ -4,13 +4,13 @@ controller_manager:
     use_sim_time: true
 
     # wheel speed controller
-    diff_cont_17:
+    diff_cont_33:
       type: diff_drive_controller/DiffDriveController
-    diff_cont_18:
+    diff_cont_34:
       type: diff_drive_controller/DiffDriveController
-    diff_cont_19:
+    diff_cont_35:
       type: diff_drive_controller/DiffDriveController
-    diff_cont_20:
+    diff_cont_36:
       type: diff_drive_controller/DiffDriveController
 
     # joint position controller
@@ -68,7 +68,7 @@ pos_cont_joint_4:
 
 # differential controllers settings
 
-diff_cont_17:
+diff_cont_33:
   ros__parameters:
     publish_rate: 50.0
 
@@ -84,7 +84,7 @@ diff_cont_17:
     enable_odom_tf: false
     enable_odom: false
 
-diff_cont_18:
+diff_cont_34:
   ros__parameters:
     publish_rate: 50.0
 
@@ -97,7 +97,7 @@ diff_cont_18:
     enable_odom_tf: false
     enable_odom: false
 
-diff_cont_19:
+diff_cont_35:
   ros__parameters:
     publish_rate: 50.0
 
@@ -110,7 +110,7 @@ diff_cont_19:
     enable_odom_tf: false
     enable_odom: false
 
-diff_cont_20:
+diff_cont_36:
   ros__parameters:
     publish_rate: 50.0
 

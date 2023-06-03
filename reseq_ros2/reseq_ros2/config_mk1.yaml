@@ -11,6 +11,3 @@ modules:
   - address: 0x13
     hasJoint: true
     hasEndEffector: false
-  - address: 0x14
-    hasJoint: true
-    hasEndEffector: false
