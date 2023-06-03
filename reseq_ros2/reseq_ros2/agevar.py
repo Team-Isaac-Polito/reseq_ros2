@@ -61,6 +61,8 @@ class Agevar(Node):
         modules = list(range(self.n_mod))
         if sign == 0:  # going backwards
             modules.reverse()
+            linear_vel = -linear_vel
+            angular_vel = -angular_vel
 
         for mod_id in modules:
             # TODO: compute and publish motor setpoints
@@ -70,7 +72,7 @@ class Agevar(Node):
             m.linear.x = linear_vel
             m.angular.z = angular_vel
             self.motors_pubs[mod_id].publish(m)
-        
+
             if mod_id != modules[-1]:  # for every module except the last one
                 linear_vel, angular_vel = self.kinematic(
                     linear_vel, angular_vel, self.yaw_angles[mod_id])
