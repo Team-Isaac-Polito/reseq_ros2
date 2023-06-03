@@ -13,9 +13,60 @@ controller_manager:
     diff_cont_20:
       type: diff_drive_controller/DiffDriveController
 
+    # joint position controller
+    pos_cont_arm_mk1:
+      type: forward_command_controller/ForwardCommandController
+    pos_cont_joint_1:
+      type: forward_command_controller/ForwardCommandController
+    pos_cont_joint_2:
+      type: forward_command_controller/ForwardCommandController
+    pos_cont_joint_3:
+      type: forward_command_controller/ForwardCommandController
+    pos_cont_joint_4:
+      type: forward_command_controller/ForwardCommandController
+
     # joint feedback
     joint_broad:
       type: joint_state_broadcaster/JointStateBroadcaster
+
+# position controllers settings
+
+pos_cont_arm_mk1:
+  ros__parameters:
+    joints:
+      - arm_mK1_joint
+    interface_name: position
+
+pos_cont_joint_1:
+  ros__parameters:
+    joints:
+      - joint_a_1_joint
+      - joint_b_1_joint
+    interface_name: position
+
+pos_cont_joint_2:
+  ros__parameters:
+    joints:
+      - joint_a_2_joint
+      - joint_b_2_joint
+      - chassis2_joint
+    interface_name: position
+
+pos_cont_joint_3:
+  ros__parameters:
+    joints:
+      - joint_a_3_joint
+      - joint_b_3_joint
+      - chassis3_joint
+    interface_name: position
+
+pos_cont_joint_4:
+  ros__parameters:
+    joints:
+      - chassis4_joint
+    interface_name: position
+
+# differential controllers settings
 
 diff_cont_17:
   ros__parameters:

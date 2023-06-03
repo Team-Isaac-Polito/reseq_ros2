@@ -59,6 +59,36 @@ def generate_launch_description():
         arguments=["diff_cont_20"],
     )
 
+    pos_cont_arm_mk1 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["pos_cont_arm_mk1"],
+    )
+
+    pos_cont_joint_1 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["pos_cont_joint_1"],
+    )
+
+    pos_cont_joint_2 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["pos_cont_joint_2"],
+    )
+
+    pos_cont_joint_3 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["pos_cont_joint_3"],
+    )
+
+    pos_cont_joint_4 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["pos_cont_joint_4"],
+    )
+
     joint_broad_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -74,5 +104,10 @@ def generate_launch_description():
         diff_drive_2_spawner,
         diff_drive_3_spawner,
         diff_drive_4_spawner,
+#        pos_cont_arm_mk1,
+#        pos_cont_joint_1,
+#        pos_cont_joint_2,
+#        pos_cont_joint_3,
+#        pos_cont_joint_4,
         joint_broad_spawner
     ])

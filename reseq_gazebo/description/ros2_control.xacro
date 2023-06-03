@@ -15,6 +15,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="right_front_wheel_1_joint">
             <command_interface name="velocity">
@@ -22,6 +23,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface>
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="left_back_wheel_1_joint">
             <command_interface name="velocity">
@@ -29,6 +31,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="right_back_wheel_1_joint">
             <command_interface name="velocity">
@@ -36,16 +39,23 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
 
         <joint name="joint_a_1_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
         <joint name="joint_b_1_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
         <joint name="chassis2_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
 
         <joint name="left_front_wheel_2_joint"> 
@@ -54,6 +64,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="right_front_wheel_2_joint"> 
             <command_interface name="velocity">
@@ -61,6 +72,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="left_back_wheel_2_joint"> 
             <command_interface name="velocity">
@@ -68,6 +80,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="right_back_wheel_2_joint"> 
             <command_interface name="velocity">
@@ -75,16 +88,23 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
 
         <joint name="joint_a_2_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
         <joint name="joint_b_2_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
         <joint name="chassis3_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
 
         <joint name="left_front_wheel_3_joint"> 
@@ -93,6 +113,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="right_front_wheel_3_joint"> 
             <command_interface name="velocity">
@@ -100,6 +121,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="left_back_wheel_3_joint"> 
             <command_interface name="velocity">
@@ -107,6 +129,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="right_back_wheel_3_joint"> 
             <command_interface name="velocity">
@@ -114,16 +137,23 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
 
         <joint name="joint_a_3_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
         <joint name="joint_b_3_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
         <joint name="chassis4_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
 
         <joint name="left_front_wheel_4_joint"> 
@@ -132,6 +162,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="right_front_wheel_4_joint"> 
             <command_interface name="velocity">
@@ -139,6 +170,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="left_back_wheel_4_joint"> 
             <command_interface name="velocity">
@@ -146,6 +178,7 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
         <joint name="right_back_wheel_4_joint"> 
             <command_interface name="velocity">
@@ -153,10 +186,13 @@
                 <param name="max">${WheelSpeed}</param>
             </command_interface> 
             <state_interface name="position"/>
+            <state_interface name="velocity"/>
         </joint>
 
         <joint name="arm_mK1_joint">
+            <command_interface name="position"/>
             <state_interface name="position"/>
+            <state_interface name="effort"/>
         </joint>
 
     </ros2_control> 

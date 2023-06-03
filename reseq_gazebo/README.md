@@ -18,6 +18,7 @@ sudo apt-get install ros-humble-xacro
 sudo apt-get install ros-humble-gazebo-ros2-control
 sudo apt-get install ros-humble-controller-manager
 sudo apt-get install ros-humble-diff-drive-controller
+sudo apt-get install ros-humble-joint-trajectory-controller:
 sudo apt-get install ros-humble-joint-state-broadcaster
 sudo apt-get install ros-humble-teleop-twist-keyboard
 sudo apt-get install ros-humble-teleop-twist-joy # only if yow want to use a controller
