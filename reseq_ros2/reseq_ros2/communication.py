@@ -1,6 +1,6 @@
 import can
 import rclpy
-import reseq_ros2.constants as rc
+import reseq_ros2.constants_mk2 as rc
 import struct
 import yaml
 from can import Message
