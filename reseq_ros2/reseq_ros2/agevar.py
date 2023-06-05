@@ -1,22 +1,21 @@
 import rclpy
-import reseq_ros2.constants_mk2 as rc
-import yaml
 from math import cos, sin, pi
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from std_msgs.msg import Float32  # deprecated?
-from yaml.loader import SafeLoader
 
 
 class Agevar(Node):
     def __init__(self):
         super().__init__("communication")
-        # TODO: read file passed as ROS argument
-        with open("src/reseq_ros2/reseq_ros2/config_mk2.yaml") as f:
-            self.config = yaml.load(f, Loader=SafeLoader)
-            print(self.config)
 
-        self.n_mod = len(self.config["modules"])
+
+        self.modules = list(self.declare_parameter("modules").get_parameter_value().byte_array_value)
+        self.joints = list(self.declare_parameter("joints").get_parameter_value().byte_array_value)
+        self.a = self.declare_parameter("a").get_parameter_value().double_value
+        self.b = self.declare_parameter("b").get_parameter_value().double_value
+
+        self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
 
         # subscribe to remote (parsed by teleop_twist_joy)
@@ -30,14 +29,14 @@ class Agevar(Node):
         self.joint_subs = []
         self.motors_pubs = []
         for i in range(self.n_mod):
-            info = self.config["modules"][i]
+            address = self.modules[i]
 
             # subscribe to feedback from joints
-            if info['hasJoint']:
+            if address in self.joints:
                 s = self.create_subscription(
                     Float32,
-                    f"reseq/module{info['address']}/joint/yaw/feedback",
-                    lambda msg, x=info["address"]: self.yaw_feedback_callback(
+                    f"reseq/module{address}/joint/yaw/feedback",
+                    lambda msg, x=address: self.yaw_feedback_callback(
                         msg, x),
                     10,
                 )
@@ -46,7 +45,7 @@ class Agevar(Node):
             # create publisher for the motor topics
             p = self.create_publisher(
                 Twist,
-                f"diff_cont_{info['address']}/cmd_vel_unstamped",
+                f"diff_cont_{address}/cmd_vel_unstamped",
                 10
             )
             self.motors_pubs.append(p)
@@ -88,8 +87,8 @@ class Agevar(Node):
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
-        linear_out = linear_vel * cos(yaw_angle) + rc.a * angular_vel * sin(yaw_angle)
-        angular_out = (linear_vel * sin(yaw_angle) - rc.a * angular_vel * cos(yaw_angle)) / rc.b
+        linear_out = linear_vel * cos(yaw_angle) + self.a * angular_vel * sin(yaw_angle)
+        angular_out = (linear_vel * sin(yaw_angle) - self.a * angular_vel * cos(yaw_angle)) / self.b
         
         return linear_out, angular_out
 
