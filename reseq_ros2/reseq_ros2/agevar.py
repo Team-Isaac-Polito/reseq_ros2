@@ -19,7 +19,7 @@ class Agevar(Node):
         self.yaw_angles = [0] * self.n_mod
 
         # subscribe to remote (parsed by teleop_twist_joy)
-        remote_sub = self.create_subscription(
+        self.remote_sub = self.create_subscription(
             Twist,
             "/cmd_vel",
             self.remote_callback,
