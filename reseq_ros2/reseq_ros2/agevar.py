@@ -7,7 +7,7 @@ from std_msgs.msg import Float32  # deprecated?
 
 class Agevar(Node):
     def __init__(self):
-        super().__init__("communication")
+        super().__init__("agevar")
 
 
         self.modules = self.declare_parameter("modules", []).get_parameter_value().byte_array_value
