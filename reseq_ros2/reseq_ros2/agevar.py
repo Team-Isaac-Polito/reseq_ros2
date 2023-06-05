@@ -10,10 +10,10 @@ class Agevar(Node):
         super().__init__("communication")
 
 
-        self.modules = list(self.declare_parameter("modules").get_parameter_value().byte_array_value)
-        self.joints = list(self.declare_parameter("joints").get_parameter_value().byte_array_value)
-        self.a = self.declare_parameter("a").get_parameter_value().double_value
-        self.b = self.declare_parameter("b").get_parameter_value().double_value
+        self.modules = self.declare_parameter("modules", []).get_parameter_value().byte_array_value
+        self.joints = self.declare_parameter("joints", []).get_parameter_value().byte_array_value
+        self.a = self.declare_parameter("a", 0.0).get_parameter_value().double_value
+        self.b = self.declare_parameter("b", 0.0).get_parameter_value().double_value
 
         self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
