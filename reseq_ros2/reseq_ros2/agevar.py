@@ -1,11 +1,9 @@
 import rclpy
 import reseq_ros2.constants_mk2 as rc
-import struct
 import yaml
-from math import cos, sin, sqrt
+from math import cos, sin, pi
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
-from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32  # deprecated?
 from yaml.loader import SafeLoader
 
@@ -86,7 +84,7 @@ class Agevar(Node):
 
         if angle >= 180:
             angle -= 360
-        self.yaw_angles[module_num-17] = angle*math.pi/180.0
+        self.yaw_angles[module_num-17] = angle*pi/180.0
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
