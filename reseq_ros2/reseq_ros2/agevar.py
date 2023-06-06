@@ -14,6 +14,8 @@ class Agevar(Node):
         self.a = self.declare_parameter("a", 0.0).get_parameter_value().double_value
         self.b = self.declare_parameter("b", 0.0).get_parameter_value().double_value
 
+        self.get_logger().info(f'Starting with parameters a: {self.a}, b: {self.b}, modules: {self.modules.tolist()}, joints: {self.joints.tolist()}')
+
         self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
 
@@ -48,6 +50,8 @@ class Agevar(Node):
                 10
             )
             self.motors_pubs.append(p)
+            
+        self.get_logger().info("Agevar node started!")
 
     def remote_callback(self, msg):
         linear_vel = msg.linear.x
