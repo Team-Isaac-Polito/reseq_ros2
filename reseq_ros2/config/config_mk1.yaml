@@ -11,3 +11,8 @@ modules:
   - address: 0x13
     hasJoint: true
     hasEndEffector: false
+dimensions:
+  a: 0.1695      # [m] Distance between the center of every module and the previous yaw joint
+  b: 0.18395     # [m] Distance between the center of every module and the following yaw joint
+  d: 0.2495      # !!!TO BE VERIFIED WITH MEASURES!!! [m] Distance between pair of equivalent wheels
+  r_eq: 0.0475   # !!!TO BE VERIFIED WITH MEASURES!!! [m] Radius of the equivalent wheels

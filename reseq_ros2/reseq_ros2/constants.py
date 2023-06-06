@@ -29,13 +29,6 @@ topic_to_id = {
     "joint/roll/setpoint": 0x35,
 }
 
-### Agevar ###
-
-# GEOMETRIC CONSTANTS
-a = 0.205       # [m] Distance between the center of every module and the previous yaw joint
-b = 0.185       # [m] Distance between the center of every module and the following yaw joint
-d = 0.12        # [m] Distance between pair of equivalent wheels
-r_eq = 0.06     # [m] Radius of the equivalent wheels
-
+# Useful constants
 rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
