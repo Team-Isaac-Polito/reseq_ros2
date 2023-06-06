@@ -9,9 +9,8 @@ class Agevar(Node):
     def __init__(self):
         super().__init__("agevar")
 
-
-        self.modules = self.declare_parameter("modules", []).get_parameter_value().byte_array_value
-        self.joints = self.declare_parameter("joints", []).get_parameter_value().byte_array_value
+        self.modules = self.declare_parameter("modules", [0]).get_parameter_value().integer_array_value
+        self.joints = self.declare_parameter("joints", [0]).get_parameter_value().integer_array_value
         self.a = self.declare_parameter("a", 0.0).get_parameter_value().double_value
         self.b = self.declare_parameter("b", 0.0).get_parameter_value().double_value
 
