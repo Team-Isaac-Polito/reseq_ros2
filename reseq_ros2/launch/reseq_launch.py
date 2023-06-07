@@ -69,6 +69,11 @@ def generate_launch_description():
         communication_node = Node(
             package="reseq_ros2",
             executable="communication",
+            parameters=[
+                {'can_channel': config['canbus']['channel']},
+                {'modules': get_addresses(config)},
+                {'joints': get_joints(config)},
+            ]
         )
         ld.add_action(communication_node)
 
