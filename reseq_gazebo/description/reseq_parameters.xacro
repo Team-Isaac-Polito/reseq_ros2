@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- import values from config.yaml file -->
+
+  <xacro:property name="config_yaml_path" value="../../../../../src/reseq_ros2/config/config_mk2.yaml" />
+  <xacro:property name="config_yaml_file" value="${xacro.load_yaml(config_yaml_path)}"/>
+  <xacro:property name="a_yaml" value="${config_yaml_file['dimensions']['a']}" />
+  <xacro:property name="b_yaml" value="${config_yaml_file['dimensions']['b']}" />
+  <xacro:property name="r_eq_yaml" value="${config_yaml_file['dimensions']['r_eq']}" />
+
+  <!-- See 'Parameters.pdf' pdf for parameters meaning (when it will exist ;) ) -->
+  <!-- All values are in meters, radiants, kg -->
+  
+  <xacro:property name="toll" value="0.01"/>
+  
+  <!-- chassis related -->
+  <xacro:property name="WheelBase" value="0.25"/>
+  <xacro:property name="EquivalentWheelDiameter" value="${r_eq_yaml*2}"/>
+  <xacro:property name="ModuleWidth" value="0.2"/>
+  <xacro:property name="TrackWidth" value="0.08"/>
+  <xacro:property name="ChassisTopAndBottomClearance" value="0.02"/>
+  
+  <xacro:property name="WheelMass" value="0.1"/>
+  <xacro:property name="ChassisMass" value="2.5"/>
+
+  <!-- joint related -->
+  <xacro:property name="JointDiameter" value="0.07"/>
+  <xacro:property name="JointA" value="${a_yaml-WheelBase/2}"/>
+  <xacro:property name="JointB" value="${b_yaml-WheelBase/2}"/>
+  <xacro:property name="JointABottomClearance" value="0.04"/>
+
+  <xacro:property name="pitch" value="${pi/2}"/>
+  <xacro:property name="roll" value="${pi/2}"/>
+  <xacro:property name="yaw" value="${pi/4}"/>
+
+  <xacro:property name="JointAMass" value="0.1"/>
+  <xacro:property name="JointBMass" value="0.05"/>
+
+  <!-- arm related -->
+  <xacro:property name="ForkThickness" value="0.01"/>
+  <xacro:property name="ForkHeight" value="0.03"/>
+  <xacro:property name="JetsonHolderLength" value="0.158"/>
+  <xacro:property name="JetsonHolderWidth" value="0.09"/>
+
+  <!-- Rvitz colors (for Gazebo ones change in single files) (from 0 to 1) -->
+  <material name="ChassisColor">
+    <color rgba="1 1 1 1" />
+  </material>
+  <material name="WheelColor">
+    <color rgba="0 0 0 1" />
+  </material>
+  <material name="JointColor">
+    <color rgba="0.5 0.5 0.5 1" />
+  </material>
+  <material name="ArmColor">
+    <color rgba="0.5 0.5 0.5 1" />
+  </material>
+  <material name="LidarColor">
+    <color rgba="0.5 0.5 0.5 1" />
+  </material>
+
+</robot>
