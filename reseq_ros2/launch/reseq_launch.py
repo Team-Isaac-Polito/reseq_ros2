@@ -59,6 +59,8 @@ def generate_launch_description():
         parameters= [
             {'a': config['dimensions']['a']},
             {'b': config['dimensions']['b']},
+            {'d': config['dimensions']['d']},
+            {'r_eq': config['dimensions']['r_eq']},
             {'modules': get_addresses(config)},
             {'joints': get_joints(config)},
         ]
