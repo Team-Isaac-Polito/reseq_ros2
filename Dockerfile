@@ -42,10 +42,6 @@ WORKDIR /ros2_ws
 COPY reseq_interfaces src/reseq_interfaces
 COPY reseq_ros2 src/reseq_ros2
 
-ENTRYPOINT ["/ros_entrypoint.sh"]
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
 
-RUN /bin/bash -c '. /opt/ros/$ROS_DISTRO/install/setup.bash; colcon build'
-#RUN source install/setup.bash
-#CMD ["source", "install/setup.bash"]
-#CMD ["ros2", "run", "reseq_ros2", "agevar"]
-#CMD ["ros2", "launch", "demo_nodes_cpp", "talker_listener.launch.py"]
+CMD /bin/bash -c "source install/setup.bash && ros2 run reseq_ros2 communication"
