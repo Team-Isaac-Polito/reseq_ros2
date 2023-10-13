@@ -30,4 +30,4 @@ COPY reseq_ros2 src/reseq_ros2
 
 RUN /ros_entrypoint.sh colcon build
 
-CMD /bin/bash -c "source install/setup.bash && ros2 run reseq_ros2 communication"
+CMD /bin/bash -c "source install/setup.bash && ros2 launch src/reseq_ros2/launch/reseq_launch.py"
