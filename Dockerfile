@@ -6,13 +6,11 @@ FROM $IMAGE
 # install bootstrap tools
 RUN apt-get update && apt-get install --no-install-recommends -y \
     build-essential \
+    python3-pip \
     git \
-    python3-colcon-common-extensions \
-    python3-colcon-mixin \
-    python3-rosdep \
-    python3-vcstool \
-    python3-can \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pip install colcon-common-extensions colcon-mixin python-can
 
 # setup colcon mixin and metadata
 RUN colcon mixin add default \
