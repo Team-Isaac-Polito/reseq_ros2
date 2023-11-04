@@ -96,6 +96,9 @@ class Communication(Node):
         except TypeError as e:
             # the type of ROS message doesn't match the publisher
             print("TypeError", e)
+        except IndexError as e:
+            print("IndexError", e)
+            print(f"{module_id} out of range 0 to {len(self.pubs)-1}")
 
     # send data received from ROS to CAN
     def ros_listener_callback(self, msg, module_num, topic_name):
