@@ -3,12 +3,19 @@ import rclpy
 import reseq_ros2.constants as rc
 import struct
 import yaml
-from can import Message
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32  # deprecated?
 from yaml.loader import SafeLoader
 
+"""ROS node that handles communication between the Jetson and each module via CAN
+
+It receives data from each module via CAN and publishes it to "feedback" ROS topics
+for Agevar to read. It receives instructions from Agevar over "setpoint" ROS topics
+on the motors velocity and sends it to the modules via CAN.
+
+See team's wiki for details on how data is packaged inside CAN messages.
+"""
 
 class Communication(Node):
     def __init__(self):
@@ -18,7 +25,7 @@ class Communication(Node):
             self.config = yaml.load(f, Loader=SafeLoader)
             print(self.config)
 
-        # create ROS publishers and subscribers for each module
+        # create ROS publishers and subscribers for each module based on config file
         self.pubs = []
         self.subs = []
         for i in range(len(self.config["modules"])):
@@ -39,6 +46,7 @@ class Communication(Node):
 
         self.get_logger().info("Communication node started")
 
+    # create ROS publishers for a module based on its properties
     def create_module_pubs(self, info):
         d = {}
         for subtopic in rc.id_to_topic.values():
@@ -53,6 +61,7 @@ class Communication(Node):
 
         return d
 
+    # create ROS subscribers for a module based on its properties
     def create_module_subs(self, info):
         d = {}
         for subtopic in rc.topic_to_id.keys():
@@ -78,6 +87,7 @@ class Communication(Node):
         topic_name = rc.id_to_topic[decoded_aid[1]]
 
         print(f"Publishing to {topic_name} on module{module_id+17}")
+        self.get_logger().info(f"Publishing to {topic_name} on module{module_id+17}")
 
         # check if the message contains one or two floats
         if len(msg.data) == 4:

@@ -7,6 +7,11 @@ T_IN = 2
 T_STEP = 4
 T_SIM = 8
 
+"""Script for testing
+
+Publish packets to the same ROS topic used by the remote controller to simulate it
+and make sure all components behave correctly.
+"""
 
 class RemoteTest(Node):
     def __init__(self):

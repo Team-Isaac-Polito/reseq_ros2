@@ -1,20 +1,22 @@
-import can
 import rclpy
 import reseq_ros2.constants as rc
-import struct
 import yaml
-from math import cos, sin, sqrt
-from can import Message
+from math import cos, sin, pi
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32  # deprecated?
 from yaml.loader import SafeLoader
 
+"""ROS node with control algorithm for snake-like movement
+
+It receives data from the remote over a ROS topic and publishes to the ROS topics
+used by the Communication node to set motors velocities.
+"""
 
 class Agevar(Node):
     def __init__(self):
-        super().__init__("communication")
+        super().__init__("agevar")
         # TODO: read file passed as ROS argument
         with open("src/reseq_ros2/reseq_ros2/config.yaml") as f:
             self.config = yaml.load(f, Loader=SafeLoader)
@@ -41,8 +43,7 @@ class Agevar(Node):
                 s = self.create_subscription(
                     Float32,
                     f"reseq/module{info['address']}/joint/yaw/feedback",
-                    lambda msg, x=info["address"]: self.yaw_feedback_callback(
-                        msg, x),
+                    lambda msg, x=info["address"]: self.yaw_feedback_callback(msg, x),
                     10,
                 )
                 self.joint_subs.append(s)
@@ -56,6 +57,7 @@ class Agevar(Node):
             self.motors_pubs.append(p)
 
     def remote_callback(self, msg):
+        # extract information from ROS Twist message
         linear_vel = msg.linear.x
         angular_vel = linear_vel * msg.angular.z
         sign = (linear_vel > 0)
@@ -67,7 +69,7 @@ class Agevar(Node):
             angular_vel = -angular_vel
 
         for mod_id in modules:
-            # TODO: compute and publish motor setpoints
+            # get velocity of left and right motor
             wdx, wsw = self.vel_motors(linear_vel, angular_vel, sign)
 
             # publish to ROS motor topics
@@ -83,13 +85,16 @@ class Agevar(Node):
                 self.get_logger().info(
                     f"Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}")
 
-    # set yaw angle of a joint
+    # update yaw angle of a joint
     def yaw_feedback_callback(self, msg, module_num):
         angle = msg.data
 
+        # keep the angle between -180 and +180
         if angle >= 180:
             angle -= 360
-        self.yaw_angles[module_num-17] = angle*math.pi/180.0
+
+        # store the angle in radiants
+        self.yaw_angles[module_num-17] = angle*pi/180.0
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
