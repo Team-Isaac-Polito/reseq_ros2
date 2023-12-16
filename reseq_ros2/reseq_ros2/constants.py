@@ -17,6 +17,10 @@ id_to_topic = {
     0x32: "joint/yaw/feedback",
     0x34: "joint/pitch/feedback",
     0x36: "joint/roll/feedback",
+
+    0x42: "end_effector/pitch/feedback",
+    0x44: "end_effector/head_pitch/feedback",
+    0x46: "end_effector/head_yaw/feedback",
 }
 
 # From ROS to CAN = ROS subscribers
@@ -27,6 +31,10 @@ topic_to_id = {
     "joint/yaw/setpoint": 0x31,
     "joint/pitch/setpoint": 0x33,
     "joint/roll/setpoint": 0x35,
+
+    "end_effector/pitch/setpoint": 0x41,
+    "end_effector/head_pitch/setpoint": 0x43,
+    "end_effector/head_yaw/setpoint": 0x45,
 }
 
 ### Agevar ###

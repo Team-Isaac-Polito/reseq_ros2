@@ -11,8 +11,9 @@ from yaml.loader import SafeLoader
 """ROS node that handles communication between the Jetson and each module via CAN
 
 It receives data from each module via CAN and publishes it to "feedback" ROS topics
-for Agevar to read. It receives instructions from Agevar over "setpoint" ROS topics
-on the motors velocity and sends it to the modules via CAN.
+for Agevar to read. It receives instructions from Agevar over "motor/setpoint" ROS topics
+on the motors velocity and sends it to the modules via CAN. It receives instructions from 
+the Scaler node for the end_effector over end_effector/.../setpoint
 
 See team's wiki for details on how data is packaged inside CAN messages.
 """
@@ -53,6 +54,9 @@ class Communication(Node):
             if subtopic.split("/")[0] == "joint" and info["hasJoint"] == False:
                 continue
 
+            if subtopic.split("/")[0] == "end_effector" and info["hasEndEffector"] == False: 
+                continue
+
             d[subtopic] = self.create_publisher(
                 Motors if subtopic.split("/")[0] == "motor" else Float32,
                 f"reseq/module{info['address']}/{subtopic}",
@@ -66,6 +70,9 @@ class Communication(Node):
         d = {}
         for subtopic in rc.topic_to_id.keys():
             if subtopic.split("/")[0] == "joint" and info["hasJoint"] == False:
+                continue
+
+            if subtopic.split("/")[0] == "end_effector" and info["hasEndEffector"] == False: 
                 continue
 
             d[subtopic] = self.create_subscription(
