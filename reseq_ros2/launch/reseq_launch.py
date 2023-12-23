@@ -13,6 +13,11 @@ def generate_launch_description():
             executable='agevar',
             name='agevar',
         ),
+        Node(
+            package='reseq_ros2',
+            executable='enea',
+            name='enea',
+        ),
         #Node(
         #    package='reseq_ros2',
         #    executable='remote_test',

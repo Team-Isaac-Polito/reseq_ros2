@@ -1,4 +1,5 @@
 from math import pi
+from typing import Final
 
 ### Translation between CAN packet identifiers and ROS topics ###
 # ROS topics will be created based on this file
@@ -47,3 +48,14 @@ r_eq = 0.05     # [m] Radius of the equivalent wheels
 
 rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
+
+### EnEA ###
+i_pitch: Final = 600               # [LSB] Initial arm pitch
+i_head_pitch: Final = 500          # [LSB] Initial head pitch
+i_head_yaw: Final = 500            # [LSB] Initial head yaw
+servo_speed: Final = 200           # [LSB] Speed of the servomotor
+
+r_pitch: Final = (200, 800)        # [LSB] Range of arm pitch angles
+r_head_pitch: Final = (200, 800)   # [LSB] Range of head pitch angles
+r_head_yaw: Final = (200, 800)     # [LSB] Range of head yaw angles
+pitch_conv: Final = 0.75           # [ ] Conversion of pitch increase to head pitch increase
