@@ -1,42 +1,53 @@
 from math import pi
-from typing import Final
+from typing import Final, NamedTuple
+from enum import Enum
+from std_msgs.msg import Int32, Float32
+from reseq_interfaces.msg import Motors
 
-### Translation between CAN packet identifiers and ROS topics ###
-# ROS topics will be created based on this file
+class Direction(Enum):
+    """
+    Represents the possible directions of data though the 
+    communication node into ROS: 
+    - `IN`: from CAN (robot) to ROS - (ROS publishers)
+    - `OUT`: from ROS to CAN - (ROS subscribers)
+    """
+    IN = 0
+    OUT = 1
 
-# From CAN to ROS = ROS publishers
-# This contains any feedback coming from the robot
-id_to_topic = {
-    0x11: "battery/percent",
-    0x12: "battery/voltage",
-    0x13: "battery/temp",
+class ReseQTopic(NamedTuple):
+    """
+    Data structure for the translation of ROS topics to CAN packets.
+    """
+    name: str
+    can_id: int
+    direction: Direction
+    data_type: type
 
-    0x22: "motor/feedback",
-    0X23: "motor/temp",
-    0x24: "motor/current",
+topics = (
+    ReseQTopic("battery/percent", 0x11, Direction.IN, Float32),
+    ReseQTopic("battery/voltage", 0x12, Direction.IN, Float32),
+    ReseQTopic("battery/temp", 0x13, Direction.IN, Float32),
 
-    0x32: "joint/yaw/feedback",
-    0x34: "joint/pitch/feedback",
-    0x36: "joint/roll/feedback",
+    ReseQTopic("motor/setpoint", 0x21, Direction.OUT, Motors),
 
-    0x42: "end_effector/pitch/feedback",
-    0x44: "end_effector/head_pitch/feedback",
-    0x46: "end_effector/head_yaw/feedback",
-}
+    ReseQTopic("motor/feedback", 0x22, Direction.IN, Motors),
+    ReseQTopic("motor/temp", 0x23, Direction.IN, Motors),
+    ReseQTopic("motor/current", 0x24, Direction.IN, Motors),
 
-# From ROS to CAN = ROS subscribers
-# This contains all information (setpoints) sent to the robot
-topic_to_id = {
-    "motor/setpoint": 0x21,
+    ReseQTopic("joint/yaw/setpoint", 0x31, Direction.OUT, Float32),
+    ReseQTopic("joint/yaw/feedback", 0x32, Direction.IN, Float32),
+    ReseQTopic("joint/pitch/setpoint", 0x33, Direction.OUT, Float32),
+    ReseQTopic("joint/pitch/feedback", 0x34, Direction.IN, Float32),
+    ReseQTopic("joint/roll/setpoint", 0x35, Direction.OUT, Float32),
+    ReseQTopic("joint/roll/feedback", 0x36, Direction.IN, Float32),
 
-    "joint/yaw/setpoint": 0x31,
-    "joint/pitch/setpoint": 0x33,
-    "joint/roll/setpoint": 0x35,
-
-    "end_effector/pitch/setpoint": 0x41,
-    "end_effector/head_pitch/setpoint": 0x43,
-    "end_effector/head_yaw/setpoint": 0x45,
-}
+    ReseQTopic("end_effector/pitch/setpoint", 0x41, Direction.OUT, Int32),
+    ReseQTopic("end_effector/pitch/feedback", 0x42, Direction.IN, Int32),
+    ReseQTopic("end_effector/head_pitch/setpoint", 0x43, Direction.OUT, Int32),
+    ReseQTopic("end_effector/head_pitch/feedback", 0x44, Direction.IN, Int32),
+    ReseQTopic("end_effector/head_yaw/setpoint", 0x45, Direction.OUT, Int32),
+    ReseQTopic("end_effector/head_yaw/feedback", 0x46, Direction.IN, Int32),
+)
 
 ### Agevar ###
 
