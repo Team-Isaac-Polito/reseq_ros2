@@ -58,8 +58,8 @@ class Agevar(Node):
 
     def remote_callback(self, msg):
         # extract information from ROS Twist message
-        linear_vel = msg.linear.x
-        angular_vel = linear_vel * msg.angular.z
+        linear_vel = msg.linear.y
+        angular_vel = msg.angular.z
         sign = (linear_vel > 0)
 
         modules = list(range(self.n_mod))
