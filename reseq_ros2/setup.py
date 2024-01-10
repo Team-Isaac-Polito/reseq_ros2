@@ -23,6 +23,8 @@ setup(
             'communication = reseq_ros2.communication:main',
             'agevar = reseq_ros2.agevar:main',
             'remote_test = reseq_ros2.remote_test:main',
+            'enea = reseq_ros2.enea:main',
+            'scaler = reseq_ros2.scaler:main',
         ],
     },
 )
