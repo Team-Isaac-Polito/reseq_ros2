@@ -63,9 +63,9 @@ class Scaler(Node):
 
 
     def agevarScaler(self, data: Twist): 
-        data.linear.x = self.scale(data.linear.y, rc.r_linear_vel)
+        data.linear.x = self.scale(data.linear.x, rc.r_linear_vel)
         data.angular.z = self.scale(data.angular.z, rc.r_radius)
-        data.angular.z /= data.linear.y # Angular vel
+        data.angular.z /= data.linear.x # Angular vel
         return data
 
     def endEffectorScaler(self, data: EndEffector): 
