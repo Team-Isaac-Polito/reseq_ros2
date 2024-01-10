@@ -56,9 +56,9 @@ class Agevar(Node):
             )
             self.motors_pubs.append(p)
 
-    def remote_callback(self, msg):
+    def remote_callback(self, msg: Twist):
         # extract information from ROS Twist message
-        linear_vel = msg.linear.y
+        linear_vel = msg.linear.x
         angular_vel = msg.angular.z
         sign = (linear_vel > 0)
 

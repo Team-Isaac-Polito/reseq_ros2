@@ -2,7 +2,6 @@ import rclpy
 from rclpy.node import Node
 import yaml
 from yaml.loader import SafeLoader
-# from reseq_interfaces.msg import Remote
 from geometry_msgs.msg import Twist
 from reseq_interfaces.msg import Remote, EndEffector
 import constants as rc
@@ -48,7 +47,7 @@ class Scaler(Node):
         #TODO: buttons, switches
         
         cmd_vel = Twist()
-        cmd_vel.linear.y = data.right.y # Linear velocity (-1:1)
+        cmd_vel.linear.x = data.right.y # Linear velocity (-1:1)
         cmd_vel.angular.z = - data.right.x # Radius of curvature (-1:1)
 
         cmd_vel = self.agevarScaler(cmd_vel)
@@ -64,9 +63,9 @@ class Scaler(Node):
 
 
     def agevarScaler(self, data: Twist): 
-        data.linear.y = self.scale(data.linear.y, rc.r_linear_vel)
+        data.linear.x = self.scale(data.linear.y, rc.r_linear_vel)
         data.angular.z = self.scale(data.angular.z, rc.r_radius)
-        data.agular.z *= data.linear.y # Angular vel
+        data.angular.z /= data.linear.y # Angular vel
         return data
 
     def endEffectorScaler(self, data: EndEffector): 
