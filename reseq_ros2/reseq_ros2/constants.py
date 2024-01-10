@@ -1,4 +1,5 @@
 from math import pi
+from typing import Final
 
 ### Translation between CAN packet identifiers and ROS topics ###
 # ROS topics will be created based on this file
@@ -47,3 +48,11 @@ r_eq = 0.05     # [m] Radius of the equivalent wheels
 
 rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
+
+
+### Scaler ###
+r_linear_vel: Final = (-1, 1)
+r_radius: Final = (-1, 1)
+r_pitch_vel: Final = (-1, 1)
+r_head_pitch_vel: Final = (-1, 1)
+r_head_yaw_vel: Final = (-1, 1)
