@@ -5,7 +5,7 @@ import struct
 import yaml
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
-from std_msgs.msg import Float32  # deprecated?
+from std_msgs.msg import Float32, Int32  # deprecated?
 from yaml.loader import SafeLoader
 
 """ROS node that handles communication between the Jetson and each module via CAN
@@ -50,16 +50,16 @@ class Communication(Node):
     # create ROS publishers for a module based on its properties
     def create_module_pubs(self, info):
         d = {}
-        for subtopic in rc.id_to_topic.values():
-            if subtopic.split("/")[0] == "joint" and info["hasJoint"] == False:
+        for topic in self.topics_from_direction(rc.Direction.IN):
+            if topic.name.split("/")[0] == "joint" and info["hasJoint"] == False:
                 continue
 
-            if subtopic.split("/")[0] == "end_effector" and info["hasEndEffector"] == False: 
+            if topic.name.split("/")[0] == "end_effector" and info["hasEndEffector"] == False: 
                 continue
 
-            d[subtopic] = self.create_publisher(
-                Motors if subtopic.split("/")[0] == "motor" else Float32,
-                f"reseq/module{info['address']}/{subtopic}",
+            d[topic.name] = self.create_publisher(
+                topic.data_type,
+                f"reseq/module{info['address']}/{topic.name}",
                 10,
             )
 
@@ -68,18 +68,18 @@ class Communication(Node):
     # create ROS subscribers for a module based on its properties
     def create_module_subs(self, info):
         d = {}
-        for subtopic in rc.topic_to_id.keys():
-            if subtopic.split("/")[0] == "joint" and info["hasJoint"] == False:
+        for topic in self.topics_from_direction(rc.Direction.OUT):
+            if topic.name.split("/")[0] == "joint" and info["hasJoint"] == False:
                 continue
 
-            if subtopic.split("/")[0] == "end_effector" and info["hasEndEffector"] == False: 
+            if topic.name.split("/")[0] == "end_effector" and info["hasEndEffector"] == False: 
                 continue
 
-            d[subtopic] = self.create_subscription(
-                Motors if subtopic.split("/")[0] == "motor" else Float32,
-                f"reseq/module{info['address']}/{subtopic}",
+            d[topic.name] = self.create_subscription(
+                topic.data_type,
+                f"reseq/module{info['address']}/{topic.name}",
                 # use lamba function to pass extra arguments to the callback
-                lambda msg, s=subtopic: self.ros_listener_callback(
+                lambda msg, s=topic.name: self.ros_listener_callback(
                     msg, info["address"], s),
                 10,
             )
@@ -91,17 +91,21 @@ class Communication(Node):
         decoded_aid = struct.unpack(
             "4b", msg.arbitration_id.to_bytes(4, "big"))
         module_id = decoded_aid[3] - 17
-        topic_name = rc.id_to_topic[decoded_aid[1]]
+        topic = self.topic_from_id(decoded_aid[1])
 
-        print(f"Publishing to {topic_name} on module{module_id+17}")
-        self.get_logger().info(f"Publishing to {topic_name} on module{module_id+17}")
+        print(f"Publishing to {topic.name} on module{module_id+17}")
+        self.get_logger().info(f"Publishing to {topic.name} on module{module_id+17}")
 
         # check if the message contains one or two floats
-        if len(msg.data) == 4:
+        if topic.data_type == Float32:
             m = Float32()
             data = struct.unpack('f', msg.data)
             m.data = data[0]
-        elif len(msg.data) == 8:
+        elif topic.data_type == Int32:
+            m = Int32()
+            data = struct.unpack('i', msg.data)
+            m.data = data[0]
+        elif topic.data_type == Motors:
             m = Motors()
             data = struct.unpack('ff', msg.data)
             print(data)
@@ -109,7 +113,7 @@ class Communication(Node):
             m.right = data[1]
 
         try:
-            self.pubs[module_id][topic_name].publish(m)
+            self.pubs[module_id][topic.name].publish(m)
         except TypeError as e:
             # the type of ROS message doesn't match the publisher
             print("TypeError", e)
@@ -119,14 +123,16 @@ class Communication(Node):
 
     # send data received from ROS to CAN
     def ros_listener_callback(self, msg, module_num, topic_name):
-        identifier = rc.topic_to_id[topic_name]
-        aid = struct.pack("bbbb", 00, identifier, module_num, 0x00)
+        topic = self.topic_from_name(topic_name)
+        aid = struct.pack("bbbb", 00, topic.id, module_num, 0x00)
 
         print(f"Sending {type(msg)} to module{module_num} via CAN")
 
-        if type(msg) is Float32:
+        if topic.data_type is Float32:
             data = struct.pack('f', msg.data)
-        elif type(msg) is Motors:
+        elif topic.data_type is Int32:
+            data = struct.pack('i', msg.data)
+        elif topic.data_type is Motors:
             data = struct.pack('ff', msg.left, msg.right)
 
         m = can.Message(
@@ -135,6 +141,15 @@ class Communication(Node):
             is_extended_id=True,
         )
         self.canbus.send(m)
+    
+    def topics_from_direction(self, d: rc.Direction): 
+        return list(filter(lambda x: x.direction == d, rc.topics))
+    
+    def topic_from_id(self, id: int) -> rc.ReseQTopic:
+        return next(filter(lambda x: x.id == id, rc.topics))
+    
+    def topic_from_name(self, name: str) -> rc.ReseQTopic:
+        return next(filter(lambda x: x.name == name, rc.topics))
 
 
 def main(args=None):
