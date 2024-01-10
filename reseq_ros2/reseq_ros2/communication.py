@@ -142,13 +142,13 @@ class Communication(Node):
         )
         self.canbus.send(m)
     
-    def topics_from_direction(d: rc.Direction): 
+    def topics_from_direction(self, d: rc.Direction): 
         return list(filter(lambda x: x.direction == d, rc.topics))
     
-    def topic_from_id(id: int) -> rc.ReseQTopic:
+    def topic_from_id(self, id: int) -> rc.ReseQTopic:
         return next(filter(lambda x: x.id == id, rc.topics))
     
-    def topic_from_name(name: str) -> rc.ReseQTopic:
+    def topic_from_name(self, name: str) -> rc.ReseQTopic:
         return next(filter(lambda x: x.name == name, rc.topics))
 
 
