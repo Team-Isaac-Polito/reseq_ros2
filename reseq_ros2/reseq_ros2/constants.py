@@ -70,3 +70,10 @@ r_pitch: Final = (200, 800)        # [LSB] Range of arm pitch angles
 r_head_pitch: Final = (200, 800)   # [LSB] Range of head pitch angles
 r_head_yaw: Final = (200, 800)     # [LSB] Range of head yaw angles
 pitch_conv: Final = 0.75           # [ ] Conversion of pitch increase to head pitch increase
+
+### Scaler ###
+r_linear_vel: Final = (-1, 1)
+r_radius: Final = (-1, 1)
+r_pitch_vel: Final = (-1, 1)
+r_head_pitch_vel: Final = (-1, 1)
+r_head_yaw_vel: Final = (-1, 1)

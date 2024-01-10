@@ -18,6 +18,11 @@ def generate_launch_description():
             executable='enea',
             name='enea',
         ),
+        Node(
+            package='reseq_ros2',
+            executable='scaler',
+            name='scaler',
+        ),
         #Node(
         #    package='reseq_ros2',
         #    executable='remote_test',
