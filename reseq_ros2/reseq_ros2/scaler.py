@@ -4,7 +4,7 @@ import yaml
 from yaml.loader import SafeLoader
 from geometry_msgs.msg import Twist
 from reseq_interfaces.msg import Remote, EndEffector
-import constants as rc
+import reseq_ros2.constants as rc
 """
 ROS node that handles scaling of the remote controller data into physical variables used
 by the motors

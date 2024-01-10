@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from yaml.loader import SafeLoader
 from reseq_interfaces.msg import EndEffector
-import constants as rc
+import reseq_ros2.constants as rc
 from std_msgs.msg import Int32
 import yaml
 from enum import Enum
