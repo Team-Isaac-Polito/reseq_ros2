@@ -124,7 +124,7 @@ class Communication(Node):
     # send data received from ROS to CAN
     def ros_listener_callback(self, msg, module_num, topic_name):
         topic = self.topic_from_name(topic_name)
-        aid = struct.pack("bbbb", 00, topic.id, module_num, 0x00)
+        aid = struct.pack("bbbb", 00, topic.can_id, module_num, 0x00)
 
         print(f"Sending {type(msg)} to module{module_num} via CAN")
 
@@ -146,7 +146,7 @@ class Communication(Node):
         return list(filter(lambda x: x.direction == d, rc.topics))
     
     def topic_from_id(self, id: int) -> rc.ReseQTopic:
-        return next(filter(lambda x: x.id == id, rc.topics))
+        return next(filter(lambda x: x.can_id == id, rc.topics))
     
     def topic_from_name(self, name: str) -> rc.ReseQTopic:
         return next(filter(lambda x: x.name == name, rc.topics))
