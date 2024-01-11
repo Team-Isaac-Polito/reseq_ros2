@@ -30,25 +30,23 @@ class Enea(Node):
             10,
         )
 
-        self.pubs = []
-        for addr in [info["address"] 
-                     for info in self.config["modules"] 
-                     if info["hasEndEffector"]]:
-            self.pubs.append(self.create_publisher(
-                Int32,
-                f"reseq/module{addr}/end_effector/pitch/setpoint",
-                10,
-            ))
-            self.pubs.append(self.create_publisher(
-                Int32,
-                f"reseq/module{addr}/end_effector/head_pitch/setpoint",
-                10,
-            ))
-            self.pubs.append(self.create_publisher(
-                Int32,
-                f"reseq/module{addr}/end_effector/head_yaw/setpoint",
-                10,
-            ))
+        self.pubs = {}
+        addr = next(map(lambda x: x["address"], filter(lambda x: x["hasEndEffector"], self.config["modules"])))
+        self.pubs[EE_Enum.PITCH] = self.create_publisher(
+            Int32,
+            f"reseq/module{addr}/end_effector/pitch/setpoint",
+            10,
+        )
+        self.pubs[EE_Enum.HEAD_PITCH] = self.create_publisher(
+            Int32,
+            f"reseq/module{addr}/end_effector/head_pitch/setpoint",
+            10,
+        )
+        self.pubs[EE_Enum.HEAD_YAW] = self.create_publisher(
+            Int32,
+            f"reseq/module{addr}/end_effector/head_yaw/setpoint",
+            10,
+        )
 
         self.get_logger().info("Node EnEA started successfully")
         
@@ -79,9 +77,10 @@ class Enea(Node):
         """
         Sends the output positions to the communication node
         """
-        self.pubs[EE_Enum.PITCH].publish(self.pitch)
-        self.pubs[EE_Enum.HEAD_PITCH].publish(self.head_pitch)
-        self.pubs[EE_Enum.HEAD_YAW].publish(self.head_yaw)
+        
+        self.pubs[EE_Enum.PITCH].publish(Int32(data=self.pitch))
+        self.pubs[EE_Enum.HEAD_PITCH].publish(Int32(data=self.head_pitch))
+        self.pubs[EE_Enum.HEAD_YAW].publish(Int32(data=self.head_yaw))
 
     def constrain(self):
         """
