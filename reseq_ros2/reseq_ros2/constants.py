@@ -73,7 +73,7 @@ pitch_conv: Final = 0.75           # [ ] Conversion of pitch increase to head pi
 
 ### Scaler ###
 r_linear_vel: Final = (-1, 1)
-r_radius: Final = (-1, 1)
+r_inverse_radius: Final = (-1, 1)
 r_pitch_vel: Final = (-1, 1)
 r_head_pitch_vel: Final = (-1, 1)
 r_head_yaw_vel: Final = (-1, 1)

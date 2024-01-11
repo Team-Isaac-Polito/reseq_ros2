@@ -48,7 +48,7 @@ class Scaler(Node):
         
         cmd_vel = Twist()
         cmd_vel.linear.x = data.right.y # Linear velocity (-1:1)
-        cmd_vel.angular.z = - data.right.x # Radius of curvature (-1:1)
+        cmd_vel.angular.z = - data.right.x # inverse of Radius of curvature (-1:1)
 
         cmd_vel = self.agevarScaler(cmd_vel)
         self.agevar_pub.publish(cmd_vel)
@@ -64,8 +64,8 @@ class Scaler(Node):
 
     def agevarScaler(self, data: Twist): 
         data.linear.x = self.scale(data.linear.x, rc.r_linear_vel)
-        data.angular.z = self.scale(data.angular.z, rc.r_radius)
-        data.angular.z /= data.linear.x # Angular vel
+        data.angular.z = self.scale(data.angular.z, rc.r_inverse_radius)
+        data.angular.z *= data.linear.x # Angular vel
         return data
 
     def endEffectorScaler(self, data: EndEffector): 
