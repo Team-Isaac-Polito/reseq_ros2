@@ -1,6 +1,6 @@
 ---
 canbus:
-  channel: "vcan0"
+  channel: "can1"
 modules:
   - address: 0x11
     hasJoint: false
