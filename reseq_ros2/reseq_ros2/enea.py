@@ -78,9 +78,9 @@ class Enea(Node):
         Sends the output positions to the communication node
         """
         
-        self.pubs[EE_Enum.PITCH].publish(Int32(data=self.pitch))
-        self.pubs[EE_Enum.HEAD_PITCH].publish(Int32(data=self.head_pitch))
-        self.pubs[EE_Enum.HEAD_YAW].publish(Int32(data=self.head_yaw))
+        self.pubs[EE_Enum.PITCH].publish(Int32(data=int(self.pitch)))
+        self.pubs[EE_Enum.HEAD_PITCH].publish(Int32(data=int(self.head_pitch)))
+        self.pubs[EE_Enum.HEAD_YAW].publish(Int32(data=int(self.head_yaw)))
 
     def constrain(self):
         """
