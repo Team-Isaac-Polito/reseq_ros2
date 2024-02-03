@@ -72,8 +72,8 @@ r_head_yaw: Final = (0, 1023)      # [LSB] Range of head yaw angles
 pitch_conv: Final = 0.75           # [ ] Conversion of pitch increase to head pitch increase
 
 ### Scaler ###
-r_linear_vel: Final = (-1, 1)
-r_inverse_radius: Final = (-1, 1)
+r_linear_vel: Final = (-0.29297, 0.29297)       # [m/s] Range of the linear velocity
+r_inverse_radius: Final = (-1.5385, 1.5385)     # [1/m] Range of the inverse radius of curvature
 r_pitch_vel: Final = (-1, 1)
 r_head_pitch_vel: Final = (-1, 1)
 r_head_yaw_vel: Final = (-1, 1)
