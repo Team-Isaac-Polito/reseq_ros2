@@ -25,6 +25,7 @@ setup(
             'remote_test = reseq_ros2.remote_test:main',
             'enea = reseq_ros2.enea:main',
             'scaler = reseq_ros2.scaler:main',
+            'realsense = reseq_ros2.realsense:main',
         ],
     },
 )
