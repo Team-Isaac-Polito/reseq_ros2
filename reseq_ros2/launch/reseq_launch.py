@@ -23,6 +23,11 @@ def generate_launch_description():
             executable='scaler',
             name='scaler',
         ),
+        Node(
+            package='reseq_ros2',
+            executable='realsense',
+            name='realsense',
+        )
         #Node(
         #    package='reseq_ros2',
         #    executable='remote_test',
