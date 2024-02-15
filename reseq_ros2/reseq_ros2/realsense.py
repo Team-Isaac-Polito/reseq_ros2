@@ -2,13 +2,12 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-import cv2
 import pyrealsense2 as rs
 import numpy as np
 
 class Realsense(Node):
     def __init__(self):
-        super().__init__("intel_publisher")
+        super().__init__("realsense")
         self.intel_publisher_rgb = self.create_publisher(Image, "rgb_frame", 10)
 
         clock_period = 0.05
@@ -22,7 +21,8 @@ class Realsense(Node):
             self.timer = self.create_timer(clock_period, self.timer_callback)
         except Exception as e:
             print(e)
-            self.get_logger().error("Intel Realsense non connesso")
+            self.get_logger().error("Unable to connect to Intel Realsense")
+        self.get_logger().info("Realsense node started")
     
     def timer_callback(self):
         frames = self.pipe.wait_for_frames()
@@ -34,11 +34,16 @@ class Realsense(Node):
 
 
 def main(args = None):
-    rclpy.init(args = None)
-    realsense = Realsense()
-    rclpy.spin(realsense)
-    realsense.destroy_node()
-    rclpy.shutdown()
+    rclpy.init(args = args)
+    try:
+        realsense = Realsense()
+    except Exception as err:
+        print("Error while starting Realsense node: " + str(err))
+        rclpy.shutdown()
+    else:
+        rclpy.spin(realsense)
+        realsense.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == "__main__":
     main()
