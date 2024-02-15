@@ -1,4 +1,5 @@
 from setuptools import setup
+from glob import glob
 
 package_name = 'reseq_ros2'
 
@@ -7,6 +8,7 @@ setup(
     version='0.0.0',
     packages=[package_name],
     data_files=[
+        (f'share/{package_name}/launch', glob('launch/*launch.py')),
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
