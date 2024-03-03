@@ -24,9 +24,9 @@ def generate_launch_description():
             name='scaler',
         ),
         Node(
-            package='reseq_ros2',
-            executable='realsense',
-            name='realsense',
+            package='realsense2_camera',
+            executable='realsense2_camera_node',
+            name='realsense2_camera_node',
         )
         #Node(
         #    package='reseq_ros2',
