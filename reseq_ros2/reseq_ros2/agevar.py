@@ -18,7 +18,7 @@ class Agevar(Node):
     def __init__(self):
         super().__init__("agevar")
         # TODO: read file passed as ROS argument
-        with open("src/reseq_ros2/reseq_ros2/config.yaml") as f:
+        with open(rc.share_folder +  "/config/reseq_mk1_can.yaml") as f:
             self.config = yaml.load(f, Loader=SafeLoader)
             print(self.config)
 
