@@ -13,3 +13,10 @@ git clone https://github.com/Team-Isaac-Polito/reseq_ros2.git src
 ```
 
 This will copy the contents of this repository inside the `ros2_ws/src` folder.
+
+## Install dependencies with ROSDEP
+
+In the directory `ros2_ws` with the apt cache updated run:
+```bash
+rosdep install -iy --from-path src --rosdistro humble
+```
