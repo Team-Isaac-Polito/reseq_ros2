@@ -1,4 +1,6 @@
 # docker run --gpus all --privileged -it --rm --net=host reseq
+# docker run --rm --privileged --net=host --gpus all --runtime=nvidia -it 
+#    -v /dev:/dev --device-cgroup-rule "c 81:* rmw" --device-cgroup-rule "c 189:* rmw" real-ros
 # docker build . --target reseq-base --tag reseq-base
 # docker build . --tag reseq
 
@@ -29,14 +31,14 @@ RUN apt update && apt install -y --no-install-recommends \
         udev \
         apt-transport-https
 
-# Compile librealsense with CUDA and RSUSB
+# Compile librealsense with CUDA and Linux Modules
 RUN git clone https://github.com/IntelRealSense/librealsense.git && \
     cd librealsense && \
     mkdir build && cd build && \
     cmake .. \
         -DBUILD_EXAMPLES=true \
         -DCMAKE_BUILD_TYPE=release \
-        -DFORCE_RSUSB_BACKEND=true \
+        -DFORCE_RSUSB_BACKEND=false \
         -DBUILD_WITH_CUDA=true \
         -DBUILD_GRAPHICAL_EXAMPLES=OFF \
         -DBUILD_PYTHON_BINDINGS=bool:true \
@@ -68,6 +70,8 @@ RUN colcon mixin add default \
 
 RUN apt update && apt install python3-rosdep -y 
 
+ENV SKIP_KEYS "libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-opencv python3-opencv librealsense2"
+
 # Compile realsense-ros
 RUN source /ros_entrypoint.sh && \
     mkdir -p /realsense-ros/src && \
@@ -82,11 +86,23 @@ RUN source /ros_entrypoint.sh && \
         realsense2_description \
         > realsense.rosinstall && \
     vcs import src < realsense.rosinstall && \
-    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys=librealsense2 -y && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys="$SKIP_KEYS" -y && \
     colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     sed -i "\$i ros_source_env /realsense-ros/install/local_setup.bash \n" /ros_entrypoint.sh
 
-ENV RMW_IMPLEMENTATION rmw_fastrtps_cpp
+# Compile image compression plugins (image-transport-plugins)
+RUN source /ros_entrypoint.sh && \
+    mkdir -p /image-transport-plugins/src && \
+    cd /image-transport-plugins && \
+    rosinstall_generator --rosdistro ${ROS_DISTRO} \
+        image_transport_plugins \
+        theora_image_transport \
+        > image-transport-plugins.rosinstall && \
+    vcs import src < image-transport-plugins.rosinstall && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" && \
+    colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+    sed -i "\$i ros_source_env /image-transport-plugins/install/local_setup.bash \n" /ros_entrypoint.sh
+
 
 RUN pip install python-can
 
