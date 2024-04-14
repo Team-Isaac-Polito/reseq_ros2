@@ -9,7 +9,7 @@ Inside the folder where you want to keep your ROS workspace, run the following c
 ```bash
 mkdir ros2_ws
 cd ros2_ws
-git clone https://github.com/Team-Isaac-Polito/reseq_ros2.git src
+git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src
 ```
 
 This will copy the contents of this repository inside the `ros2_ws/src` folder.
