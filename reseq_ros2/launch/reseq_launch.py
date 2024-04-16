@@ -30,7 +30,7 @@ def generate_launch_description():
             executable='realsense2_camera_node',
             name='realsense2_camera_node',
             parameters=[{
-                'config_file': share_folder + "config/realsense_rgb_motion.yaml"
+                'config_file': share_folder + "/config/realsense_rgb_motion.yaml"
             }]
         )
         #Node(
