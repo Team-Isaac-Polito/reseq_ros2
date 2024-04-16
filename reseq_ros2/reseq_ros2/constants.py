@@ -3,6 +3,7 @@ from typing import Final, NamedTuple
 from enum import Enum
 from std_msgs.msg import Int32, Float32
 from reseq_interfaces.msg import Motors
+from ament_index_python.packages import get_package_share_directory
 
 class Direction(Enum):
     """
@@ -48,6 +49,8 @@ topics = (
     ReseQTopic("end_effector/head_yaw/setpoint", 0x45, Direction.OUT, Int32),
     ReseQTopic("end_effector/head_yaw/feedback", 0x46, Direction.IN, Int32),
 )
+
+share_folder = get_package_share_directory("reseq_ros2")
 
 ### Agevar ###
 

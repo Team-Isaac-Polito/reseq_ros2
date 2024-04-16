@@ -9,6 +9,7 @@ setup(
     packages=[package_name],
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
+        (f'share/{package_name}/config', glob('config/*.yaml')),
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
@@ -26,8 +27,7 @@ setup(
             'agevar = reseq_ros2.agevar:main',
             'remote_test = reseq_ros2.remote_test:main',
             'enea = reseq_ros2.enea:main',
-            'scaler = reseq_ros2.scaler:main',
-            'realsense = reseq_ros2.realsense:main',
+            'scaler = reseq_ros2.scaler:main'
         ],
     },
 )
