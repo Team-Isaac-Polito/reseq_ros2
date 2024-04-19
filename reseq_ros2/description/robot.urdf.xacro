@@ -11,6 +11,4 @@
   <xacro:include filename="reseq_arm_mk1.xacro" />
   <xacro:include filename="lidar.xacro" />
 
-  <xacro:include filename="ros2_control.xacro" />
-
 </robot>
