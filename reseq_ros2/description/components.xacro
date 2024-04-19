@@ -1,0 +1,231 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="chassis_joint_factory" params="id">
+    <joint name="chassis${id}_joint" type="revolute">
+      <parent link="joint_b_${id-1}_link"/>
+      <child link="chassis${id}_link"/>
+      <!-- Effort in Nm -->
+      <limit effort="2.0" lower="${-roll}" upper="${roll}" velocity="0.5"/>
+      <origin xyz="0 0 -${JointB+WheelBase/2}" rpy="${-pi/2} ${-pi/2} 0"/>
+      <axis xyz="1 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="chassis" params="id">
+  
+    <link name="chassis${id}_link">
+      <visual>
+        <origin xyz="${EquivalentWheelDiameter/12+(toll+JointDiameter/2)/2} 0 0"/>
+        <geometry>
+          <!-- leaving 1/3 of the EquivalentWheelDiameter from front and toll from Joint and Tracks (for clearance) -->
+          <box size="${WheelBase-JointDiameter/2-toll+EquivalentWheelDiameter*2/3-EquivalentWheelDiameter/2} ${ModuleWidth-2*TrackWidth-2*toll} ${EquivalentWheelDiameter-2*ChassisTopAndBottomClearance}"/>
+        </geometry>
+        <material name="ChassisColor"/>
+      </visual>
+      
+      <collision>
+        <origin xyz="${EquivalentWheelDiameter/12+(toll+JointDiameter/2)/2} 0 0"/>
+        <geometry>
+          <!-- leaving 1/3 of the EquivalentWheelDiameter from front and toll from Joint and Tracks (for clearance) -->
+          <box size="${WheelBase-JointDiameter/2-toll+EquivalentWheelDiameter*2/3-EquivalentWheelDiameter/2} ${ModuleWidth-2*TrackWidth-2*toll} ${EquivalentWheelDiameter-2*ChassisTopAndBottomClearance}"/>
+        </geometry>
+      </collision>
+      
+      <xacro:inertial_box mass="${ChassisMass}" x="${WheelBase-JointDiameter/2-toll+EquivalentWheelDiameter*2/3-EquivalentWheelDiameter/2}" y="${ModuleWidth-2*TrackWidth-2*toll}" z="${EquivalentWheelDiameter-2*ChassisTopAndBottomClearance}">
+        <origin xyz="${EquivalentWheelDiameter/12+(toll+JointDiameter/2)/2} 0 0" rpy="0 0 0"/>
+      </xacro:inertial_box>
+    </link>
+  
+    <!-- LEFT FRONT WHEEL 1-->
+    <joint name="left_front_wheel_${id}_joint" type="continuous">
+      <parent link="chassis${id}_link"/>
+      <child link="left_front_wheel_${id}_link"/>
+      <origin xyz="${WheelBase/2} ${ModuleWidth/2-TrackWidth/2} 0" rpy="-${pi/2} 0 0" />
+      <axis xyz="0 0 1"/>
+    </joint>
+  
+    <link name="left_front_wheel_${id}_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}"/>
+        </geometry>
+        <material name="WheelColor"/>
+      </visual>
+      
+      <collision>
+        <geometry>
+          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}"/>
+        </geometry>
+      </collision>
+      
+      <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}" radius="${EquivalentWheelDiameter/2}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:inertial_cylinder>
+    </link>
+
+  
+    <!-- RIGHT FRONT WHEEL 1-->
+    <joint name="right_front_wheel_${id}_joint" type="continuous">
+      <parent link="chassis${id}_link"/>
+      <child link="right_front_wheel_${id}_link"/>
+      <origin xyz="${WheelBase/2} ${-ModuleWidth/2+TrackWidth/2} 0" rpy="${pi/2} 0 0" />
+      <axis xyz="0 0 -1"/>
+    </joint>
+  
+    <link name="right_front_wheel_${id}_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}"/>
+        </geometry>
+        <material name="WheelColor"/>
+      </visual>
+      
+      <collision>
+        <geometry>
+          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}"/>
+        </geometry>
+      </collision>
+      
+      <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}" radius="${EquivalentWheelDiameter/2}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:inertial_cylinder>
+    </link>
+  
+  
+    <!-- LEFT BACK WHEEL 1-->
+    <joint name="left_back_wheel_${id}_joint" type="continuous">
+      <parent link="chassis${id}_link"/>
+      <child link="left_back_wheel_${id}_link"/>
+      <origin xyz="${-WheelBase/2} ${ModuleWidth/2-TrackWidth/2} 0" rpy="-${pi/2} 0 0" />
+      <axis xyz="0 0 1"/>
+    </joint>
+  
+    <link name="left_back_wheel_${id}_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}"/>
+        </geometry>
+        <material name="WheelColor"/>
+      </visual>
+      
+      <collision>
+        <geometry>
+          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}"/>
+        </geometry>
+      </collision>
+      
+      <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}" radius="${EquivalentWheelDiameter/2}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:inertial_cylinder>
+    </link>
+  
+  
+    <!-- RIGHT BACK WHEEL 1-->
+    <joint name="right_back_wheel_${id}_joint" type="continuous">
+      <parent link="chassis${id}_link"/>
+      <child link="right_back_wheel_${id}_link"/>
+      <origin xyz="${-WheelBase/2} ${-ModuleWidth/2+TrackWidth/2} 0" rpy="${pi/2} 0 0" />
+      <axis xyz="0 0 -1"/>
+    </joint>
+    
+    <link name="right_back_wheel_${id}_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}"/>
+        </geometry>
+        <material name="WheelColor"/>
+      </visual>
+      
+      <collision>
+        <geometry>
+          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}"/>
+        </geometry>
+      </collision>
+      
+      <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}" radius="${EquivalentWheelDiameter/2}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:inertial_cylinder>
+    </link>
+  
+    <!-- JointA 1-->
+    <joint name="joint_a_${id}_joint" type="revolute">
+      <parent link="chassis${id}_link"/>
+      <child link="joint_a_${id}_link"/>
+      <!-- Effort in Nm -->
+      <limit effort="20.0" lower="${-pitch}" upper="${pitch}" velocity="0.5"/>
+      <origin xyz="${-WheelBase/2} 0 0" rpy="${pi/2} 0 0" />
+      <axis xyz="0 0 -1"/>
+    </joint>
+  
+    <link name="joint_a_${id}_link">
+      <!-- gearbox cilinder -->
+      <visual>
+        <geometry>
+          <cylinder radius="${JointDiameter/2}" length="${ModuleWidth-2*TrackWidth-toll*2}"/>
+        </geometry>
+        <material name="JointColor"/>
+      </visual>
+      <!-- horizontal shaft -->
+      <visual>
+        <origin xyz="${-JointA/2} 0 0" />
+        <geometry>
+          <box size="${JointA} ${EquivalentWheelDiameter-2*JointABottomClearance} ${ModuleWidth-2*TrackWidth-toll*2}"/>
+        </geometry>
+        <material name="JointColor"/>
+      </visual>
+      <!-- to hide space wile rotating -->
+      <visual>
+        <origin xyz="${-JointA} 0 0" />
+        <geometry>
+          <sphere radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}"/>
+        </geometry>
+        <material name="JointColor"/>
+      </visual>
+  
+      <!-- gearbox cilinder -->
+      <collision>
+        <geometry>
+          <cylinder radius="${JointDiameter/2}" length="${ModuleWidth-2*TrackWidth-toll*2}"/>
+        </geometry>
+      </collision>
+      <!-- horizontal shaft -->
+      <collision>
+        <origin xyz="${-JointA/2} 0 0" />
+        <geometry>
+          <box size="${JointA} ${EquivalentWheelDiameter-2*JointABottomClearance} ${ModuleWidth-2*TrackWidth-toll*2}"/>
+        </geometry>
+      </collision>
+      
+      <xacro:inertial_box mass="${JointAMass}" x="${JointA}" y="${EquivalentWheelDiameter-2*JointABottomClearance}" z="${ModuleWidth-2*TrackWidth-toll*2}">
+        <origin xyz="${-JointA/2} 0 0" rpy="0 0 0"/>
+      </xacro:inertial_box>
+    </link>
+  
+    <!-- JointB 1-->
+    <joint name="joint_b_${id}_joint" type="revolute">
+      <parent link="joint_a_${id}_link"/>
+      <child link="joint_b_${id}_link"/>
+      <!-- Effort in Nm -->
+      <limit effort="20.0" lower="${-yaw}" upper="${yaw}" velocity="0.5"/>
+      <origin xyz="${-JointA} 0 0" rpy="0 ${pi/2} 0" />
+      <axis xyz="0 1 0"/>
+    </joint>
+  
+    <link name="joint_b_${id}_link">
+      <visual>
+        <origin xyz="0 0 -${JointB/2}" />
+        <geometry>
+          <cylinder radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}" length="${JointB}"/>
+        </geometry>
+        <material name="JointColor"/>
+      </visual>
+  
+      <xacro:inertial_cylinder mass="${JointBMass}" length="${JointB}" radius="${(ModuleWidth-2*TrackWidth-toll*2)/2}">
+        <origin xyz="0 0 ${-(JointB-WheelBase/2-EquivalentWheelDiameter/6)/2}" rpy="0 0 0"/>
+      </xacro:inertial_cylinder>
+    </link>
+  </xacro:macro>
+
+
+</robot>

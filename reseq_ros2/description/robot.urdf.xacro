@@ -6,9 +6,11 @@
 
   <xacro:include filename="inertial_macros.xacro" />
   <xacro:include filename="reseq_parameters.xacro" />
+  <xacro:include filename="components.xacro"/>
+  <xacro:include filename="module_body.xacro" />
 
-  <xacro:include filename="reseq_body.xacro" />
-  <xacro:include filename="reseq_arm_mk1.xacro" />
-  <xacro:include filename="lidar.xacro" />
+  <!-- <xacro:include filename="reseq_body.xacro" /> -->
+  <!-- <xacro:include filename="reseq_arm_mk1.xacro" /> -->
+  <!-- <xacro:include filename="lidar.xacro" /> -->
 
 </robot>
