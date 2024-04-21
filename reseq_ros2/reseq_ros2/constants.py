@@ -52,27 +52,8 @@ topics = (
 
 share_folder = get_package_share_directory("reseq_ros2")
 
-### Agevar ###
-
-# GEOMETRIC CONSTANTS
-a = 0.18        # [m] Distance between the center of every module and the previous yaw joint
-b = 0.18        # [m] Distance between the center of every module and the following yaw joint
-d = 0.21        # [m] Distance between pair of equivalent wheels
-r_eq = 0.05     # [m] Radius of the equivalent wheels
-
 rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
-
-### EnEA, specified in WIKI ###
-i_pitch: Final = 567               # [LSB] Initial arm pitch
-i_head_pitch: Final = 663          # [LSB] Initial head pitch
-i_head_yaw: Final = 512            # [LSB] Initial head yaw
-servo_speed: Final = 200           # [LSB] Speed of the servomotor
-
-r_pitch: Final = (200, 750)        # [LSB] Range of arm pitch angles
-r_head_pitch: Final = (0, 800)     # [LSB] Range of head pitch angles
-r_head_yaw: Final = (0, 1023)      # [LSB] Range of head yaw angles
-pitch_conv: Final = 0.75           # [ ] Conversion of pitch increase to head pitch increase
 
 ### Scaler, specified in WIKI ###
 r_linear_vel: Final = (-0.29297, 0.29297)       # [m/s] Range of the linear velocity

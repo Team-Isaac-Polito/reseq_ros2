@@ -1,4 +1,5 @@
 ---
+version: "mk1"
 canbus:
   channel: "can1"
 modules:
@@ -11,3 +12,23 @@ modules:
   - address: 0x13
     hasJoint: true
     hasEndEffector: false
+geometric_consts:
+  a: 0.18                    # [m] Distance between the center of every module and the previous yaw joint
+  b: 0.18                    # [m] Distance between the center of every module and the following yaw joint
+  d: 0.223                   # [m] Distance between pair of equivalent wheels
+  r_eq: 0.0465               # [m] Radius of the equivalent wheels
+enea_consts:
+  i_pitch: 567               # [LSB] Initial arm pitch
+  i_head_pitch: 663          # [LSB] Initial head pitch
+  i_head_yaw: 512            # [LSB] Initial head yaw
+  servo_speed: 200           # [LSB] Speed of the servomotor
+  r_pitch:                   # [LSB] Range of arm pitch angles
+    - 200
+    - 750
+  r_head_pitch:              # [LSB] Range of head pitch angles
+    - 0
+    - 800 
+  r_head_yaw:                # [LSB] Range of head yaw angles
+    - 0
+    - 1023
+  pitch_conv:  0.75          # [ ] Conversion of pitch increase to head pitch increase
