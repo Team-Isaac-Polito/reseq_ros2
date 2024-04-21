@@ -3,6 +3,12 @@
   <xacro:include filename="inertial_macros.xacro" />
   <xacro:include filename="reseq_parameters.xacro" />
 
+  <!-- 
+    Replicates the visual block inside the collision block to avoid code 
+    duplication until the use of 3D meshes for the visuals
+
+    @param **block: the <visual/> block to replicate
+   -->
   <xacro:macro name="replicate_collision" params="**block">
     <visual>
       <xacro:insert_block name="block" />
@@ -12,6 +18,13 @@
     </collision>
   </xacro:macro>
 
+  <!-- 
+    Creates the joint between two consecutive chassis. It assumes that two 
+    consecutive chassis have a consecutive id. This macro must be called between
+    the definition of the two chassis
+
+    @param id: the id of the joint (which is assumed part of the chassis behind)
+   -->
   <xacro:macro name="chassis_joint_factory" params="id">
     <!-- JointR -->
     <joint name="joint_r_${id}_joint" type="revolute">
@@ -100,6 +113,11 @@
     
   </xacro:macro>
 
+  <!-- 
+    Defines the current chassis
+
+    @param id: the id of the chassis (starting from 1)
+  -->
   <xacro:macro name="chassis" params="id">
 
     <link name="chassis${id}_link">
