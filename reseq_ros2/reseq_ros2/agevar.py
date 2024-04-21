@@ -17,12 +17,16 @@ used by the Communication node to set motors velocities.
 class Agevar(Node):
     def __init__(self):
         super().__init__("agevar")
-        # TODO: read file passed as ROS argument
-        with open(rc.share_folder +  "/config/reseq_mk1_can.yaml") as f:
-            self.config = yaml.load(f, Loader=SafeLoader)
-            print(self.config)
+        #Declaring parameters
+        self.a = self.declare_parameter('a', 0.0).get_parameter_value().double_value
+        self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
+        self.d = self.declare_parameter('d', 0.0).get_parameter_value().double_value
+        self.r_eq = self.declare_parameter('r_eq', 0.0).get_parameter_value().double_value
+        self.modules= self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
+        self.joints = self.declare_parameter('joints', [0]).get_parameter_value().integer_array_value
+        self.end_effectors = self.declare_parameter('end_effectors', [0]).get_parameter_value().integer_array_value
 
-        self.n_mod = len(self.config["modules"])
+        self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
 
         # subscribe to remote (parsed by teleop_twist_joy)
@@ -36,14 +40,14 @@ class Agevar(Node):
         self.joint_subs = []
         self.motors_pubs = []
         for i in range(self.n_mod):
-            info = self.config["modules"][i]
+            address = self.modules[i]
 
             # subscribe to feedback from joints
-            if info['hasJoint']:
+            if address in self.joints:
                 s = self.create_subscription(
                     Float32,
-                    f"reseq/module{info['address']}/joint/yaw/feedback",
-                    lambda msg, x=info["address"]: self.yaw_feedback_callback(msg, x),
+                    f"reseq/module{address}/joint/yaw/feedback",
+                    lambda msg, x=address: self.yaw_feedback_callback(msg, x),
                     10,
                 )
                 self.joint_subs.append(s)
@@ -51,7 +55,7 @@ class Agevar(Node):
             # create publisher for the motor topics
             p = self.create_publisher(
                 Motors,
-                f"reseq/module{info['address']}/motor/setpoint",
+                f"reseq/module{address}/motor/setpoint",
                 10
             )
             self.motors_pubs.append(p)
@@ -98,15 +102,15 @@ class Agevar(Node):
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
-        linear_out = linear_vel * cos(yaw_angle) + rc.a * angular_vel * sin(yaw_angle)
-        angular_out = (linear_vel * sin(yaw_angle) - rc.a * angular_vel * cos(yaw_angle)) / rc.b
+        linear_out = linear_vel * cos(yaw_angle) + self.a * angular_vel * sin(yaw_angle)
+        angular_out = (linear_vel * sin(yaw_angle) - self.a * angular_vel * cos(yaw_angle)) / self.b
         
         return linear_out, angular_out
 
     # compute motors velocity for each module
     def vel_motors(self, lin_vel, ang_vel, sign):
-        wdx = (lin_vel+ang_vel*rc.d/2) / rc.r_eq
-        wsx = (lin_vel-ang_vel*rc.d/2) / rc.r_eq
+        wdx = (lin_vel+ang_vel*self.d/2) / self.r_eq
+        wsx = (lin_vel-ang_vel*self.d/2) / self.r_eq
 
         if sign == 0:  # backwards
             wsx, wdx = -wsx, -wdx

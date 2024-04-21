@@ -17,10 +17,6 @@ It receives a packet from the remote controller and rescales end_effector data
 class Scaler(Node):
     def __init__(self):
         super().__init__("scaler")
-        # TODO: read file passed as ROS argument
-        with open(rc.share_folder +  "/config/reseq_mk1_can.yaml") as f:
-            self.config = yaml.load(f, Loader=SafeLoader)
-            print(self.config)
 
         self.create_subscription(
             Remote,
