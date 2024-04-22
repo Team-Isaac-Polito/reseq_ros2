@@ -78,9 +78,13 @@ class Agevar(Node):
             m.left = wsw
             self.motors_pubs[mod_id].publish(m)
 
-            if mod_id != modules[-1]:  # for every module except the last one
+            if mod_id != modules[-1]: # for every module except the last one
+                # invert yaw angle if going backwards
+                yaw_angle = (1 if sign else -1) * self.yaw_angles[mod_id]
+
+                # compute linear and angular velocity of the following module
                 linear_vel, angular_vel = self.kinematic(
-                    linear_vel, angular_vel, self.yaw_angles[mod_id])
+                    linear_vel, angular_vel, yaw_angle)
 
                 self.get_logger().info(
                     f"Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}")
