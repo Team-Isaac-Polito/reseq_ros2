@@ -1,6 +1,5 @@
 from setuptools import setup
 from glob import glob
-import os
 
 package_name = 'reseq_ros2'
 
@@ -12,6 +11,7 @@ setup(
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
         (f'share/{package_name}/config', glob('config/*.yaml')),
         (f'share/{package_name}/description', glob('description/*.xacro')),
+        (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
