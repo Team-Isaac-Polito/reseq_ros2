@@ -16,3 +16,22 @@ dimensions:
   b: 0.18395     # [m] Distance between the center of every module and the following yaw joint
   d: 0.2495      # !!!TO BE VERIFIED WITH MEASURES!!! [m] Distance between pair of equivalent wheels
   r_eq: 0.0475   # !!!TO BE VERIFIED WITH MEASURES!!! [m] Radius of the equivalent wheels
+
+xacro:
+  WheelBase: 0.137
+  ModuleWidth: 0.27
+  TrackWidth: 0.052
+  ChassisTopAndBottomClearance: 0.013
+  WheelMass: 0.1
+  ChassisMass: 2.5
+
+  JointDiameter: 0.048
+  JointABottomClearance: 0.013
+  JointAMass: 0.1
+  JointBMass: 0.05
+  JointWidth: 0.067 # At the moment ${EquivalentWheelDiameter-2*JointABottomClearance}
+
+  ForkThickness: 0.02
+  ForkHeight: 0.05
+  JetsonHolderWidth: 0.085
+  JetsonHolderLength: 0.158

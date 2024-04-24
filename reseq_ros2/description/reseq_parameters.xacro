@@ -3,45 +3,46 @@
 
   <!-- import values from config.yaml file -->
 
-  <xacro:property name="config_yaml_path" value="$(find reseq_ros2)/config/config_mk2.yaml" />
-  <xacro:property name="config_yaml_file" value="${xacro.load_yaml(config_yaml_path)}"/>
-  <xacro:property name="a_yaml" value="${config_yaml_file['dimensions']['a']}" />
-  <xacro:property name="b_yaml" value="${config_yaml_file['dimensions']['b']}" />
-  <xacro:property name="r_eq_yaml" value="${config_yaml_file['dimensions']['r_eq']}" />
+  <xacro:property name="config_yaml_path" value="$(find reseq_ros2)/config/config_mk1.yaml" />
+  <xacro:property name="config" value="${xacro.load_yaml(config_yaml_path)}"/>
+  <xacro:property name="a" value="${config['dimensions']['a']}" />
+  <xacro:property name="b" value="${config['dimensions']['b']}" />
+  <xacro:property name="r_eq" value="${config['dimensions']['r_eq']}" />
 
   <!-- See 'Parameters.pdf' pdf for parameters meaning (when it will exist ;) ) -->
   <!-- All values are in meters, radiants, kg -->
   
-  <xacro:property name="toll" value="0.01"/>
+  <xacro:property name="toll" value="0.001"/>
   
   <!-- chassis related -->
-  <xacro:property name="WheelBase" value="0.25"/>
-  <xacro:property name="EquivalentWheelDiameter" value="${r_eq_yaml*2}"/>
-  <xacro:property name="ModuleWidth" value="0.2"/>
-  <xacro:property name="TrackWidth" value="0.08"/>
-  <xacro:property name="ChassisTopAndBottomClearance" value="0.02"/>
+  <xacro:property name="WheelBase" value="${config['xacro']['WheelBase']}"/>
+  <xacro:property name="EquivalentWheelDiameter" value="${r_eq*2}"/>
+  <xacro:property name="ModuleWidth" value="${config['xacro']['ModuleWidth']}"/>
+  <xacro:property name="TrackWidth" value="${config['xacro']['TrackWidth']}"/>
+  <xacro:property name="ChassisTopAndBottomClearance" value="${config['xacro']['ChassisTopAndBottomClearance']}"/>
   
-  <xacro:property name="WheelMass" value="0.1"/>
-  <xacro:property name="ChassisMass" value="2.5"/>
+  <xacro:property name="WheelMass" value="${config['xacro']['WheelMass']}"/>
+  <xacro:property name="ChassisMass" value="${config['xacro']['ChassisMass']}"/>
 
   <!-- joint related -->
-  <xacro:property name="JointDiameter" value="0.07"/>
-  <xacro:property name="JointA" value="${a_yaml-WheelBase/2}"/>
-  <xacro:property name="JointB" value="${b_yaml-WheelBase/2}"/>
-  <xacro:property name="JointABottomClearance" value="0.04"/>
+  <xacro:property name="JointDiameter" value="${config['xacro']['JointDiameter']}"/>
+  <xacro:property name="JointA" value="${a-WheelBase/2}"/>
+  <xacro:property name="JointB" value="${b-WheelBase/2}"/>
+  <xacro:property name="JointABottomClearance" value="${config['xacro']['JointABottomClearance']}"/>
+  <xacro:property name="JointWidth" value="${config['xacro']['JointWidth']}"/>
 
   <xacro:property name="pitch" value="${pi/2}"/>
   <xacro:property name="roll" value="${pi/2}"/>
   <xacro:property name="yaw" value="${pi/4}"/>
 
-  <xacro:property name="JointAMass" value="0.1"/>
-  <xacro:property name="JointBMass" value="0.05"/>
+  <xacro:property name="JointAMass" value="${config['xacro']['JointAMass']}"/>
+  <xacro:property name="JointBMass" value="${config['xacro']['JointBMass']}"/>
 
-  <!-- arm related -->
-  <xacro:property name="ForkThickness" value="0.01"/>
-  <xacro:property name="ForkHeight" value="0.03"/>
-  <xacro:property name="JetsonHolderLength" value="0.158"/>
-  <xacro:property name="JetsonHolderWidth" value="0.09"/>
+  <!-- arm related (only mk1) -->
+  <xacro:property name="ForkThickness" value="${config['xacro']['ForkThickness']}"/>
+  <xacro:property name="ForkHeight" value="${config['xacro']['ForkHeight']}"/>
+  <xacro:property name="JetsonHolderLength" value="${config['xacro']['JetsonHolderLength']}"/>
+  <xacro:property name="JetsonHolderWidth" value="${config['xacro']['JetsonHolderWidth']}"/>
 
   <!-- Rvitz colors (for Gazebo ones change in single files) (from 0 to 1) -->
   <material name="ChassisColor">
