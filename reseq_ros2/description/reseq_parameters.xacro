@@ -29,6 +29,7 @@
   <xacro:property name="JointA" value="${a-WheelBase/2}"/>
   <xacro:property name="JointB" value="${b-WheelBase/2}"/>
   <xacro:property name="JointABottomClearance" value="${config['xacro']['JointABottomClearance']}"/>
+  <xacro:property name="JointWidth" value="${config['xacro']['JointWidth']}"/>
 
   <xacro:property name="pitch" value="${pi/2}"/>
   <xacro:property name="roll" value="${pi/2}"/>

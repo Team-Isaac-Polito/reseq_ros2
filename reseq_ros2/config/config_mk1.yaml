@@ -29,6 +29,7 @@ xacro:
   JointABottomClearance: 0.013
   JointAMass: 0.1
   JointBMass: 0.05
+  JointWidth: 0.067 # At the moment ${EquivalentWheelDiameter-2*JointABottomClearance}
 
   ForkThickness: 0.02
   ForkHeight: 0.05
