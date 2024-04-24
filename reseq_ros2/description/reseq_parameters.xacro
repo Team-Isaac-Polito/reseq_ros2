@@ -3,7 +3,7 @@
 
   <!-- import values from config.yaml file -->
 
-  <xacro:property name="config_yaml_path" value="../../../../../src/reseq_ros2/config/config_mk2.yaml" />
+  <xacro:property name="config_yaml_path" value="$(find reseq_ros2)/config/config_mk2.yaml" />
   <xacro:property name="config_yaml_file" value="${xacro.load_yaml(config_yaml_path)}"/>
   <xacro:property name="a_yaml" value="${config_yaml_file['dimensions']['a']}" />
   <xacro:property name="b_yaml" value="${config_yaml_file['dimensions']['b']}" />
