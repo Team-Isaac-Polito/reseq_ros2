@@ -54,10 +54,3 @@ share_folder = get_package_share_directory("reseq_ros2")
 
 rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
-
-### Scaler, specified in WIKI ###
-r_linear_vel: Final = (-0.29297, 0.29297)       # [m/s] Range of the linear velocity
-r_inverse_radius: Final = (-1.5385, 1.5385)     # [1/m] Range of the inverse radius of curvature
-r_pitch_vel: Final = (-183, 183)                # [LSB/s] Range of pitch velocity
-r_head_pitch_vel: Final = (-400, 400)           # [LSB/s] Range of indepepndent head pitch velocity
-r_head_yaw_vel: Final = (-455, 455)             # [LSB/s] Range of head yaw velocity
