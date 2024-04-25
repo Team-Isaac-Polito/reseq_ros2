@@ -4,7 +4,7 @@ import yaml
 from yaml.loader import SafeLoader
 from geometry_msgs.msg import Twist
 from reseq_interfaces.msg import Remote, EndEffector
-import reseq_ros2.constants as rc
+
 """
 ROS node that handles scaling of the remote controller data into physical variables used
 by the motors
@@ -17,7 +17,13 @@ It receives a packet from the remote controller and rescales end_effector data
 class Scaler(Node):
     def __init__(self):
         super().__init__("scaler")
-
+        #Declaring parameters and getting values
+        self.r_linear_vel = self.declare_parameter('r_linear_vel', [0.0]).get_parameter_value().double_array_value
+        self.r_inverse_radius = self.declare_parameter('r_inverse_radius', [0.0]).get_parameter_value().double_array_value
+        self.r_pitch_vel = self.declare_parameter('r_pitch_vel', [0.0]).get_parameter_value().integer_array_value
+        self.r_head_pitch_vel = self.declare_parameter('r_head_pitch_vel', [0.0]).get_parameter_value().integer_array_value
+        self.r_head_yaw_vel = self.declare_parameter('r_head_yaw_vel', [0.0]).get_parameter_value().integer_array_value
+        
         self.create_subscription(
             Remote,
             "/remote",
@@ -59,15 +65,15 @@ class Scaler(Node):
 
 
     def agevarScaler(self, data: Twist): 
-        data.linear.x = self.scale(data.linear.x, rc.r_linear_vel)
-        data.angular.z = self.scale(data.angular.z, rc.r_inverse_radius)
+        data.linear.x = self.scale(data.linear.x, self.r_linear_vel)
+        data.angular.z = self.scale(data.angular.z, self.r_inverse_radius)
         data.angular.z *= data.linear.x # Angular vel
         return data
 
     def endEffectorScaler(self, data: EndEffector): 
-        data.pitch_vel = self.scale(data.pitch_vel, rc.r_pitch_vel)
-        data.head_pitch_vel = self.scale(data.head_pitch_vel, rc.r_head_pitch_vel)
-        data.head_yaw_vel = self.scale(data.head_yaw_vel, rc.r_head_yaw_vel)
+        data.pitch_vel = self.scale(data.pitch_vel, self.r_pitch_vel)
+        data.head_pitch_vel = self.scale(data.head_pitch_vel, self.r_head_pitch_vel)
+        data.head_yaw_vel = self.scale(data.head_yaw_vel, self.r_head_yaw_vel)
         return data
 
     def scale(self, val, range):
