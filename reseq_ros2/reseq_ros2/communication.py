@@ -21,20 +21,20 @@ See team's wiki for details on how data is packaged inside CAN messages.
 class Communication(Node):
     def __init__(self):
         super().__init__("communication")
-        #Declaring parameters
+        #Declaring parameters and getting values
         self.can_channel = self.declare_parameter('can_channel', 'vcan0').get_parameter_value().string_value
         self.modules= self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
         self.joints = self.declare_parameter('joints', [0]).get_parameter_value().integer_array_value
-        self.end_effectors = self.declare_parameter('end_effectors', [0]).get_parameter_value().integer_array_value
+        self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
 
         # create ROS publishers and subscribers for each module based on config file
         self.pubs = []
         self.subs = []
         for i in range(len(self.modules)):
             self.pubs.append(self.create_module_pubs(
-                self.modules[i], self.modules[i] in self.joints, self.modules[i] in self.end_effectors))
+                self.modules[i], self.modules[i] in self.joints, self.modules[i] in self.end_effector))
             self.subs.append(self.create_module_subs(
-                self.modules[i], self.modules[i] in self.joints, self.modules[i] in self.end_effectors))
+                self.modules[i], self.modules[i] in self.joints, self.modules[i] in self.end_effector))
 
         # connect to CAN bus
         try:

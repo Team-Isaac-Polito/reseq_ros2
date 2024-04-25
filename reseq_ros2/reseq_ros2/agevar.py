@@ -17,14 +17,14 @@ used by the Communication node to set motors velocities.
 class Agevar(Node):
     def __init__(self):
         super().__init__("agevar")
-        #Declaring parameters
+        #Declaring parameters and getting values
         self.a = self.declare_parameter('a', 0.0).get_parameter_value().double_value
         self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
         self.d = self.declare_parameter('d', 0.0).get_parameter_value().double_value
         self.r_eq = self.declare_parameter('r_eq', 0.0).get_parameter_value().double_value
         self.modules= self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
         self.joints = self.declare_parameter('joints', [0]).get_parameter_value().integer_array_value
-        self.end_effectors = self.declare_parameter('end_effectors', [0]).get_parameter_value().integer_array_value
+        self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
 
         self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod

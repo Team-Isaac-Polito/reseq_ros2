@@ -18,7 +18,7 @@ class Enea(Node):
 
     def __init__(self):
         super().__init__("enea")
-        #Declaring parameters
+        #Declaring parameters and getting values
         self.pitch = self.declare_parameter('pitch', 0).get_parameter_value().integer_value
         self.head_pitch = self.declare_parameter('head_pitch', 0).get_parameter_value().integer_value
         self.head_yaw = self.declare_parameter('head_yaw', 0).get_parameter_value().integer_value
@@ -27,7 +27,7 @@ class Enea(Node):
         self.r_head_pitch = self.declare_parameter('r_head_pitch', [0]).get_parameter_value().integer_array_value
         self.r_head_yaw = self.declare_parameter('r_head_yaw', [0]).get_parameter_value().integer_array_value
         self.pitch_conv = self.declare_parameter('pitch_conv', 0).get_parameter_value().integer_value
-        self.end_effectors = self.declare_parameter('end_effectors', [0]).get_parameter_value().integer_array_value
+        self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
 
         self.create_subscription(
             EndEffector,
@@ -37,7 +37,7 @@ class Enea(Node):
         )
 
         self.pubs = {}
-        addr = next(self.end_effectors)
+        addr = next(self.end_effector)
         self.pubs[EE_Enum.PITCH] = self.create_publisher(
             Int32,
             f"reseq/module{addr}/end_effector/pitch/setpoint",

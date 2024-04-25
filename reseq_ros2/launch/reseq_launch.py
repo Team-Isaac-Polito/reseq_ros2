@@ -7,6 +7,7 @@ from yaml import SafeLoader
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
+#Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
 default_path = "/config/reseq_mk1_can.yaml"
 
@@ -27,19 +28,20 @@ def get_joints(config):
             l.append(mod['address'])
     return l
 
-def get_end_effectors(config):
-    l = []
+def get_end_effector(config):
     for mod in config['modules']:
         if mod['hasEndEffector']:
-            l.append(mod['address'])
-    return l
-    
+            return mod['address']
+
+#launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
+    #Get config path from command line, otherwise use the default path
     config_path = LaunchConfiguration('config_path').perform(context)
+    #Parse the config file
     config = parse_config(share_folder + config_path)
     addresses = get_addresses(config)
     joints = get_joints(config)
-    endEffectors = get_end_effectors(config)
+    endEffector = get_end_effector(config)
     nodes = []
     nodes.append(Node(
             package='reseq_ros2',
@@ -49,7 +51,7 @@ def launch_setup(context, *args, **kwargs):
                 'can_channel': config['canbus']['channel'],
                 'modules': addresses,
                 'joints': joints,
-                'end_effectors': endEffectors
+                'end_effector': endEffector
             }]))
     nodes.append(Node(
             package='reseq_ros2',
@@ -62,7 +64,7 @@ def launch_setup(context, *args, **kwargs):
                 'r_eq': config['dimensions']['r_eq'],
                 'modules': addresses,
                 'joints': joints,
-                'end_effectors': endEffectors
+                'end_effector': endEffector
             }]))
     nodes.append(Node(
             package='reseq_ros2',
@@ -96,12 +98,12 @@ def launch_setup(context, *args, **kwargs):
                     'r_head_pitch': config['enea_consts']['r_head_pitch'],
                     'r_head_yaw': config['enea_consts']['r_head_yaw'],
                     'pitch_conv': config['enea_consts']['pitch_conv'],
-                    'end_effectors': endEffectors
+                    'end_effector': endEffector
                 }]))
     return nodes
     
 def generate_launch_description():
-    return LaunchDescription([DeclareLaunchArgument('config_path', default_value=default_path), 
+    return LaunchDescription([DeclareLaunchArgument('config_path', default_value = default_path), 
                              OpaqueFunction(function = launch_setup)
                              ])
 
