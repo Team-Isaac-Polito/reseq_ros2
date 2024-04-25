@@ -74,17 +74,21 @@ class Agevar(Node):
 
         for mod_id in modules:
             # get velocity of left and right motor
-            wdx, wsw = self.vel_motors(linear_vel, angular_vel, sign)
+            w_right, w_left = self.vel_motors(linear_vel, angular_vel, sign)
 
             # publish to ROS motor topics
             m = Motors()
-            m.right = wdx
-            m.left = wsw
+            m.right = w_right
+            m.left = w_left
             self.motors_pubs[mod_id].publish(m)
 
-            if mod_id != modules[-1]:  # for every module except the last one
+            if mod_id != modules[-1]: # for every module except the last one
+                # invert yaw angle if going backwards
+                yaw_angle = (1 if sign else -1) * self.yaw_angles[mod_id]
+
+                # compute linear and angular velocity of the following module
                 linear_vel, angular_vel = self.kinematic(
-                    linear_vel, angular_vel, self.yaw_angles[mod_id])
+                    linear_vel, angular_vel, yaw_angle)
 
                 self.get_logger().info(
                     f"Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}")
@@ -109,17 +113,17 @@ class Agevar(Node):
 
     # compute motors velocity for each module
     def vel_motors(self, lin_vel, ang_vel, sign):
-        wdx = (lin_vel+ang_vel*self.d/2) / self.r_eq
-        wsx = (lin_vel-ang_vel*self.d/2) / self.r_eq
+        w_right = (lin_vel+ang_vel*rc.d/2) / rc.r_eq
+        w_left = (lin_vel-ang_vel*rc.d/2) / rc.r_eq
 
         if sign == 0:  # backwards
-            wsx, wdx = -wsx, -wdx
+            w_left, w_right = -w_left, -w_right
 
         # from radiants to rmp
-        wdx = wdx*rc.rads2rpm
-        wsx = wsx*rc.rads2rpm
+        w_right = w_right*rc.rads2rpm
+        w_left = w_left*rc.rads2rpm
 
-        return wdx, wsx
+        return w_right, w_left
 
 
 def main(args=None):
