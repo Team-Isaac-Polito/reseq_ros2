@@ -3,17 +3,20 @@ version: "mk2"
 canbus:
   channel: "vcan0"
 modules:
-  - address: 0x11
-    hasJoint: false
-    hasEndEffector: true
-  - address: 0x12
+  - address: 0x21
     hasJoint: true
     hasEndEffector: false
-  - address: 0x13
+  - address: 0x22
     hasJoint: true
     hasEndEffector: false
-geometric_consts:
-  a: 0.18                    # [m] Distance between the center of every module and the previous yaw joint
-  b: 0.18                    # [m] Distance between the center of every module and the following yaw joint
-  d: 0.223                   # [m] Distance between pair of equivalent wheels
-  r_eq: 0.0465               # [m] Radius of the equivalent wheels
+  - address: 0x23
+    hasJoint: true
+    hasEndEffector: false
+  - address: 0x24
+    hasJoint: true
+    hasEndEffector: false
+dimensions:
+  a: 0.205                  # [m] Distance between the center of every module and the previous yaw joint
+  b: 0.185                 # [m] Distance between the center of every module and the following yaw joint
+  d: 0.12                   # [m] Distance between pair of equivalent wheels
+  r_eq: 0.06               # [m] Radius of the equivalent wheels
