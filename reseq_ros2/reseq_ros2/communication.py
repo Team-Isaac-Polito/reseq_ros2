@@ -2,11 +2,9 @@ import can
 import rclpy
 import reseq_ros2.constants as rc
 import struct
-import yaml
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32, Int32  # deprecated?
-from yaml.loader import SafeLoader
 
 """ROS node that handles communication between the Jetson and each module via CAN
 
@@ -21,24 +19,25 @@ See team's wiki for details on how data is packaged inside CAN messages.
 class Communication(Node):
     def __init__(self):
         super().__init__("communication")
-        # TODO: read file passed as ROS argument
-        with open(rc.share_folder +  "/config/reseq_mk1_can.yaml") as f:
-            self.config = yaml.load(f, Loader=SafeLoader)
-            print(self.config)
+        #Declaring parameters and getting values
+        self.can_channel = self.declare_parameter('can_channel', 'vcan0').get_parameter_value().string_value
+        self.modules= self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
+        self.joints = self.declare_parameter('joints', [0]).get_parameter_value().integer_array_value
+        self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
 
         # create ROS publishers and subscribers for each module based on config file
         self.pubs = []
         self.subs = []
-        for i in range(len(self.config["modules"])):
+        for i in range(len(self.modules)):
             self.pubs.append(self.create_module_pubs(
-                self.config["modules"][i]))
-            self.subs.append(self.create_module_subs(
-                self.config["modules"][i]))
+                self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))  
+            self.subs.append(self.create_module_subs(  
+                self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))  
 
         # connect to CAN bus
         try:
             self.canbus = can.interface.Bus(
-                channel=self.config["canbus"]["channel"],
+                channel=self.can_channel,
                 bustype="socketcan",
             )
             self.notifier = can.Notifier(self.canbus, [self.can_callback])
@@ -48,39 +47,39 @@ class Communication(Node):
         self.get_logger().info("Communication node started")
 
     # create ROS publishers for a module based on its properties
-    def create_module_pubs(self, info):
+    def create_module_pubs(self, address, hasJoint, hasEndEffector):
         d = {}
         for topic in self.topics_from_direction(rc.Direction.IN):
-            if topic.name.split("/")[0] == "joint" and info["hasJoint"] == False:
+            if topic.name.split("/")[0] == "joint" and not hasJoint:
                 continue
 
-            if topic.name.split("/")[0] == "end_effector" and info["hasEndEffector"] == False: 
+            if topic.name.split("/")[0] == "end_effector" and not hasEndEffector: 
                 continue
 
             d[topic.name] = self.create_publisher(
                 topic.data_type,
-                f"reseq/module{info['address']}/{topic.name}",
+                f"reseq/module{address}/{topic.name}",
                 10,
             )
 
         return d
 
     # create ROS subscribers for a module based on its properties
-    def create_module_subs(self, info):
+    def create_module_subs(self, address, hasJoint, hasEndEffector):
         d = {}
         for topic in self.topics_from_direction(rc.Direction.OUT):
-            if topic.name.split("/")[0] == "joint" and info["hasJoint"] == False:
+            if topic.name.split("/")[0] == "joint" and not hasJoint:
                 continue
 
-            if topic.name.split("/")[0] == "end_effector" and info["hasEndEffector"] == False: 
+            if topic.name.split("/")[0] == "end_effector" and not hasEndEffector: 
                 continue
 
             d[topic.name] = self.create_subscription(
                 topic.data_type,
-                f"reseq/module{info['address']}/{topic.name}",
+                f"reseq/module{address}/{topic.name}",
                 # use lamba function to pass extra arguments to the callback
                 lambda msg, s=topic.name: self.ros_listener_callback(
-                    msg, info["address"], s),
+                    msg, address, s),
                 10,
             )
 

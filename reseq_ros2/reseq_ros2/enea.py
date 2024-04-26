@@ -1,10 +1,7 @@
 import rclpy
 from rclpy.node import Node
-from yaml.loader import SafeLoader
 from reseq_interfaces.msg import EndEffector
-import reseq_ros2.constants as rc
 from std_msgs.msg import Int32
-import yaml
 from enum import Enum
 from time import time
 
@@ -18,10 +15,16 @@ class Enea(Node):
 
     def __init__(self):
         super().__init__("enea")
-        # TODO: read file passed as ROS argument
-        with open(rc.share_folder +  "/config/reseq_mk1_can.yaml") as f:
-            self.config = yaml.load(f, Loader=SafeLoader)
-            print(self.config)
+        #Declaring parameters and getting values
+        self.pitch = self.declare_parameter('pitch', 0).get_parameter_value().integer_value
+        self.head_pitch = self.declare_parameter('head_pitch', 0).get_parameter_value().integer_value
+        self.head_yaw = self.declare_parameter('head_yaw', 0).get_parameter_value().integer_value
+        self.servo_speed = self.declare_parameter('servo_speed', 0).get_parameter_value().integer_value
+        self.r_pitch = self.declare_parameter('r_pitch', [0]).get_parameter_value().integer_array_value
+        self.r_head_pitch = self.declare_parameter('r_head_pitch', [0]).get_parameter_value().integer_array_value
+        self.r_head_yaw = self.declare_parameter('r_head_yaw', [0]).get_parameter_value().integer_array_value
+        self.pitch_conv = self.declare_parameter('pitch_conv', 0.0).get_parameter_value().double_value
+        self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
 
         self.create_subscription(
             EndEffector,
@@ -31,7 +34,7 @@ class Enea(Node):
         )
 
         self.pubs = {}
-        addr = next(map(lambda x: x["address"], filter(lambda x: x["hasEndEffector"], self.config["modules"])))
+        addr = self.end_effector
         self.pubs[EE_Enum.PITCH] = self.create_publisher(
             Int32,
             f"reseq/module{addr}/end_effector/pitch/setpoint",
@@ -51,10 +54,6 @@ class Enea(Node):
         self.get_logger().info("Node EnEA started successfully")
         
         self.previous_time = -1
-        self.pitch = rc.i_pitch
-        self.head_pitch = rc.i_head_pitch
-        self.head_yaw = rc.i_head_yaw
-
         self.post()
         self.get_logger().info("EnEA: Moving to start position")
 
@@ -68,7 +67,7 @@ class Enea(Node):
 
         self.pitch += dp
         self.head_yaw += (-1)*msg.head_yaw_vel*dt
-        self.head_pitch += msg.head_pitch_vel*dt + rc.pitch_conv*dp
+        self.head_pitch += msg.head_pitch_vel*dt + self.pitch_conv*dp
 
         self.constrain()
 
@@ -92,14 +91,14 @@ class Enea(Node):
 
         Theoretically the pitch value is already constrained by the constraints of dp
         """
-        if self.pitch < rc.r_pitch[0]: self.pitch = rc.r_pitch[0]
-        if self.pitch > rc.r_pitch[1]: self.pitch = rc.r_pitch[1]
+        if self.pitch < self.r_pitch[0]: self.pitch = self.r_pitch[0]
+        if self.pitch > self.r_pitch[1]: self.pitch = self.r_pitch[1]
 
-        if self.head_pitch < rc.r_head_pitch[0]: self.head_pitch = rc.r_head_pitch[0]
-        if self.head_pitch > rc.r_head_pitch[1]: self.head_pitch = rc.r_head_pitch[1]
+        if self.head_pitch < self.r_head_pitch[0]: self.head_pitch = self.r_head_pitch[0]
+        if self.head_pitch > self.r_head_pitch[1]: self.head_pitch = self.r_head_pitch[1]
 
-        if self.head_yaw < rc.r_head_yaw[0]: self.head_yaw = rc.r_head_yaw[0]
-        if self.head_yaw > rc.r_head_yaw[1]: self.head_yaw = rc.r_head_yaw[1]
+        if self.head_yaw < self.r_head_yaw[0]: self.head_yaw = self.r_head_yaw[0]
+        if self.head_yaw > self.r_head_yaw[1]: self.head_yaw = self.r_head_yaw[1]
 
     def constrain_delta_pitch(self, dp):
         """
@@ -107,8 +106,8 @@ class Enea(Node):
         the pitch and head_pitch movement if the arm reaches the boundaries but 
         the head could still move
         """
-        if self.pitch + dp > rc.r_pitch[1]: dp = rc.r_pitch[1] - self.pitch
-        if self.pitch + dp < rc.r_pitch[0]: dp = rc.r_pitch[0] - self.pitch
+        if self.pitch + dp > self.r_pitch[1]: dp = self.r_pitch[1] - self.pitch
+        if self.pitch + dp < self.r_pitch[0]: dp = self.r_pitch[0] - self.pitch
         return dp
 
 
