@@ -1,10 +1,7 @@
 import rclpy
 from rclpy.node import Node
-from yaml.loader import SafeLoader
 from reseq_interfaces.msg import EndEffector
-import reseq_ros2.constants as rc
 from std_msgs.msg import Int32
-import yaml
 from enum import Enum
 from time import time
 
@@ -26,7 +23,7 @@ class Enea(Node):
         self.r_pitch = self.declare_parameter('r_pitch', [0]).get_parameter_value().integer_array_value
         self.r_head_pitch = self.declare_parameter('r_head_pitch', [0]).get_parameter_value().integer_array_value
         self.r_head_yaw = self.declare_parameter('r_head_yaw', [0]).get_parameter_value().integer_array_value
-        self.pitch_conv = self.declare_parameter('pitch_conv', 0).get_parameter_value().integer_value
+        self.pitch_conv = self.declare_parameter('pitch_conv', 0.0).get_parameter_value().double_value
         self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
 
         self.create_subscription(
@@ -37,7 +34,7 @@ class Enea(Node):
         )
 
         self.pubs = {}
-        addr = next(self.end_effector)
+        addr = self.end_effector
         self.pubs[EE_Enum.PITCH] = self.create_publisher(
             Int32,
             f"reseq/module{addr}/end_effector/pitch/setpoint",

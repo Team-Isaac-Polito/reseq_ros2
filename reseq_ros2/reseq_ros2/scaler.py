@@ -1,7 +1,5 @@
 import rclpy
 from rclpy.node import Node
-import yaml
-from yaml.loader import SafeLoader
 from geometry_msgs.msg import Twist
 from reseq_interfaces.msg import Remote, EndEffector
 
@@ -20,9 +18,9 @@ class Scaler(Node):
         #Declaring parameters and getting values
         self.r_linear_vel = self.declare_parameter('r_linear_vel', [0.0]).get_parameter_value().double_array_value
         self.r_inverse_radius = self.declare_parameter('r_inverse_radius', [0.0]).get_parameter_value().double_array_value
-        self.r_pitch_vel = self.declare_parameter('r_pitch_vel', [0.0]).get_parameter_value().integer_array_value
-        self.r_head_pitch_vel = self.declare_parameter('r_head_pitch_vel', [0.0]).get_parameter_value().integer_array_value
-        self.r_head_yaw_vel = self.declare_parameter('r_head_yaw_vel', [0.0]).get_parameter_value().integer_array_value
+        self.r_pitch_vel = self.declare_parameter('r_pitch_vel', [0]).get_parameter_value().integer_array_value  
+        self.r_head_pitch_vel = self.declare_parameter('r_head_pitch_vel', [0]).get_parameter_value().integer_array_value  
+        self.r_head_yaw_vel = self.declare_parameter('r_head_yaw_vel', [0]).get_parameter_value().integer_array_value 
         
         self.create_subscription(
             Remote,

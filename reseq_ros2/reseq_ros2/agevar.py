@@ -1,12 +1,10 @@
 import rclpy
 import reseq_ros2.constants as rc
-import yaml
 from math import cos, sin, pi
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32  # deprecated?
-from yaml.loader import SafeLoader
 
 """ROS node with control algorithm for snake-like movement
 
@@ -113,8 +111,8 @@ class Agevar(Node):
 
     # compute motors velocity for each module
     def vel_motors(self, lin_vel, ang_vel, sign):
-        w_right = (lin_vel+ang_vel*rc.d/2) / rc.r_eq
-        w_left = (lin_vel-ang_vel*rc.d/2) / rc.r_eq
+        w_right = (lin_vel+ang_vel*self.d/2) / self.r_eq
+        w_left = (lin_vel-ang_vel*self.d/2) / self.r_eq
 
         if sign == 0:  # backwards
             w_left, w_right = -w_left, -w_right

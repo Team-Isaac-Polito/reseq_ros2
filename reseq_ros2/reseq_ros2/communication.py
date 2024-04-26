@@ -2,11 +2,9 @@ import can
 import rclpy
 import reseq_ros2.constants as rc
 import struct
-import yaml
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32, Int32  # deprecated?
-from yaml.loader import SafeLoader
 
 """ROS node that handles communication between the Jetson and each module via CAN
 
@@ -32,9 +30,9 @@ class Communication(Node):
         self.subs = []
         for i in range(len(self.modules)):
             self.pubs.append(self.create_module_pubs(
-                self.modules[i], self.modules[i] in self.joints, self.modules[i] in self.end_effector))
-            self.subs.append(self.create_module_subs(
-                self.modules[i], self.modules[i] in self.joints, self.modules[i] in self.end_effector))
+                self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))  
+            self.subs.append(self.create_module_subs(  
+                self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))  
 
         # connect to CAN bus
         try:
