@@ -58,10 +58,10 @@ def launch_setup(context, *args, **kwargs):
             executable='agevar',
             name='agevar',
             parameters=[{
-                'a': config['dimensions']['a'],
-                'b': config['dimensions']['b'],
-                'd': config['dimensions']['d'],
-                'r_eq': config['dimensions']['r_eq'],
+                'a': config['agevar_consts']['a'],
+                'b': config['agevar_consts']['b'],
+                'd': config['agevar_consts']['d'],
+                'r_eq': config['agevar_consts']['r_eq'],
                 'modules': addresses,
                 'joints': joints,
                 'end_effector': endEffector
@@ -71,11 +71,11 @@ def launch_setup(context, *args, **kwargs):
             executable='scaler',
             name='scaler',
             parameters=[{
-                'r_linear_vel': config['dimensions']['r_linear_vel'],
-                'r_inverse_radius': config['dimensions']['r_inverse_radius'],
-                'r_pitch_vel': config['dimensions']['r_pitch_vel'],
-                'r_head_pitch_vel': config['dimensions']['r_head_pitch_vel'],
-                'r_head_yaw_vel': config['dimensions']['r_head_yaw_vel'],
+                'r_linear_vel': config['scaler_consts']['r_linear_vel'],
+                'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
+                'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
+                'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
+                'r_head_yaw_vel': config['scaler_consts']['r_head_yaw_vel'],
             }]))
     nodes.append(Node(
             package='realsense2_camera',
