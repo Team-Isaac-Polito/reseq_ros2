@@ -29,7 +29,7 @@
 
         <link name="${side}_${pos}_wheel_${id}_link">
         <visual>
-            <origin xyz="0 0 0"  rpy="${-side_sign*pi/2} 0 0"/>
+            <origin xyz="0 0 0" rpy="${-side_sign*pi/2} 0 0"/>
             <geometry>
             <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
             </geometry>
@@ -37,6 +37,7 @@
         </visual>
 
         <collision>
+            <origin xyz="0 0 0" rpy="${-side_sign*pi/2} 0 0"/>
             <geometry>
             <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
             </geometry>
@@ -44,7 +45,7 @@
 
         <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}"
             radius="${EquivalentWheelDiameter/2}">
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy="${-side_sign*pi/2} 0 0"/>
         </xacro:inertial_cylinder>
         </link>
     </xacro:macro>
