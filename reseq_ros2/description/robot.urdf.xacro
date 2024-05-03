@@ -10,9 +10,11 @@
   <xacro:include filename="macros/utils.xacro" />
   <xacro:include filename="macros/joint.xacro" />
   <xacro:include filename="macros/chassis.xacro" />
+  <xacro:include filename="macros/wheel.xacro" />
 
   <xacro:include filename="reseq_body.xacro" />
   <xacro:include filename="reseq_arm_mk1.xacro" />
   <xacro:include filename="lidar.xacro" />
 
 </robot>
+
