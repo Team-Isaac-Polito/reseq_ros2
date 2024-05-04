@@ -78,6 +78,11 @@ def launch_setup(context, *args, **kwargs):
                 'r_head_yaw_vel': config['scaler_consts']['r_head_yaw_vel'],
             }]))
     nodes.append(Node(
+            package='reseq_ros2',
+            executable='joint_publisher',
+            name='joint_publisher'
+            ))
+    nodes.append(Node(
             package='realsense2_camera',
             executable='realsense2_camera_node',
             name='realsense2_camera_node',
