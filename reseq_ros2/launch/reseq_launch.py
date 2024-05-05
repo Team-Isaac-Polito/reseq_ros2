@@ -80,8 +80,12 @@ def launch_setup(context, *args, **kwargs):
     nodes.append(Node(
             package='reseq_ros2',
             executable='joint_publisher',
-            name='joint_publisher'
-            ))
+            name='joint_publisher',
+            parameters=[{
+                'modules': addresses,
+                'joints': joints,
+                'end_effector': endEffector
+            }]))
     nodes.append(Node(
             package='realsense2_camera',
             executable='realsense2_camera_node',

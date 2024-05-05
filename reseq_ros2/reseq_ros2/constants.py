@@ -15,6 +15,11 @@ class Direction(Enum):
     IN = 0
     OUT = 1
 
+class StateType(Enum):
+    MOTOR_FEEDBACK = 0
+    JOINT_FEEDBACK = 1
+    END_EFFECTOR_FEEDBACK = 2
+
 class ReseQTopic(NamedTuple):
     """
     Data structure for the translation of ROS topics to CAN packets.
@@ -23,6 +28,23 @@ class ReseQTopic(NamedTuple):
     can_id: int
     direction: Direction
     data_type: type
+
+class ReseQState(NamedTuple):
+    topic: str
+    states: list[str]
+    state_type: StateType
+
+states = (
+    ReseQState("motor/feedback", ["left_front_wheel", "left_back_wheel", "right_front_wheel", "right_back_wheel"], StateType.MOTOR_FEEDBACK),
+    
+    ReseQState("joint/yaw/feedback", ["joint_y"], StateType.JOINT_FEEDBACK),
+    ReseQState("joint/pitch/feedback", ["joint_p"], StateType.JOINT_FEEDBACK),
+    ReseQState("joint/roll/feedback", ["joint_r"], StateType.JOINT_FEEDBACK),
+
+    ReseQState("end_effector/pitch/feedback", ["arm_pitch"], StateType.END_EFFECTOR_FEEDBACK),
+    ReseQState("end_effector/head_pitch/feedback", ["arm_head_pitch"], StateType.END_EFFECTOR_FEEDBACK),
+    ReseQState("end_effector/head_yaw/feedback", ["arm_head_yaw"], StateType.END_EFFECTOR_FEEDBACK)
+)
 
 topics = (
     ReseQTopic("battery/percent", 0x11, Direction.IN, Float32),
@@ -54,3 +76,5 @@ share_folder = get_package_share_directory("reseq_ros2")
 
 rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
+
+sample_time: Final = 0.08
