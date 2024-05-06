@@ -24,7 +24,7 @@
         <parent link="chassis${id}_link" />
         <child link="${side}_${pos}_wheel_${id}_link" />
         <origin xyz="${pos_sign*WheelBase/2} ${side_sign*(ModuleWidth/2-TrackWidth/2)} 0" rpy="0 0 0" />
-        <axis xyz="0 0 ${side_sign}" />
+        <axis xyz="0 1 0" />
         </joint>
 
         <link name="${side}_${pos}_wheel_${id}_link">
