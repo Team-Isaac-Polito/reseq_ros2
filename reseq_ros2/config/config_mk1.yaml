@@ -18,6 +18,7 @@ dimensions:
   r_eq: 0.0475   # !!!TO BE VERIFIED WITH MEASURES!!! [m] Radius of the equivalent wheels
 
 xacro:
+  NumModules: 2
   WheelBase: 0.137
   ModuleWidth: 0.27
   TrackWidth: 0.052
