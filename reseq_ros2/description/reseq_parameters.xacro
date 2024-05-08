@@ -47,7 +47,7 @@
   <xacro:property name="JetsonHolderLength" value="${config['xacro']['JetsonHolderLength']}"/>
   <xacro:property name="JetsonHolderWidth" value="${config['xacro']['JetsonHolderWidth']}"/>
 
-  <!-- Rvitz colors (for Gazebo ones change in single files) (from 0 to 1) -->
+  <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->
   <material name="ChassisColor">
     <color rgba="1 1 1 1" />
   </material>
