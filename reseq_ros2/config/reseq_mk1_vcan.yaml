@@ -2,6 +2,7 @@
 version: "mk1"
 canbus:
   channel: "vcan0"
+num_modules: 3
 modules:
   - address: 0x11
     hasJoint: false
@@ -49,7 +50,6 @@ enea_consts:
     - 1023
   pitch_conv:  0.75          # [ ] Conversion of pitch increase to head pitch increase
 xacro:
-  NumModules: 2
   WheelBase: 0.137
   ModuleWidth: 0.27
   TrackWidth: 0.052

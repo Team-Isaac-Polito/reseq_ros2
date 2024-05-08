@@ -2,6 +2,7 @@
 version: "mk2"
 canbus:
   channel: "vcan0"
+num_modules: 4
 modules:
   - address: 0x21
     hasJoint: true
@@ -20,8 +21,7 @@ agevar_consts:
   b: 0.185                 # [m] Distance between the center of every module and the following yaw joint
   d: 0.12                   # [m] Distance between pair of equivalent wheels
   r_eq: 0.06               # [m] Radius of the equivalent wheels
-xacro:
-  NumModules: 2
+xacro:                     # Referred to MK1
   WheelBase: 0.137
   ModuleWidth: 0.27
   TrackWidth: 0.052

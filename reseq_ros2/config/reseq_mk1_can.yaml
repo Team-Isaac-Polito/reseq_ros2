@@ -2,14 +2,12 @@
 version: "mk1"
 canbus:
   channel: "can1"
+num_modules: 2
 modules:
   - address: 0x11
     hasJoint: false
     hasEndEffector: true
   - address: 0x12
-    hasJoint: true
-    hasEndEffector: false
-  - address: 0x13
     hasJoint: true
     hasEndEffector: false
 agevar_consts:
@@ -49,7 +47,6 @@ enea_consts:
     - 1023
   pitch_conv:  0.75          # [ ] Conversion of pitch increase to head pitch increase
 xacro:
-  NumModules: 2
   WheelBase: 0.137
   ModuleWidth: 0.27
   TrackWidth: 0.052

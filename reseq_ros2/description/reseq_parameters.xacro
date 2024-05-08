@@ -17,7 +17,7 @@
   <xacro:property name="toll" value="0.001"/>
   
   <!-- chassis related -->
-  <xacro:property name="NumModules" value="${config['xacro']['NumModules']}"/>
+  <xacro:property name="NumModules" value="${config['num_modules']}"/>
   <xacro:property name="WheelBase" value="${config['xacro']['WheelBase']}"/>
   <xacro:property name="EquivalentWheelDiameter" value="${r_eq*2}"/>
   <xacro:property name="ModuleWidth" value="${config['xacro']['ModuleWidth']}"/>
