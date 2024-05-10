@@ -84,7 +84,12 @@ def launch_setup(context, *args, **kwargs):
             parameters=[{
                 'modules': addresses,
                 'joints': joints,
-                'end_effector': endEffector
+                'end_effector': endEffector,
+                'arm_pitch_origin': config['joint_pub_consts']['arm_pitch_origin'],
+                'head_pitch_origin': config['joint_pub_consts']['head_pitch_origin'],
+                'head_yaw_origin': config['joint_pub_consts']['head_yaw_origin'],
+                'vel_gain': config['joint_pub_consts']['vel_gain'],
+                'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain']
             }]))
     nodes.append(Node(
             package='realsense2_camera',

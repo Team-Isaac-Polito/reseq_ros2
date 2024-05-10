@@ -78,3 +78,5 @@ rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
 
 sample_time: Final = 0.08
+
+lsb_to_rads: Final = 5.6301e-3 # [rad/LSB] Conversion from Dynamixel position LSB to radians
