@@ -85,7 +85,7 @@ def launch_setup(context, *args, **kwargs):
             executable='realsense2_camera_node',
             name='realsense2_camera_node',
             namespace="realsense",
-            parameters=[ParameterFile(config_path + "/realsense_rgb_motion.yaml")]))
+            parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
     if config['version'] == 'mk1':
         nodes.append(Node(
                 package='reseq_ros2',

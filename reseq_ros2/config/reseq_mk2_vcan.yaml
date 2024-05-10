@@ -16,6 +16,7 @@ modules:
   - address: 0x24
     hasJoint: true
     hasEndEffector: false
+realsense_config: "realsense_rgb_motion.yaml"
 agevar_consts:
   a: 0.205                  # [m] Distance between the center of every module and the previous yaw joint
   b: 0.185                 # [m] Distance between the center of every module and the following yaw joint
