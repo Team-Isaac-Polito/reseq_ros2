@@ -2,6 +2,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch.actions import OpaqueFunction
+from launch_ros.parameter_descriptions import ParameterFile
 import yaml
 from yaml import SafeLoader
 from launch_ros.actions import Node
@@ -83,9 +84,8 @@ def launch_setup(context, *args, **kwargs):
             package='realsense2_camera',
             executable='realsense2_camera_node',
             name='realsense2_camera_node',
-            parameters=[{
-                'config_file': config_path + "/realsense_rgb_motion.yaml"
-            }]))
+            namespace="realsense",
+            parameters=[ParameterFile(config_path + "/realsense_rgb_motion.yaml")]))
     if config['version'] == 'mk1':
         nodes.append(Node(
                 package='reseq_ros2',
