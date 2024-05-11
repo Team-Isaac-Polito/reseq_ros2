@@ -29,121 +29,13 @@
       </xacro:inertial_box>
     </link>
 
-    <!-- LEFT FRONT WHEEL 1-->
-    <joint name="left_front_wheel_${id}_joint" type="continuous">
-      <parent link="chassis${id}_link" />
-      <child link="left_front_wheel_${id}_link" />
-      <origin xyz="${WheelBase/2} ${ModuleWidth/2-TrackWidth/2} 0" rpy="-${pi/2} 0 0" />
-      <axis xyz="0 0 1" />
-    </joint>
-
-    <link name="left_front_wheel_${id}_link">
-      <visual>
-        <geometry>
-          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
-        </geometry>
-        <material name="WheelColor" />
-      </visual>
-
-      <collision>
-        <geometry>
-          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
-        </geometry>
-      </collision>
-
-      <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}"
-        radius="${EquivalentWheelDiameter/2}">
-        <origin xyz="0 0 0" rpy="0 0 0" />
-      </xacro:inertial_cylinder>
-    </link>
-
-
-    <!-- RIGHT FRONT WHEEL 1-->
-    <joint name="right_front_wheel_${id}_joint" type="continuous">
-      <parent link="chassis${id}_link" />
-      <child link="right_front_wheel_${id}_link" />
-      <origin xyz="${WheelBase/2} ${-ModuleWidth/2+TrackWidth/2} 0" rpy="${pi/2} 0 0" />
-      <axis xyz="0 0 -1" />
-    </joint>
-
-    <link name="right_front_wheel_${id}_link">
-      <visual>
-        <geometry>
-          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
-        </geometry>
-        <material name="WheelColor" />
-      </visual>
-
-      <collision>
-        <geometry>
-          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
-        </geometry>
-      </collision>
-
-      <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}"
-        radius="${EquivalentWheelDiameter/2}">
-        <origin xyz="0 0 0" rpy="0 0 0" />
-      </xacro:inertial_cylinder>
-    </link>
-
-
-    <!-- LEFT BACK WHEEL 1-->
-    <joint name="left_back_wheel_${id}_joint" type="continuous">
-      <parent link="chassis${id}_link" />
-      <child link="left_back_wheel_${id}_link" />
-      <origin xyz="${-WheelBase/2} ${ModuleWidth/2-TrackWidth/2} 0" rpy="-${pi/2} 0 0" />
-      <axis xyz="0 0 1" />
-    </joint>
-
-    <link name="left_back_wheel_${id}_link">
-      <visual>
-        <geometry>
-          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
-        </geometry>
-        <material name="WheelColor" />
-      </visual>
-
-      <collision>
-        <geometry>
-          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
-        </geometry>
-      </collision>
-
-      <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}"
-        radius="${EquivalentWheelDiameter/2}">
-        <origin xyz="0 0 0" rpy="0 0 0" />
-      </xacro:inertial_cylinder>
-    </link>
-
-
-    <!-- RIGHT BACK WHEEL 1-->
-    <joint name="right_back_wheel_${id}_joint" type="continuous">
-      <parent link="chassis${id}_link" />
-      <child link="right_back_wheel_${id}_link" />
-      <origin xyz="${-WheelBase/2} ${-ModuleWidth/2+TrackWidth/2} 0" rpy="${pi/2} 0 0" />
-      <axis xyz="0 0 -1" />
-    </joint>
-
-    <link name="right_back_wheel_${id}_link">
-      <visual>
-        <geometry>
-          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
-        </geometry>
-        <material name="WheelColor" />
-      </visual>
-
-      <collision>
-        <geometry>
-          <cylinder radius="${EquivalentWheelDiameter/2}" length="${TrackWidth}" />
-        </geometry>
-      </collision>
-
-      <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}"
-        radius="${EquivalentWheelDiameter/2}">
-        <origin xyz="0 0 0" rpy="0 0 0" />
-      </xacro:inertial_cylinder>
-    </link>
+    <!-- Wheels -->
+    <xacro:wheel_factory id="${id}" pos="front" side="left" />
+    <xacro:wheel_factory id="${id}" pos="front" side="right" />
+    <xacro:wheel_factory id="${id}" pos="back" side="left" />
+    <xacro:wheel_factory id="${id}" pos="back" side="right" />
 
   </xacro:macro>
 
 </robot>
+

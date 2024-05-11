@@ -2,14 +2,17 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch.actions import OpaqueFunction
+from launch_ros.parameter_descriptions import ParameterFile
 import yaml
 from yaml import SafeLoader
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
+import xacro
 
 #Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
-default_path = "/config/reseq_mk1_can.yaml"
+config_path = f'{share_folder}/config'
+default_filename = "reseq_mk1_can.yaml"
 
 def parse_config(filename):
     with open(filename) as f:
@@ -36,9 +39,9 @@ def get_end_effector(config):
 #launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
     #Get config path from command line, otherwise use the default path
-    config_path = LaunchConfiguration('config_path').perform(context)
+    config_filename = LaunchConfiguration('config_file').perform(context)
     #Parse the config file
-    config = parse_config(share_folder + config_path)
+    config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
     joints = get_joints(config)
     endEffector = get_end_effector(config)
@@ -95,9 +98,8 @@ def launch_setup(context, *args, **kwargs):
             package='realsense2_camera',
             executable='realsense2_camera_node',
             name='realsense2_camera_node',
-            parameters=[{
-                'config_file': share_folder + "/config/realsense_rgb_motion.yaml"
-            }]))
+            namespace="realsense",
+            parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
     if config['version'] == 'mk1':
         nodes.append(Node(
                 package='reseq_ros2',
@@ -114,10 +116,20 @@ def launch_setup(context, *args, **kwargs):
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
                 }]))
+    
+    xacro_file = share_folder + "/description/robot.urdf.xacro"
+    robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}).toxml()
+    robot_state_publisher_node = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[{'robot_description': robot_description}] # add other parameters here if required
+    )
+    nodes.append(robot_state_publisher_node)
     return nodes
     
 def generate_launch_description():
-    return LaunchDescription([DeclareLaunchArgument('config_path', default_value = default_path), 
+    return LaunchDescription([DeclareLaunchArgument('config_file', default_value = default_filename), 
                              OpaqueFunction(function = launch_setup)
                              ])
 

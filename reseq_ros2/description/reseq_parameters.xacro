@@ -3,11 +3,13 @@
 
   <!-- import values from config.yaml file -->
 
-  <xacro:property name="config_yaml_path" value="$(find reseq_ros2)/config/config_mk1.yaml" />
-  <xacro:property name="config" value="${xacro.load_yaml(config_yaml_path)}"/>
-  <xacro:property name="a" value="${config['dimensions']['a']}" />
-  <xacro:property name="b" value="${config['dimensions']['b']}" />
-  <xacro:property name="r_eq" value="${config['dimensions']['r_eq']}" />
+  <xacro:arg name="config_path" default="$(find reseq_ros2)/config/reseq_mk1_can.yaml"/>
+  <xacro:property name="config_path_prop" value="$(arg config_path)"/>
+
+  <xacro:property name="config" value="${xacro.load_yaml(config_path_prop)}"/>
+  <xacro:property name="a" value="${config['agevar_consts']['a']}" />
+  <xacro:property name="b" value="${config['agevar_consts']['b']}" />
+  <xacro:property name="r_eq" value="${config['agevar_consts']['r_eq']}" />
 
   <!-- See 'Parameters.pdf' pdf for parameters meaning (when it will exist ;) ) -->
   <!-- All values are in meters, radiants, kg -->
@@ -15,6 +17,7 @@
   <xacro:property name="toll" value="0.001"/>
   
   <!-- chassis related -->
+  <xacro:property name="NumModules" value="${config['num_modules']}"/>
   <xacro:property name="WheelBase" value="${config['xacro']['WheelBase']}"/>
   <xacro:property name="EquivalentWheelDiameter" value="${r_eq*2}"/>
   <xacro:property name="ModuleWidth" value="${config['xacro']['ModuleWidth']}"/>
@@ -44,7 +47,7 @@
   <xacro:property name="JetsonHolderLength" value="${config['xacro']['JetsonHolderLength']}"/>
   <xacro:property name="JetsonHolderWidth" value="${config['xacro']['JetsonHolderWidth']}"/>
 
-  <!-- Rvitz colors (for Gazebo ones change in single files) (from 0 to 1) -->
+  <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->
   <material name="ChassisColor">
     <color rgba="1 1 1 1" />
   </material>

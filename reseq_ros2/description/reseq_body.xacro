@@ -10,9 +10,17 @@
     <origin xyz="0 0 ${(EquivalentWheelDiameter-2*ChassisTopAndBottomClearance)/2+ChassisTopAndBottomClearance}"/>
   </joint>
 
-  <xacro:chassis id="1"/>
-  <xacro:chassis_joint_factory id="2"/>
-  <xacro:chassis id="2"/>
+  <xacro:macro name="loop" params="module n_modules">
+    <xacro:if value="${module &lt; n_modules}">
+      <xacro:chassis id="${module}"/>
+      <xacro:chassis_joint_factory id="${module + 1}"/>
+      <xacro:loop module="${module + 1}" n_modules="${n_modules}"/>
+    </xacro:if>
+    <xacro:if value="${module == n_modules}">
+      <xacro:chassis id="${module}"/>
+    </xacro:if>
+  </xacro:macro>
 
+  <xacro:loop module="1" n_modules="${NumModules}"/>
 
 </robot>
