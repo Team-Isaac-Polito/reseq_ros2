@@ -30,6 +30,9 @@ class ReseQTopic(NamedTuple):
     data_type: type
 
 class ReseQState(NamedTuple):
+    """
+    Data structure for JointState operations
+    """
     topic: str
     states: list[str]
     state_type: StateType

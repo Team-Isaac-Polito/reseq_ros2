@@ -16,9 +16,16 @@ class State:
         self.value = value
     def update(self, value):
         self.value = value
-    
 
 
+"""
+ROS node publish Joint states updates which are visible on the Robot Model
+in RVIZ or other tools. It is part of the Digital Twin project
+
+It receives feedbacks from the Communication node and calculates the angular 
+position or velocity. Two subsequent messages are sent: one for the wheels 
+velocity and one for the joint and end effector joints angular positions
+"""
 class JointPublisher(Node):
     def __init__(self):
         super().__init__("joint_publisher")
@@ -83,6 +90,12 @@ class JointPublisher(Node):
         self.create_timer(rc.sample_time, self.broadcast_states)
 
     def init_state(self, modules: list[int], joints: list[int], end_effector: int):
+        """
+        Creates the states, given the robot configuration, using a dictionary
+        `(module_address, generic_state): State(name=specific_state, value=0.0)`
+        in which the specific state is the generic state specialised to the 
+        current module
+        """
         for mod in modules:
             id = mod % 16
 
@@ -106,6 +119,10 @@ class JointPublisher(Node):
                 })
 
     def create_subs(self, modules: list[int], joints: list[int], end_effector: int):
+        """
+        Creates the subscription to all the feedback topics linked to Joints
+        (the ones in `rc.states`)
+        """
         for mod in modules:
             for topic in self.topics_from_type(rc.StateType.MOTOR_FEEDBACK):
                 self.create_subscription(
@@ -138,6 +155,10 @@ class JointPublisher(Node):
                     )
 
     def broadcast_states(self):
+        """
+        Creates and publishes the `JointState` messages, based on a timer
+        of `rc.sample_time` seconds
+        """
 
         velocity = JointState()
         now = self.get_clock().now()
@@ -162,6 +183,10 @@ class JointPublisher(Node):
         topic: str,
         state_t: rc.StateType,
     ):
+        """
+        Given the module address, the topic suffix, and the state type, this callback receives 
+        listens on the feedback topics and updates the internal representation of the Joints
+        """
         if state_t == rc.StateType.MOTOR_FEEDBACK:
             l, r = msg.left, msg.right
 
