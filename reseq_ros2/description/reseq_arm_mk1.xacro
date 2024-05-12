@@ -3,7 +3,7 @@
 
   <!-- This is a parametric description of reseq mK1 arm -->
 
-  <joint name="arm_mK1_joint" type="revolute">
+  <joint name="arm_pitch_1_joint" type="revolute">
     <parent link="chassis1_link"/>
     <child link="arm_mK1_link"/>
     <!-- Effort in Nm, angle in radians -->
