@@ -10,13 +10,16 @@
     <origin xyz="0 0 ${(EquivalentWheelDiameter-2*ChassisTopAndBottomClearance)/2+ChassisTopAndBottomClearance}"/>
   </joint>
 
+  <!-- Create n_modules modules by recursively calling the loop macro -->
   <xacro:macro name="loop" params="module n_modules">
     <xacro:if value="${module &lt; n_modules}">
+      <!-- Create module and following joint -->
       <xacro:chassis id="${module}"/>
       <xacro:chassis_joint_factory id="${module + 1}"/>
       <xacro:loop module="${module + 1}" n_modules="${n_modules}"/>
     </xacro:if>
     <xacro:if value="${module == n_modules}">
+      <!-- Create last module -->
       <xacro:chassis id="${module}"/>
     </xacro:if>
   </xacro:macro>
