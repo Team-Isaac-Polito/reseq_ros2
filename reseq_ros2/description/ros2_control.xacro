@@ -4,7 +4,6 @@
         <hardware>
             <plugin>gazebo_ros2_control/GazeboSystem</plugin>
         </hardware>
-    </ros2_control>
 
     <!-- Create n_modules modules by recursively calling the loop macro -->
     <xacro:macro name="loop" params="module n_modules">
@@ -23,4 +22,5 @@
 
     <xacro:loop module="1" n_modules="${NumModules}"/>
 
+    </ros2_control>
 </robot>
