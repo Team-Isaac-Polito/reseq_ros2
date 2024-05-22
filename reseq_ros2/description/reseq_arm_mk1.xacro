@@ -7,84 +7,85 @@
     <parent link="chassis1_link"/>
     <child link="arm_mK1_link"/>
     <!-- Effort in Nm, angle in radians -->
-    <limit effort="10.0" lower="-${pi*0.01}" upper="${pi/2}" velocity="0.5"/>
-    <origin xyz="${WheelBase/2} 0 0" rpy="${pi/2} 0 0" />
-    <axis xyz="0 0 1"/>
+    <limit effort="10.0" lower="${pi*0.01}" upper="-${pi/2}" velocity="0.5"/>
+    <origin xyz="${WheelBase/2} 0 0" />
+    <axis xyz="0 1 0"/>
   </joint>
 
-  <link name="arm_mK1_link">
+  <link name="arm_mK1_link"> 
     <!-- cylinder to the right -->
     <xacro:replicate_collision>
-    <visual>
-      <origin xyz="0 0 ${ForkThickness/2+toll+ModuleWidth/2}" />
-      <geometry>
-        <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
-      </geometry>
-      <material name="ArmColor"/>
-    </visual>
+      <visual>
+        <origin xyz="0 ${-(ForkThickness/2+toll+ModuleWidth/2)} 0" rpy = "${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
+        </geometry>
+        <material name="ArmColor"/>
+      </visual>
     </xacro:replicate_collision>
 
     <!-- cylinder to the left -->
     <xacro:replicate_collision>
-    <visual>
-      <origin xyz="0 0 -${ForkThickness/2+toll+ModuleWidth/2}" />
-      <geometry>
-        <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
-      </geometry>
-      <material name="ArmColor"/>
-    </visual>
+      <visual>
+        <origin xyz="0 ${(ForkThickness/2+toll+ModuleWidth/2)} 0" rpy = "${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
+        </geometry>
+        <material name="ArmColor"/>
+      </visual>
     </xacro:replicate_collision>
 
     <!-- right side of the fork -->
     <xacro:replicate_collision>
-    <visual>
-      <origin xyz="${(toll+EquivalentWheelDiameter/2)/2} 0 ${ForkThickness/2+toll+ModuleWidth/2}" />
-      <geometry>
-        <box size="${toll+EquivalentWheelDiameter/2} ${ForkHeight} ${ForkThickness}"/>
-      </geometry>
-      <material name="ArmColor"/>
-    </visual>
+      <visual>
+        <origin xyz="${(toll+EquivalentWheelDiameter/2)/2} -${ForkThickness/2+toll+ModuleWidth/2} 0" rpy = "${pi/2} 0 0"/>
+        <geometry>
+          <box size="${toll+EquivalentWheelDiameter/2} ${ForkHeight} ${ForkThickness}"/>
+        </geometry>
+        <material name="ArmColor"/>
+      </visual>
     </xacro:replicate_collision>
 
     <!-- left side of the fork -->
     <xacro:replicate_collision>
-    <visual>
-      <origin xyz="${(toll+EquivalentWheelDiameter/2)/2} 0 -${ForkThickness/2+toll+ModuleWidth/2}" />
-      <geometry>
-        <box size="${toll+EquivalentWheelDiameter/2} ${ForkHeight} ${ForkThickness}"/>
-      </geometry>
-      <material name="ArmColor"/>
-    </visual>
+      <visual>
+        <origin xyz="${(toll+EquivalentWheelDiameter/2)/2} ${ForkThickness/2+toll+ModuleWidth/2} 0" rpy = "${pi/2} 0 0"/>
+        <geometry>
+          <box size="${toll+EquivalentWheelDiameter/2} ${ForkHeight} ${ForkThickness}"/>
+        </geometry>
+        <material name="ArmColor"/>
+      </visual>
     </xacro:replicate_collision>
 
     <!-- front side of the fork -->
     <xacro:replicate_collision>
-    <visual>
-      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2} 0 0" />
-      <geometry>
-        <box size="${ForkThickness} ${ForkHeight} ${ModuleWidth+(toll+ForkThickness)*2}"/>
-      </geometry>
-      <material name="ArmColor"/>
-    </visual>
+      <visual>
+        <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2} 0 0" rpy = "${pi/2} 0 0"/>
+        <geometry>
+          <box size="${ForkThickness} ${ForkHeight} ${ModuleWidth+(toll+ForkThickness)*2}"/>
+        </geometry>
+        <material name="ArmColor"/>
+      </visual>
     </xacro:replicate_collision>
 
     <!-- Jetson holder -->
     <xacro:replicate_collision>
-    <visual>
-      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" />
-      <geometry>
-        <box size="${JetsonHolderLength} ${ForkHeight} ${JetsonHolderWidth}"/>
-      </geometry>
-      <material name="ArmColor"/>
-    </visual>
+      <visual>
+        <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" rpy = "${pi/2} 0 0"/>
+        <geometry>
+          <box size="${JetsonHolderLength} ${ForkHeight} ${JetsonHolderWidth}"/>
+        </geometry>
+        <material name="ArmColor"/>
+      </visual>
     </xacro:replicate_collision>
 
-    <!-- cylinder to the right -->
-    <collision>
-      <origin xyz="0 0 ${ForkThickness/2+toll+ModuleWidth/2}" />
-      <geometry>
-        <cylinder radius="${ForkHeight/2}" length="${ForkThickness}"/>
-      </geometry>
+    <!-- cylinder on the jetson holder-->
+    <xacro:replicate_collision>
+      <visual>
+        <origin xyz ="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength + CylinderOnJetsonLength/2} -${CylinderOnJetsonShift} 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder radius="${CylinderOnJetsonRadius}" length="${CylinderOnJetsonLength}"/>
+        </geometry>
         <material name="ArmColor"/>
       </visual>
     </xacro:replicate_collision>
