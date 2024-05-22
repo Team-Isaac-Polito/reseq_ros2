@@ -8,7 +8,7 @@ ROS node that handles scaling of the remote controller data into physical variab
 by the motors
 
 It receives a packet from the remote controller and rescales end_effector data 
-(pitch, head_pitch, head_yaw) and the Twist data used by Agevar 
+(pitch, head_pitch, head_roll) and the Twist data used by Agevar 
 (linear velocity, angular velocity)
 """
 
@@ -20,7 +20,7 @@ class Scaler(Node):
         self.r_inverse_radius = self.declare_parameter('r_inverse_radius', [0.0]).get_parameter_value().double_array_value
         self.r_pitch_vel = self.declare_parameter('r_pitch_vel', [0]).get_parameter_value().integer_array_value  
         self.r_head_pitch_vel = self.declare_parameter('r_head_pitch_vel', [0]).get_parameter_value().integer_array_value  
-        self.r_head_yaw_vel = self.declare_parameter('r_head_yaw_vel', [0]).get_parameter_value().integer_array_value 
+        self.r_head_roll_vel = self.declare_parameter('r_head_roll_vel', [0]).get_parameter_value().integer_array_value 
         
         self.create_subscription(
             Remote,
@@ -56,7 +56,7 @@ class Scaler(Node):
         end_e = EndEffector()
         end_e.pitch_vel = data.left.y
         end_e.head_pitch_vel = data.left.z
-        end_e.head_yaw_vel = data.left.x
+        end_e.head_roll_vel = data.left.x
 
         end_e = self.endEffectorScaler(end_e)
         self.enea_pub.publish(end_e)
@@ -71,7 +71,7 @@ class Scaler(Node):
     def endEffectorScaler(self, data: EndEffector): 
         data.pitch_vel = self.scale(data.pitch_vel, self.r_pitch_vel)
         data.head_pitch_vel = self.scale(data.head_pitch_vel, self.r_head_pitch_vel)
-        data.head_yaw_vel = self.scale(data.head_yaw_vel, self.r_head_yaw_vel)
+        data.head_roll_vel = self.scale(data.head_roll_vel, self.r_head_roll_vel)
         return data
 
     def scale(self, val, range):

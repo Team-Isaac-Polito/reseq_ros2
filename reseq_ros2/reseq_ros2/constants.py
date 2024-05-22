@@ -46,8 +46,8 @@ topics = (
     ReseQTopic("end_effector/pitch/feedback", 0x42, Direction.IN, Int32),
     ReseQTopic("end_effector/head_pitch/setpoint", 0x43, Direction.OUT, Int32),
     ReseQTopic("end_effector/head_pitch/feedback", 0x44, Direction.IN, Int32),
-    ReseQTopic("end_effector/head_yaw/setpoint", 0x45, Direction.OUT, Int32),
-    ReseQTopic("end_effector/head_yaw/feedback", 0x46, Direction.IN, Int32),
+    ReseQTopic("end_effector/head_roll/setpoint", 0x45, Direction.OUT, Int32),
+    ReseQTopic("end_effector/head_roll/feedback", 0x46, Direction.IN, Int32),
 )
 
 share_folder = get_package_share_directory("reseq_ros2")
