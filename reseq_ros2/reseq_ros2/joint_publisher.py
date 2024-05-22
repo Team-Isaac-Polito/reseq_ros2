@@ -214,15 +214,15 @@ class JointPublisher(Node):
             st = self.states_from_topic(topic)[0]
             if topic == "end_effector/pitch/feedback":
                 self.position_states[(address, st)].update(
-                    (lsb - self.arm_pitch_origin) * rc.lsb_to_rads * self.arm_pitch_gain
+                    (lsb - self.arm_pitch_origin) * rc.lsb_to_rads * self.arm_pitch_gain * (-1)
                 )
             if topic == "end_effector/head_pitch/feedback":
                 self.position_states[(address, st)].update(
-                    (lsb - self.head_pitch_origin) * rc.lsb_to_rads * (-1)
+                    (lsb - self.head_pitch_origin) * rc.lsb_to_rads
                 )
             if topic == "end_effector/head_roll/feedback":
                 self.position_states[(address, st)].update(
-                    (lsb - self.arm_pitch_origin) * rc.lsb_to_rads
+                    (lsb - self.head_roll_origin) * rc.lsb_to_rads
                 )
             
 
