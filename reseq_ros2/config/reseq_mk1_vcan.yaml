@@ -32,13 +32,13 @@ scaler_consts:
   r_head_pitch_vel:          # [LSB/s] Range of indepepndent head pitch velocity
     - -400
     - 400
-  r_head_yaw_vel:            # [LSB/s] Range of head yaw velocity
+  r_head_roll_vel:            # [LSB/s] Range of head roll velocity
     - -455
     - 455
 enea_consts:
   i_pitch: 567               # [LSB] Initial arm pitch
   i_head_pitch: 663          # [LSB] Initial head pitch
-  i_head_yaw: 512            # [LSB] Initial head yaw
+  i_head_roll: 512            # [LSB] Initial head roll
   servo_speed: 200           # [LSB] Speed of the servomotor
   r_pitch:                   # [LSB] Range of arm pitch angles
     - 200
@@ -46,7 +46,7 @@ enea_consts:
   r_head_pitch:              # [LSB] Range of head pitch angles
     - 0
     - 800 
-  r_head_yaw:                # [LSB] Range of head yaw angles
+  r_head_roll:                # [LSB] Range of head roll angles
     - 0
     - 1023
   pitch_conv:  0.75          # [ ] Conversion of pitch increase to head pitch increase

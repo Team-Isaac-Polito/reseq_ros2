@@ -8,7 +8,7 @@ from time import time
 class EE_Enum(Enum):
     PITCH = 0
     HEAD_PITCH = 1
-    HEAD_YAW = 2
+    HEAD_ROLL = 2
 
 class Enea(Node):
 
@@ -18,11 +18,11 @@ class Enea(Node):
         #Declaring parameters and getting values
         self.pitch = self.declare_parameter('pitch', 0).get_parameter_value().integer_value
         self.head_pitch = self.declare_parameter('head_pitch', 0).get_parameter_value().integer_value
-        self.head_yaw = self.declare_parameter('head_yaw', 0).get_parameter_value().integer_value
+        self.head_roll = self.declare_parameter('head_roll', 0).get_parameter_value().integer_value
         self.servo_speed = self.declare_parameter('servo_speed', 0).get_parameter_value().integer_value
         self.r_pitch = self.declare_parameter('r_pitch', [0]).get_parameter_value().integer_array_value
         self.r_head_pitch = self.declare_parameter('r_head_pitch', [0]).get_parameter_value().integer_array_value
-        self.r_head_yaw = self.declare_parameter('r_head_yaw', [0]).get_parameter_value().integer_array_value
+        self.r_head_roll = self.declare_parameter('r_head_roll', [0]).get_parameter_value().integer_array_value
         self.pitch_conv = self.declare_parameter('pitch_conv', 0.0).get_parameter_value().double_value
         self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
 
@@ -45,9 +45,9 @@ class Enea(Node):
             f"reseq/module{addr}/end_effector/head_pitch/setpoint",
             10,
         )
-        self.pubs[EE_Enum.HEAD_YAW] = self.create_publisher(
+        self.pubs[EE_Enum.HEAD_ROLL] = self.create_publisher(
             Int32,
-            f"reseq/module{addr}/end_effector/head_yaw/setpoint",
+            f"reseq/module{addr}/end_effector/head_roll/setpoint",
             10,
         )
 
@@ -66,12 +66,12 @@ class Enea(Node):
         dp = self.constrain_delta_pitch(dp)
 
         self.pitch += dp
-        self.head_yaw += (-1)*msg.head_yaw_vel*dt
+        self.head_roll += (-1)*msg.head_roll_vel*dt
         self.head_pitch += msg.head_pitch_vel*dt + self.pitch_conv*dp
 
         self.constrain()
 
-        self.get_logger().info(f"Output: pitch={self.pitch}, head_pitch={self.head_pitch}, head_yaw={self.head_yaw}")
+        self.get_logger().info(f"Output: pitch={self.pitch}, head_pitch={self.head_pitch}, head_roll={self.head_roll}")
 
         self.post()
 
@@ -82,11 +82,11 @@ class Enea(Node):
         
         self.pubs[EE_Enum.PITCH].publish(Int32(data=int(self.pitch)))
         self.pubs[EE_Enum.HEAD_PITCH].publish(Int32(data=int(self.head_pitch)))
-        self.pubs[EE_Enum.HEAD_YAW].publish(Int32(data=int(self.head_yaw)))
+        self.pubs[EE_Enum.HEAD_ROLL].publish(Int32(data=int(self.head_roll)))
 
     def constrain(self):
         """
-        Constrains the values of `pitch`, `head_pitch` and `head_yaw` to be inside
+        Constrains the values of `pitch`, `head_pitch` and `head_roll` to be inside
         of the intervals defined in the constants file `r_...`
 
         Theoretically the pitch value is already constrained by the constraints of dp
@@ -97,8 +97,8 @@ class Enea(Node):
         if self.head_pitch < self.r_head_pitch[0]: self.head_pitch = self.r_head_pitch[0]
         if self.head_pitch > self.r_head_pitch[1]: self.head_pitch = self.r_head_pitch[1]
 
-        if self.head_yaw < self.r_head_yaw[0]: self.head_yaw = self.r_head_yaw[0]
-        if self.head_yaw > self.r_head_yaw[1]: self.head_yaw = self.r_head_yaw[1]
+        if self.head_roll < self.r_head_roll[0]: self.head_roll = self.r_head_roll[0]
+        if self.head_roll > self.r_head_roll[1]: self.head_roll = self.r_head_roll[1]
 
     def constrain_delta_pitch(self, dp):
         """

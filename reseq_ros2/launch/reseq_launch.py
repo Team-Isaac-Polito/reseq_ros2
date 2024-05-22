@@ -78,7 +78,7 @@ def launch_setup(context, *args, **kwargs):
                 'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
                 'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
                 'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
-                'r_head_yaw_vel': config['scaler_consts']['r_head_yaw_vel'],
+                'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
             }]))
     nodes.append(Node(
             package='reseq_ros2',
@@ -108,11 +108,11 @@ def launch_setup(context, *args, **kwargs):
                 parameters=[{
                     'pitch': config['enea_consts']['i_pitch'],
                     'head_pitch': config['enea_consts']['i_head_pitch'],
-                    'head_yaw': config['enea_consts']['i_head_yaw'],
+                    'head_roll': config['enea_consts']['i_head_roll'],
                     'servo_speed': config['enea_consts']['servo_speed'],
                     'r_pitch': config['enea_consts']['r_pitch'],
                     'r_head_pitch': config['enea_consts']['r_head_pitch'],
-                    'r_head_yaw': config['enea_consts']['r_head_yaw'],
+                    'r_head_roll': config['enea_consts']['r_head_roll'],
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
                 }]))
