@@ -3,7 +3,7 @@
 
   <!-- This is a parametric description of reseq mK1 arm -->
 
-  <joint name="arm_mK1_joint" type="revolute">
+  <joint name="arm_pitch_1_joint" type="revolute">
     <parent link="chassis1_link"/>
     <child link="arm_mK1_link"/>
     <!-- Effort in Nm, angle in radians -->
@@ -97,7 +97,7 @@
   </link>
 
   <!-- head pitch joint-->
-  <joint name="arm_mK1_head_pitch" type="revolute">
+  <joint name="arm_head_pitch_1_joint" type="revolute">
     <parent link="arm_mK1_link"/>
     <child link="camera_holder_intermediate"/>
     <!-- Effort in Nm, angle in radians -->
@@ -111,7 +111,7 @@
   </link>
 
   <!-- head roll joint -->
-  <joint name="arm_mK1_head_roll" type="revolute">
+  <joint name="arm_head_roll_1_joint" type="revolute">
     <parent link="camera_holder_intermediate"/>
     <child link="camera_holder"/>
     <!-- Effort in Nm, angle in radians -->
