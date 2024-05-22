@@ -46,7 +46,7 @@ states = (
 
     ReseQState("end_effector/pitch/feedback", ["arm_pitch"], StateType.END_EFFECTOR_FEEDBACK),
     ReseQState("end_effector/head_pitch/feedback", ["arm_head_pitch"], StateType.END_EFFECTOR_FEEDBACK),
-    ReseQState("end_effector/head_yaw/feedback", ["arm_head_yaw"], StateType.END_EFFECTOR_FEEDBACK)
+    ReseQState("end_effector/head_roll/feedback", ["arm_head_roll"], StateType.END_EFFECTOR_FEEDBACK)
 )
 
 topics = (

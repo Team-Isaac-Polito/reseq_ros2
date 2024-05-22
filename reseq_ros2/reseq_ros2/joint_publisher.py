@@ -61,8 +61,8 @@ class JointPublisher(Node):
             .get_parameter_value()
             .integer_value
         )
-        self.head_yaw_origin = (
-            self.declare_parameter("head_yaw_origin", 0)
+        self.head_roll_origin = (
+            self.declare_parameter("head_roll_origin", 0)
             .get_parameter_value()
             .integer_value
         )
@@ -220,7 +220,7 @@ class JointPublisher(Node):
                 self.position_states[(address, st)].update(
                     (lsb - self.head_pitch_origin) * rc.lsb_to_rads * (-1)
                 )
-            if topic == "end_effector/head_yaw/feedback":
+            if topic == "end_effector/head_roll/feedback":
                 self.position_states[(address, st)].update(
                     (lsb - self.arm_pitch_origin) * rc.lsb_to_rads
                 )
