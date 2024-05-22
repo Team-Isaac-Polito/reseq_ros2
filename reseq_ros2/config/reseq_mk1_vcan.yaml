@@ -74,3 +74,11 @@ xacro:
   ForkHeight: 0.05
   JetsonHolderWidth: 0.085
   JetsonHolderLength: 0.158
+  CylinderOnJetsonLength: 0.085
+  CylinderOnJetsonRadius: 0.026
+  CylinderOnJetsonShift: 0.012
+  CylinderRealsenseLength: 0.055
+  CylinderRealsenseRadius: 0.026
+  RealsenseLength: 0.026
+  RealsenseWidth: 0.09
+  RealsenseOriginSystem: 0.0162
