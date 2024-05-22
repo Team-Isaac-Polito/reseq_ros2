@@ -46,6 +46,14 @@
   <xacro:property name="ForkHeight" value="${config['xacro']['ForkHeight']}"/>
   <xacro:property name="JetsonHolderLength" value="${config['xacro']['JetsonHolderLength']}"/>
   <xacro:property name="JetsonHolderWidth" value="${config['xacro']['JetsonHolderWidth']}"/>
+  <xacro:property name="CylinderOnJetsonLength" value="${config['xacro']['CylinderOnJetsonLength']}"/>
+  <xacro:property name="CylinderOnJetsonRadius" value="${config['xacro']['CylinderOnJetsonRadius']}"/>
+  <xacro:property name="CylinderOnJetsonShift" value="${config['xacro']['CylinderOnJetsonShift']}"/>
+  <xacro:property name="CylinderRealsenseLength" value="${config['xacro']['CylinderRealsenseLength']}"/>
+  <xacro:property name="CylinderRealsenseRadius" value="${config['xacro']['CylinderRealsenseRadius']}"/>
+  <xacro:property name="RealsenseLength" value="${config['xacro']['RealsenseLength']}"/>
+  <xacro:property name="RealsenseWidth" value="${config['xacro']['RealsenseWidth']}"/>
+  <xacro:property name="RealsenseOriginSystem" value="${config['xacro']['RealsenseOriginSystem']}"/>
 
   <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->
   <material name="ChassisColor">
