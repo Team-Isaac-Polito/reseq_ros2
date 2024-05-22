@@ -160,13 +160,13 @@
 
   <joint name="camera_joint" type="fixed">
     <parent link="camera_holder"/>
-    <child link="camera_link_copy"/>
+    <child link="camera_link"/>
     <!-- Effort in Nm, angle in radians -->
     <origin xyz ="0 ${RealsenseOriginSystem} -${RealsenseLength + 2*CylinderRealsenseRadius + RealsenseLength/2}" rpy="0 ${pi/2} 0"/>
     <axis xyz="1 0 0"/>
   </joint>
 
-  <link name="camera_link_copy">
+  <link name="camera_link">
 
   </link>
 
