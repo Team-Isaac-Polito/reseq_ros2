@@ -5,14 +5,14 @@
 
   <joint name="arm_pitch_1_joint" type="revolute">
     <parent link="chassis1_link"/>
-    <child link="arm_mK1_link"/>
+    <child link="arm_mk1_link"/>
     <!-- Effort in Nm, angle in radians -->
     <limit effort="10.0" lower="${pi*0.01}" upper="-${pi/2}" velocity="0.5"/>
     <origin xyz="${WheelBase/2} 0 0" />
     <axis xyz="0 1 0"/>
   </joint>
 
-  <link name="arm_mK1_link"> 
+  <link name="arm_mk1_link"> 
     <!-- cylinder to the right -->
     <xacro:replicate_collision>
       <visual>
@@ -98,22 +98,22 @@
 
   <!-- head pitch joint-->
   <joint name="arm_head_pitch_1_joint" type="revolute">
-    <parent link="arm_mK1_link"/>
-    <child link="camera_holder_intermediate"/>
+    <parent link="arm_mk1_link"/>
+    <child link="arm_camera_holder_intermediate"/>
     <!-- Effort in Nm, angle in radians -->
     <limit effort="10.0" lower="0" upper="-${pi}" velocity="0.5"/>
     <origin xyz ="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength + CylinderOnJetsonLength - CylinderOnJetsonRadius} -${CylinderOnJetsonShift} 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
-  <link name="camera_holder_intermediate">
+  <link name="arm_camera_holder_intermediate">
 
   </link>
 
   <!-- head roll joint -->
   <joint name="arm_head_roll_1_joint" type="revolute">
-    <parent link="camera_holder_intermediate"/>
-    <child link="camera_holder"/>
+    <parent link="arm_camera_holder_intermediate"/>
+    <child link="arm_camera_holder"/>
     <!-- Effort in Nm, angle in radians -->
     <limit effort="10.0" lower="${-5*(pi/6)}" upper="${5*(pi/6)}" velocity="0.5"/>
     <origin xyz ="0 0 0"/>
@@ -121,7 +121,7 @@
   </joint>
 
 
-  <link name="camera_holder">
+  <link name="arm_camera_holder">
 
     <!-- cylinder between realsense and rotation axis -->
     <xacro:replicate_collision>
@@ -158,8 +158,8 @@
     
   </link>
 
-  <joint name="camera_joint" type="fixed">
-    <parent link="camera_holder"/>
+  <joint name="arm_camera_joint" type="fixed">
+    <parent link="arm_camera_holder"/>
     <child link="camera_link"/>
     <!-- Effort in Nm, angle in radians -->
     <origin xyz ="0 ${RealsenseOriginSystem} -${RealsenseLength + 2*CylinderRealsenseRadius + RealsenseLength/2}" rpy="0 ${pi/2} 0"/>
