@@ -77,5 +77,6 @@ xacro:
   CylinderRealsenseLength: 0.055
   CylinderRealsenseRadius: 0.026
   RealsenseLength: 0.026
+  RealsenseHeight: 0.02
   RealsenseWidth: 0.09
   RealsenseOriginSystem: 0.0162
