@@ -9,6 +9,9 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import xacro
 
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+
 #Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
 config_path = f'{share_folder}/config'
@@ -116,6 +119,25 @@ def launch_setup(context, *args, **kwargs):
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
                 }]))
+
+    robot_controllers = PathJoinSubstitution(
+        [
+            FindPackageShare("reseq_ros2"),
+            "config",
+            "reseq_controllers.yaml",
+        ]
+    )
+
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_controllers],
+        output="both",
+        remappings=[
+            ("~/robot_description", "/robot_description"),
+        ],
+    )
+    nodes.append(control_node)
     
     xacro_file = share_folder + "/description/robot.urdf.xacro"
     robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}).toxml()
@@ -126,6 +148,28 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{'robot_description': robot_description}] # add other parameters here if required
     )
     nodes.append(robot_state_publisher_node)
+
+    joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+    )
+    nodes.append(joint_state_broadcaster_spawner)
+
+    diff_controller_spawner1 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
+    )
+    nodes.append(diff_controller_spawner1)
+
+    diff_controller_spawner2 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
+    )
+    nodes.append(diff_controller_spawner2)
+
     return nodes
     
 def generate_launch_description():
