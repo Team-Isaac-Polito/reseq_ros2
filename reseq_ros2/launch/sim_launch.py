@@ -25,7 +25,7 @@ def generate_launch_description():
                 get_package_share_directory('ros_gz_sim'), 'launch'), '/gz_sim.launch.py']),
             )
 
-    #Include the executable can spawn the robot model in the simulation
+    #Include the spawning executable
     spawn_entity = Node(package='ros_gz_sim', executable='create',
                         arguments=['-topic', 'robot_description', 
                                    '-entity', 'reseq_ros2'],
