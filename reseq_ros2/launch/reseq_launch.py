@@ -95,7 +95,8 @@ def launch_setup(context, *args, **kwargs):
                 'head_pitch_origin': config['joint_pub_consts']['head_pitch_origin'],
                 'head_roll_origin': config['joint_pub_consts']['head_roll_origin'],
                 'vel_gain': config['joint_pub_consts']['vel_gain'],
-                'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain']
+                'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
+                'b': config['agevar_consts']['b'],
             }]))
     nodes.append(Node(
             package='realsense2_camera',

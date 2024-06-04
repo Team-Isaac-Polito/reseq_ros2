@@ -3,6 +3,7 @@ from itertools import chain
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
+from geometry_msgs.msg import Twist, TwistStamped
 from std_msgs.msg import Int32, Float32
 import reseq_ros2.constants as rc
 from reseq_interfaces.msg import Motors
@@ -51,6 +52,8 @@ class JointPublisher(Node):
             .integer_value
         )
 
+        self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
+
         self.arm_pitch_origin = (
             self.declare_parameter("arm_pitch_origin", 0)
             .get_parameter_value()
@@ -79,9 +82,10 @@ class JointPublisher(Node):
             .double_value
         )
 
-        self.velocity_states = {}
+        self.wheel_velocities = []
         self.position_states = {}
 
+        self.controller_pubs = []
         self.init_state(modules, joints, end_effector)
         self.create_subs(modules, joints, end_effector)
 
@@ -99,10 +103,11 @@ class JointPublisher(Node):
         for mod in modules:
             id = mod % 16
 
-            self.velocity_states.update({
-                (mod, x): State(x + f"_{id}_joint", 0.0)
-                for x in self.states_from_type(rc.StateType.MOTOR_FEEDBACK)
-            })
+            self.controller_pubs.append(
+                self.create_publisher(TwistStamped, f"/diff_controller{id}/cmd_vel", 10)
+            )
+
+            self.wheel_velocities.append([0.0, 0.0])
 
             if mod in joints:
                 self.position_states.update({
@@ -160,13 +165,23 @@ class JointPublisher(Node):
         of `rc.sample_time` seconds
         """
 
-        velocity = JointState()
-        now = self.get_clock().now()
-        velocity.header.stamp = now.to_msg()
-        velocity.name = [x.name for x in self.velocity_states.values()]
-        velocity.velocity = [x.value for x in self.velocity_states.values()]
+        for i, vel in enumerate(self.wheel_velocities):
+            vl = vel[0]
+            vr = vel[1]
 
-        self.joint_pub.publish(velocity)
+            # compute velocity of the module given the feedback velocity of its wheels
+            w = (vr-vl)/self.b
+            r = self.b/2*((vr+vl)/(vr-vl)) if (vr != vl) else 0
+            v = (vr+vl)/2
+
+            # publish Twist to differential controller
+            t = Twist()
+            t.linear.x = v
+            t.angular.z = w
+            msg = TwistStamped()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.twist = t
+            self.controller_pubs[i].publish(msg)
 
         position = JointState()
         now = self.get_clock().now()
@@ -193,12 +208,7 @@ class JointPublisher(Node):
             l *= self.velocity_gain
             r *= self.velocity_gain
 
-
-            for st in self.states_from_topic(topic):
-                if "left" in st:
-                    self.velocity_states[(address, st)].update(l)
-                else:
-                    self.velocity_states[(address, st)].update(r)
+            self.wheel_velocities[(address % 16) - 1] = [l, r]
 
         if state_t == rc.StateType.JOINT_FEEDBACK:
             angle = msg.data
