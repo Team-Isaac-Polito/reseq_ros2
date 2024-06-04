@@ -171,6 +171,16 @@ def launch_setup(context, *args, **kwargs):
     )
     nodes.append(diff_controller_spawner2)
 
+    frf = Node(
+        package='reseq_ros2',
+        executable='fake_robot_feedback',
+        name='fake_robot_feedback',
+        parameters=[{
+            'modules': addresses,
+        }]
+    )
+    nodes.append(frf)
+
     return nodes
     
 def generate_launch_description():
@@ -178,8 +188,3 @@ def generate_launch_description():
                              OpaqueFunction(function = launch_setup)
                              ])
 
- #Node(
-        #    package='reseq_ros2',
-        #    executable='remote_test',
-        #    name='remote_test',
-        #),
