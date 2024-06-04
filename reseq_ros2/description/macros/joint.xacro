@@ -29,6 +29,13 @@
           <material name="JointColor" />
         </visual>
       </xacro:replicate_collision>
+
+      <xacro:inertial_cylinder_x mass = "${JointBMass}"
+        length = "${JointB}"
+        radius = "${JointWidth/2}">
+        <origin xyz="-${JointB/2} 0 0" rpy="0 ${pi/2} 0" />
+      </xacro:inertial_cylinder_x>  
+
     </link>
 
     <gazebo reference="joint_r_${id}_link">
@@ -67,6 +74,10 @@
           <material name="JointColor" />
         </visual>
       </xacro:replicate_collision>
+
+      <xacro:inertial_box mass="${JointAMass}" x="${JointA}" y="${EquivalentWheelDiameter-2*JointABottomClearance}" z="${JointWidth}">
+        <origin xyz="-${JointA/2} 0 0" rpy="0 0 0" />
+      </xacro:inertial_box>
 
     </link>
 

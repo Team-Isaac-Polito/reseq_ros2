@@ -44,7 +44,7 @@
         </geometry>
         <material name="ArmColor"/>
       </visual>
-    </xacro:replicate_collision>
+    </xacro:replicate_collision>   
 
     <!-- left side of the fork -->
     <xacro:replicate_collision>
@@ -55,7 +55,7 @@
         </geometry>
         <material name="ArmColor"/>
       </visual>
-    </xacro:replicate_collision>
+    </xacro:replicate_collision>       
 
     <!-- front side of the fork -->
     <xacro:replicate_collision>
@@ -66,7 +66,7 @@
         </geometry>
         <material name="ArmColor"/>
       </visual>
-    </xacro:replicate_collision>
+    </xacro:replicate_collision>  
 
     <!-- Jetson holder -->
     <xacro:replicate_collision>
@@ -79,6 +79,10 @@
       </visual>
     </xacro:replicate_collision>
 
+    <xacro:inertial_box mass="${0.5}" x="${JetsonHolderLength}" z="${ForkHeight}" y="${JetsonHolderWidth}">
+      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" rpy="0 0 0"/>
+    </xacro:inertial_box>
+
     <!-- cylinder on the jetson holder-->
     <xacro:replicate_collision>
       <visual>
@@ -90,11 +94,11 @@
       </visual>
     </xacro:replicate_collision>
 
-    <xacro:inertial_box mass="${0.5}" x="${JetsonHolderLength}" y="${ForkHeight}" z="${JetsonHolderWidth}">
-      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" rpy="0 0 0"/>
-    </xacro:inertial_box>
-
   </link>
+
+  <gazebo reference="arm_mk1_link">
+    <material>Gazebo/Grey</material>
+  </gazebo>
 
   <!-- head pitch joint-->
   <joint name="arm_head_pitch_1_joint" type="revolute">
@@ -136,7 +140,7 @@
         </geometry>
         <material name="ArmColor"/>
       </visual>
-    </xacro:replicate_collision>
+    </xacro:replicate_collision>   
   
     <!-- sphere -->
     <xacro:replicate_collision>
@@ -159,6 +163,10 @@
         <material name="ArmColor"/>
       </visual>
     </xacro:replicate_collision>
+
+    <xacro:inertial_box mass="0.5" x="${RealsenseLength}" y="${RealsenseWidth}" z="${RealsenseHeight}">
+      <origin xyz ="0 0 -${CylinderRealsenseLength + RealsenseLength/2}" rpy="0 ${pi/2} 0"/>
+    </xacro:inertial_box>       
     
   </link>
 
@@ -182,5 +190,5 @@
   <gazebo reference="camera_link">
     <material>Gazebo/Grey</material>
   </gazebo>
-
+  
 </robot>
