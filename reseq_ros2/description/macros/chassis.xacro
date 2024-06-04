@@ -29,6 +29,10 @@
       </xacro:inertial_box>
     </link>
 
+    <gazebo reference="chassis${id}_link">
+      <material>Gazebo/White</material>
+    </gazebo>
+
     <!-- Wheels -->
     <xacro:wheel_factory id="${id}" pos="front" side="left" />
     <xacro:wheel_factory id="${id}" pos="front" side="right" />

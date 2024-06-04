@@ -31,6 +31,10 @@
       </xacro:replicate_collision>
     </link>
 
+    <gazebo reference="joint_r_${id}_link">
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
     <!-- JointY -->
     <joint name="joint_y_${id}_joint" type="revolute">
       <parent link="joint_r_${id}_link" />
@@ -65,6 +69,12 @@
       </xacro:replicate_collision>
 
     </link>
+
+    <gazebo reference="joint_y_${id}_link">
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+
     <!-- JointP -->
     <joint name="joint_p_${id}_joint" type="revolute">
       <parent link="joint_y_${id}_link" />
@@ -87,6 +97,10 @@
         </visual>
       </xacro:replicate_collision>
     </link>
+
+    <gazebo reference="joint_p_${id}_link">
+      <material>Gazebo/Grey</material>
+    </gazebo>
 
     <joint name="chassis${id}_joint" type="fixed">
       <parent link="joint_p_${id}_link" />

@@ -110,6 +110,10 @@
 
   </link>
 
+  <gazebo reference="arm_camera_holder_intermediate">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
   <!-- head roll joint -->
   <joint name="arm_head_roll_1_joint" type="revolute">
     <parent link="arm_camera_holder_intermediate"/>
@@ -158,6 +162,11 @@
     
   </link>
 
+  <gazebo reference="arm_camera_holder">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+
   <joint name="arm_camera_joint" type="fixed">
     <parent link="arm_camera_holder"/>
     <child link="camera_link"/>
@@ -170,7 +179,7 @@
 
   </link>
 
-  <gazebo reference="arm_mK1_link">
+  <gazebo reference="camera_link">
     <material>Gazebo/Grey</material>
   </gazebo>
 
