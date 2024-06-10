@@ -9,8 +9,6 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import xacro
 
-from launch.substitutions import PathJoinSubstitution
-from launch_ros.substitutions import FindPackageShare
 
 #Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
@@ -121,14 +119,7 @@ def launch_setup(context, *args, **kwargs):
                     'end_effector': endEffector
                 }]))
 
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare("reseq_ros2"),
-            "config",
-            "reseq_controllers.yaml",
-        ]
-    )
-
+    robot_controllers = f"{config_path}/reseq_controllers.yaml"
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
