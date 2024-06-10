@@ -164,7 +164,7 @@ class JointPublisher(Node):
         Creates and publishes the `JointState` messages, based on a timer
         of `rc.sample_time` seconds
         """
-
+        # Send wheel velocities for each module
         for i, vel in enumerate(self.wheel_velocities):
             vl = vel[0]
             vr = vel[1]
