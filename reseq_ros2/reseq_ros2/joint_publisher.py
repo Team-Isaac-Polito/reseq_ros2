@@ -171,7 +171,6 @@ class JointPublisher(Node):
 
             # compute velocity of the module given the feedback velocity of its wheels
             w = (vr-vl)/self.b
-            r = self.b/2*((vr+vl)/(vr-vl)) if (vr != vl) else 0
             v = (vr+vl)/2
 
             # publish Twist to differential controller
