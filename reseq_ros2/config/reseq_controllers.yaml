@@ -35,7 +35,7 @@ diff_controller2:
 
     odom_frame_id: odom
     base_frame_id: base_link
-
+    # TODO: Obtained from YAML
     wheel_separation: 0.13
     wheel_radius: 0.06
     wheels_per_side: 2
