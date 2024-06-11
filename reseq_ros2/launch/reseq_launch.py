@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.actions import OpaqueFunction
 from launch_ros.parameter_descriptions import ParameterFile
@@ -46,8 +46,8 @@ def launch_setup(context, *args, **kwargs):
     addresses = get_addresses(config)
     joints = get_joints(config)
     endEffector = get_end_effector(config)
-    nodes = []
-    nodes.append(Node(
+    launch_config = []
+    launch_config.append(Node(
             package='reseq_ros2',
             executable='communication',
             name='communication',
@@ -57,7 +57,7 @@ def launch_setup(context, *args, **kwargs):
                 'joints': joints,
                 'end_effector': endEffector
             }]))
-    nodes.append(Node(
+    launch_config.append(Node(
             package='reseq_ros2',
             executable='agevar',
             name='agevar',
@@ -70,7 +70,7 @@ def launch_setup(context, *args, **kwargs):
                 'joints': joints,
                 'end_effector': endEffector
             }]))
-    nodes.append(Node(
+    launch_config.append(Node(
             package='reseq_ros2',
             executable='scaler',
             name='scaler',
@@ -81,7 +81,7 @@ def launch_setup(context, *args, **kwargs):
                 'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
                 'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
             }]))
-    nodes.append(Node(
+    launch_config.append(Node(
             package='reseq_ros2',
             executable='joint_publisher',
             name='joint_publisher',
@@ -96,14 +96,14 @@ def launch_setup(context, *args, **kwargs):
                 'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
                 'b': config['agevar_consts']['b'],
             }]))
-    nodes.append(Node(
+    launch_config.append(Node(
             package='realsense2_camera',
             executable='realsense2_camera_node',
             name='realsense2_camera_node',
             namespace="realsense",
             parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
     if config['version'] == 'mk1':
-        nodes.append(Node(
+        launch_config.append(Node(
                 package='reseq_ros2',
                 executable='enea',
                 name='enea',
@@ -118,7 +118,6 @@ def launch_setup(context, *args, **kwargs):
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
                 }]))
-
     robot_controllers = f"{config_path}/reseq_controllers.yaml"
     control_node = Node(
         package="controller_manager",
@@ -129,7 +128,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/robot_description", "/robot_description"),
         ],
     )
-    nodes.append(control_node)
+    launch_config.append(control_node)
     
     xacro_file = share_folder + "/description/robot.urdf.xacro"
     robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}).toxml()
@@ -139,28 +138,28 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
         parameters=[{'robot_description': robot_description}] # add other parameters here if required
     )
-    nodes.append(robot_state_publisher_node)
+    launch_config.append(robot_state_publisher_node)
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
-    nodes.append(joint_state_broadcaster_spawner)
+    launch_config.append(joint_state_broadcaster_spawner)
 
     diff_controller_spawner1 = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
     )
-    nodes.append(diff_controller_spawner1)
+    launch_config.append(diff_controller_spawner1)
 
     diff_controller_spawner2 = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
     )
-    nodes.append(diff_controller_spawner2)
+    launch_config.append(diff_controller_spawner2)
 
     frf = Node(
         package='reseq_ros2',
@@ -170,9 +169,12 @@ def launch_setup(context, *args, **kwargs):
             'modules': addresses,
         }]
     )
-    nodes.append(frf)
+    launch_config.append(frf)
 
-    return nodes
+    launch_config.append(IncludeLaunchDescription(
+        f"{get_package_share_directory('rplidar_ros')}/launch/rplidar_a2m8_launch.py"
+    ))
+    return launch_config
     
 def generate_launch_description():
     return LaunchDescription([DeclareLaunchArgument('config_file', default_value = default_filename), 
