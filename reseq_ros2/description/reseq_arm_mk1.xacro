@@ -82,7 +82,7 @@
     <!-- cylinder on the jetson holder-->
     <xacro:replicate_collision>
       <visual>
-        <origin xyz ="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength + CylinderOnJetsonLength/2} -${CylinderOnJetsonShift} 0" rpy="0 ${pi/2} 0"/>
+        <origin xyz ="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength + CylinderOnJetsonLength/2} 0 ${CylinderOnJetsonShift}" rpy="0 ${pi/2} 0"/>
         <geometry>
           <cylinder radius="${CylinderOnJetsonRadius}" length="${CylinderOnJetsonLength}"/>
         </geometry>
@@ -102,7 +102,7 @@
     <child link="arm_camera_holder_intermediate"/>
     <!-- Effort in Nm, angle in radians -->
     <limit effort="10.0" lower="0" upper="-${pi}" velocity="0.5"/>
-    <origin xyz ="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength + CylinderOnJetsonLength - CylinderOnJetsonRadius} -${CylinderOnJetsonShift} 0"/>
+    <origin xyz ="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength + CylinderOnJetsonLength} 0 ${CylinderOnJetsonShift}"/>
     <axis xyz="0 1 0"/>
   </joint>
 
@@ -126,7 +126,7 @@
     <!-- cylinder between realsense and rotation axis -->
     <xacro:replicate_collision>
       <visual>
-        <origin xyz ="0 0 -${CylinderRealsenseRadius + CylinderRealsenseLength/2}" rpy="0 0 0"/>
+        <origin xyz ="0 0 -${CylinderRealsenseLength/2}" rpy="0 0 0"/>
         <geometry>
           <cylinder radius="${CylinderRealsenseRadius}" length="${CylinderRealsenseLength}"/>
         </geometry>
@@ -139,7 +139,7 @@
       <visual>
         <origin xyz ="0 0 0" rpy="${pi/2} ${pi} ${pi}"/>
         <geometry> 
-          <sphere radius="0.037"/>  <!-- this value? -->
+          <sphere radius="${CylinderRealsenseRadius}"/> 
         </geometry>
         <material name="ArmColor"/>
       </visual>
@@ -148,9 +148,9 @@
     <!-- realsense holder -->
     <xacro:replicate_collision>
       <visual>
-        <origin xyz ="0 0 -${RealsenseLength + 2*CylinderRealsenseRadius + RealsenseLength/2}" rpy="0 ${pi/2} 0"/>
+        <origin xyz ="0 0 -${CylinderRealsenseLength + RealsenseLength/2}" rpy="0 ${pi/2} 0"/>
         <geometry>
-          <box size="${RealsenseLength} ${RealsenseWidth} ${2*CylinderRealsenseRadius}"/>
+          <box size="${RealsenseLength} ${RealsenseWidth} ${RealsenseHeight}"/>
         </geometry>
         <material name="ArmColor"/>
       </visual>
@@ -162,7 +162,7 @@
     <parent link="arm_camera_holder"/>
     <child link="camera_link"/>
     <!-- Effort in Nm, angle in radians -->
-    <origin xyz ="0 ${RealsenseOriginSystem} -${RealsenseLength + 2*CylinderRealsenseRadius + RealsenseLength/2}" rpy="0 ${pi/2} 0"/>
+    <origin xyz ="0 ${RealsenseOriginSystem} -${CylinderRealsenseLength}" rpy="0 ${pi/2} 0"/>
     <axis xyz="1 0 0"/>
   </joint>
 

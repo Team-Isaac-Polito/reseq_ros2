@@ -53,6 +53,7 @@
   <xacro:property name="CylinderRealsenseRadius" value="${config['xacro']['CylinderRealsenseRadius']}"/>
   <xacro:property name="RealsenseLength" value="${config['xacro']['RealsenseLength']}"/>
   <xacro:property name="RealsenseWidth" value="${config['xacro']['RealsenseWidth']}"/>
+  <xacro:property name="RealsenseHeight" value="${config['xacro']['RealsenseHeight']}"/>
   <xacro:property name="RealsenseOriginSystem" value="${config['xacro']['RealsenseOriginSystem']}"/>
 
   <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->

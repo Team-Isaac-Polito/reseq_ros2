@@ -29,7 +29,9 @@ setup(
             'agevar = reseq_ros2.agevar:main',
             'remote_test = reseq_ros2.remote_test:main',
             'enea = reseq_ros2.enea:main',
-            'scaler = reseq_ros2.scaler:main'
+            'scaler = reseq_ros2.scaler:main',
+            'joint_publisher = reseq_ros2.joint_publisher:main',
+            'fake_robot_feedback = reseq_ros2.fake_robot_feedback:main',
         ],
     },
 )

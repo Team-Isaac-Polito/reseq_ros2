@@ -50,6 +50,12 @@ enea_consts:
     - 0
     - 1023
   pitch_conv:  0.75          # [ ] Conversion of pitch increase to head pitch increase
+joint_pub_consts:
+  arm_pitch_origin: 200      # [LSB] Origin for arm pitch joint (horizontal)
+  head_pitch_origin: 800     # [LSB] Origin for head pitch joint (facing downwards)
+  head_roll_origin: 512       # [LSB] Origin for head roll joint (center)
+  arm_pitch_gain: 0.50943    # [ ] Ratio arm pitch rotations over motor rotations
+  vel_gain: 0.52522          # [ ] Ratio wheel rotations over motor rotations
 xacro:
   WheelBase: 0.137
   ModuleWidth: 0.27
