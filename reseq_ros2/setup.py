@@ -10,6 +10,8 @@ setup(
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
         (f'share/{package_name}/config', glob('config/*.yaml')),
+        (f'share/{package_name}/description', glob('description/*.xacro')),
+        (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
@@ -27,7 +29,9 @@ setup(
             'agevar = reseq_ros2.agevar:main',
             'remote_test = reseq_ros2.remote_test:main',
             'enea = reseq_ros2.enea:main',
-            'scaler = reseq_ros2.scaler:main'
+            'scaler = reseq_ros2.scaler:main',
+            'joint_publisher = reseq_ros2.joint_publisher:main',
+            'fake_robot_feedback = reseq_ros2.fake_robot_feedback:main',
         ],
     },
 )

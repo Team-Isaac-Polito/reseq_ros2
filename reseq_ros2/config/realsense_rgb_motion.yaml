@@ -1,11 +1,11 @@
-camera_namespace: reseq
-camera_name: realsense
+realsense: 
+  realsense2_camera_node: 
+    ros__parameters:
+      enable_color: true
+      enable_depth: false
+      enable_infra1: false
+      enable_infra2: false
+      enable_gyro: true
+      enable_accel: true
 
-enable_color: true
-elable_depth: false
-enable_infra1: false
-enable_infra2: false
-enable_gyro: true
-enable_accel: true
-
-rgb_camera.profile: 960x540x30
+      rgb_camera.profile: 960x540x30

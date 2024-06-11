@@ -15,6 +15,11 @@ class Direction(Enum):
     IN = 0
     OUT = 1
 
+class StateType(Enum):
+    MOTOR_FEEDBACK = 0
+    JOINT_FEEDBACK = 1
+    END_EFFECTOR_FEEDBACK = 2
+
 class ReseQTopic(NamedTuple):
     """
     Data structure for the translation of ROS topics to CAN packets.
@@ -23,6 +28,26 @@ class ReseQTopic(NamedTuple):
     can_id: int
     direction: Direction
     data_type: type
+
+class ReseQState(NamedTuple):
+    """
+    Data structure for JointState operations
+    """
+    topic: str
+    states: list[str]
+    state_type: StateType
+
+states = (
+    ReseQState("motor/feedback", ["left_front_wheel", "left_back_wheel", "right_front_wheel", "right_back_wheel"], StateType.MOTOR_FEEDBACK),
+    
+    ReseQState("joint/yaw/feedback", ["joint_y"], StateType.JOINT_FEEDBACK),
+    ReseQState("joint/pitch/feedback", ["joint_p"], StateType.JOINT_FEEDBACK),
+    ReseQState("joint/roll/feedback", ["joint_r"], StateType.JOINT_FEEDBACK),
+
+    ReseQState("end_effector/pitch/feedback", ["arm_pitch"], StateType.END_EFFECTOR_FEEDBACK),
+    ReseQState("end_effector/head_pitch/feedback", ["arm_head_pitch"], StateType.END_EFFECTOR_FEEDBACK),
+    ReseQState("end_effector/head_roll/feedback", ["arm_head_roll"], StateType.END_EFFECTOR_FEEDBACK)
+)
 
 topics = (
     ReseQTopic("battery/percent", 0x11, Direction.IN, Float32),
@@ -46,11 +71,15 @@ topics = (
     ReseQTopic("end_effector/pitch/feedback", 0x42, Direction.IN, Int32),
     ReseQTopic("end_effector/head_pitch/setpoint", 0x43, Direction.OUT, Int32),
     ReseQTopic("end_effector/head_pitch/feedback", 0x44, Direction.IN, Int32),
-    ReseQTopic("end_effector/head_yaw/setpoint", 0x45, Direction.OUT, Int32),
-    ReseQTopic("end_effector/head_yaw/feedback", 0x46, Direction.IN, Int32),
+    ReseQTopic("end_effector/head_roll/setpoint", 0x45, Direction.OUT, Int32),
+    ReseQTopic("end_effector/head_roll/feedback", 0x46, Direction.IN, Int32),
 )
 
 share_folder = get_package_share_directory("reseq_ros2")
 
 rpm2rads = 2*pi/60
 rads2rpm = 60/(2*pi)
+
+sample_time: Final = 0.08
+
+lsb_to_rads: Final = 5.1183e-3 # [rad/LSB] Conversion from Dynamixel position LSB to radians
