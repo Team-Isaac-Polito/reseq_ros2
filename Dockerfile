@@ -5,7 +5,7 @@
 # docker build . --tag reseq
 
 # At the moment an amd64 alternative with CUDA and ROS2 is yet to be chosen
-ARG BASE_IMAGE=dustynv/ros:humble-ros-base-l4t-r35.1.0
+ARG BASE_IMAGE=dustynv/ros:humble-ros-base-l4t-r35.4.1
 
 FROM ${BASE_IMAGE} AS reseq-base
 
