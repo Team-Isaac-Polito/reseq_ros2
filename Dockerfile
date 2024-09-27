@@ -123,7 +123,16 @@ RUN source /ros_entrypoint.sh && \
     rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" -t exec -t buildtool -t buildtool_export -t exec -t build -t build_export  && \
     colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     sed -i "\$i ros_source_env /ros2-control/install/local_setup.bash \n" /ros_entrypoint.sh
-
+RUN source /ros_entrypoint.sh && \
+    mkdir -p /rplidar/src && \
+    cd /rplidar && \
+    rosinstall_generator --rosdistro ${ROS_DISTRO} \
+        rplidar_ros \
+        > rplidar.rosinstall && \
+    vcs import src < rplidar.rosinstall && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" -t exec -t buildtool -t buildtool_export -t exec -t build -t build_export  && \
+    colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+    sed -i "\$i ros_source_env /rplidar/install/local_setup.bash \n" /ros_entrypoint.sh
 
 RUN pip install python-can
 
