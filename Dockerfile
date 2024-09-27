@@ -102,6 +102,27 @@ RUN source /ros_entrypoint.sh && \
     rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" && \
     colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     sed -i "\$i ros_source_env /image-transport-plugins/install/local_setup.bash \n" /ros_entrypoint.sh
+RUN source /ros_entrypoint.sh && \
+    mkdir -p /ros2-control/src && \
+    cd /ros2-control && \
+    rosinstall_generator --rosdistro ${ROS_DISTRO} \
+        ros2_control \
+	transmission_interface \
+        hardware_interface \
+        ros2controlcli \
+        controller_manager_msgs \
+        control_msgs \
+        controller_manager \
+        ros2_control_test_assets \
+        joint_limits \
+        realtime_tools \
+	controller_interface \
+        backward_ros \
+        > ros2-control.rosinstall && \
+    vcs import src < ros2-control.rosinstall && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" -t exec -t buildtool -t buildtool_export -t exec -t build -t build_export  && \
+    colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+    sed -i "\$i ros_source_env /ros2-control/install/local_setup.bash \n" /ros_entrypoint.sh
 
 
 RUN pip install python-can
@@ -114,7 +135,7 @@ COPY reseq_interfaces src/reseq_interfaces
 COPY reseq_ros2 src/reseq_ros2
 
 RUN source /ros_entrypoint.sh && \
-    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y -t exec && \
     colcon build && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh
 
