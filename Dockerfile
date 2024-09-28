@@ -102,12 +102,14 @@ RUN source /ros_entrypoint.sh && \
     rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" && \
     colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     sed -i "\$i ros_source_env /image-transport-plugins/install/local_setup.bash \n" /ros_entrypoint.sh
-RUN source /ros_entrypoint.sh && \
+
+# Compile ros2_control stack
+    RUN source /ros_entrypoint.sh && \
     mkdir -p /ros2-control/src && \
     cd /ros2-control && \
     rosinstall_generator --rosdistro ${ROS_DISTRO} \
         ros2_control \
-	transmission_interface \
+        transmission_interface \
         hardware_interface \
         ros2controlcli \
         controller_manager_msgs \
@@ -116,13 +118,16 @@ RUN source /ros_entrypoint.sh && \
         ros2_control_test_assets \
         joint_limits \
         realtime_tools \
-	controller_interface \
+        controller_interface \
         backward_ros \
         > ros2-control.rosinstall && \
     vcs import src < ros2-control.rosinstall && \
-    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" -t exec -t buildtool -t buildtool_export -t exec -t build -t build_export  && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" \
+        -t exec -t buildtool -t buildtool_export -t build -t build_export  && \
     colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     sed -i "\$i ros_source_env /ros2-control/install/local_setup.bash \n" /ros_entrypoint.sh
+
+# Compile lidar ros drivers (rplidar_ros)
 RUN source /ros_entrypoint.sh && \
     mkdir -p /rplidar/src && \
     cd /rplidar && \
@@ -130,7 +135,8 @@ RUN source /ros_entrypoint.sh && \
         rplidar_ros \
         > rplidar.rosinstall && \
     vcs import src < rplidar.rosinstall && \
-    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" -t exec -t buildtool -t buildtool_export -t exec -t build -t build_export  && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" \
+        -t exec -t buildtool -t buildtool_export -t build -t build_export  && \
     colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     sed -i "\$i ros_source_env /rplidar/install/local_setup.bash \n" /ros_entrypoint.sh
 
@@ -148,4 +154,4 @@ RUN source /ros_entrypoint.sh && \
     colcon build && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh
 
-CMD /bin/bash -c "source /ros_entrypoint.sh && ros2 launch reseq_ros2 reseq_launch.py"
+CMD /bin/bash -c "ros2 launch reseq_ros2 reseq_launch.py"
