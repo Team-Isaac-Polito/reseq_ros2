@@ -27,8 +27,7 @@ def solve_dep(pkg):
         #run command
         process = subprocess.Popen(cmd, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, executable="/bin/bash")
         stdout, stderr = process.communicate()
-        #print(stdout.strip())
-        #print(stderr.strip())
+        print(stdout.strip())
         found = False
         if process.returncode != 0:
             #find the dependency un the error by regular expressions
@@ -45,21 +44,21 @@ def solve_dep(pkg):
                         dep = match2.group(1)
                     deps += f"""\
                                 {dep}"""
-                    if (match1 or match2 ):
-                        cmd = f"""source /ros_entrypoint.sh && \
-                                mkdir -p /{pkg_dir}/src && \
-                                cd /{pkg_dir} && \
-                                rosinstall_generator --rosdistro ${{ROS_DISTRO}} \
-                                    {deps} \
-                                > {pkg_dir}.rosinstall && \
-                                vcs import src < {pkg_dir}.rosinstall && \
-                                rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" && \
-                                colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
-                                sed -i "\$i ros_source_env /{pkg_dir}/install/local_setup.bash \n" /ros_entrypoint.sh"""
-                        print(f"Dependency added: {dep}")
-                        deps_set.add(dep)
+                    cmd = f"""source /ros_entrypoint.sh && \
+                            mkdir -p /{pkg_dir}/src && \
+                            cd /{pkg_dir} && \
+                            rosinstall_generator --rosdistro ${{ROS_DISTRO}} \
+                                {deps} \
+                            > {pkg_dir}.rosinstall && \
+                            vcs import src < {pkg_dir}.rosinstall && \
+                            rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" && \
+                            colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+                            sed -i "\$i ros_source_env /{pkg_dir}/install/local_setup.bash \n" /ros_entrypoint.sh"""
+                    print(f"Dependency added: {dep}")
+                    deps_set.add(dep)
             if (not found):
                 #error unrelated to missing depedendencies
+                #print(stderr.strip())
                 missing_deps = False   
         else:
             missing_deps = False
