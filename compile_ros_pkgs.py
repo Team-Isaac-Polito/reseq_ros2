@@ -3,6 +3,8 @@ import re
 import sys
 import subprocess
            
+#python script that automatically find the ros packages'dependencies and install them
+
 def solve_dep(pkg):
     #create package directory name
     if '_' in pkg:
@@ -30,7 +32,7 @@ def solve_dep(pkg):
         print(stdout.strip())
         found = False
         if process.returncode != 0:
-            #find the dependency un the error by regular expressions
+            #find the dependency in the error using regular expressions
             dep_re1 = re.compile(f"No definition of \[([^\"]+)\] for OS version")
             dep_re2 = re.compile(f"Cannot locate rosdep definition for \[([^\"]+)\]")
             for line in stderr.splitlines():
