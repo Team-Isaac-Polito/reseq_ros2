@@ -29,7 +29,7 @@ def solve_dep(pkg):
         #run command
         process = subprocess.Popen(cmd, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, executable="/bin/bash")
         stdout, stderr = process.communicate()
-        print(stdout.strip())
+        print(stdout.strip(), flush=True)
         found = False
         if process.returncode != 0:
             #find the dependency in the error using regular expressions
@@ -56,7 +56,7 @@ def solve_dep(pkg):
                             rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" && \
                             colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
                             sed -i "\$i ros_source_env /{pkg_dir}/install/local_setup.bash \n" /ros_entrypoint.sh"""
-                    print(f"Dependency added: {dep}")
+                    print(f"Dependency added: {dep}", flush=True)
                     deps_set.add(dep)
             if (not found):
                 #error unrelated to missing depedendencies
