@@ -5,14 +5,14 @@ import subprocess
            
 #python script that automatically find the ros packages'dependencies and install them
 
-def solve_dep(pkg):
+def solve_dep(pkgs):
     #create package directory name
-    if '_' in pkg:
-        pkg_dir = pkg.split('_')
+    if '_' in pkgs[0]:
+        pkg_dir = pkgs[0].split('_')
         pkg_dir = '-'.join(pkg_dir)
     else:
-        pkg_dir = pkg
-    deps = f"{pkg}"
+        pkg_dir = pkgs[0]
+    deps = " \\ \n ".join(pkgs)
     cmd = f"""source /ros_entrypoint.sh && \
             mkdir -p /{pkg_dir}/src && \
             cd /{pkg_dir} && \
@@ -67,8 +67,7 @@ def solve_dep(pkg):
 
 def main():
     #ros packages passed by command line
-    for i in range(1, len(sys.argv)):
-        solve_dep(sys.argv[i])
+    solve_dep(sys.argv[1:])
 
 if __name__ == "__main__":
     main()
