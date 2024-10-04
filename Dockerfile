@@ -72,28 +72,12 @@ RUN apt update && apt install python3-rosdep -y
 
 ENV SKIP_KEYS "libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-opencv python3-opencv librealsense2"
 
-# Compile realsense-ros
-RUN source /ros_entrypoint.sh && \
-    mkdir -p /realsense-ros/src && \
-    cd /realsense-ros && \
-    rosinstall_generator --rosdistro ${ROS_DISTRO} \
-        xacro \
-        diagnostic_updater \
-        sensor_msgs_py \
-        launch_pytest \
-        realsense2_camera \
-        realsense2_camera_msgs \
-        realsense2_description \
-        > realsense.rosinstall && \
-    vcs import src < realsense.rosinstall && \
-    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys="$SKIP_KEYS" -y && \
-    colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
-    sed -i "\$i ros_source_env /realsense-ros/install/local_setup.bash \n" /ros_entrypoint.sh
-
-# Compile automatically other packages
+# Compile automatically dependency packages
 ADD compile_ros_pkgs.py /
-RUN python3 compile_ros_pkgs.py image_transport_plugins rplidar_ros ros2_control \
-    diff_drive_controller joint_state_broadcaster rviz2 ros2_controllers
+RUN python3 compile_ros_pkgs.py image_transport_plugins
+RUN python3 compile_ros_pkgs.py rplidar_ros 
+RUN python3 compile_ros_pkgs.py ros2_control diff_drive_controller joint_state_broadcaster 
+RUN python3 compile_ros_pkgs.py realsense2_camera
 
 RUN pip install python-can
 
