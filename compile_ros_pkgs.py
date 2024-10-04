@@ -12,7 +12,7 @@ def solve_dep(pkgs):
         pkg_dir = '-'.join(pkg_dir)
     else:
         pkg_dir = pkgs[0]
-    deps = " \\ \n ".join(pkgs)
+    deps = " ".join(pkgs)
     cmd = f"""source /ros_entrypoint.sh && \
             mkdir -p /{pkg_dir}/src && \
             cd /{pkg_dir} && \
@@ -44,8 +44,7 @@ def solve_dep(pkgs):
                         dep = match1.group(1)
                     elif match2:
                         dep = match2.group(1)
-                    deps += f"""\
-                                {dep}"""
+                    deps += f" {dep}"
                     cmd = f"""source /ros_entrypoint.sh && \
                             mkdir -p /{pkg_dir}/src && \
                             cd /{pkg_dir} && \
@@ -60,7 +59,7 @@ def solve_dep(pkgs):
                     deps_set.add(dep)
             if (not found):
                 #error unrelated to missing depedendencies
-                #print(stderr.strip())
+                print(stderr.strip(), flush=True)
                 missing_deps = False   
                 exit(1)
         else:
