@@ -78,7 +78,7 @@ RUN python3 compile_ros_pkgs.py image_transport_plugins
 RUN python3 compile_ros_pkgs.py rplidar_ros 
 RUN python3 compile_ros_pkgs.py ros2_control diff_drive_controller joint_state_broadcaster 
 RUN python3 compile_ros_pkgs.py realsense2_camera
-
+RUN python3 compile_ros_pkgs.py xacro
 RUN pip install python-can
 
 FROM reseq-base AS reseq
