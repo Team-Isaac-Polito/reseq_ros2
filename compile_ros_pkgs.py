@@ -62,6 +62,7 @@ def solve_dep(pkgs):
                 #error unrelated to missing depedendencies
                 #print(stderr.strip())
                 missing_deps = False   
+                exit(1)
         else:
             missing_deps = False
 
