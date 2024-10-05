@@ -1,3 +1,4 @@
+from __future__ import annotations # compatibility with Python 3.8
 from math import pi
 from itertools import chain
 import rclpy

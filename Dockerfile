@@ -93,4 +93,4 @@ RUN source /ros_entrypoint.sh && \
     colcon build && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh
 
-CMD /bin/bash -c "source /ros_entrypoint.sh && ros2 launch reseq_ros2 reseq_launch.py"
+CMD /bin/bash -c "ros2 launch reseq_ros2 reseq_launch.py"
