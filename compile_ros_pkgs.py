@@ -6,6 +6,28 @@ import subprocess
 #python script that automatically find the ros packages'dependencies and install them
 
 def solve_dep(pkgs):
+    """
+    Resolves dependencies for a given list of ROS packages and builds them using colcon.
+
+    Args:
+        pkgs (list): A list of ROS package names.
+
+    The function performs the following steps:
+    1. Creates a directory name based on the first package name.
+    2. Constructs a command to source the ROS entry point, create necessary directories, 
+       generate a .rosinstall file, import the packages, install dependencies, and build the packages.
+    3. Executes the command in a subprocess.
+    4. If the command fails due to missing dependencies, it extracts the missing dependency from the error message,
+       adds it to the list of dependencies, and retries the command.
+    5. Repeats the process until all dependencies are resolved or an unrelated error occurs.
+
+    Prints:
+        - Standard output and error messages from the subprocess.
+        - Added dependencies during the resolution process.
+
+    Exits:
+        - If an unrelated error occurs during the subprocess execution.
+    """
     #create package directory name
     if '_' in pkgs[0]:
         pkg_dir = pkgs[0].split('_')
