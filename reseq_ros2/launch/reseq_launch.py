@@ -161,15 +161,15 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(diff_controller_spawner2)
 
-    frf = Node(
-        package='reseq_ros2',
-        executable='fake_robot_feedback',
-        name='fake_robot_feedback',
-        parameters=[{
-            'modules': addresses,
-        }]
-    )
-    launch_config.append(frf)
+    # frf = Node(
+    #     package='reseq_ros2',
+    #     executable='fake_robot_feedback',
+    #     name='fake_robot_feedback',
+    #     parameters=[{
+    #         'modules': addresses,
+    #     }]
+    # )
+    # launch_config.append(frf)
 
     launch_config.append(IncludeLaunchDescription(
         f"{get_package_share_directory('rplidar_ros')}/launch/rplidar_a2m8_launch.py"
