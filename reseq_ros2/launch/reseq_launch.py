@@ -81,27 +81,6 @@ def launch_setup(context, *args, **kwargs):
                 'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
                 'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
             }]))
-    launch_config.append(Node(
-            package='reseq_ros2',
-            executable='joint_publisher',
-            name='joint_publisher',
-            parameters=[{
-                'modules': addresses,
-                'joints': joints,
-                'end_effector': endEffector,
-                'arm_pitch_origin': config['joint_pub_consts']['arm_pitch_origin'],
-                'head_pitch_origin': config['joint_pub_consts']['head_pitch_origin'],
-                'head_roll_origin': config['joint_pub_consts']['head_roll_origin'],
-                'vel_gain': config['joint_pub_consts']['vel_gain'],
-                'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
-                'b': config['agevar_consts']['b'],
-            }]))
-    launch_config.append(Node(
-            package='realsense2_camera',
-            executable='realsense2_camera_node',
-            name='realsense2_camera_node',
-            namespace="realsense",
-            parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
     if config['version'] == 'mk1':
         launch_config.append(Node(
                 package='reseq_ros2',
@@ -118,62 +97,6 @@ def launch_setup(context, *args, **kwargs):
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
                 }]))
-    robot_controllers = f"{config_path}/reseq_controllers.yaml"
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_controllers],
-        output="both",
-        remappings=[
-            ("~/robot_description", "/robot_description"),
-        ],
-    )
-    launch_config.append(control_node)
-    
-    xacro_file = share_folder + "/description/robot.urdf.xacro"
-    robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}).toxml()
-    robot_state_publisher_node = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        parameters=[{'robot_description': robot_description}] # add other parameters here if required
-    )
-    launch_config.append(robot_state_publisher_node)
-
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(joint_state_broadcaster_spawner)
-
-    diff_controller_spawner1 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner1)
-
-    diff_controller_spawner2 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner2)
-
-    # frf = Node(
-    #     package='reseq_ros2',
-    #     executable='fake_robot_feedback',
-    #     name='fake_robot_feedback',
-    #     parameters=[{
-    #         'modules': addresses,
-    #     }]
-    # )
-    # launch_config.append(frf)
-
-    launch_config.append(IncludeLaunchDescription(
-        f"{get_package_share_directory('rplidar_ros')}/launch/rplidar_a2m8_launch.py"
-    ))
     return launch_config
     
 def generate_launch_description():
