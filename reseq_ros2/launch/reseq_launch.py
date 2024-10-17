@@ -7,7 +7,6 @@ import yaml
 from yaml import SafeLoader
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-import xacro
 
 
 #Default config file path
