@@ -1,7 +1,7 @@
 ---
 version: "mk1"
 canbus:
-  channel: "can1"
+  channel: "can0"
 num_modules: 2
 modules:
   - address: 0x11
