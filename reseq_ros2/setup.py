@@ -9,6 +9,7 @@ setup(
     packages=[package_name],
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
+        (f'share/{package_name}/worlds', glob('worlds/*.world')),
         (f'share/{package_name}/config', glob('config/*.yaml')),
         (f'share/{package_name}/description', glob('description/*.xacro')),
         (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),

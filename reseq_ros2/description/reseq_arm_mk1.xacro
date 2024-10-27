@@ -175,10 +175,10 @@
   </gazebo>
 
 
-  <joint name="arm_camera_joint" type="fixed">
+  <!-- <joint name="arm_camera_joint" type="fixed">
     <parent link="arm_camera_holder"/>
     <child link="camera_link"/>
-    <!-- Effort in Nm, angle in radians -->
+    Effort in Nm, angle in radians
     <origin xyz ="0 ${RealsenseOriginSystem} -${CylinderRealsenseLength}" rpy="0 ${pi/2} 0"/>
     <axis xyz="1 0 0"/>
   </joint>
@@ -190,5 +190,7 @@
   <gazebo reference="camera_link">
     <material>Gazebo/Grey</material>
   </gazebo>
+
+   -->
   
 </robot>
