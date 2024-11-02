@@ -24,19 +24,19 @@ class RemoteTest(Node):
         msg = Twist()
 
         if self.t <= T_IN:
-            print('not moving')
+            self.get_logger().debug('not moving')
             linear_vel = 0
             turn_radius = 0
         elif self.t <= T_STEP:
-            print('going straight')
+            self.get_logger().debug('going straight')
             linear_vel = 500
             turn_radius = 0
         elif self.t <= T_SIM:
-            print('turning')
+            self.get_logger().debug('turning')
             linear_vel = 500
             turn_radius = 500
         else:
-            print('stopped')
+            self.get_logger().debug('stopped')
             linear_vel = 0
             turn_radius = 0
             self.destroy_timer(self.timer)

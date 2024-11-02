@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from reseq_interfaces.msg import Remote, EndEffector
+import traceback
 
 """
 ROS node that handles scaling of the remote controller data into physical variables used
@@ -82,7 +83,7 @@ def main(args=None):
     try:
         scaler = Scaler()
     except Exception as err:
-        print("Error while starting Scaler node: " + str(err))
+        rclpy.logging.get_logger('scaler').fatal(f"Error while starting Scaler node: {str(err)}\n{traceback.format_exc()}")
         rclpy.shutdown()
     else:
         rclpy.spin(scaler)

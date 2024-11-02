@@ -5,6 +5,7 @@ import struct
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32, Int32  # deprecated?
+import traceback
 
 """ROS node that handles communication between the Jetson and each module via CAN
 
@@ -106,25 +107,25 @@ class Communication(Node):
         elif topic.data_type == Motors:
             m = Motors()
             data = struct.unpack('ff', msg.data)
-            print(data)
+            self.get_logger().debug(data)
             m.left = data[0]
             m.right = data[1]
 
         try:
             self.pubs[module_id][topic.name].publish(m)
         except TypeError as e:
-            # the type of ROS message doesn't match the publisher
-            print("TypeError", e)
+            # The type of ROS message doesn't match the publisher
+            self.get_logger().error(f'TypeError in can_callback: {str(e)}\n{traceback.format_exc()}')
         except IndexError as e:
-            print("IndexError", e)
-            print(f"{module_id} out of range 0 to {len(self.pubs)-1}")
+            self.get_logger().error(f'IndexError in can_callback: {str(e)}\n{traceback.format_exc()}')
+            self.get_logger().error(f'{module_id} out of range 0 to {len(self.pubs)-1}')
 
     # send data received from ROS to CAN
     def ros_listener_callback(self, msg, module_num, topic_name):
         topic = self.topic_from_name(topic_name)
         aid = struct.pack("bbbb", 00, topic.can_id, module_num, 0x00)
 
-        print(f"Sending {type(msg)} to module{module_num} via CAN")
+        self.get_logger().debug(f"Sending {type(msg)} to module{module_num} via CAN")
 
         if topic.data_type is Float32:
             data = struct.pack('f', msg.data)
@@ -155,7 +156,7 @@ def main(args=None):
     try:
         communication = Communication()
     except Exception as err:
-        print("Error while starting Communication node: " + str(err))
+        rclpy.logging.get_logger('communication').fatal(f"Error while starting Communication node: {str(err)}\n{traceback.format_exc()}")
         rclpy.shutdown()
     else:
         rclpy.spin(communication)

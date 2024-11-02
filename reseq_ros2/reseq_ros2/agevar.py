@@ -5,6 +5,7 @@ from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32  # deprecated?
+import traceback
 
 """ROS node with control algorithm for snake-like movement
 
@@ -129,7 +130,7 @@ def main(args=None):
     try:
         agevar = Agevar()
     except Exception as err:
-        print("Error while starting Agevar node: " + str(err))
+        rclpy.logging.get_logger('agevar').fatal(f"Error while starting Agevar node: {str(err)}\n{traceback.format_exc()}")
         rclpy.shutdown()
     else:
         rclpy.spin(agevar)

@@ -4,6 +4,7 @@ from reseq_interfaces.msg import EndEffector
 from std_msgs.msg import Int32
 from enum import Enum
 from time import time
+import traceback
 
 class EE_Enum(Enum):
     PITCH = 0
@@ -121,7 +122,7 @@ def main(args=None):
     try:
         enea = Enea()
     except Exception as err:
-        print("Error while starting Enea node: " + str(err))
+        rclpy.logging.get_logger('enea').fatal(f"Error while starting Enea node: {str(err)}\n{traceback.format_exc()}")
         rclpy.shutdown()
     else:
         rclpy.spin(enea)
