@@ -71,7 +71,7 @@ class Enea(Node):
 
         self.constrain()
 
-        self.get_logger().info(f"Output: pitch={self.pitch}, head_pitch={self.head_pitch}, head_roll={self.head_roll}")
+        self.get_logger().debug(f"Output: pitch={self.pitch}, head_pitch={self.head_pitch}, head_roll={self.head_roll}")
 
         self.post()
 

@@ -47,7 +47,7 @@ class RemoteTest(Node):
         msg.angular.z = float(turn_radius)
 
         self.publisher.publish(msg)
-        self.get_logger().info(
+        self.get_logger().debug(
             f"Linear velocity: {msg.linear.x}\t Turn radius: {msg.angular.z}")
         self.t += TS
 

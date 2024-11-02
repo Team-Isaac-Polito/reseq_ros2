@@ -92,8 +92,7 @@ class Communication(Node):
         module_id = decoded_aid[3] - 17
         topic = self.topic_from_id(decoded_aid[1])
 
-        print(f"Publishing to {topic.name} on module{module_id+17}")
-        self.get_logger().info(f"Publishing to {topic.name} on module{module_id+17}")
+        self.get_logger().debug(f"Publishing to {topic.name} on module{module_id+17}")
 
         # check if the message contains one or two floats
         if topic.data_type == Float32:

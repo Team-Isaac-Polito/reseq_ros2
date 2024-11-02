@@ -88,7 +88,7 @@ class Agevar(Node):
                 linear_vel, angular_vel = self.kinematic(
                     linear_vel, angular_vel, yaw_angle)
 
-                self.get_logger().info(
+                self.get_logger().debug(
                     f"Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}")
 
     # update yaw angle of a joint
