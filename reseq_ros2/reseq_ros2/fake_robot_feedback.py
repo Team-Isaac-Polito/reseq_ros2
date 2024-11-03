@@ -10,38 +10,49 @@ ROS node designed to test movement of the digital twin without access to the CAN
 It publishes to motor/feedback like the Communication node would do upon receiving
 feedback from the robot via CAN bus.
 """
+
 class FakeRobotFeedback(Node):
     def __init__(self):
         super().__init__("fake_robot_feedback")
-        self.time = 0
-        self.modules= self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
+        try:
+            self.time = 0
+            self.modules = self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
 
-        self.pubs = []
-        for address in self.modules:
-            self.pubs.append(self.create_publisher(
-                Motors,
-                f"/reseq/module{address}/motor/feedback",
-                10
-            ))
+            self.pubs = []
+            for address in self.modules:
+                self.pubs.append(self.create_publisher(
+                    Motors,
+                    f"/reseq/module{address}/motor/feedback",
+                    10
+                ))
 
-        self.create_timer(rc.sample_time, self.fake_callback)
+            self.create_timer(rc.sample_time, self.fake_callback)
+
+            self.get_logger().info("FakeRobotFeedback node started successfully")
+        except Exception as e:
+            self.get_logger().fatal(f'Error during initialization: {str(e)}\n{traceback.format_exc()}')
+            raise
 
     def fake_callback(self):
-        self.time += 1
-        self.time %= 150
+        try:
+            self.time += 1
+            self.time %= 150
 
-        if self.time < 50: # straight
-            l, r = 0.5, 0.5
-        elif self.time < 100: # turn left
-            l, r = 0.5, 0.4
-        else: # straight
-            l, r = 0.5, 0.5
+            if self.time < 50:  # straight
+                l, r = 0.5, 0.5
+            elif self.time < 100:  # turn left
+                l, r = 0.5, 0.4
+            else:  # straight
+                l, r = 0.5, 0.5
 
-        msg = Motors()
-        msg.left, msg.right = l, r
-        for pub in self.pubs:
-            pub.publish(msg)
+            msg = Motors()
+            msg.left, msg.right = l, r
+            for pub in self.pubs:
+                pub.publish(msg)
 
+            self.get_logger().debug(f"Published feedback: left={l}, right={r}")
+        except Exception as e:
+            self.get_logger().error(f'Error in fake_callback: {str(e)}\n{traceback.format_exc()}')
 
 def main(args=None):
     rclpy.init(args=args)
