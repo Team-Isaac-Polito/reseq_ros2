@@ -1,9 +1,10 @@
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler
 from launch.substitutions import LaunchConfiguration
-from launch.actions import OpaqueFunction
+from launch.actions import OpaqueFunction, ExecuteProcess, LogInfo
 from launch_ros.parameter_descriptions import ParameterFile
+from launch.event_handlers import OnProcessExit
 import yaml
 from yaml import SafeLoader
 from launch_ros.actions import Node
@@ -184,7 +185,26 @@ def launch_setup(context, *args, **kwargs):
     return launch_config
     
 def generate_launch_description():
-    return LaunchDescription([DeclareLaunchArgument('config_file', default_value = default_filename), 
-                             OpaqueFunction(function = launch_setup)
-                             ])
+    generate_configs = ExecuteProcess(
+        cmd=['python3', os.path.join(share_folder, 'scripts/generate_configs.py')],
+        name='generate_configs',
+        output='screen'
+    )
+
+    return LaunchDescription([
+        generate_configs,
+        # Wait for the config generation process to complete before proceeding
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=generate_configs,
+                on_exit=[LogInfo(msg="Configuration files generated."),
+                         DeclareLaunchArgument(
+                             'config_file',
+                             default_value=default_filename,
+                         ),
+                         OpaqueFunction(function=launch_setup)
+                ]
+            )
+        )
+    ])
 
