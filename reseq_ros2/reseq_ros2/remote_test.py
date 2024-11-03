@@ -51,6 +51,7 @@ class RemoteTest(Node):
             f"Linear velocity: {msg.linear.x}\t Turn radius: {msg.angular.z}")
         self.t += TS
 
+
 def main(args=None):
     rclpy.init(args=args)
     remote_test = RemoteTest()

@@ -12,9 +12,11 @@ class EE_Enum(Enum):
     HEAD_ROLL = 2
 
 class Enea(Node):
+
+
     def __init__(self):
         super().__init__("enea")
-        # Declaring parameters and getting values
+        #Declaring parameters and getting values
         self.pitch = self.declare_parameter('pitch', 0).get_parameter_value().integer_value
         self.head_pitch = self.declare_parameter('head_pitch', 0).get_parameter_value().integer_value
         self.head_roll = self.declare_parameter('head_roll', 0).get_parameter_value().integer_value
@@ -51,22 +53,22 @@ class Enea(Node):
         )
 
         self.get_logger().info("Node EnEA started successfully")
-
+        
         self.previous_time = -1
         self.post()
         self.get_logger().info("EnEA: Moving to start position")
 
-    def consume_velocities(self, msg: EndEffector):
+    def consume_velocities(self, msg: EndEffector): 
         t = time()
         dt = t - self.previous_time
         self.previous_time = t
 
-        dp = (-1) * msg.pitch_vel * dt
+        dp = (-1)*msg.pitch_vel*dt
         dp = self.constrain_delta_pitch(dp)
 
         self.pitch += dp
-        self.head_roll += (-1) * msg.head_roll_vel * dt
-        self.head_pitch += msg.head_pitch_vel * dt + self.pitch_conv * dp
+        self.head_roll += (-1)*msg.head_roll_vel*dt
+        self.head_pitch += msg.head_pitch_vel*dt + self.pitch_conv*dp
 
         self.constrain()
 
@@ -78,6 +80,7 @@ class Enea(Node):
         """
         Sends the output positions to the communication node
         """
+        
         self.pubs[EE_Enum.PITCH].publish(Int32(data=int(self.pitch)))
         self.pubs[EE_Enum.HEAD_PITCH].publish(Int32(data=int(self.head_pitch)))
         self.pubs[EE_Enum.HEAD_ROLL].publish(Int32(data=int(self.head_roll)))
@@ -107,6 +110,11 @@ class Enea(Node):
         if self.pitch + dp > self.r_pitch[1]: dp = self.r_pitch[1] - self.pitch
         if self.pitch + dp < self.r_pitch[0]: dp = self.r_pitch[0] - self.pitch
         return dp
+
+
+        
+
+
 
 
 def main(args=None):

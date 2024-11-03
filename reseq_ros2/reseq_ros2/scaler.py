@@ -16,7 +16,7 @@ It receives a packet from the remote controller and rescales end_effector data
 class Scaler(Node):
     def __init__(self):
         super().__init__("scaler")
-        # Declaring parameters and getting values
+        #Declaring parameters and getting values
         self.r_linear_vel = self.declare_parameter('r_linear_vel', [0.0]).get_parameter_value().double_array_value
         self.r_inverse_radius = self.declare_parameter('r_inverse_radius', [0.0]).get_parameter_value().double_array_value
         self.r_pitch_vel = self.declare_parameter('r_pitch_vel', [0]).get_parameter_value().integer_array_value  
@@ -44,12 +44,12 @@ class Scaler(Node):
 
         self.get_logger().info("Scaler node started")
 
-    def remote_callback(self, data: Remote):
-        # TODO: buttons, switches
+    def remote_callback(self, data: Remote): 
+        #TODO: buttons, switches
         
         cmd_vel = Twist()
-        cmd_vel.linear.x = data.right.y  # Linear velocity (-1:1)
-        cmd_vel.angular.z = -data.right.x  # inverse of Radius of curvature (-1:1)
+        cmd_vel.linear.x = data.right.y # Linear velocity (-1:1)
+        cmd_vel.angular.z = - data.right.x # inverse of Radius of curvature (-1:1)
 
         cmd_vel = self.agevarScaler(cmd_vel)
         self.agevar_pub.publish(cmd_vel)
@@ -62,20 +62,21 @@ class Scaler(Node):
         end_e = self.endEffectorScaler(end_e)
         self.enea_pub.publish(end_e)
 
-    def agevarScaler(self, data: Twist):
+
+    def agevarScaler(self, data: Twist): 
         data.linear.x = self.scale(data.linear.x, self.r_linear_vel)
         data.angular.z = self.scale(data.angular.z, self.r_inverse_radius)
-        data.angular.z *= data.linear.x  # Angular vel
+        data.angular.z *= data.linear.x # Angular vel
         return data
 
-    def endEffectorScaler(self, data: EndEffector):
+    def endEffectorScaler(self, data: EndEffector): 
         data.pitch_vel = self.scale(data.pitch_vel, self.r_pitch_vel)
         data.head_pitch_vel = self.scale(data.head_pitch_vel, self.r_head_pitch_vel)
         data.head_roll_vel = self.scale(data.head_roll_vel, self.r_head_roll_vel)
         return data
 
     def scale(self, val, range):
-        return (val + 1) / 2 * (range[1] - range[0]) + range[0]
+        return (val+1)/2*(range[1]-range[0]) + range[0]
 
 def main(args=None):
     rclpy.init(args=args)

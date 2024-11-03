@@ -10,12 +10,11 @@ ROS node designed to test movement of the digital twin without access to the CAN
 It publishes to motor/feedback like the Communication node would do upon receiving
 feedback from the robot via CAN bus.
 """
-
 class FakeRobotFeedback(Node):
     def __init__(self):
         super().__init__("fake_robot_feedback")
         self.time = 0
-        self.modules = self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
+        self.modules= self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
 
         self.pubs = []
         for address in self.modules:
@@ -31,17 +30,18 @@ class FakeRobotFeedback(Node):
         self.time += 1
         self.time %= 150
 
-        if self.time < 50:  # straight
+        if self.time < 50: # straight
             l, r = 0.5, 0.5
-        elif self.time < 100:  # turn left
+        elif self.time < 100: # turn left
             l, r = 0.5, 0.4
-        else:  # straight
+        else: # straight
             l, r = 0.5, 0.5
 
         msg = Motors()
         msg.left, msg.right = l, r
         for pub in self.pubs:
             pub.publish(msg)
+
 
 def main(args=None):
     rclpy.init(args=args)

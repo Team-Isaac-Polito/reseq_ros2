@@ -23,23 +23,22 @@ See team's wiki for details on how data is packaged inside CAN messages.
 class Communication(Node):
     def __init__(self):
         super().__init__("communication")
-        # Declaring parameters and getting values
+        #Declaring parameters and getting values
         self.can_channel = self.declare_parameter('can_channel', 'vcan0').get_parameter_value().string_value
-        self.modules = self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
+        self.modules= self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
         self.joints = self.declare_parameter('joints', [0]).get_parameter_value().integer_array_value
         self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
 
-        # Create ROS publishers and subscribers for each module based on config file
+        # create ROS publishers and subscribers for each module based on config file
         self.pubs = []
         self.subs = []
-
         for i in range(len(self.modules)):
             self.pubs.append(self.create_module_pubs(
-                self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))
-            self.subs.append(self.create_module_subs(
-                self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))
+                self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))  
+            self.subs.append(self.create_module_subs(  
+                self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))  
 
-        # Connect to CAN bus
+        # connect to CAN bus
         try:
             self.canbus = can.interface.Bus(
                 channel=self.can_channel,
@@ -70,14 +69,14 @@ class Communication(Node):
                 rclpy.shutdown()
                 return
 
-    # Create ROS publishers for a module based on its properties
+    # create ROS publishers for a module based on its properties
     def create_module_pubs(self, address, hasJoint, hasEndEffector):
         d = {}
         for topic in self.topics_from_direction(rc.Direction.IN):
             if topic.name.split("/")[0] == "joint" and not hasJoint:
                 continue
 
-            if topic.name.split("/")[0] == "end_effector" and not hasEndEffector:
+            if topic.name.split("/")[0] == "end_effector" and not hasEndEffector: 
                 continue
 
             d[topic.name] = self.create_publisher(
@@ -88,20 +87,20 @@ class Communication(Node):
 
         return d
 
-    # Create ROS subscribers for a module based on its properties
+    # create ROS subscribers for a module based on its properties
     def create_module_subs(self, address, hasJoint, hasEndEffector):
         d = {}
         for topic in self.topics_from_direction(rc.Direction.OUT):
             if topic.name.split("/")[0] == "joint" and not hasJoint:
                 continue
 
-            if topic.name.split("/")[0] == "end_effector" and not hasEndEffector:
+            if topic.name.split("/")[0] == "end_effector" and not hasEndEffector: 
                 continue
 
             d[topic.name] = self.create_subscription(
                 topic.data_type,
                 f"reseq/module{address}/{topic.name}",
-                # Use lambda function to pass extra arguments to the callback
+                # use lambda function to pass extra arguments to the callback
                 lambda msg, s=topic.name: self.ros_listener_callback(
                     msg, address, s),
                 10,
@@ -109,7 +108,7 @@ class Communication(Node):
 
         return d
 
-    # Publish data received from CAN to ROS topic
+    # publish data received from CAN to ROS topic
     def can_callback(self, msg):
         decoded_aid = struct.unpack(
             "4b", msg.arbitration_id.to_bytes(4, "big"))
@@ -118,7 +117,7 @@ class Communication(Node):
 
         self.get_logger().debug(f"Publishing to {topic.name} on module{module_id+17}")
 
-        # Check if the message contains one or two floats
+        # check if the message contains one or two floats
         if topic.data_type == Float32:
             m = Float32()
             data = struct.unpack('f', msg.data)
@@ -137,13 +136,13 @@ class Communication(Node):
         try:
             self.pubs[module_id][topic.name].publish(m)
         except TypeError as e:
-            # The type of ROS message doesn't match the publisher
+            # the type of ROS message doesn't match the publisher
             self.get_logger().error(f'TypeError in can_callback: {str(e)}\n{traceback.format_exc()}')
         except IndexError as e:
             self.get_logger().error(f'IndexError in can_callback: {str(e)}\n{traceback.format_exc()}')
             self.get_logger().error(f'{module_id} out of range 0 to {len(self.pubs)-1}')
 
-    # Send data received from ROS to CAN
+    # send data received from ROS to CAN
     def ros_listener_callback(self, msg, module_num, topic_name):
         topic = self.topic_from_name(topic_name)
         aid = struct.pack("bbbb", 00, topic.can_id, module_num, 0x00)
@@ -163,13 +162,13 @@ class Communication(Node):
             is_extended_id=True,
         )
         self.canbus.send(m)
-
-    def topics_from_direction(self, d: rc.Direction):
+    
+    def topics_from_direction(self, d: rc.Direction): 
         return list(filter(lambda x: x.direction == d, rc.topics))
-
+    
     def topic_from_id(self, id: int) -> rc.ReseQTopic:
         return next(filter(lambda x: x.can_id == id, rc.topics))
-
+    
     def topic_from_name(self, name: str) -> rc.ReseQTopic:
         return next(filter(lambda x: x.name == name, rc.topics))
 

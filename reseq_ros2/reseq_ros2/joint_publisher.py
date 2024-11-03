@@ -1,4 +1,4 @@
-from __future__ import annotations  # compatibility with Python 3.8
+from __future__ import annotations # compatibility with Python 3.8
 from math import pi
 from itertools import chain
 import rclpy
@@ -29,7 +29,6 @@ It receives feedbacks from the Communication node and calculates the angular
 position or velocity. Two subsequent messages are sent: one for the wheels 
 velocity and one for the joint and end effector joints angular positions
 """
-
 class JointPublisher(Node):
     def __init__(self):
         super().__init__("joint_publisher")
@@ -172,11 +171,11 @@ class JointPublisher(Node):
             vl = vel[0]
             vr = vel[1]
 
-            # Compute velocity of the module given the feedback velocity of its wheels
+            # compute velocity of the module given the feedback velocity of its wheels
             w = (vr-vl)/self.b
             v = (vr+vl)/2
 
-            # Publish Twist to differential controller
+            # publish Twist to differential controller
             t = Twist()
             t.linear.x = v
             t.angular.z = w
@@ -236,7 +235,7 @@ class JointPublisher(Node):
                 self.position_states[(address, st)].update(
                     (lsb - self.head_roll_origin) * rc.lsb_to_rads
                 )
-
+            
 
     def states_from_type(self, state_type: rc.StateType) -> list[str]:
         return list(
