@@ -38,13 +38,12 @@ def generate_final_config(include_file):
         main_config = create_configs(main_config, include_files)
         del main_config['include']  # Clean up the include key after merging
     
-    # Save the final merged configuration to a temporary YAML file
-    temp_filename = f"{os.path.splitext(include_file)[0]}.yaml"
-    with open(os.path.join(temp_config_path, temp_filename), 'w') as outfile:
-        yaml.dump(main_config, outfile, default_flow_style=False)
+        # Save the final merged configuration to a temporary YAML file
+        temp_filename = f"{os.path.splitext(include_file)[0]}.yaml"
+        with open(os.path.join(temp_config_path, temp_filename), 'w') as outfile:
+            yaml.dump(main_config, outfile, default_flow_style=False)
 
 # Generate the relevant config files with includes, without overwriting the originals
-generate_final_config('reseq_mk1_can.yaml')
-generate_final_config('reseq_mk1_vcan.yaml')
-generate_final_config('reseq_mk2_vcan.yaml')
-generate_final_config('reseq_controllers.yaml')
+for file_name in os.listdir(config_path):
+    if file_name.endswith(".yaml"):
+        generate_final_config(file_name)
