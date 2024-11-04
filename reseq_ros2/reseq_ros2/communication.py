@@ -2,10 +2,12 @@ import can
 import rclpy
 import reseq_ros2.constants as rc
 import struct
-from rclpy.node import Node
+from rclpy.lifecycle import LifecycleNode, TransitionCallbackReturn
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32, Int32  # deprecated?
 import traceback
+import threading
+import subprocess
 
 """ROS node that handles communication between the Jetson and each module via CAN
 
@@ -17,19 +19,38 @@ the Scaler node for the end_effector over end_effector/.../setpoint
 See team's wiki for details on how data is packaged inside CAN messages.
 """
 
-class Communication(Node):
+class Communication(LifecycleNode):
     def __init__(self):
         super().__init__("communication")
+        self.active = False
+        self.monitoring_thread = None
+
         try:
             # Declaring parameters and getting values
-            self.can_channel = self.declare_parameter('can_channel', 'vcan0').get_parameter_value().string_value
-            self.modules = self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
-            self.joints = self.declare_parameter('joints', [0]).get_parameter_value().integer_array_value
-            self.end_effector = self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
+            self.declare_parameter('can_channel', 'vcan0')
+            self.declare_parameter('modules', [0])
+            self.declare_parameter('joints', [0])
+            self.declare_parameter('end_effector', 0)
+
+            # Initialize canbus and notifier
+            self.canbus = None
+            self.notifier = None
 
             # Create ROS publishers and subscribers for each module based on config file
             self.pubs = []
             self.subs = []
+        except Exception as e:
+            self.get_logger().fatal(f'Error during Initialization: {str(e)}\n{traceback.format_exc()}')
+            raise
+
+    def on_configure(self, state):
+        self.get_logger().info("Configuring...")
+        try:
+            self.can_channel = self.get_parameter('can_channel').get_parameter_value().string_value
+            self.modules = self.get_parameter('modules').get_parameter_value().integer_array_value
+            self.joints = self.get_parameter('joints').get_parameter_value().integer_array_value
+            self.end_effector = self.get_parameter('end_effector').get_parameter_value().integer_value
+
             for i in range(len(self.modules)):
                 self.pubs.append(self.create_module_pubs(
                     self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))
@@ -37,20 +58,55 @@ class Communication(Node):
                     self.modules[i], self.modules[i] in self.joints, self.modules[i] == self.end_effector))
 
             # Connect to CAN bus
-            try:
-                self.canbus = can.interface.Bus(
-                    channel=self.can_channel,
-                    bustype="socketcan",
-                )
-                self.notifier = can.Notifier(self.canbus, [self.can_callback])
-            except OSError as e:
-                self.get_logger().fatal(f'Error while connecting to CAN bus: {str(e)}\n{traceback.format_exc()}')
-                raise
+            self.canbus = can.interface.Bus(
+                channel=self.can_channel,
+                bustype="socketcan",
+            )
+            self.notifier = can.Notifier(self.canbus, [self.can_callback])
 
-            self.get_logger().info("Communication node started")
+            # Start the CAN bus monitoring thread
+            self.active = True
+            self.monitoring_thread = threading.Thread(target=self.monitor_canbus)
+            self.monitoring_thread.start()
         except Exception as e:
-            self.get_logger().fatal(f'Error during initialization: {str(e)}\n{traceback.format_exc()}')
-            raise
+            self.get_logger().fatal(f'Error during configuration: {str(e)}\n{traceback.format_exc()}')
+            return TransitionCallbackReturn.FAILURE
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_cleanup(self, state):
+        self.get_logger().info("Cleaning up...")
+        try:
+            self.active = False
+            if self.monitoring_thread:
+                self.monitoring_thread.join()
+                self.monitoring_thread = None
+
+            if self.notifier:
+                self.notifier.stop()
+                self.notifier = None
+
+            # Clear ROS publishers and subscribers
+            self.pubs = []
+            self.subs = []
+
+            if self.canbus:
+                self.canbus.shutdown()
+                self.canbus = None
+        except Exception as e:
+            self.get_logger().fatal(f'Error during cleanup: {str(e)}\n{traceback.format_exc()}')
+            return TransitionCallbackReturn.FAILURE
+        return TransitionCallbackReturn.SUCCESS
+
+    def monitor_canbus(self):
+        process = subprocess.Popen(["candump", self.can_channel], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        while self.active:
+            retcode = process.poll()  # Check if the candump process has terminated
+            if retcode is not None:  # If the process has terminated
+                self.get_logger().fatal(f'candump process terminated with return code {retcode}')
+                self.active = False
+                process.terminate()
+                rclpy.shutdown()
+                return
 
     # Create ROS publishers for a module based on its properties
     def create_module_pubs(self, address, hasJoint, hasEndEffector):
@@ -101,7 +157,7 @@ class Communication(Node):
 
             self.get_logger().debug(f"Publishing to {topic.name} on module{module_id+17}")
 
-        # Check if the message contains one or two floats
+            # Check if the message contains one or two floats
             if topic.data_type == Float32:
                 m = Float32()
                 data = struct.unpack('f', msg.data)
@@ -145,16 +201,19 @@ class Communication(Node):
                 data=data,
                 is_extended_id=True,
             )
-            self.canbus.send(m)
+            if self.canbus is not None:
+                self.canbus.send(m)
+            else:
+                self.get_logger().warn("CAN bus is not initialized")
         except Exception as e:
             self.get_logger().error(f'Error in ros_listener_callback: {str(e)}\n{traceback.format_exc()}')
 
     def topics_from_direction(self, d: rc.Direction):
         return list(filter(lambda x: x.direction == d, rc.topics))
-    
+
     def topic_from_id(self, id: int) -> rc.ReseQTopic:
         return next(filter(lambda x: x.can_id == id, rc.topics))
-    
+
     def topic_from_name(self, name: str) -> rc.ReseQTopic:
         return next(filter(lambda x: x.name == name, rc.topics))
 
