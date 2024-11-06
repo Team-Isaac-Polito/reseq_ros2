@@ -15,6 +15,7 @@ share_folder = get_package_share_directory("reseq_ros2")
 config_path = f'{share_folder}/config'
 default_filename = "reseq_mk1_can.yaml"
 
+# load and parse a YAML configuration file
 def parse_config(filename):
     with open(filename) as f:
         return yaml.load(f, Loader=SafeLoader)
@@ -177,6 +178,11 @@ def launch_setup(context, *args, **kwargs):
     return launch_config
     
 def generate_launch_description():
+    # LaunchDescription takes as input a list, where the first element is DeclareLaunchArgument and the other one is OpaqueFunction to
+    # execute launch_setup (which returns a list of nodes)
+    # DeclareLaunchArgument allows the user to specify an argument while executing the launch file, f.i.
+    # ros2 launch <your_package_name> <name>.py config_file:=<name>
+    # The argument value can be retrieved with LaunchConfiguration
     return LaunchDescription([DeclareLaunchArgument('config_file', default_value = default_filename), 
                              OpaqueFunction(function = launch_setup)
                              ])
