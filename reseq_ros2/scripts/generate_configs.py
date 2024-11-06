@@ -1,5 +1,6 @@
 import os
 import yaml
+import sys
 
 # Set the path to the config directory relative to the scripts directory
 config_path = os.path.join(os.path.dirname(__file__), '../config')
@@ -43,7 +44,11 @@ def generate_final_config(include_file):
         with open(os.path.join(temp_config_path, temp_filename), 'w') as outfile:
             yaml.dump(main_config, outfile, default_flow_style=False)
 
-# Generate the relevant config files with includes, without overwriting the originals
-for file_name in os.listdir(config_path):
-    if file_name.endswith(".yaml"):
-        generate_final_config(file_name)
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python generate_configs.py <config_file>")
+    else:
+        config_file = sys.argv[1]
+        generate_final_config(config_file)
+        # Generate reseq_controllers.yaml to avoid fatal errors
+        generate_final_config("reseq_controllers.yaml")

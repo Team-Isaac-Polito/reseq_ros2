@@ -185,8 +185,10 @@ def launch_setup(context, *args, **kwargs):
     return launch_config
     
 def generate_launch_description():
+    config_file = LaunchConfiguration('config_file')
+    
     generate_configs = ExecuteProcess(
-        cmd=['python3', os.path.join(share_folder, 'scripts/generate_configs.py')],
+        cmd=['python3', os.path.join(share_folder, 'scripts/generate_configs.py'), config_file],
         name='generate_configs',
         output='screen'
     )
