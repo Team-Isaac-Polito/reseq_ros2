@@ -1,21 +1,19 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
-from launch_ros.parameter_descriptions import ParameterFile
 import yaml
 from yaml import SafeLoader
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-import xacro
-
+import os
 
 #Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
 config_path = f'{share_folder}/config'
 default_filename = "reseq_mk1_can.yaml"
 
-# load and parse a YAML configuration file
 def parse_config(filename):
     with open(filename) as f:
         return yaml.load(f, Loader=SafeLoader)
@@ -43,147 +41,53 @@ def launch_setup(context, *args, **kwargs):
     #Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     #Parse the config file
-    config = parse_config(f'{config_path}/{config_filename}')
-    addresses = get_addresses(config)
-    joints = get_joints(config)
-    endEffector = get_end_effector(config)
+    # config = parse_config(f'{config_path}/{config_filename}')
+    # addresses = get_addresses(config)
+    # joints = get_joints(config)
+    # endEffector = get_end_effector(config)
     launch_config = []
-    launch_config.append(Node(
-            package='reseq_ros2',
-            executable='communication',
-            name='communication',
-            parameters=[{
-                'can_channel': config['canbus']['channel'],
-                'modules': addresses,
-                'joints': joints,
-                'end_effector': endEffector
-            }]))
-    launch_config.append(Node(
-            package='reseq_ros2',
-            executable='agevar',
-            name='agevar',
-            parameters=[{
-                'a': config['agevar_consts']['a'],
-                'b': config['agevar_consts']['b'],
-                'd': config['agevar_consts']['d'],
-                'r_eq': config['agevar_consts']['r_eq'],
-                'modules': addresses,
-                'joints': joints,
-                'end_effector': endEffector
-            }]))
-    launch_config.append(Node(
-            package='reseq_ros2',
-            executable='scaler',
-            name='scaler',
-            parameters=[{
-                'r_linear_vel': config['scaler_consts']['r_linear_vel'],
-                'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
-                'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
-                'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
-                'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
-            }]))
-    launch_config.append(Node(
-            package='reseq_ros2',
-            executable='joint_publisher',
-            name='joint_publisher',
-            parameters=[{
-                'modules': addresses,
-                'joints': joints,
-                'end_effector': endEffector,
-                'arm_pitch_origin': config['joint_pub_consts']['arm_pitch_origin'],
-                'head_pitch_origin': config['joint_pub_consts']['head_pitch_origin'],
-                'head_roll_origin': config['joint_pub_consts']['head_roll_origin'],
-                'vel_gain': config['joint_pub_consts']['vel_gain'],
-                'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
-                'b': config['agevar_consts']['b'],
-            }]))
-    launch_config.append(Node(
-            package='realsense2_camera',
-            executable='realsense2_camera_node',
-            name='realsense2_camera_node',
-            namespace="realsense",
-            parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
-    if config['version'] == 'mk1':
-        launch_config.append(Node(
-                package='reseq_ros2',
-                executable='enea',
-                name='enea',
-                parameters=[{
-                    'pitch': config['enea_consts']['i_pitch'],
-                    'head_pitch': config['enea_consts']['i_head_pitch'],
-                    'head_roll': config['enea_consts']['i_head_roll'],
-                    'servo_speed': config['enea_consts']['servo_speed'],
-                    'r_pitch': config['enea_consts']['r_pitch'],
-                    'r_head_pitch': config['enea_consts']['r_head_pitch'],
-                    'r_head_roll': config['enea_consts']['r_head_roll'],
-                    'pitch_conv': config['enea_consts']['pitch_conv'],
-                    'end_effector': endEffector
-                }]))
-    robot_controllers = f"{config_path}/reseq_controllers.yaml"
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_controllers],
-        output="both",
-        remappings=[
-            ("~/robot_description", "/robot_description"),
-        ],
-    )
-    launch_config.append(control_node)
-    
-    xacro_file = share_folder + "/description/robot.urdf.xacro"
-    robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}).toxml()
-    robot_state_publisher_node = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        parameters=[{'robot_description': robot_description}] # add other parameters here if required
-    )
-    launch_config.append(robot_state_publisher_node)
 
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(joint_state_broadcaster_spawner)
+    # add optional nodes for sensors  
+    lidar_enabled = LaunchConfiguration('lidar').perform(context) == 'true'
+    camera_enabled = LaunchConfiguration('realsense').perform(context) == 'true'
 
-    diff_controller_spawner1 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner1)
-
-    diff_controller_spawner2 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner2)
-
-    # frf = Node(
-    #     package='reseq_ros2',
-    #     executable='fake_robot_feedback',
-    #     name='fake_robot_feedback',
-    #     parameters=[{
-    #         'modules': addresses,
-    #     }]
-    # )
-    # launch_config.append(frf)
-
+    # Core launch file
+    core_launch_file = os.path.join(get_package_share_directory('reseq_ros2'), 'launch', 'reseq_core_launch.py')
     launch_config.append(IncludeLaunchDescription(
-        f"{get_package_share_directory('rplidar_ros')}/launch/rplidar_a2m8_launch.py"
+        PythonLaunchDescriptionSource(core_launch_file),
+        launch_arguments={
+            'config_file': config_filename
+        }.items()
     ))
+
+    # Sensor launch file
+    sensors_launch_file = os.path.join(get_package_share_directory('reseq_ros2'), 'launch', 'sensors_launch.py')
+    launch_config.append(IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(sensors_launch_file),
+        launch_arguments={
+            'config_file': config_filename,
+            'lidar': str(lidar_enabled).lower(),
+            'realsense': str(camera_enabled).lower()
+        }.items()
+    ))
+
+    # Digital twin launch file
+    digital_twin_launch_file = os.path.join(get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py')
+    launch_config.append(IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(digital_twin_launch_file),
+        launch_arguments={
+            'config_file': config_filename
+        }.items()
+    ))
+    
     return launch_config
     
 def generate_launch_description():
-    # LaunchDescription takes as input a list, where the first element is DeclareLaunchArgument and the other one is OpaqueFunction to
-    # execute launch_setup (which returns a list of nodes)
-    # DeclareLaunchArgument allows the user to specify an argument while executing the launch file, f.i.
-    # ros2 launch <your_package_name> <name>.py config_file:=<name>
-    # The argument value can be retrieved with LaunchConfiguration
-    return LaunchDescription([DeclareLaunchArgument('config_file', default_value = default_filename), 
-                             OpaqueFunction(function = launch_setup)
+    return LaunchDescription([
+        DeclareLaunchArgument('config_file', default_value = default_filename),
+        DeclareLaunchArgument('lidar', default_value = 'true', description="Enable lidar sensor"),
+        DeclareLaunchArgument('realsense', default_value = 'true', description="Enable realsense camera"),
+        
+        OpaqueFunction(function = launch_setup)
                              ])
 
