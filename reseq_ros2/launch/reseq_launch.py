@@ -3,9 +3,6 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
-import yaml
-from yaml import SafeLoader
-from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import os
 from reseq_ros2.common_functions_launch import *

@@ -1,11 +1,8 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch.actions import OpaqueFunction
-import yaml
-from yaml import SafeLoader
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
 import xacro
 from reseq_ros2.common_functions_launch import *
 
