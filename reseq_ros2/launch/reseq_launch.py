@@ -194,16 +194,16 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'config_file',
+            default_value=default_filename,
+        ),
         generate_configs,
         # Wait for the config generation process to complete before proceeding
         RegisterEventHandler(
             OnProcessExit(
                 target_action=generate_configs,
                 on_exit=[LogInfo(msg="Configuration files generated."),
-                         DeclareLaunchArgument(
-                             'config_file',
-                             default_value=default_filename,
-                         ),
                          OpaqueFunction(function=launch_setup)
                 ]
             )
