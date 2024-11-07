@@ -1,7 +1,9 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch.actions import OpaqueFunction
+from launch.actions import OpaqueFunction, RegisterEventHandler, LogInfo, EmitEvent
+from launch.events import Shutdown
+from launch.event_handlers import OnProcessExit
 from launch_ros.actions import Node
 from reseq_ros2.common_functions_launch import *
 
@@ -9,23 +11,28 @@ from reseq_ros2.common_functions_launch import *
 def launch_setup(context, *args, **kwargs):
     #Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
+    is_can = LaunchConfiguration('is_can').perform(context)
     #Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
     joints = get_joints(config)
     endEffector = get_end_effector(config)
     launch_config = []
+    core_nodes = [] # it contains indexes in launch_config
+
+    if is_can == 'true':
+        core_nodes.append(0)
 
     launch_config.append(Node(
-            package='reseq_ros2',
-            executable='communication',
-            name='communication',
-            parameters=[{
-                'can_channel': config['canbus']['channel'],
-                'modules': addresses,
-                'joints': joints,
-                'end_effector': endEffector
-            }]))
+                package='reseq_ros2',
+                executable='communication',
+                name='communication',
+                parameters=[{
+                    'can_channel': config['canbus']['channel'],
+                    'modules': addresses,
+                    'joints': joints,
+                    'end_effector': endEffector
+                }]))
     launch_config.append(Node(
             package='reseq_ros2',
             executable='agevar',
@@ -110,12 +117,31 @@ def launch_setup(context, *args, **kwargs):
     # )
     # launch_config.append(frf)
 
+    # all other reseq_core nodes are core nodes
+    core_nodes += list(range(1, len(launch_config)))
+
+    event_handlers = []
+    # create list of event handlers for each core node
+    for el in core_nodes:
+        event_handlers.append(
+            RegisterEventHandler(
+                event_handler=OnProcessExit(
+                    target_action = launch_config[el],
+                    on_exit=[
+                        LogInfo(msg=f'{launch_config[el].name} exited, system ends'),
+                        EmitEvent(event=Shutdown())
+                    ]
+                )
+            )
+        )
     
-    return launch_config
+    return launch_config + event_handlers
+    # return launch_config
     
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('config_file', default_value = default_filename),
+        DeclareLaunchArgument('is_can', default_value = 'true', description="is CAN or VCAN"),
         
         OpaqueFunction(function = launch_setup)
                              ])
