@@ -29,75 +29,72 @@ It receives feedbacks from the Communication node and calculates the angular
 position or velocity. Two subsequent messages are sent: one for the wheels 
 velocity and one for the joint and end effector joints angular positions
 """
+
 class JointPublisher(Node):
     def __init__(self):
         super().__init__("joint_publisher")
-        try:
-            self.get_logger().info("JointPublisher node started")
+        self.get_logger().info("JointPublisher node started")
 
-            self.joint_pub = self.create_publisher(JointState, "/joint_states", 10)
+        self.joint_pub = self.create_publisher(JointState, "/joint_states", 10)
 
-            modules = (
-                self.declare_parameter("modules", [0])
-                .get_parameter_value()
-                .integer_array_value
-            )
+        modules = (
+            self.declare_parameter("modules", [0])
+            .get_parameter_value()
+            .integer_array_value
+        )
 
-            joints = (
-                self.declare_parameter("joints", [0])
-                .get_parameter_value()
-                .integer_array_value
-            )
+        joints = (
+            self.declare_parameter("joints", [0])
+            .get_parameter_value()
+            .integer_array_value
+        )
 
-            end_effector = (
-                self.declare_parameter("end_effector", 0)
-                .get_parameter_value()
-                .integer_value
-            )
+        end_effector = (
+            self.declare_parameter("end_effector", 0)
+            .get_parameter_value()
+            .integer_value
+        )
 
-            self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
+        self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
 
-            self.arm_pitch_origin = (
-                self.declare_parameter("arm_pitch_origin", 0)
-                .get_parameter_value()
-                .integer_value
-            )
-            self.head_pitch_origin = (
-                self.declare_parameter("head_pitch_origin", 0)
-                .get_parameter_value()
-                .integer_value
-            )
-            self.head_roll_origin = (
-                self.declare_parameter("head_roll_origin", 0)
-                .get_parameter_value()
-                .integer_value
-            )
+        self.arm_pitch_origin = (
+            self.declare_parameter("arm_pitch_origin", 0)
+            .get_parameter_value()
+            .integer_value
+        )
+        self.head_pitch_origin = (
+            self.declare_parameter("head_pitch_origin", 0)
+            .get_parameter_value()
+            .integer_value
+        )
+        self.head_roll_origin = (
+            self.declare_parameter("head_roll_origin", 0)
+            .get_parameter_value()
+            .integer_value
+        )
 
-            self.velocity_gain = (
-                self.declare_parameter("vel_gain", 0.0)
-                .get_parameter_value()
-                .double_value
-            )
+        self.velocity_gain = (
+            self.declare_parameter("vel_gain", 0.0)
+            .get_parameter_value()
+            .double_value
+        )
 
-            self.arm_pitch_gain = (
-                self.declare_parameter("arm_pitch_gain", 0.0)
-                .get_parameter_value()
-                .double_value
-            )
+        self.arm_pitch_gain = (
+            self.declare_parameter("arm_pitch_gain", 0.0)
+            .get_parameter_value()
+            .double_value
+        )
 
-            self.wheel_velocities = []
-            self.position_states = {}
+        self.wheel_velocities = []
+        self.position_states = {}
 
-            self.controller_pubs = []
-            self.init_state(modules, joints, end_effector)
-            self.create_subs(modules, joints, end_effector)
+        self.controller_pubs = []
+        self.init_state(modules, joints, end_effector)
+        self.create_subs(modules, joints, end_effector)
 
-            self.get_logger().info(f"States initialized")
+        self.get_logger().info(f"States initialized")
 
-            self.create_timer(rc.sample_time, self.broadcast_states)
-        except Exception as e:
-            self.get_logger().fatal(f'Error during initialization: {str(e)}\n{traceback.format_exc()}')
-            raise
+        self.create_timer(rc.sample_time, self.broadcast_states)
 
     def init_state(self, modules: list[int], joints: list[int], end_effector: int):
         """
@@ -106,105 +103,95 @@ class JointPublisher(Node):
         in which the specific state is the generic state specialised to the 
         current module
         """
-        try:
-            for mod in modules:
-                id = mod % 16
+        for mod in modules:
+            id = mod % 16
 
-                self.controller_pubs.append(
-                    self.create_publisher(TwistStamped, f"/diff_controller{id}/cmd_vel", 10)
-                )
+            self.controller_pubs.append(
+                self.create_publisher(TwistStamped, f"/diff_controller{id}/cmd_vel", 10)
+            )
 
-                self.wheel_velocities.append([0.0, 0.0])
+            self.wheel_velocities.append([0.0, 0.0])
 
-                if mod in joints:
-                    self.position_states.update({
-                        (mod, x): State(x + f"_{id}_joint", 0.0)
-                        for x in self.states_from_type(rc.StateType.JOINT_FEEDBACK)
-                    })
+            if mod in joints:
+                self.position_states.update({
+                    (mod, x): State(x + f"_{id}_joint", 0.0)
+                    for x in self.states_from_type(rc.StateType.JOINT_FEEDBACK)
+                })
 
-                if mod == end_effector:
-                    self.position_states.update({
-                        (mod, x): State(x + f"_{id}_joint", 0.0)
-                        for x in self.states_from_type(
-                            rc.StateType.END_EFFECTOR_FEEDBACK
-                        )
-                    })
-        except Exception as e:
-            self.get_logger().error(f'Error in init_state: {str(e)}\n{traceback.format_exc()}')
-            raise
+            if mod == end_effector:
+                self.position_states.update({
+                    (mod, x): State(x + f"_{id}_joint", 0.0)
+                    for x in self.states_from_type(
+                        rc.StateType.END_EFFECTOR_FEEDBACK
+                    )
+                })
 
     def create_subs(self, modules: list[int], joints: list[int], end_effector: int):
         """
         Creates the subscription to all the feedback topics linked to Joints
         (the ones in `rc.states`)
         """
-        try:
-            for mod in modules:
-                for topic in self.topics_from_type(rc.StateType.MOTOR_FEEDBACK):
+        for mod in modules:
+            for topic in self.topics_from_type(rc.StateType.MOTOR_FEEDBACK):
+                self.create_subscription(
+                    Motors,
+                    f"reseq/module{mod}/{topic}",
+                    lambda msg, addr=mod, tp=topic: self.update_callback(
+                        msg, addr, tp, rc.StateType.MOTOR_FEEDBACK
+                    ), 
+                    10,
+                )
+            if mod in joints:
+                for topic in self.topics_from_type(rc.StateType.JOINT_FEEDBACK):
                     self.create_subscription(
-                        Motors,
+                        Float32,
                         f"reseq/module{mod}/{topic}",
                         lambda msg, addr=mod, tp=topic: self.update_callback(
-                            msg, addr, tp, rc.StateType.MOTOR_FEEDBACK
-                        ), 
+                            msg, addr, tp, rc.StateType.JOINT_FEEDBACK
+                        ),
                         10,
                     )
-                if mod in joints:
-                    for topic in self.topics_from_type(rc.StateType.JOINT_FEEDBACK):
-                        self.create_subscription(
-                            Float32,
-                            f"reseq/module{mod}/{topic}",
-                            lambda msg, addr=mod, tp=topic: self.update_callback(
-                                msg, addr, tp, rc.StateType.JOINT_FEEDBACK
-                            ),
-                            10,
-                        )
-                if mod is end_effector:
-                    for topic in self.topics_from_type(rc.StateType.END_EFFECTOR_FEEDBACK):
-                        self.create_subscription(
-                            Int32,
-                            f"reseq/module{mod}/{topic}",
-                            lambda msg, addr=mod, tp=topic: self.update_callback(
-                                msg, addr, tp, rc.StateType.END_EFFECTOR_FEEDBACK
-                            ),
-                            10,
-                        )
-        except Exception as e:
-            self.get_logger().error(f'Error in create_subs: {str(e)}\n{traceback.format_exc()}')
+            if mod is end_effector:
+                for topic in self.topics_from_type(rc.StateType.END_EFFECTOR_FEEDBACK):
+                    self.create_subscription(
+                        Int32,
+                        f"reseq/module{mod}/{topic}",
+                        lambda msg, addr=mod, tp=topic: self.update_callback(
+                            msg, addr, tp, rc.StateType.END_EFFECTOR_FEEDBACK
+                        ),
+                        10,
+                    )
 
     def broadcast_states(self):
         """
         Creates and publishes the `JointState` messages, based on a timer
         of `rc.sample_time` seconds
         """
-        try:
-            # Send wheel velocities for each module
-            for i, vel in enumerate(self.wheel_velocities):
-                vl = vel[0]
-                vr = vel[1]
+        # Send wheel velocities for each module
+        for i, vel in enumerate(self.wheel_velocities):
+            vl = vel[0]
+            vr = vel[1]
 
-                # Compute velocity of the module given the feedback velocity of its wheels
-                w = (vr-vl)/self.b
-                v = (vr+vl)/2
+            # Compute velocity of the module given the feedback velocity of its wheels
+            w = (vr-vl)/self.b
+            v = (vr+vl)/2
 
-                # Publish Twist to differential controller
-                t = Twist()
-                t.linear.x = v
-                t.angular.z = w
-                msg = TwistStamped()
-                msg.header.stamp = self.get_clock().now().to_msg()
-                msg.twist = t
-                self.controller_pubs[i].publish(msg)
+            # Publish Twist to differential controller
+            t = Twist()
+            t.linear.x = v
+            t.angular.z = w
+            msg = TwistStamped()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.twist = t
+            self.controller_pubs[i].publish(msg)
 
-            position = JointState()
-            now = self.get_clock().now()
-            position.header.stamp = now.to_msg()
-            position.name = [x.name for x in self.position_states.values()]
-            position.position = [x.value for x in self.position_states.values()]
+        position = JointState()
+        now = self.get_clock().now()
+        position.header.stamp = now.to_msg()
+        position.name = [x.name for x in self.position_states.values()]
+        position.position = [x.value for x in self.position_states.values()]
 
-            self.joint_pub.publish(position)
-        except Exception as e:
-            self.get_logger().error(f'Error in broadcast_states: {str(e)}\n{traceback.format_exc()}')
+        self.joint_pub.publish(position)
 
     def update_callback(
         self,
@@ -217,41 +204,38 @@ class JointPublisher(Node):
         Given the module address, the topic suffix, and the state type, this callback receives 
         listens on the feedback topics and updates the internal representation of the Joints
         """
-        try:
-            if state_t == rc.StateType.MOTOR_FEEDBACK:
-                l, r = msg.left, msg.right
+        if state_t == rc.StateType.MOTOR_FEEDBACK:
+            l, r = msg.left, msg.right
 
-                l *= self.velocity_gain
-                r *= self.velocity_gain
+            l *= self.velocity_gain
+            r *= self.velocity_gain
 
-                self.wheel_velocities[(address % 16) - 1] = [l, r]
+            self.wheel_velocities[(address % 16) - 1] = [l, r]
 
-            if state_t == rc.StateType.JOINT_FEEDBACK:
-                angle = msg.data
+        if state_t == rc.StateType.JOINT_FEEDBACK:
+            angle = msg.data
 
-                if angle >= 180:
-                    angle -= 360
+            if angle >= 180:
+                angle -= 360
 
-                st = self.states_from_topic(topic)[0]
-                self.position_states[(address, st)].update(angle * pi / 180.0)
+            st = self.states_from_topic(topic)[0]
+            self.position_states[(address, st)].update(angle * pi / 180.0)
 
-            if state_t == rc.StateType.END_EFFECTOR_FEEDBACK:
-                lsb = msg.data
-                st = self.states_from_topic(topic)[0]
-                if topic == "end_effector/pitch/feedback":
-                    self.position_states[(address, st)].update(
-                        (lsb - self.arm_pitch_origin) * rc.lsb_to_rads * self.arm_pitch_gain * (-1)
-                    )
-                if topic == "end_effector/head_pitch/feedback":
-                    self.position_states[(address, st)].update(
-                        (lsb - self.head_pitch_origin) * rc.lsb_to_rads
-                    )
-                if topic == "end_effector/head_roll/feedback":
-                    self.position_states[(address, st)].update(
-                        (lsb - self.head_roll_origin) * rc.lsb_to_rads
-                    )
-        except Exception as e:
-            self.get_logger().error(f'Error in update_callback: {str(e)}\n{traceback.format_exc()}')
+        if state_t == rc.StateType.END_EFFECTOR_FEEDBACK:
+            lsb = msg.data
+            st = self.states_from_topic(topic)[0]
+            if topic == "end_effector/pitch/feedback":
+                self.position_states[(address, st)].update(
+                    (lsb - self.arm_pitch_origin) * rc.lsb_to_rads * self.arm_pitch_gain * (-1)
+                )
+            if topic == "end_effector/head_pitch/feedback":
+                self.position_states[(address, st)].update(
+                    (lsb - self.head_pitch_origin) * rc.lsb_to_rads
+                )
+            if topic == "end_effector/head_roll/feedback":
+                self.position_states[(address, st)].update(
+                    (lsb - self.head_roll_origin) * rc.lsb_to_rads
+                )
 
 
     def states_from_type(self, state_type: rc.StateType) -> list[str]:

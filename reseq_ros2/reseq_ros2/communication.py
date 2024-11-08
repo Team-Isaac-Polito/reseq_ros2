@@ -111,30 +111,30 @@ class Communication(Node):
 
     # Publish data received from CAN to ROS topic
     def can_callback(self, msg):
+        decoded_aid = struct.unpack(
+            "4b", msg.arbitration_id.to_bytes(4, "big"))
+        module_id = decoded_aid[3] - 17
+        topic = self.topic_from_id(decoded_aid[1])
+
+        self.get_logger().debug(f"Publishing to {topic.name} on module{module_id+17}")
+
+        # Check if the message contains one or two floats
+        if topic.data_type == Float32:
+            m = Float32()
+            data = struct.unpack('f', msg.data)
+            m.data = data[0]
+        elif topic.data_type == Int32:
+            m = Int32()
+            data = struct.unpack('i', msg.data)
+            m.data = data[0]
+        elif topic.data_type == Motors:
+            m = Motors()
+            data = struct.unpack('ff', msg.data)
+            self.get_logger().debug(data)
+            m.left = data[0]
+            m.right = data[1]
+
         try:
-            decoded_aid = struct.unpack(
-                "4b", msg.arbitration_id.to_bytes(4, "big"))
-            module_id = decoded_aid[3] - 17
-            topic = self.topic_from_id(decoded_aid[1])
-
-            self.get_logger().debug(f"Publishing to {topic.name} on module{module_id+17}")
-
-            # Check if the message contains one or two floats
-            if topic.data_type == Float32:
-                m = Float32()
-                data = struct.unpack('f', msg.data)
-                m.data = data[0]
-            elif topic.data_type == Int32:
-                m = Int32()
-                data = struct.unpack('i', msg.data)
-                m.data = data[0]
-            elif topic.data_type == Motors:
-                m = Motors()
-                data = struct.unpack('ff', msg.data)
-                self.get_logger().debug(data)
-                m.left = data[0]
-                m.right = data[1]
-
             self.pubs[module_id][topic.name].publish(m)
         except TypeError as e:
             # The type of ROS message doesn't match the publisher
@@ -145,30 +145,24 @@ class Communication(Node):
 
     # Send data received from ROS to CAN
     def ros_listener_callback(self, msg, module_num, topic_name):
-        try:
-            topic = self.topic_from_name(topic_name)
-            aid = struct.pack("bbbb", 00, topic.can_id, module_num, 0x00)
+        topic = self.topic_from_name(topic_name)
+        aid = struct.pack("bbbb", 00, topic.can_id, module_num, 0x00)
 
-            self.get_logger().debug(f"Sending {type(msg)} to module{module_num} via CAN")
+        self.get_logger().debug(f"Sending {type(msg)} to module{module_num} via CAN")
 
-            if topic.data_type is Float32:
-                data = struct.pack('f', msg.data)
-            elif topic.data_type is Int32:
-                data = struct.pack('i', msg.data)
-            elif topic.data_type is Motors:
-                data = struct.pack('ff', msg.left, msg.right)
+        if topic.data_type is Float32:
+            data = struct.pack('f', msg.data)
+        elif topic.data_type is Int32:
+            data = struct.pack('i', msg.data)
+        elif topic.data_type is Motors:
+            data = struct.pack('ff', msg.left, msg.right)
 
-            m = can.Message(
-                arbitration_id=int.from_bytes(aid, byteorder="big", signed=False),
-                data=data,
-                is_extended_id=True,
-            )
-            if self.canbus is not None:
-                self.canbus.send(m)
-            else:
-                self.get_logger().warn("CAN bus is not initialized")
-        except Exception as e:
-            self.get_logger().error(f'Error in ros_listener_callback: {str(e)}\n{traceback.format_exc()}')
+        m = can.Message(
+            arbitration_id=int.from_bytes(aid, byteorder="big", signed=False),
+            data=data,
+            is_extended_id=True,
+        )
+        self.canbus.send(m)
 
     def topics_from_direction(self, d: rc.Direction):
         return list(filter(lambda x: x.direction == d, rc.topics))
