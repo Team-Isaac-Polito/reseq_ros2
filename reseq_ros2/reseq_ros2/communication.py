@@ -173,6 +173,10 @@ class Communication(Node):
     def topic_from_name(self, name: str) -> rc.ReseQTopic:
         return next(filter(lambda x: x.name == name, rc.topics))
 
+    def destroy(self):
+        self.active = False
+        if hasattr(self, 'monitoring_thread') and self.monitoring_thread.is_alive():
+            self.monitoring_thread.join()
 
 def main(args=None):
     rclpy.init(args=args)
@@ -187,6 +191,7 @@ def main(args=None):
     finally:
         if communication is not None:
             exit_code = communication.exit_code if hasattr(communication, 'exit_code') else exit_code  # Use retcode if available
+            communication.destroy()
             communication.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

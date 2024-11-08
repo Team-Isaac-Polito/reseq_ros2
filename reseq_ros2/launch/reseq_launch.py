@@ -111,7 +111,7 @@ def launch_setup(context, *args, **kwargs):
         name='realsense2_camera_node',
         namespace="realsense",
         parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")],
-        arguments=['--ros-args', '--log-level', log_level]
+        arguments=['--ros-args', '--log-level', 'warn']
     ))
     if config['version'] == 'mk1':
         launch_config.append(Node(
@@ -140,7 +140,7 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ("~/robot_description", "/robot_description"),
         ],
-        arguments=['--ros-args', '--log-level', log_level],
+        arguments=['--ros-args', '--log-level', 'warn'],
     )
     launch_config.append(control_node)
 
@@ -151,28 +151,28 @@ def launch_setup(context, *args, **kwargs):
         executable='robot_state_publisher',
         output='screen',
         parameters=[{'robot_description': robot_description}], # add other parameters here if required
-        arguments=['--ros-args', '--log-level', log_level]
+        arguments=['--ros-args', '--log-level', 'warn']
     )
     launch_config.append(robot_state_publisher_node)
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager", '--ros-args', '--log-level', log_level],
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager", '--ros-args', '--log-level', 'warn'],
     )
     launch_config.append(joint_state_broadcaster_spawner)
 
     diff_controller_spawner1 = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["diff_controller1", "--controller-manager", "/controller_manager", '--ros-args', '--log-level', log_level],
+        arguments=["diff_controller1", "--controller-manager", "/controller_manager", '--ros-args', '--log-level', 'warn'],
     )
     launch_config.append(diff_controller_spawner1)
 
     diff_controller_spawner2 = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["diff_controller2", "--controller-manager", "/controller_manager", '--ros-args', '--log-level', log_level],
+        arguments=["diff_controller2", "--controller-manager", "/controller_manager", '--ros-args', '--log-level', 'warn'],
     )
     launch_config.append(diff_controller_spawner2)
 
