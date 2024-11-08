@@ -155,19 +155,14 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(joint_state_broadcaster_spawner)
 
-    diff_controller_spawner1 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
+    num_modules = config.get('num_modules', 0)
+    for i in range(num_modules):
+        launch_config.append(Node(
+            package="controller_manager",
+            executable="spawner",
+            arguments=[f"diff_controller{i + 1}", "--controller-manager", "/controller_manager"],
+            )
     )
-    launch_config.append(diff_controller_spawner1)
-
-    diff_controller_spawner2 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner2)
 
     # frf = Node(
     #     package='reseq_ros2',

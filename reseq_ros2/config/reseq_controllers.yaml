@@ -1,15 +1,6 @@
-include:
-  diff_controller1: diff_controller1.yaml
-  diff_controller2: diff_controller2.yaml
 controller_manager:
   ros__parameters:
     update_rate: 10 # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
-
-    diff_controller1:
-      type: diff_drive_controller/DiffDriveController
-
-    diff_controller2:
-      type: diff_drive_controller/DiffDriveController
