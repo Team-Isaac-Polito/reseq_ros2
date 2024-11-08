@@ -1,6 +1,7 @@
 import os
 import yaml
 import sys
+import shutil
 
 # Set the path to the config directory relative to the scripts directory
 config_path = os.path.join(os.path.dirname(__file__), '../config')
@@ -8,6 +9,12 @@ temp_config_path = os.path.join(config_path, 'temp')
 
 # Ensure the temp directory exists
 os.makedirs(temp_config_path, exist_ok=True)
+
+# Function to clear the temp directory 
+def clear_temp_directory(temp_path):
+    if os.path.exists(temp_path):
+        shutil.rmtree(temp_path)
+        os.makedirs(temp_path, exist_ok=True)
 
 # Function to merge multiple YAML files into a single dictionary
 def merge_yaml(file_paths):
@@ -100,6 +107,8 @@ if __name__ == "__main__":
         print("Usage: python generate_configs.py <config_file>")
     else:
         config_file = sys.argv[1]
+        # Clear the temp directory before generating new configs
+        clear_temp_directory(temp_config_path)
         generate_final_config(config_file)
         # Generate reseq_controllers.yaml to avoid fatal errors
         generate_controllers_config(config_file)
