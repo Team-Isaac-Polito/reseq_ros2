@@ -25,10 +25,8 @@ def launch_setup(context, *args, **kwargs):
     launch_config = []
 
     # add optional nodes for sensors
-    sensors_enabled = LaunchConfiguration('sensors').perform(context) == 'true'
-    digital_twin_enabled = LaunchConfiguration('d_twin').perform(context) == 'true'
-    lidar_enabled = LaunchConfiguration('lidar').perform(context) == 'true'
-    camera_enabled = LaunchConfiguration('realsense').perform(context) == 'true'
+    sensors_enabled = LaunchConfiguration('sensors').perform(context)
+    digital_twin_enabled = LaunchConfiguration('d_twin').perform(context)
     is_can = LaunchConfiguration('is_can').perform(context) == 'true'
 
     # Core launch file
@@ -48,8 +46,6 @@ def launch_setup(context, *args, **kwargs):
             PythonLaunchDescriptionSource(sensors_launch_file),
             launch_arguments={
                 'config_file': config_filename,
-                'lidar': str(lidar_enabled).lower(),
-                'realsense': str(camera_enabled).lower()
             }.items()
         ))
 
@@ -68,8 +64,6 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('config_file', default_value = default_filename),
-        DeclareLaunchArgument('lidar', default_value = 'true', description="Enable lidar sensor"),
-        DeclareLaunchArgument('realsense', default_value = 'true', description="Enable realsense camera"),
         DeclareLaunchArgument('is_can', default_value = 'true', description="is CAN or VCAN"),
         DeclareLaunchArgument('sensors', default_value = 'true', description="Enable sensors"),
         DeclareLaunchArgument('d_twin', default_value = 'true', description="Enable digital twin"),

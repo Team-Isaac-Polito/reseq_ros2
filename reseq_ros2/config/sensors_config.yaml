@@ -1,0 +1,14 @@
+sensors:
+  - name: realsense2_camera_node
+    enabled: true
+    package: realsense2_camera
+    executable: realsense2_camera_node
+    has_launch_file: false
+    namespace: realsense
+    has_parameter: true
+
+  - name: lidar
+    enabled: true
+    has_launch_file: true
+    package: rplidar_ros
+    launch_file: rplidar_a2m8_launch.py

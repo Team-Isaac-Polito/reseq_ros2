@@ -6,7 +6,6 @@ from launch.actions import OpaqueFunction
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import sys
-from ament_index_python.packages import get_package_share_directory
 
 #Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
@@ -19,28 +18,35 @@ def launch_setup(context, *args, **kwargs):
     config_filename = LaunchConfiguration('config_file').perform(context)
     #Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
-    # Sensor arguments
-    lidar_enabled = LaunchConfiguration('lidar').perform(context)
-    realsense_enabled = LaunchConfiguration('realsense').perform(context)
+    sensors_config = parse_config(f'{config_path}/sensors_config.yaml')
 
     launch_config = []
 
-    if realsense_enabled == 'true':
-        launch_config.append(Node(
-                package='realsense2_camera',
-                executable='realsense2_camera_node',
-                name='realsense2_camera_node',
-                namespace="realsense",
-                parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
-    if lidar_enabled == "true":
-        launch_config.append(IncludeLaunchDescription(
-            f"{get_package_share_directory('rplidar_ros')}/launch/rplidar_a2m8_launch.py"
-        ))
+    for sensor in sensors_config['sensors']:
+        # if sensor doens't have a launch file, create the Node, otherwise use it
+        # YAML value true are read as boolean, so don't use equality check "true"
+        if sensor['enabled']:
+            if sensor['has_launch_file']:
+                launch_config.append(IncludeLaunchDescription(
+                    f"{get_package_share_directory(sensor['package'])}/launch/{sensor['launch_file']}"))
+            else:
+                # if sensor has parameters, it is contained in the config
+                if sensor['has_parameter']:
+                    launch_config.append(Node(
+                    package=sensor['package'],
+                    executable=sensor['executable'],
+                    name=sensor['name'],
+                    namespace=sensor['namespace'],
+                    parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
+                else:
+                    launch_config.append(Node(
+                    package=sensor['package'],
+                    executable=sensor['executable'],
+                    name=sensor['name'],
+                    namespace=sensor['namespace']))
     return launch_config
     
 def generate_launch_description():
     return LaunchDescription([DeclareLaunchArgument('config_file', default_value = default_filename),
-                            DeclareLaunchArgument('lidar', default_value = 'true', description="Enable lidar sensor"),
-                            DeclareLaunchArgument('realsense', default_value = "true", description="Enable realsense camera"),
                              OpaqueFunction(function = launch_setup)
                              ])
