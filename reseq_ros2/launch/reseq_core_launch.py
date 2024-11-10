@@ -5,7 +5,13 @@ from launch.actions import OpaqueFunction, RegisterEventHandler, LogInfo, EmitEv
 from launch.events import Shutdown
 from launch.event_handlers import OnProcessExit
 from launch_ros.actions import Node
-from reseq_ros2.common_functions_launch import *
+import sys
+from ament_index_python.packages import get_package_share_directory
+
+#Default config file path
+share_folder = get_package_share_directory("reseq_ros2")
+sys.path.append(share_folder+"/launch")
+from common_functions_launch import *
 
 #launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
