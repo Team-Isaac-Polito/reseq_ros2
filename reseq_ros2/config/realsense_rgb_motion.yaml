@@ -9,3 +9,5 @@ realsense:
       enable_accel: true
 
       rgb_camera.profile: 960x540x30
+
+      wait_for_device_timeout: 20.0

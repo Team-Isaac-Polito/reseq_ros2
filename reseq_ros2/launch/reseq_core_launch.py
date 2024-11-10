@@ -17,7 +17,6 @@ from common_functions_launch import *
 def launch_setup(context, *args, **kwargs):
     #Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
-    is_can = LaunchConfiguration('is_can').perform(context)
     #Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
@@ -26,7 +25,8 @@ def launch_setup(context, *args, **kwargs):
     launch_config = []
     core_nodes = [] # it contains indexes in launch_config
 
-    if is_can == 'true':
+    # check if it is can
+    if config['canbus']['channel'].startswith("can"):
         core_nodes.append(0)
 
     launch_config.append(Node(
@@ -147,7 +147,6 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('config_file', default_value = default_filename),
-        DeclareLaunchArgument('is_can', default_value = 'true', description="is CAN or VCAN"),
         
         OpaqueFunction(function = launch_setup)
                              ])

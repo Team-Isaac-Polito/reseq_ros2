@@ -27,7 +27,6 @@ def launch_setup(context, *args, **kwargs):
     # add optional nodes for sensors
     sensors_enabled = LaunchConfiguration('sensors').perform(context)
     digital_twin_enabled = LaunchConfiguration('d_twin').perform(context)
-    is_can = LaunchConfiguration('is_can').perform(context) == 'true'
 
     # Core launch file
     core_launch_file = os.path.join(get_package_share_directory('reseq_ros2'), 'launch', 'reseq_core_launch.py')
@@ -35,7 +34,6 @@ def launch_setup(context, *args, **kwargs):
         PythonLaunchDescriptionSource(core_launch_file),
         launch_arguments={
             'config_file': config_filename,
-            'is_can': str(is_can).lower()
         }.items()
     ))
 
@@ -64,7 +62,6 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('config_file', default_value = default_filename),
-        DeclareLaunchArgument('is_can', default_value = 'true', description="is CAN or VCAN"),
         DeclareLaunchArgument('sensors', default_value = 'true', description="Enable sensors"),
         DeclareLaunchArgument('d_twin', default_value = 'true', description="Enable digital twin"),
         
