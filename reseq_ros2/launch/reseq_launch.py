@@ -24,7 +24,9 @@ def launch_setup(context, *args, **kwargs):
     # endEffector = get_end_effector(config)
     launch_config = []
 
-    # add optional nodes for sensors  
+    # add optional nodes for sensors
+    sensors_enabled = LaunchConfiguration('sensors').perform(context) == 'true'
+    digital_twin_enabled = LaunchConfiguration('d_twin').perform(context) == 'true'
     lidar_enabled = LaunchConfiguration('lidar').perform(context) == 'true'
     camera_enabled = LaunchConfiguration('realsense').perform(context) == 'true'
     is_can = LaunchConfiguration('is_can').perform(context) == 'true'
@@ -40,24 +42,26 @@ def launch_setup(context, *args, **kwargs):
     ))
 
     # Sensor launch file
-    sensors_launch_file = os.path.join(get_package_share_directory('reseq_ros2'), 'launch', 'sensors_launch.py')
-    launch_config.append(IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(sensors_launch_file),
-        launch_arguments={
-            'config_file': config_filename,
-            'lidar': str(lidar_enabled).lower(),
-            'realsense': str(camera_enabled).lower()
-        }.items()
-    ))
+    if sensors_enabled == 'true':
+        sensors_launch_file = os.path.join(get_package_share_directory('reseq_ros2'), 'launch', 'sensors_launch.py')
+        launch_config.append(IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(sensors_launch_file),
+            launch_arguments={
+                'config_file': config_filename,
+                'lidar': str(lidar_enabled).lower(),
+                'realsense': str(camera_enabled).lower()
+            }.items()
+        ))
 
-    # Digital twin launch file
-    digital_twin_launch_file = os.path.join(get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py')
-    launch_config.append(IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(digital_twin_launch_file),
-        launch_arguments={
-            'config_file': config_filename
-        }.items()
-    ))
+    if digital_twin_enabled == 'true':
+        # Digital twin launch file
+        digital_twin_launch_file = os.path.join(get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py')
+        launch_config.append(IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(digital_twin_launch_file),
+            launch_arguments={
+                'config_file': config_filename
+            }.items()
+        ))
     
     return launch_config
     
@@ -67,6 +71,8 @@ def generate_launch_description():
         DeclareLaunchArgument('lidar', default_value = 'true', description="Enable lidar sensor"),
         DeclareLaunchArgument('realsense', default_value = 'true', description="Enable realsense camera"),
         DeclareLaunchArgument('is_can', default_value = 'true', description="is CAN or VCAN"),
+        DeclareLaunchArgument('sensors', default_value = 'true', description="Enable sensors"),
+        DeclareLaunchArgument('d_twin', default_value = 'true', description="Enable digital twin"),
         
         OpaqueFunction(function = launch_setup)
                              ])
