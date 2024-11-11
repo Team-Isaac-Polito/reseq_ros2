@@ -39,6 +39,39 @@ def launch_setup(context, *args, **kwargs):
                 'b': config['agevar_consts']['b'],
             }]))
     
+    robot_controllers = f"{config_path}/reseq_controllers.yaml"
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_controllers],
+        output="both",
+        remappings=[
+            ("~/robot_description", "/robot_description"),
+        ],
+    )
+    launch_config.append(control_node)
+
+    joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+    )
+    launch_config.append(joint_state_broadcaster_spawner)
+
+    diff_controller_spawner1 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
+    )
+    launch_config.append(diff_controller_spawner1)
+
+    diff_controller_spawner2 = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
+    )
+    launch_config.append(diff_controller_spawner2)
+    
     xacro_file = share_folder + "/description/robot.urdf.xacro"
     robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}).toxml()
     robot_state_publisher_node = Node(

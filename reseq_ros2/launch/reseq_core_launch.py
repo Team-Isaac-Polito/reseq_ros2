@@ -80,48 +80,6 @@ def launch_setup(context, *args, **kwargs):
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
                 }]))
-    robot_controllers = f"{config_path}/reseq_controllers.yaml"
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_controllers],
-        output="both",
-        remappings=[
-            ("~/robot_description", "/robot_description"),
-        ],
-    )
-    launch_config.append(control_node)
-
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(joint_state_broadcaster_spawner)
-
-    diff_controller_spawner1 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner1)
-
-    diff_controller_spawner2 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner2)
-
-    # frf = Node(
-    #     package='reseq_ros2',
-    #     executable='fake_robot_feedback',
-    #     name='fake_robot_feedback',
-    #     parameters=[{
-    #         'modules': addresses,
-    #     }]
-    # )
-    # launch_config.append(frf)
 
     # all other reseq_core nodes are core nodes
     core_nodes += list(range(1, len(launch_config)))
@@ -134,7 +92,7 @@ def launch_setup(context, *args, **kwargs):
                 event_handler=OnProcessExit(
                     target_action = launch_config[el],
                     on_exit=[
-                        LogInfo(msg=f'{launch_config[el].name} exited, system ends'),
+                        LogInfo(msg=f'---------------------{launch_config[el].name} exited, system ends'),
                         EmitEvent(event=Shutdown())
                     ]
                 )
