@@ -16,15 +16,6 @@ def clear_temp_directory(temp_path):
         shutil.rmtree(temp_path)
         os.makedirs(temp_path, exist_ok=True)
 
-# Function to merge multiple YAML files into a single dictionary
-def merge_yaml(file_paths):
-    merged_data = {}
-    for file_path in file_paths:
-        with open(file_path, 'r') as file:
-            data = yaml.safe_load(file)
-            merged_data.update(data)
-    return merged_data
-
 # Function to include and merge additional YAML files specified in the 'include' section
 def create_configs(main_config, include_files):
     for key, file in include_files.items():
