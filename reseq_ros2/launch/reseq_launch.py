@@ -2,7 +2,8 @@ import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler
 from launch.substitutions import LaunchConfiguration
-from launch.actions import OpaqueFunction, ExecuteProcess, LogInfo
+from launch.actions import OpaqueFunction, ExecuteProcess, LogInfo, EmitEvent
+from launch.events import Shutdown
 from launch_ros.parameter_descriptions import ParameterFile
 from launch.event_handlers import OnProcessExit
 import yaml
@@ -188,6 +189,17 @@ def generate_launch_description():
         output='screen'
     )
 
+    def on_process_exit(event, context):
+        if event.returncode == 0:
+            return [
+                LogInfo(msg="Configuration files generated."),
+                OpaqueFunction(function=launch_setup)
+            ]
+        else:
+            return [
+                EmitEvent(event=Shutdown(reason='Configuration generation failed'))
+            ]
+
     return LaunchDescription([
         DeclareLaunchArgument(
             'config_file',
@@ -198,9 +210,7 @@ def generate_launch_description():
         RegisterEventHandler(
             OnProcessExit(
                 target_action=generate_configs,
-                on_exit=[LogInfo(msg="Configuration files generated."),
-                         OpaqueFunction(function=launch_setup)
-                ]
+                on_exit=on_process_exit
             )
         )
     ])

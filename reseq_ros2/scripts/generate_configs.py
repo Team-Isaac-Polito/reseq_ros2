@@ -98,8 +98,13 @@ if __name__ == "__main__":
         print("Usage: python generate_configs.py <config_file>")
     else:
         config_file = sys.argv[1]
-        # Clear the temp directory before generating new configs
-        clear_temp_directory(temp_config_path)
-        generate_final_config(config_file)
-        # Generate reseq_controllers.yaml to avoid fatal errors
-        generate_controllers_config(config_file)
+        try:
+            # Clear the temp directory before generating new configs
+            clear_temp_directory(temp_config_path)
+            generate_final_config(config_file)
+            # Generate reseq_controllers.yaml to avoid fatal errors
+            generate_controllers_config(config_file)
+            sys.exit(0)
+        except Exception as e:
+            print(f"Error generating configuration files: {e}")
+            sys.exit(1)
