@@ -18,32 +18,28 @@ def launch_setup(context, *args, **kwargs):
     config_filename = LaunchConfiguration('config_file').perform(context)
     #Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
-    sensors_config = parse_config(f'{config_path}/sensors_config.yaml')
 
     launch_config = []
 
-    for sensor in sensors_config['sensors']:
-        # if sensor doens't have a launch file, create the Node, otherwise use it
-        # YAML value true are read as boolean, so don't use equality check "true"
-        if sensor['enabled']:
-            if sensor['has_launch_file']:
+    # for each sensor in the config file
+    for sensor in config['sensors']:
+        # name of the sensor
+        name = list(sensor.keys())[0]
+        # if sensor == True, it means that in the config file the sensor has to activated
+        if sensor[name]:
+            # now a series of if
+            if name == "lidar":
                 launch_config.append(IncludeLaunchDescription(
-                    f"{get_package_share_directory(sensor['package'])}/launch/{sensor['launch_file']}"))
-            else:
-                # if sensor has parameters, it is contained in the config
-                if sensor['has_parameter']:
-                    launch_config.append(Node(
-                    package=sensor['package'],
-                    executable=sensor['executable'],
-                    name=sensor['name'],
-                    namespace=sensor['namespace'],
+                    f"{get_package_share_directory('rplidar_ros')}/launch/rplidar_a2m8_launch.py"))
+            if name == "realsense":
+                launch_config.append(Node(
+                    package='realsense2_camera',
+                    executable='realsense2_camera_node',
+                    name='realsense2_camera_node',
+                    namespace="realsense",
                     parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
-                else:
-                    launch_config.append(Node(
-                    package=sensor['package'],
-                    executable=sensor['executable'],
-                    name=sensor['name'],
-                    namespace=sensor['namespace']))
+    
+
     return launch_config
     
 def generate_launch_description():
