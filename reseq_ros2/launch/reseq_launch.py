@@ -1,18 +1,21 @@
+import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler
 from launch.substitutions import LaunchConfiguration
-from launch.actions import OpaqueFunction
+from launch.actions import OpaqueFunction, ExecuteProcess, LogInfo, EmitEvent
+from launch.events import Shutdown
 from launch_ros.parameter_descriptions import ParameterFile
+from launch.event_handlers import OnProcessExit
 import yaml
 from yaml import SafeLoader
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import xacro
 
-
-#Default config file path
+# Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
 config_path = f'{share_folder}/config'
+temp_config_path = os.path.join(config_path, 'temp')
 default_filename = "reseq_mk1_can.yaml"
 
 def parse_config(filename):
@@ -39,13 +42,18 @@ def get_end_effector(config):
 
 #launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
-    #Get config path from command line, otherwise use the default path
+    # Get the configuration file path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
-    #Parse the config file
-    config = parse_config(f'{config_path}/{config_filename}')
+
+    # Parse the main configuration file
+    config = parse_config(f'{temp_config_path}/{config_filename}')
+
+    # Extract relevant configurations
     addresses = get_addresses(config)
     joints = get_joints(config)
     endEffector = get_end_effector(config)
+
+    # List of nodes to launch with their respective parameters
     launch_config = []
     launch_config.append(Node(
             package='reseq_ros2',
@@ -101,7 +109,7 @@ def launch_setup(context, *args, **kwargs):
             executable='realsense2_camera_node',
             name='realsense2_camera_node',
             namespace="realsense",
-            parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
+            parameters=[ParameterFile(f"{temp_config_path}/{config['realsense_config']}")]))
     if config['version'] == 'mk1':
         launch_config.append(Node(
                 package='reseq_ros2',
@@ -118,7 +126,7 @@ def launch_setup(context, *args, **kwargs):
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
                 }]))
-    robot_controllers = f"{config_path}/reseq_controllers.yaml"
+    robot_controllers = f"{temp_config_path}/reseq_controllers.yaml"
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
@@ -131,7 +139,8 @@ def launch_setup(context, *args, **kwargs):
     launch_config.append(control_node)
     
     xacro_file = share_folder + "/description/robot.urdf.xacro"
-    robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}).toxml()
+    robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{temp_config_path}/{config_filename}'}).toxml()
+
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -147,19 +156,14 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(joint_state_broadcaster_spawner)
 
-    diff_controller_spawner1 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
+    num_modules = config.get('num_modules', 0)
+    for i in range(num_modules):
+        launch_config.append(Node(
+            package="controller_manager",
+            executable="spawner",
+            arguments=[f"diff_controller{i + 1}", "--controller-manager", "/controller_manager"],
+            )
     )
-    launch_config.append(diff_controller_spawner1)
-
-    diff_controller_spawner2 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner2)
 
     # frf = Node(
     #     package='reseq_ros2',
@@ -177,7 +181,37 @@ def launch_setup(context, *args, **kwargs):
     return launch_config
     
 def generate_launch_description():
-    return LaunchDescription([DeclareLaunchArgument('config_file', default_value = default_filename), 
-                             OpaqueFunction(function = launch_setup)
-                             ])
+    config_file = LaunchConfiguration('config_file')
+    
+    generate_configs = ExecuteProcess(
+        cmd=['python3', os.path.join(share_folder, 'scripts/generate_configs.py'), config_file],
+        name='generate_configs',
+        output='screen'
+    )
+
+    def on_process_exit(event, context):
+        if event.returncode == 0:
+            return [
+                LogInfo(msg="Configuration files generated."),
+                OpaqueFunction(function=launch_setup)
+            ]
+        else:
+            return [
+                EmitEvent(event=Shutdown(reason='Configuration generation failed'))
+            ]
+
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            'config_file',
+            default_value=default_filename,
+        ),
+        generate_configs,
+        # Wait for the config generation process to complete before proceeding
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=generate_configs,
+                on_exit=on_process_exit
+            )
+        )
+    ])
 
