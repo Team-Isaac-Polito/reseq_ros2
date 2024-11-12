@@ -16,6 +16,7 @@ from common_functions_launch import *
 def launch_setup(context, *args, **kwargs):
     #Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
+    log_level = LaunchConfiguration('log_level').perform(context)
     #Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
@@ -35,6 +36,7 @@ def launch_setup(context, *args, **kwargs):
                     'joints': joints,
                     'end_effector': endEffector
                 }],
+                arguments=['--ros-args', '--log-level', log_level],
                 on_exit = Shutdown()))
     else:
         launch_config.append(Node(
@@ -46,7 +48,8 @@ def launch_setup(context, *args, **kwargs):
                         'modules': addresses,
                         'joints': joints,
                         'end_effector': endEffector
-                    }]))
+                    }],
+                    arguments=['--ros-args', '--log-level', log_level]))
     launch_config.append(Node(
             package='reseq_ros2',
             executable='agevar',
@@ -60,6 +63,7 @@ def launch_setup(context, *args, **kwargs):
                 'joints': joints,
                 'end_effector': endEffector
             }],
+            arguments=['--ros-args', '--log-level', log_level],
             on_exit = Shutdown()))
     launch_config.append(Node(
             package='reseq_ros2',
@@ -72,6 +76,7 @@ def launch_setup(context, *args, **kwargs):
                 'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
                 'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
             }],
+            arguments=['--ros-args', '--log-level', log_level],
             on_exit = Shutdown()))
 
     if config['version'] == 'mk1':
@@ -90,6 +95,7 @@ def launch_setup(context, *args, **kwargs):
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
                 }],
+                arguments=['--ros-args', '--log-level', log_level],
                 on_exit = Shutdown()))
 
     return launch_config
@@ -98,6 +104,6 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('config_file', default_value = default_filename),
-        
+        DeclareLaunchArgument('log_level', default_value='info'),
         OpaqueFunction(function = launch_setup)
                              ])

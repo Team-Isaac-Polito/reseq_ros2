@@ -38,7 +38,7 @@ def launch_setup(context, *args, **kwargs):
                 'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
                 'b': config['agevar_consts']['b'],
             }],
-            arguments=['--ros-args', '--log-level', 'warn']
+            arguments=['--ros-args', '--log-level', 'info']
             ))
 
     robot_controllers = f"{config_path}/reseq_controllers.yaml"
