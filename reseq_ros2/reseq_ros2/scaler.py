@@ -82,11 +82,11 @@ def main(args=None):
     rclpy.init(args=args)
     try:
         scaler = Scaler()
-    except Exception as err:
-        rclpy.logging.get_logger('scaler').fatal(f"Error while starting Scaler node: {str(err)}\n{traceback.format_exc()}")
-        rclpy.shutdown()
-    else:
         rclpy.spin(scaler)
+    except Exception as err:
+        rclpy.logging.get_logger('scaler').fatal(f"Error in the Scaler node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
         scaler.destroy_node()
         rclpy.shutdown()
 

@@ -121,11 +121,11 @@ def main(args=None):
     rclpy.init(args=args)
     try:
         enea = Enea()
-    except Exception as err:
-        rclpy.logging.get_logger('enea').fatal(f"Error while starting Enea node: {str(err)}\n{traceback.format_exc()}")
-        rclpy.shutdown()
-    else:
         rclpy.spin(enea)
+    except Exception as err:
+        rclpy.logging.get_logger('enea').fatal(f"Error in the Enea node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
         enea.destroy_node()
         rclpy.shutdown()
 

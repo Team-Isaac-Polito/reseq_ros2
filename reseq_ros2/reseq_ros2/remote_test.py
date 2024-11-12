@@ -1,6 +1,7 @@
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
+import traceback
 
 TS = 1/50  # sampling time
 T_IN = 2
@@ -54,9 +55,15 @@ class RemoteTest(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    remote_test = RemoteTest()
-    rclpy.spin(remote_test)
-    rclpy.shutdown()
+    try:
+        remote_test = RemoteTest()
+        rclpy.spin(remote_test)
+    except Exception as err:
+        rclpy.logging.get_logger('remote_test').fatal(f"Error in the RemoteTest node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
+        remote_test.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

@@ -129,11 +129,11 @@ def main(args=None):
     rclpy.init(args=args)
     try:
         agevar = Agevar()
-    except Exception as err:
-        rclpy.logging.get_logger('agevar').fatal(f"Error while starting Agevar node: {str(err)}\n{traceback.format_exc()}")
-        rclpy.shutdown()
-    else:
         rclpy.spin(agevar)
+    except Exception as err:
+        rclpy.logging.get_logger('agevar').fatal(f"Error in the Agevar node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
         agevar.destroy_node()
         rclpy.shutdown()
 
