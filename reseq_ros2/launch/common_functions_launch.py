@@ -4,7 +4,7 @@ from ament_index_python.packages import get_package_share_directory
 
 #Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
-config_path = f'{share_folder}/config'
+config_path = f'{share_folder}/config/temp'
 default_filename = "reseq_mk1_can.yaml"
 
 def parse_config(filename):

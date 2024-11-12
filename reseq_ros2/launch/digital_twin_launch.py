@@ -7,16 +7,16 @@ import xacro
 import sys
 from ament_index_python.packages import get_package_share_directory
 
-#Default config file path
+# Default config file path
 share_folder = get_package_share_directory("reseq_ros2")
 sys.path.append(share_folder+"/launch")
 from common_functions_launch import *
 
-#launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command line argument directly in the launch file
+# launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
-    #Get config path from command line, otherwise use the default path
+    # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
-    #Parse the config file
+    # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
     joints = get_joints(config)
@@ -38,7 +38,7 @@ def launch_setup(context, *args, **kwargs):
                 'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
                 'b': config['agevar_consts']['b'],
             }]))
-    
+
     robot_controllers = f"{config_path}/reseq_controllers.yaml"
     control_node = Node(
         package="controller_manager",
@@ -58,20 +58,19 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(joint_state_broadcaster_spawner)
 
-    diff_controller_spawner1 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller1", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner1)
+    num_modules = config.get("num_modules", 0)
+    for i in range(num_modules):
+        module_controller = Node(
+            package="controller_manager",
+            executable="spawner",
+            arguments=[
+                f"diff_controller{i + 1}",
+                "--controller-manager",
+                "/controller_manager",
+            ],
+        )
+        launch_config.append(module_controller)
 
-    diff_controller_spawner2 = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller2", "--controller-manager", "/controller_manager"],
-    )
-    launch_config.append(diff_controller_spawner2)
-    
     xacro_file = share_folder + "/description/robot.urdf.xacro"
     robot_description = xacro.process_file(xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}).toxml()
     robot_state_publisher_node = Node(
@@ -81,7 +80,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{'robot_description': robot_description}] # add other parameters here if required
     )
     launch_config.append(robot_state_publisher_node)
-
 
     # frf = Node(
     #     package='reseq_ros2',
@@ -93,16 +91,11 @@ def launch_setup(context, *args, **kwargs):
     # )
     # launch_config.append(frf)
 
-    # launch_config.append(IncludeLaunchDescription(
-    #     f"{get_package_share_directory('rplidar_ros')}/launch/rplidar_a2m8_launch.py"
-    # ))
-
     return launch_config
-    
+
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('config_file', default_value = default_filename),
         
         OpaqueFunction(function = launch_setup)
                              ])
-
