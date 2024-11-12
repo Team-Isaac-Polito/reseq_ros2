@@ -1,9 +1,8 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch.actions import OpaqueFunction, RegisterEventHandler, LogInfo, EmitEvent
+from launch.actions import OpaqueFunction
 from launch.events import Shutdown
-from launch.event_handlers import OnProcessExit
 from launch_ros.actions import Node
 import sys
 from ament_index_python.packages import get_package_share_directory
@@ -23,13 +22,10 @@ def launch_setup(context, *args, **kwargs):
     joints = get_joints(config)
     endEffector = get_end_effector(config)
     launch_config = []
-    core_nodes = [] # it contains indexes in launch_config
 
     # check if it is can
     if config['canbus']['channel'].startswith("can"):
-        core_nodes.append(0)
-
-    launch_config.append(Node(
+        launch_config.append(Node(
                 package='reseq_ros2',
                 executable='communication',
                 name='communication',
@@ -38,7 +34,19 @@ def launch_setup(context, *args, **kwargs):
                     'modules': addresses,
                     'joints': joints,
                     'end_effector': endEffector
-                }]))
+                }],
+                on_exit = Shutdown()))
+    else:
+        launch_config.append(Node(
+                    package='reseq_ros2',
+                    executable='communication',
+                    name='communication',
+                    parameters=[{
+                        'can_channel': config['canbus']['channel'],
+                        'modules': addresses,
+                        'joints': joints,
+                        'end_effector': endEffector
+                    }]))
     launch_config.append(Node(
             package='reseq_ros2',
             executable='agevar',
@@ -51,7 +59,8 @@ def launch_setup(context, *args, **kwargs):
                 'modules': addresses,
                 'joints': joints,
                 'end_effector': endEffector
-            }]))
+            }],
+            on_exit = Shutdown()))
     launch_config.append(Node(
             package='reseq_ros2',
             executable='scaler',
@@ -62,7 +71,8 @@ def launch_setup(context, *args, **kwargs):
                 'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
                 'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
                 'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
-            }]))
+            }],
+            on_exit = Shutdown()))
 
     if config['version'] == 'mk1':
         launch_config.append(Node(
@@ -79,27 +89,10 @@ def launch_setup(context, *args, **kwargs):
                     'r_head_roll': config['enea_consts']['r_head_roll'],
                     'pitch_conv': config['enea_consts']['pitch_conv'],
                     'end_effector': endEffector
-                }]))
+                }],
+                on_exit = Shutdown()))
 
-    # all other reseq_core nodes are core nodes
-    core_nodes += list(range(1, len(launch_config)))
-
-    event_handlers = []
-    # create list of event handlers for each core node
-    for el in core_nodes:
-        event_handlers.append(
-            RegisterEventHandler(
-                event_handler=OnProcessExit(
-                    target_action = launch_config[el],
-                    on_exit=[
-                        LogInfo(msg=f'---------------------{launch_config[el].name} exited, system ends'),
-                        EmitEvent(event=Shutdown())
-                    ]
-                )
-            )
-        )
-    
-    return launch_config + event_handlers
+    return launch_config
     # return launch_config
     
 def generate_launch_description():

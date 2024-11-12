@@ -14,6 +14,9 @@ modules:
     hasJoint: true
     hasEndEffector: false
 realsense_config: "realsense_rgb_motion.yaml"
+sensors:
+  - realsense: true
+  - lidar: true
 agevar_consts:
   a: 0.1695                  # [m] Distance between the center of every module and the previous yaw joint
   b: 0.18395                 # [m] Distance between the center of every module and the following yaw joint
