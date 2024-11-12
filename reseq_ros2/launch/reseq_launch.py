@@ -25,6 +25,7 @@ from common_functions_launch import *
 def launch_setup(context, *args, **kwargs):
     # Get the configuration file path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
+    log_level = LaunchConfiguration('log_level').perform(context)
     launch_config = []
 
     # add optional nodes for sensors
@@ -37,6 +38,7 @@ def launch_setup(context, *args, **kwargs):
         PythonLaunchDescriptionSource(core_launch_file),
         launch_arguments={
             'config_file': config_filename,
+            'log_level': log_level,
         }.items()
     ))
 
@@ -56,7 +58,8 @@ def launch_setup(context, *args, **kwargs):
         launch_config.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(digital_twin_launch_file),
             launch_arguments={
-                'config_file': config_filename
+                'config_file': config_filename,
+                'log_level': log_level,
             }.items()
         ))
     
@@ -86,6 +89,7 @@ def generate_launch_description():
         DeclareLaunchArgument('config_file',default_value=default_filename),
         DeclareLaunchArgument('sensors', default_value = 'true', description="Enable sensors"),
         DeclareLaunchArgument('d_twin', default_value = 'true', description="Enable digital twin"),
+        DeclareLaunchArgument('log_level', default_value='info', description="Set log level for reseq nodes"),
         generate_configs,
         # Wait for the config generation process to complete before proceeding
         RegisterEventHandler(

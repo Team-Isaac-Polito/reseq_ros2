@@ -8,6 +8,7 @@ from geometry_msgs.msg import Twist, TwistStamped
 from std_msgs.msg import Int32, Float32
 import reseq_ros2.constants as rc
 from reseq_interfaces.msg import Motors
+import traceback
 
 
 class State:
@@ -254,11 +255,11 @@ def main(args=None):
     rclpy.init(args=args)
     try:
         joint_publisher = JointPublisher()
-    except Exception as err:
-        print("Error while starting JointPublisher node: " + str(err))
-        rclpy.shutdown()
-    else:
         rclpy.spin(joint_publisher)
+    except Exception as err:
+        rclpy.logging.get_logger('joint_publisher').fatal(f"Error in the JointPublisher node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
         joint_publisher.destroy_node()
         rclpy.shutdown()
 

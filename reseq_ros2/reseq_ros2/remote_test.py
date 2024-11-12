@@ -1,6 +1,7 @@
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
+import traceback
 
 TS = 1/50  # sampling time
 T_IN = 2
@@ -24,19 +25,19 @@ class RemoteTest(Node):
         msg = Twist()
 
         if self.t <= T_IN:
-            print('not moving')
+            self.get_logger().debug('not moving')
             linear_vel = 0
             turn_radius = 0
         elif self.t <= T_STEP:
-            print('going straight')
+            self.get_logger().debug('going straight')
             linear_vel = 500
             turn_radius = 0
         elif self.t <= T_SIM:
-            print('turning')
+            self.get_logger().debug('turning')
             linear_vel = 500
             turn_radius = 500
         else:
-            print('stopped')
+            self.get_logger().debug('stopped')
             linear_vel = 0
             turn_radius = 0
             self.destroy_timer(self.timer)
@@ -47,16 +48,22 @@ class RemoteTest(Node):
         msg.angular.z = float(turn_radius)
 
         self.publisher.publish(msg)
-        self.get_logger().info(
+        self.get_logger().debug(
             f"Linear velocity: {msg.linear.x}\t Turn radius: {msg.angular.z}")
         self.t += TS
 
 
 def main(args=None):
     rclpy.init(args=args)
-    remote_test = RemoteTest()
-    rclpy.spin(remote_test)
-    rclpy.shutdown()
+    try:
+        remote_test = RemoteTest()
+        rclpy.spin(remote_test)
+    except Exception as err:
+        rclpy.logging.get_logger('remote_test').fatal(f"Error in the RemoteTest node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
+        remote_test.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

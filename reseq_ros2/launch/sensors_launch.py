@@ -37,7 +37,8 @@ def launch_setup(context, *args, **kwargs):
                     executable='realsense2_camera_node',
                     name='realsense2_camera_node',
                     namespace="realsense",
-                    parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")]))
+                    parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")],
+                    arguments=['--ros-args', '--log-level', 'warn']))
     
 
     return launch_config

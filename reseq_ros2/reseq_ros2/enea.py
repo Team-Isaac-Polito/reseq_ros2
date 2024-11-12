@@ -4,6 +4,7 @@ from reseq_interfaces.msg import EndEffector
 from std_msgs.msg import Int32
 from enum import Enum
 from time import time
+import traceback
 
 class EE_Enum(Enum):
     PITCH = 0
@@ -71,7 +72,7 @@ class Enea(Node):
 
         self.constrain()
 
-        self.get_logger().info(f"Output: pitch={self.pitch}, head_pitch={self.head_pitch}, head_roll={self.head_roll}")
+        self.get_logger().debug(f"Output: pitch={self.pitch}, head_pitch={self.head_pitch}, head_roll={self.head_roll}")
 
         self.post()
 
@@ -120,11 +121,11 @@ def main(args=None):
     rclpy.init(args=args)
     try:
         enea = Enea()
-    except Exception as err:
-        print("Error while starting Enea node: " + str(err))
-        rclpy.shutdown()
-    else:
         rclpy.spin(enea)
+    except Exception as err:
+        rclpy.logging.get_logger('enea').fatal(f"Error in the Enea node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
         enea.destroy_node()
         rclpy.shutdown()
 

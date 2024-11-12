@@ -16,6 +16,7 @@ from common_functions_launch import *
 def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
+    log_level = LaunchConfiguration('log_level').perform(context)
     # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
@@ -37,7 +38,9 @@ def launch_setup(context, *args, **kwargs):
                 'vel_gain': config['joint_pub_consts']['vel_gain'],
                 'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
                 'b': config['agevar_consts']['b'],
-            }]))
+            }],
+            arguments=['--ros-args', '--log-level', log_level]
+            ))
 
     robot_controllers = f"{config_path}/reseq_controllers.yaml"
     control_node = Node(
@@ -48,13 +51,14 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ("~/robot_description", "/robot_description"),
         ],
+        arguments=['--ros-args', '--log-level', 'warn']
     )
     launch_config.append(control_node)
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager", '--ros-args', '--log-level', 'warn'],
     )
     launch_config.append(joint_state_broadcaster_spawner)
 
@@ -67,6 +71,7 @@ def launch_setup(context, *args, **kwargs):
                 f"diff_controller{i + 1}",
                 "--controller-manager",
                 "/controller_manager",
+                '--ros-args', '--log-level', 'warn'
             ],
         )
         launch_config.append(module_controller)
@@ -77,7 +82,8 @@ def launch_setup(context, *args, **kwargs):
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        parameters=[{'robot_description': robot_description}] # add other parameters here if required
+        parameters=[{'robot_description': robot_description}], # add other parameters here if required
+        arguments=['--ros-args', '--log-level', 'warn']
     )
     launch_config.append(robot_state_publisher_node)
 
@@ -96,6 +102,6 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('config_file', default_value = default_filename),
-        
+        DeclareLaunchArgument('log_level', default_value='info'),      
         OpaqueFunction(function = launch_setup)
                              ])

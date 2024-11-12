@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 import reseq_ros2.constants as rc
 from reseq_interfaces.msg import Motors
+import traceback
 
 """
 ROS node designed to test movement of the digital twin without access to the CAN bus.
@@ -46,11 +47,11 @@ def main(args=None):
     rclpy.init(args=args)
     try:
         frf = FakeRobotFeedback()
-    except Exception as err:
-        print("Error while starting FakeRobotFeedback node: " + str(err))
-        rclpy.shutdown()
-    else:
         rclpy.spin(frf)
+    except Exception as err:
+        rclpy.logging.get_logger('fake_robot_feedback').fatal(f"Error in the FakeRobotFeedback node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
         frf.destroy_node()
         rclpy.shutdown()
 
