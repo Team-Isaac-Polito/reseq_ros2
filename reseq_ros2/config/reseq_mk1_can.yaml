@@ -17,3 +17,6 @@ modules:
     hasJoint: true
     hasEndEffector: false
 realsense_config: "realsense_rgb_motion.yaml"
+sensors:
+  - realsense: true
+  - lidar: true
