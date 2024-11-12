@@ -6,9 +6,6 @@ from rclpy.node import Node
 from reseq_interfaces.msg import Motors
 from std_msgs.msg import Float32, Int32  # deprecated?
 import traceback
-import threading
-import subprocess
-import sys
 
 """ROS node that handles communication between the Jetson and each module via CAN
 
@@ -50,24 +47,6 @@ class Communication(Node):
             raise
 
         self.get_logger().info("Communication node started")
-
-        # Start the CAN bus monitoring thread
-        self.active = True
-        self.monitoring_thread = threading.Thread(target=self.monitor_canbus)
-        self.monitoring_thread.start()
-
-    def monitor_canbus(self):
-        process = subprocess.Popen(["candump", self.can_channel], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        while self.active:
-            retcode = process.poll()  # Check if the candump process has terminated
-            if retcode is not None:  # If the process has terminated
-                if retcode != 0:
-                    self.get_logger().fatal(f'candump process terminated with return code {retcode}')
-                self.active = False
-                self.exit_code = retcode # Save the retcode for later use
-                process.terminate()
-                rclpy.shutdown()
-                return
 
     # create ROS publishers for a module based on its properties
     def create_module_pubs(self, address, hasJoint, hasEndEffector):
@@ -172,29 +151,18 @@ class Communication(Node):
     def topic_from_name(self, name: str) -> rc.ReseQTopic:
         return next(filter(lambda x: x.name == name, rc.topics))
 
-    def destroy(self):
-        self.active = False
-        if hasattr(self, 'monitoring_thread') and self.monitoring_thread.is_alive():
-            self.monitoring_thread.join()
 
 def main(args=None):
     rclpy.init(args=args)
-    communication = None
-    exit_code = 0  # Default to 0 for a clean exit
     try:
         communication = Communication()
         rclpy.spin(communication)
     except Exception as err:
-        rclpy.logging.get_logger('communication').fatal(f"Error while starting Communication node: {str(err)}\n{traceback.format_exc()}")
-        exit_code = 1  # Set a non-zero exit code to indicate an error
-    finally:
-        if communication is not None:
-            exit_code = communication.exit_code if hasattr(communication, 'exit_code') else exit_code  # Use retcode if available
-            communication.destroy()
-            communication.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
-    sys.exit(exit_code)
+        rclpy.logging.get_logger('communication').fatal(f"Error in the Communication node: {str(err)}\n{traceback.format_exc()}")
+        raise err
+    else:
+        communication.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == "__main__":
     main()

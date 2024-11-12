@@ -118,7 +118,7 @@ class Agevar(Node):
         if sign == 0:  # backwards
             w_left, w_right = -w_left, -w_right
 
-        # from radiants to rmp
+        # from radiants to rpm
         w_right = w_right*rc.rads2rpm
         w_left = w_left*rc.rads2rpm
 
