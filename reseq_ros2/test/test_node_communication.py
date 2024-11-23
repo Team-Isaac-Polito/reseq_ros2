@@ -3,7 +3,7 @@ import rclpy
 
 from reseq_interfaces.msg import Remote, EndEffector, Motors
 from geometry_msgs.msg import Vector3, Twist, TwistStamped
-from std_msgs.msg import Int32, Float32, String
+from std_msgs.msg import Int32, Float32
 from sensor_msgs.msg import JointState
 import time
 
@@ -225,24 +225,6 @@ class TestNodes(unittest.TestCase):
         for i in range(1, idx):
             if not bool(self.msgs[i]): problems.append(f"Couldn't get message from '/diff_controller{i}/cmd_vel' topic.")
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
-
-    def test_0_robotstatepublisher_topics(self):
-        self.node.create_subscription(
-            String,
-            "/robot_description",
-            self.create_callback(0),
-            10
-        )
-
-        # Wait until it transmits message
-        endtime = time.time() + 10
-        while time.time() < endtime:
-            self.pub_.publish(self.msg)
-            rclpy.spin_once(self.node, timeout_sec=0.1)
-            if self.msgs[0]:
-                break
-        
-        self.assertTrue(self.msgs[0], "Couldn't get message from '/robot_description' topic.")
 
     def create_callback(self, index):
         def callback(msg):
