@@ -12,6 +12,9 @@ from launch.actions import ExecuteProcess
 import launch_testing
 import launch_testing.actions
 
+import can
+import struct
+
 class TestNodes(unittest.TestCase):
 
     @classmethod
@@ -187,10 +190,34 @@ class TestNodes(unittest.TestCase):
                 )
                 idx += 1
 
+        # Initialize the CAN bus interface
+        can_channel = 'vcan0'
+        canbus = can.interface.Bus(channel=can_channel, bustype='socketcan')
+
         # Wait until it transmits message
         endtime = time.time() + 10
         while time.time() < endtime:
-            self.pub_.publish(self.msg)
+            # Loop through various IDs, module numbers, and data
+            for id, module_num, data in [(0x22, 0x11, struct.pack('ff', 5.0, 3.0)),
+                                         (0x22, 0x12, struct.pack('ff', 5.0, 3.0)),
+                                         (0x22, 0x13, struct.pack('ff', 5.0, 3.0)),
+                                         (0x32, 0x12, struct.pack('f', 5.0)),
+                                         (0x34, 0x12, struct.pack('f', 5.0)),
+                                         (0x36, 0x12, struct.pack('f', 5.0)),
+                                         (0x32, 0x13, struct.pack('f', 5.0)),
+                                         (0x34, 0x13, struct.pack('f', 5.0)),
+                                         (0x36, 0x13, struct.pack('f', 5.0)),
+                                         (0x42, 0x11, struct.pack('i', 5)),
+                                         (0x44, 0x11, struct.pack('i', 5)),
+                                         (0x46, 0x11, struct.pack('i', 5)),]:
+                # Create a CAN message
+                aid = struct.pack('bbbb', 00, id, 0x00, module_num)
+                msg = can.Message(
+                    arbitration_id=int.from_bytes(aid, byteorder='big', signed=False),
+                    data=data,
+                    is_extended_id=True)
+                # Send the message to trigger the can_callback
+                canbus.send(msg)
             rclpy.spin_once(self.node, timeout_sec=0.1)
             if None not in self.msgs[:idx]:
                 break
