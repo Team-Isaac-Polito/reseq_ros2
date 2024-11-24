@@ -1,5 +1,6 @@
-from setuptools import setup
 from glob import glob
+
+from setuptools import setup
 
 package_name = 'reseq_ros2'
 
@@ -13,8 +14,7 @@ setup(
         (f'share/{package_name}/scripts', glob('scripts/*.py')),
         (f'share/{package_name}/description', glob('description/*.xacro')),
         (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],

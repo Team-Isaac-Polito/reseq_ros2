@@ -1,9 +1,10 @@
+import traceback
+
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
-import traceback
 
-TS = 1/50  # sampling time
+TS = 1 / 50  # sampling time
 T_IN = 2
 T_STEP = 4
 T_SIM = 8
@@ -13,6 +14,7 @@ T_SIM = 8
 Publish packets to the same ROS topic used by the remote controller to simulate it
 and make sure all components behave correctly.
 """
+
 
 class RemoteTest(Node):
     def __init__(self):
@@ -48,8 +50,7 @@ class RemoteTest(Node):
         msg.angular.z = float(turn_radius)
 
         self.publisher.publish(msg)
-        self.get_logger().debug(
-            f"Linear velocity: {msg.linear.x}\t Turn radius: {msg.angular.z}")
+        self.get_logger().debug(f'Linear velocity: {msg.linear.x}\t Turn radius: {msg.angular.z}')
         self.t += TS
 
 
@@ -59,7 +60,9 @@ def main(args=None):
         remote_test = RemoteTest()
         rclpy.spin(remote_test)
     except Exception as err:
-        rclpy.logging.get_logger('remote_test').fatal(f"Error in the RemoteTest node: {str(err)}\n{traceback.format_exc()}")
+        rclpy.logging.get_logger('remote_test').fatal(
+            f'Error in the RemoteTest node: {str(err)}\n{traceback.format_exc()}'
+        )
         raise err
     else:
         remote_test.destroy_node()
