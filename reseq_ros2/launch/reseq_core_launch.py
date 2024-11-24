@@ -1,18 +1,21 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
-from launch.actions import OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.events import Shutdown
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-import sys
-from ament_index_python.packages import get_package_share_directory
 
-#Default config file path
-share_folder = get_package_share_directory("reseq_ros2")
-sys.path.append(share_folder+"/launch")
-from common_functions_launch import *
+from reseq_ros2.utils.launch_utils import (
+    config_path,
+    default_filename,
+    get_addresses,
+    get_end_effector,
+    get_joints,
+    parse_config,
+)
 
-#launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command line argument directly in the launch file
+
+# launch_setup is used through an OpaqueFunction because it is the only way to manipulate a
+# command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)

@@ -1,25 +1,25 @@
 import os
-import sys
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    IncludeLaunchDescription,
-    RegisterEventHandler,
-    OpaqueFunction,
-    ExecuteProcess,
-    LogInfo,
     EmitEvent,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    LogInfo,
+    OpaqueFunction,
+    RegisterEventHandler,
 )
-from launch.substitutions import LaunchConfiguration
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.events import Shutdown
 from launch.event_handlers import OnProcessExit
-from ament_index_python.packages import get_package_share_directory
+from launch.events import Shutdown
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 
-# Default config file path
-share_folder = get_package_share_directory("reseq_ros2")
-sys.path.append(share_folder+"/launch")
-from common_functions_launch import *
+from reseq_ros2.utils.launch_utils import default_filename
+
+share_folder = get_package_share_directory('reseq_ros2')
+
 
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a
 # command line argument directly in the launch file
