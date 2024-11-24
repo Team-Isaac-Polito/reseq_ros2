@@ -21,8 +21,8 @@ In the directory `ros2_ws` with the apt cache updated run:
 rosdep install -iy --from-path src --rosdistro humble
 ```
 
-## Install other dependencies
-Run:
+## Development dependencies
+Install dependencies to manually inspect and test the environment:
 ```
-sudo apt install -y can-utils ros-humble-rviz2 ros-humble-ros-gzharmonic
+sudo apt install -y can-utils ros-humble-rviz2 ros-humble-ros-gzharmonic python3-flake8 python3-flake8-blind-except python3-flake8-builtins python3-flake8-class-newline python3-flake8-comprehensions python3-flake8-deprecated python3-flake8-docstrings python3-flake8-import-order python3-flake8-quotes
 ```
