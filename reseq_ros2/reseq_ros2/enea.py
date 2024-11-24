@@ -95,10 +95,7 @@ class Enea(Node):
         self.post()
 
     def post(self):
-        """
-        Sends the output positions to the communication node
-        """
-
+        """Send the output positions to the communication node."""
         self.pubs[EE_Enum.PITCH].publish(Int32(data=int(self.pitch)))
         self.pubs[EE_Enum.HEAD_PITCH].publish(Int32(data=int(self.head_pitch)))
         self.pubs[EE_Enum.HEAD_ROLL].publish(Int32(data=int(self.head_roll)))

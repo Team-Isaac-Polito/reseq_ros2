@@ -80,8 +80,8 @@ class Scaler(Node):
         data.head_roll_vel = self.scale(data.head_roll_vel, self.r_head_roll_vel)
         return data
 
-    def scale(self, val, range):
-        return (val + 1) / 2 * (range[1] - range[0]) + range[0]
+    def scale(self, val, scaling_range):
+        return (val + 1) / 2 * (scaling_range[1] - scaling_range[0]) + scaling_range[0]
 
 
 def main(args=None):

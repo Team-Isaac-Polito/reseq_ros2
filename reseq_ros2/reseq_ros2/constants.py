@@ -29,9 +29,7 @@ class StateType(Enum):
 
 
 class ReseQTopic(NamedTuple):
-    """
-    Data structure for the translation of ROS topics to CAN packets.
-    """
+    """Data structure for the translation of ROS topics to CAN packets."""
 
     name: str
     can_id: int
@@ -40,9 +38,7 @@ class ReseQTopic(NamedTuple):
 
 
 class ReseQState(NamedTuple):
-    """
-    Data structure for JointState operations
-    """
+    """Data structure for JointState operations."""
 
     topic: str
     states: list[str]

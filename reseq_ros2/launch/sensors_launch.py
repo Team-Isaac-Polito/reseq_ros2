@@ -28,8 +28,8 @@ def launch_setup(context, *args, **kwargs):
             if name == 'lidar':
                 launch_config.append(
                     IncludeLaunchDescription(
-                        f"{get_package_share_directory('rplidar_ros')}"
-                        "/launch/rplidar_a2m8_launch.py"
+                        f'{get_package_share_directory("rplidar_ros")}'
+                        '/launch/rplidar_a2m8_launch.py'
                     )
                 )
             if name == 'realsense':

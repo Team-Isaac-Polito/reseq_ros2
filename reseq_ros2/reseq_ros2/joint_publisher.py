@@ -90,10 +90,10 @@ class JointPublisher(Node):
         current module
         """
         for mod in modules:
-            id = mod % 16
+            module_id = mod % 16
 
             self.controller_pubs.append(
-                self.create_publisher(TwistStamped, f'/diff_controller{id}/cmd_vel', 10)
+                self.create_publisher(TwistStamped, f'/diff_controller{module_id}/cmd_vel', 10)
             )
 
             self.wheel_velocities.append([0.0, 0.0])
@@ -101,7 +101,7 @@ class JointPublisher(Node):
             if mod in joints:
                 self.position_states.update(
                     {
-                        (mod, x): State(x + f'_{id}_joint', 0.0)
+                        (mod, x): State(x + f'_{module_id}_joint', 0.0)
                         for x in self.states_from_type(rc.StateType.JOINT_FEEDBACK)
                     }
                 )
@@ -109,7 +109,7 @@ class JointPublisher(Node):
             if mod == end_effector:
                 self.position_states.update(
                     {
-                        (mod, x): State(x + f'_{id}_joint', 0.0)
+                        (mod, x): State(x + f'_{module_id}_joint', 0.0)
                         for x in self.states_from_type(rc.StateType.END_EFFECTOR_FEEDBACK)
                     }
                 )
