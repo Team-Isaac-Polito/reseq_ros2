@@ -20,3 +20,9 @@ In the directory `ros2_ws` with the apt cache updated run:
 ```bash
 rosdep install -iy --from-path src --rosdistro humble
 ```
+
+## Install other dependencies
+Run:
+```
+sudo apt install -y can-utils ros-humble-rviz2 ros-humble-ros-gzharmonic
+```
