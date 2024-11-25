@@ -1,19 +1,19 @@
-import unittest
-import rclpy
-
-from reseq_interfaces.msg import Remote, EndEffector, Motors
-from geometry_msgs.msg import Vector3, Twist, TwistStamped
-from std_msgs.msg import Int32, Float32
-from sensor_msgs.msg import JointState
+import struct
 import time
-
-from launch import LaunchDescription
-from launch.actions import ExecuteProcess
-import launch_testing
-import launch_testing.actions
+import unittest
 
 import can
-import struct
+import launch_testing
+import launch_testing.actions
+import rclpy
+from geometry_msgs.msg import Twist, TwistStamped, Vector3
+from launch import LaunchDescription
+from launch.actions import ExecuteProcess
+from sensor_msgs.msg import JointState
+from std_msgs.msg import Float32, Int32
+
+from reseq_interfaces.msg import EndEffector, Motors, Remote
+
 
 class TestNodes(unittest.TestCase):
 
@@ -23,7 +23,7 @@ class TestNodes(unittest.TestCase):
         cls.node = rclpy.create_node('test_node')
         cls.pub_ = cls.node.create_publisher(
             Remote,
-            "/remote",
+            '/remote',
             10
         )
         cls.msg = Remote()
@@ -56,13 +56,13 @@ class TestNodes(unittest.TestCase):
     def test_1_scaler_topics(self):
         self.node.create_subscription(
             EndEffector,
-            "/end_effector",
+            '/end_effector',
             self.create_callback(0),
             10
         )
         self.node.create_subscription(
             Twist,
-            "/cmd_vel",
+            '/cmd_vel',
             self.create_callback(1),
             10
         )
@@ -76,15 +76,17 @@ class TestNodes(unittest.TestCase):
                 break
 
         problems = []
-        if not bool(self.msgs[0]): problems.append("Couldn't get message from '/end_effector' topic.")
-        if not bool(self.msgs[1]): problems.append("Couldn't get message from '/cmd_vel' topic.")
+        if not bool(self.msgs[0]):
+            problems.append("Couldn't get message from '/end_effector' topic.")
+        if not bool(self.msgs[1]):
+            problems.append("Couldn't get message from '/cmd_vel' topic.")
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
         time.sleep(2) # Wait until launch ends
 
     def test_2_agevar_topics(self):
         idx = 0
         while 1:
-            topic = f'/reseq/module{self.address + idx}/motor/setpoint'
+            topic = f"/reseq/module{self.address + idx}/motor/setpoint"
             if topic not in self.topic_names:
                 break
 
@@ -111,17 +113,19 @@ class TestNodes(unittest.TestCase):
                 break
 
         problems = []
-        if len(self.msgs[:idx]) != self.module_num: problems.append(f"Number of topics doesn't match. Expected {self.module_num}, got {len(self.msgs[:idx])}.")
+        if len(self.msgs[:idx]) != self.module_num:
+            problems.append(f"Number of topics doesn't match. Expected {self.module_num}, got {len(self.msgs[:idx])}.")
         for i in range(idx):
-            if not bool(self.msgs[i]): problems.append(f"Couldn't get message from '/reseq/module{self.address + i}/motor/setpoint' topic.")
+            if not bool(self.msgs[i]):
+                problems.append(f"Couldn't get message from '/reseq/module{self.address + i}/motor/setpoint' topic.")
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
 
     def test_3_enea_topics(self):
         idx = 0
-        for vel in ["pitch", "head_pitch", "head_roll"]:
+        for vel in ['pitch', 'head_pitch', 'head_roll']:
             n = 0
             while 1:
-                topic = f'/reseq/module{self.address + n}/end_effector/{vel}/setpoint'
+                topic = f"/reseq/module{self.address + n}/end_effector/{vel}/setpoint"
                 if topic not in self.topic_names:
                     break
 
@@ -149,9 +153,11 @@ class TestNodes(unittest.TestCase):
                 break
 
         problems = []
-        if len(self.msgs[:idx]) != self.end_effector_num: problems.append(f"Number of topics doesn't match. Expected {self.end_effector_num}, got {len(self.msgs[:idx])}.")
+        if len(self.msgs[:idx]) != self.end_effector_num:
+            problems.append(f"Number of topics doesn't match. Expected {self.end_effector_num}, got {len(self.msgs[:idx])}.")
         for i in range(idx):
-            if not bool(self.msgs[i]): problems.append(f"Couldn't get message from '/reseq/module{self.address + (i % (idx//3))}/end_effector/{['pitch', 'head_pitch', 'head_roll'][i // (idx//3)]}/setpoint' topic.")
+            if not bool(self.msgs[i]):
+                problems.append(f"Couldn't get message from '/reseq/module{self.address + (i % (idx//3))}/end_effector/{['pitch', 'head_pitch', 'head_roll'][i // (idx//3)]}/setpoint' topic.")
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
 
     def test_4_communication_topics(self):
@@ -162,7 +168,7 @@ class TestNodes(unittest.TestCase):
         for st in ['motor', 'joint', 'end_effector']:
             while 1:
                 if st == 'motor':
-                    topic = f'/reseq/module{self.address + idx}/{st}/feedback'
+                    topic = f"/reseq/module{self.address + idx}/{st}/feedback"
                     topic_type = self.motor_type
                     n_motor += 1
                 elif st == 'joint':
@@ -223,22 +229,28 @@ class TestNodes(unittest.TestCase):
                 break
 
         problems = []
-        if n_motor != self.module_num: problems.append(f"Number of motors doesn't match. Expected {self.module_num}, got {n_motor}.")
-        if n_joint != self.joint_num: problems.append(f"Number of joints doesn't match. Expected {self.joint_num}, got {n_joint}.")
-        if n_end_effector != self.end_effector_num: problems.append(f"Number of end effectors doesn't match. Expected {self.end_effector_num}, got {n_end_effector}.")
+        if n_motor != self.module_num:
+            problems.append(f"Number of motors doesn't match. Expected {self.module_num}, got {n_motor}.")
+        if n_joint != self.joint_num:
+            problems.append(f"Number of joints doesn't match. Expected {self.joint_num}, got {n_joint}.")
+        if n_end_effector != self.end_effector_num:
+            problems.append(f"Number of end effectors doesn't match. Expected {self.end_effector_num}, got {n_end_effector}.")
         for i in range(idx):
             if n_motor > i: 
-                if not bool(self.msgs[i]): problems.append(f"Couldn't get message from '/reseq/module{self.address + i}/motor/feedback' topic." + "\n")
+                if not bool(self.msgs[i]):
+                    problems.append(f"Couldn't get message from '/reseq/module{self.address + i}/motor/feedback' topic." + "\n")
             elif n_motor + n_joint > i:
-                if not bool(self.msgs[i]): problems.append(f"Couldn't get message from '/reseq/module{self.address+1 + ((i-n_motor)//3)}/joint/{['pitch', 'roll', 'yaw'][(i-n_motor)%3]}/feedback' topic." + "\n")
+                if not bool(self.msgs[i]):
+                    problems.append(f"Couldn't get message from '/reseq/module{self.address+1 + ((i-n_motor)//3)}/joint/{['pitch', 'roll', 'yaw'][(i-n_motor)%3]}/feedback' topic." + "\n")
             else:
-                if not bool(self.msgs[i]): problems.append(f"Couldn't get message from '/reseq/module{self.address}/end_effector/{['pitch', 'head_pitch', 'head_roll'][(i-n_motor-n_joint)%3]}/feedback' topic." + "\n")
+                if not bool(self.msgs[i]):
+                    problems.append(f"Couldn't get message from '/reseq/module{self.address}/end_effector/{['pitch', 'head_pitch', 'head_roll'][(i-n_motor-n_joint)%3]}/feedback' topic." + "\n")
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
 
     def test_5_jointpublisher_topics(self):
         self.node.create_subscription(
             JointState,
-            "/joint_states",
+            '/joint_states',
             self.create_callback(0),
             10
         )
@@ -268,9 +280,11 @@ class TestNodes(unittest.TestCase):
                 break
 
         problems = []
-        if not bool(self.msgs[0]): problems.append("Couldn't get message from '/joint_states' topic.")
+        if not bool(self.msgs[0]):
+            problems.append("Couldn't get message from '/joint_states' topic.")
         for i in range(1, idx):
-            if not bool(self.msgs[i]): problems.append(f"Couldn't get message from '/diff_controller{i}/cmd_vel' topic.")
+            if not bool(self.msgs[i]):
+                problems.append(f"Couldn't get message from '/diff_controller{i}/cmd_vel' topic.")
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
 
     def create_callback(self, index):
@@ -281,12 +295,8 @@ class TestNodes(unittest.TestCase):
 def generate_test_description():
     return LaunchDescription([
         ExecuteProcess(
-            cmd=["ros2", "launch", "reseq_ros2", "reseq_launch.py", "config_file:=reseq_mk1_vcan.yaml"],
+            cmd=['ros2', 'launch', 'reseq_ros2', 'reseq_launch.py', 'config_file:=reseq_mk1_vcan.yaml'],
         ),
-
-        # Start tests right away - no need to wait for anything in this example.
-        # In a more complicated launch description, we might want this action happen
-        # once some process starts or once some other event happens
         launch_testing.actions.ReadyToTest()
     ]), {
         'TestNodes': TestNodes,
