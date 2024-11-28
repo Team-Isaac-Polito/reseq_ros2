@@ -5,7 +5,7 @@ on:
       - main
   push:
     branches:
-      - dev-action-ci
+      - main
 
 jobs: 
   test:

@@ -1,3 +1,5 @@
+[![ROS2 CI/CD](https://github.com/Team-Isaac-Polito/reseq_ros2/actions/workflows/ros-ci.yaml/badge.svg)](https://github.com/Team-Isaac-Polito/reseq_ros2/actions/workflows/ros-ci.yaml)
+
 # Reseq_ros2
 
 ROS2 code to control the ReseQ robot.
