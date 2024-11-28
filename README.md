@@ -29,7 +29,7 @@ rosdep install -iy --from-path src --rosdistro humble
 Install dependencies to manually inspect and test the environment:
 
 ```
-sudo apt install -y can-utils ros-humble-rviz2 ros-humble-ros-gzharmonic python3-flake8 python3-flake8-blind-except python3-flake8-builtins python3-flake8-class-newline python3-flake8-comprehensions python3-flake8-deprecated python3-flake8-docstrings python3-flake8-import-order python3-flake8-quotes
+sudo apt install -y can-utils ros-humble-rviz2 python3-flake8 python3-flake8-blind-except python3-flake8-builtins python3-flake8-class-newline python3-flake8-comprehensions python3-flake8-deprecated python3-flake8-docstrings python3-flake8-import-order python3-flake8-quotes curl lsb-release gnupg
 ```
 
 ## VSCode Development configuration
@@ -69,4 +69,14 @@ To execute ROS2 tests, run the following command which generates a more detailed
 
 ```
 colcon test --event-handlers=console_direct+
+```
+
+## Gazebo Simulator
+Due to problems with wsl, the project uses _Gazebo Harmonic_, which can be installed from the official Gazebo repositories.
+
+```bash
+sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+sudo apt-get update
+sudo apt install ros-humble-ros-gzharmonic
 ```
