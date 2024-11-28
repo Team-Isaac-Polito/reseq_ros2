@@ -170,14 +170,32 @@ class EmulatorRemoteController(Node):
                     self.previousValue = -0.1
                     self.previousKey = key.char
                 self.publisher.publish(message)
-            # if spacebar clicked, make cmd_vel movements faster
-            elif key == keyboard.Key.space:
+            # if b pressed, make cmd_vel movements faser
+            elif key.char == 'b':
                 print("fast")
+                # it works only if previous key is I,K,J,L
+                if self.previousKey in ['i','k']:
+                    if self.previousKey == 'i':
+                        message.right.y = min(1,self.previousValue * 1.5)
+                        self.previousValue = min(1,self.previousValue * 1.5)
+                    else:
+                        message.right.y = -min(1,-self.previousValue * 1.5)
+                        self.previousValue = -min(1,-self.previousValue * 1.5)
+                    self.publisher.publish(message)
+                elif self.previousKey in ['j','l']:
+                    if self.previousKey == 'j':
+                        message.right.x = -min(1,-self.previousValue * 1.5)
+                        self.previousValue = -min(1,-self.previousValue * 1.5)
+                    else:
+                        message.right.x = min(1,self.previousValue * 1.5)
+                        self.previousValue = min(1,self.previousValue * 1.5)
+                    self.publisher.publish(message)
             elif key.char == 'z':
                 # stop the listener, otherwise it will keep listening for keys
                 self.listener.stop()
                 # set the flag to true
                 self.exit = True
+            print(f"pressed {key.char}")
         except AttributeError:
             pass
 
