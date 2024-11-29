@@ -5,6 +5,7 @@ import unittest
 import can
 import launch_testing
 import launch_testing.actions
+import pytest
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped, Vector3
 from launch import LaunchDescription
@@ -292,6 +293,7 @@ class TestNodes(unittest.TestCase):
             self.msgs[index] = msg
         return callback
 
+@pytest.mark.launch_test
 def generate_test_description():
     return LaunchDescription([
         ExecuteProcess(

@@ -7,6 +7,7 @@ import can
 import geometry_msgs.msg
 import launch_testing
 import launch_testing.actions
+import pytest
 import rclpy
 import sensor_msgs.msg
 import std_msgs.msg
@@ -290,6 +291,7 @@ class TestNodes(unittest.TestCase):
 
         return msg_type
 
+@pytest.mark.launch_test
 def generate_test_description():
     return LaunchDescription([
         ExecuteProcess(
