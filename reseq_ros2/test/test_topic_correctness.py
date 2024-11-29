@@ -115,6 +115,7 @@ class TestNodes(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.canbus.shutdown()
         rclpy.shutdown()
 
     def setUp(self):

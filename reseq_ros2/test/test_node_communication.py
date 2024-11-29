@@ -42,8 +42,12 @@ class TestNodes(unittest.TestCase):
         cls.end_effector_type = Int32
         cls.diff_controller_type = TwistStamped
 
+        # Initialize the CAN bus interface
+        cls.canbus = can.interface.Bus(channel='vcan0', bustype='socketcan')
+
     @classmethod
     def tearDownClass(cls):
+        cls.canbus.shutdown()
         rclpy.shutdown()
 
     def setUp(self):
@@ -197,10 +201,6 @@ class TestNodes(unittest.TestCase):
                 )
                 idx += 1
 
-        # Initialize the CAN bus interface
-        can_channel = 'vcan0'
-        canbus = can.interface.Bus(channel=can_channel, bustype='socketcan')
-
         # Wait until it transmits message
         endtime = time.time() + 10
         while time.time() < endtime:
@@ -224,7 +224,7 @@ class TestNodes(unittest.TestCase):
                     data=data,
                     is_extended_id=True)
                 # Send the message to trigger the can_callback
-                canbus.send(msg)
+                self.canbus.send(msg)
             rclpy.spin_once(self.node, timeout_sec=0.1)
             if None not in self.msgs[:idx]:
                 break
