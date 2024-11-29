@@ -1,5 +1,6 @@
 import importlib
 import struct
+import subprocess
 import time
 import unittest
 
@@ -20,6 +21,20 @@ import reseq_interfaces.msg
 from reseq_interfaces.msg import Remote
 
 
+def check_interface_status(interface_name):
+    # Run the `ip` command to get interface details
+    result = subprocess.run(['ip', 'link', 'show', interface_name], capture_output=True, text=True)
+
+    # Check if the command was successful
+    if result.returncode != 0:
+        return False, f"Failed to get interface status. Error: {result.stderr}"
+
+    # Check if the interface is up
+    if 'UP,LOWER_UP' in result.stdout:
+        return True, f"Interface {interface_name} is up and running."
+    else:
+        return False, f"Interface {interface_name} is not up."
+
 class FrequencyChecker(Node):
     def __init__(self, topics, string_to_msg_type, pub, msg, canbus):
         super().__init__('frequency_checker')
@@ -29,6 +44,7 @@ class FrequencyChecker(Node):
         self.pub_ = pub
         self.msg = msg
         self.canbus = canbus
+        self.timer2 = False
 
         for topic_name, msg_type in topics:
             self.subscriptions_[topic_name] = self.create_subscription(
@@ -41,8 +57,12 @@ class FrequencyChecker(Node):
                 'last_time': None,
                 'intervals': []
             }
+            if topic_name.split('/')[-1] == 'feedback':
+                self.timer2 = True
+
         self.timer1 = self.create_timer(0.08, self.publisher_callback) # 12.5 Hz
-        self.timer2 = self.create_timer(0.01, self.feedback_callback) # 100 Hz
+        if self.timer2:
+            self.timer2 = self.create_timer(0.01, self.feedback_callback) # 100 Hz
 
     def create_callback(self, topic_name):
         def callback(msg):
@@ -93,6 +113,8 @@ class FrequencyChecker(Node):
 
 
 class TestNodes(unittest.TestCase):
+    # Define stat as a class attribute
+    stat = check_interface_status('vcan0')
 
     @classmethod
     def setUpClass(cls):
@@ -167,6 +189,7 @@ class TestNodes(unittest.TestCase):
             exp = expected[topic]
             self.assertEqual(msg, exp, f"The message of {topic} is incorrect. Expected {exp}, got {msg}")
 
+    @unittest.skipUnless(stat[0], stat[1])
     def test_2_feedback(self):
         """Test the message accuracy of the telemetry/feedback."""
         # Create the subscribers for each topic
@@ -242,8 +265,11 @@ class TestNodes(unittest.TestCase):
 
     def test_3_frequency(self):
         """Test the frequency accuracy."""
+        if not self.stat[0]:
+            print("Skip the message frequency test for feedback topics")
         topics = [(topic, type) for topic, type in self.node.get_topic_names_and_types()
-                  if topic in ['/cmd_vel', '/end_effector', '/remote', '/reseq/module17/end_effector/head_pitch/feedback', '/reseq/module17/end_effector/head_pitch/setpoint', '/reseq/module17/end_effector/head_roll/feedback', '/reseq/module17/end_effector/head_roll/setpoint', '/reseq/module17/end_effector/pitch/feedback', '/reseq/module17/end_effector/pitch/setpoint', '/reseq/module17/motor/feedback', '/reseq/module17/motor/setpoint', '/reseq/module18/joint/pitch/feedback', '/reseq/module18/joint/roll/feedback', '/reseq/module18/joint/yaw/feedback', '/reseq/module18/motor/feedback', '/reseq/module18/motor/setpoint', '/reseq/module19/joint/pitch/feedback', '/reseq/module19/joint/roll/feedback', '/reseq/module19/joint/yaw/feedback', '/reseq/module19/motor/feedback', '/reseq/module19/motor/setpoint']]
+                  if (topic.split('/')[-1] == 'feedback' and self.stat[0])
+                  or topic in ['/cmd_vel', '/end_effector', '/remote', '/reseq/module17/end_effector/head_pitch/setpoint', '/reseq/module17/end_effector/head_roll/setpoint', '/reseq/module17/end_effector/pitch/setpoint', '/reseq/module17/motor/setpoint', '/reseq/module18/motor/setpoint', '/reseq/module19/motor/setpoint']]
         node = FrequencyChecker(topics, self.string_to_msg_type, self.pub_, self.msg, self.canbus)
 
         # Wait to gather frequency info

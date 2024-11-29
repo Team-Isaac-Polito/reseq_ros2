@@ -1,4 +1,5 @@
 import struct
+import subprocess
 import time
 import unittest
 
@@ -16,7 +17,24 @@ from std_msgs.msg import Float32, Int32
 from reseq_interfaces.msg import EndEffector, Motors, Remote
 
 
+def check_interface_status(interface_name):
+    # Run the `ip` command to get interface details
+    result = subprocess.run(['ip', 'link', 'show', interface_name], capture_output=True, text=True)
+
+    # Check if the command was successful
+    if result.returncode != 0:
+        return False, f"Failed to get interface status. Error: {result.stderr}"
+
+    # Check if the interface is up
+    if 'UP,LOWER_UP' in result.stdout:
+        return True, f"Interface {interface_name} is up and running."
+    else:
+        return False, f"Interface {interface_name} is not up."
+
+
 class TestNodes(unittest.TestCase):
+    # Define stat as a class attribute
+    stat = check_interface_status('vcan0')
 
     @classmethod
     def setUpClass(cls):
@@ -165,6 +183,7 @@ class TestNodes(unittest.TestCase):
                 problems.append(f"Couldn't get message from '/reseq/module{self.address + (i % (idx//3))}/end_effector/{['pitch', 'head_pitch', 'head_roll'][i // (idx//3)]}/setpoint' topic.")
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
 
+    @unittest.skipUnless(stat[0], stat[1])
     def test_4_communication_topics(self):
         idx = 0
         n_motor = -1
