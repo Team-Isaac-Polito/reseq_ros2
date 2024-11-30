@@ -18,6 +18,12 @@ from reseq_interfaces.msg import EndEffector, Motors, Remote
 
 
 def check_interface_status(interface_name):
+    """
+    Check if the specified network interface is up and running.
+
+    This function attempts to set up a virtual CAN interface (`vcan0`), 
+    and then checks the status of the specified network interface.
+    """
     # Try to setup the vcan0 before checking
     commands = [
         'sudo modprobe vcan',
@@ -47,6 +53,12 @@ def check_interface_status(interface_name):
 
 
 class TestNodes(unittest.TestCase):
+    """
+    Unit test class for testing ROS2 nodes.
+
+    This class contains tests to verify the accuracy and frequency of messages
+    published and subscribed by ROS2 nodes.
+    """
     # Define stat as a class attribute
     stat = check_interface_status('vcan0')
 
@@ -91,6 +103,7 @@ class TestNodes(unittest.TestCase):
             self.node.destroy_subscription(sub)
 
     def test_1_scaler_topics(self):
+        """Test the message reception from the scaler topics."""
         self.node.create_subscription(
             EndEffector,
             '/end_effector',
@@ -118,9 +131,10 @@ class TestNodes(unittest.TestCase):
         if not bool(self.msgs[1]):
             problems.append("Couldn't get message from '/cmd_vel' topic.")
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
-        time.sleep(2) # Wait until launch ends
+        time.sleep(2)  # Wait until launch ends
 
     def test_2_agevar_topics(self):
+        """Test the message reception from the motor setpoint topics."""
         idx = 0
         while 1:
             topic = f"/reseq/module{self.address + idx}/motor/setpoint"
@@ -158,6 +172,7 @@ class TestNodes(unittest.TestCase):
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
 
     def test_3_enea_topics(self):
+        """Test the message reception from the end effector setpoint topics."""
         idx = 0
         for vel in ['pitch', 'head_pitch', 'head_roll']:
             n = 0
@@ -199,6 +214,7 @@ class TestNodes(unittest.TestCase):
 
     @unittest.skipUnless(stat[0], stat[1])
     def test_4_communication_topics(self):
+        """Test the message reception from various feedback topics."""
         idx = 0
         n_motor = -1
         n_joint = -1
@@ -282,6 +298,7 @@ class TestNodes(unittest.TestCase):
         self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
 
     def test_5_jointpublisher_topics(self):
+        """Test the message reception from the joint states and diff controller topics."""
         self.node.create_subscription(
             JointState,
             '/joint_states',

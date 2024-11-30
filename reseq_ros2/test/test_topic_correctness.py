@@ -22,6 +22,12 @@ from reseq_interfaces.msg import Remote
 
 
 def check_interface_status(interface_name):
+    """
+    Check if the specified network interface is up and running.
+
+    This function attempts to set up a virtual CAN interface (`vcan0`), 
+    and then checks the status of the specified network interface.
+    """
     # Try to setup the vcan0 before checking
     commands = [
         'sudo modprobe vcan',
@@ -49,7 +55,14 @@ def check_interface_status(interface_name):
     else:
         return False, f"Interface {interface_name} is not up."
 
+
 class FrequencyChecker(Node):
+    """
+    A ROS2 node that checks the frequency of messages on specified topics.
+
+    This node subscribes to multiple topics and calculates the frequency of the received messages.
+    It also publishes messages to a specified topic at a given rate.
+    """
     def __init__(self, topics, string_to_msg_type, pub, msg, canbus):
         super().__init__('frequency_checker')
 
@@ -74,11 +87,12 @@ class FrequencyChecker(Node):
             if topic_name.split('/')[-1] == 'feedback':
                 self.timer2 = True
 
-        self.timer1 = self.create_timer(0.08, self.publisher_callback) # 12.5 Hz
+        self.timer1 = self.create_timer(0.08, self.publisher_callback)  # 12.5 Hz
         if self.timer2:
-            self.timer2 = self.create_timer(0.01, self.feedback_callback) # 100 Hz
+            self.timer2 = self.create_timer(0.01, self.feedback_callback)  # 100 Hz
 
     def create_callback(self, topic_name):
+        """Create a callback function to calculate the intervals between messages."""
         def callback(msg):
             current_time = time.time()
             last_time = self.intervals[topic_name]['last_time']
@@ -91,9 +105,11 @@ class FrequencyChecker(Node):
         return callback
 
     def publisher_callback(self):
+        """Publish messages at the specified rate."""
         self.pub_.publish(self.msg)
-    
+
     def feedback_callback(self):
+        """Send CAN messages to trigger the feedback callback at the specified rate."""
         for id, module_num, data in [(0x22, 0x11, struct.pack('ff', 5.0, 3.0)),
                                          (0x22, 0x12, struct.pack('ff', 5.0, 3.0)),
                                          (0x22, 0x13, struct.pack('ff', 5.0, 3.0)),
@@ -116,6 +132,7 @@ class FrequencyChecker(Node):
                 self.canbus.send(msg)
 
     def get_frequency(self):
+        """Calculate the frequency of messages for each topic."""
         freqs = {}
         for topic_name, data in self.intervals.items():
             intervals = data['intervals']
@@ -127,6 +144,12 @@ class FrequencyChecker(Node):
 
 
 class TestNodes(unittest.TestCase):
+    """
+    Unit test class for testing ROS2 nodes.
+
+    This class contains tests to verify the accuracy and frequency of messages
+    published and subscribed by ROS2 nodes.
+    """
     # Define stat as a class attribute
     stat = check_interface_status('vcan0')
 
