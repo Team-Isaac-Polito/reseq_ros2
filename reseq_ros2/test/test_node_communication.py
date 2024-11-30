@@ -18,6 +18,20 @@ from reseq_interfaces.msg import EndEffector, Motors, Remote
 
 
 def check_interface_status(interface_name):
+    # Try to setup the vcan0 before checking
+    commands = [
+        'sudo modprobe vcan',
+        'sudo ip link add dev vcan0 type vcan',
+        'sudo ip link set up vcan0'
+    ]
+
+    for command in commands:
+        result = subprocess.run(command.split(), capture_output=True, text=True)
+        if (result.returncode != 0) and ("RTNETLINK answers: File exists" not in result.stderr):
+            return False, f"Failed to run '{command}'. Error: {result.stderr}"
+        else:
+            continue
+
     # Run the `ip` command to get interface details
     result = subprocess.run(['ip', 'link', 'show', interface_name], capture_output=True, text=True)
 
