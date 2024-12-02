@@ -1,7 +1,6 @@
 import os
 import unittest
 import pytest
-import sys
 import rclpy
 import re
 
@@ -10,19 +9,15 @@ from launch.actions import ExecuteProcess
 from launch_testing.actions import ReadyToTest
 import time
 
-from ament_index_python.packages import get_package_share_directory
-
-# Default config file path
-share_folder = get_package_share_directory("reseq_ros2")
-sys.path.append(share_folder+"/launch")
-from common_functions_launch import *
+# Test the launch using the reseq MK1 vcan configurations
+config_file = 'reseq_mk1_vcan.yaml'
 
 @pytest.mark.launch_test
 def generate_test_description():
     return LaunchDescription([
         ExecuteProcess(
                 cmd=[
-                    'ros2', 'launch', 'reseq_ros2', 'reseq_launch.py', 'config_file:=reseq_mk1_vcan.yaml',
+                    'ros2', 'launch', 'reseq_ros2', 'sensors_launch.py', f"config_file:={config_file}",
                 ],
         ),
         ReadyToTest()
