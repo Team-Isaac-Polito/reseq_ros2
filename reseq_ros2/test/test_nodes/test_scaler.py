@@ -14,7 +14,7 @@ from rclpy.parameter import Parameter
 from reseq_interfaces.msg import EndEffector, Remote
 from reseq_ros2.scaler import Scaler
 
-# Test the enea using the reseq MK1 vcan configurations
+# Launch the Scaler using the reseq MK1 vcan configurations
 config_file = 'reseq_mk1_vcan.yaml'
 
 @pytest.mark.launch_test

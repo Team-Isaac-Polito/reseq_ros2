@@ -17,7 +17,7 @@ from launch import LaunchDescription
 from launch.actions import ExecuteProcess
 from launch_testing.actions import ReadyToTest
 
-# Test the enea using the reseq MK1 vcan configurations
+# Launch the JointPublisher using the reseq MK1 vcan configurations
 config_file = 'reseq_mk1_vcan.yaml'
 
 @pytest.mark.launch_test

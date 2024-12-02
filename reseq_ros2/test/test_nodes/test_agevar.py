@@ -17,7 +17,7 @@ import reseq_ros2.constants as rc
 from reseq_interfaces.msg import Motors
 from reseq_ros2.agevar import Agevar
 
-# Test the enea using the reseq MK1 vcan configurations
+# Launch the Agevar using the reseq MK1 vcan configurations
 config_file = 'reseq_mk1_vcan.yaml'
 
 @pytest.mark.launch_test

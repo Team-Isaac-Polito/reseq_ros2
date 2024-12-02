@@ -14,7 +14,7 @@ from std_msgs.msg import Int32
 from reseq_interfaces.msg import EndEffector
 from reseq_ros2.enea import EE_Enum, Enea
 
-# Test the enea using the reseq MK1 vcan configurations
+# Launch the Enea using the reseq MK1 vcan configurations
 config_file = 'reseq_mk1_vcan.yaml'
 
 @pytest.mark.launch_test
