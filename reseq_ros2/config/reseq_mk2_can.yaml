@@ -1,0 +1,64 @@
+---
+version: "mk2"
+canbus:
+  channel: "can0"
+num_modules: 1
+modules:
+  - address: 0x21
+    hasJoint: true
+    hasEndEffector: true
+realsense_config: "realsense_rgb_motion.yaml"
+agevar_consts:
+  a: 0.205                  # [m] Distance between the center of every module and the previous yaw joint
+  b: 0.185                 # [m] Distance between the center of every module and the following yaw joint
+  d: 0.12                   # [m] Distance between pair of equivalent wheels
+  r_eq: 0.06               # [m] Radius of the equivalent wheels
+scaler_consts: # !! Referred to MK1
+  r_linear_vel:              # [m/s] Range of the linear velocity
+    - -0.27017
+    - 0.27017
+  r_inverse_radius:          # [1/m] Range of the inverse radius of curvature
+    - -1.5385
+    - 1.5385
+  r_pitch_vel:               # [LSB/s] Range of pitch velocity
+    - -183
+    - 183
+  r_head_pitch_vel:          # [LSB/s] Range of indepepndent head pitch velocity
+    - -400
+    - 400
+  r_head_roll_vel:            # [LSB/s] Range of head roll velocity
+    - -455
+    - 455
+joint_pub_consts:
+  arm_pitch_origin: 200      # [LSB] Origin for arm pitch joint (horizontal)
+  head_pitch_origin: 800     # [LSB] Origin for head pitch joint (facing downwards)
+  head_roll_origin: 512       # [LSB] Origin for head roll joint (center)
+  arm_pitch_gain: 0.50943    # [ ] Ratio arm pitch rotations over motor rotations
+  vel_gain: 0.52522          # [ ] Ratio wheel rotations over motor rotations
+xacro:                     # Referred to MK1
+  WheelBase: 0.137
+  ModuleWidth: 0.27
+  TrackWidth: 0.052
+  ChassisTopAndBottomClearance: 0.013
+  WheelMass: 0.1
+  ChassisMass: 2.5
+
+  JointDiameter: 0.048
+  JointABottomClearance: 0.013
+  JointAMass: 0.1
+  JointBMass: 0.05
+  JointWidth: 0.067 # At the moment ${EquivalentWheelDiameter-2*JointABottomClearance}
+
+  ForkThickness: 0.02
+  ForkHeight: 0.05
+  JetsonHolderWidth: 0.085
+  JetsonHolderLength: 0.158
+  CylinderOnJetsonLength: 0.085
+  CylinderOnJetsonRadius: 0.026
+  CylinderOnJetsonShift: 0.012
+  CylinderRealsenseLength: 0.055
+  CylinderRealsenseRadius: 0.026
+  RealsenseLength: 0.026
+  RealsenseWidth: 0.09
+  RealsenseOriginSystem: 0.0162
+  RealsenseHeight: 0.02
