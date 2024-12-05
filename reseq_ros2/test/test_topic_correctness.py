@@ -22,26 +22,7 @@ from reseq_interfaces.msg import Remote
 
 
 def check_interface_status(interface_name):
-    """
-    Check if the specified network interface is up and running.
-
-    This function attempts to set up a virtual CAN interface (`vcan0`), 
-    and then checks the status of the specified network interface.
-    """
-    # Try to setup the vcan0 before checking
-    commands = [
-        'sudo modprobe vcan',
-        'sudo ip link add dev vcan0 type vcan',
-        'sudo ip link set up vcan0'
-    ]
-
-    for command in commands:
-        result = subprocess.run(command.split(), capture_output=True, text=True)
-        if (result.returncode != 0) and ("RTNETLINK answers: File exists" not in result.stderr):
-            return False, f"Failed to run '{command}'. Error: {result.stderr}"
-        else:
-            continue
-
+    """Check if the specified network interface is up and running."""
     # Run the `ip` command to get interface details
     result = subprocess.run(['ip', 'link', 'show', interface_name], capture_output=True, text=True)
 
