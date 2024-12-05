@@ -21,7 +21,7 @@ class EmulatorRemoteController(Node):
         self.states = {"Normal": normal_value, "Double": normal_value*2, "Half": normal_value/2}
     
     def readLoop(self):
-        with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as self.listener:
+        with keyboard.Listener(on_press=self.on_press, on_release=self.on_release, suppress=True) as self.listener:
             self.listener.join()  # Wait for the listener thread to terminate
 
     def on_press(self, key):
