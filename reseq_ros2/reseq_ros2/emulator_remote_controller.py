@@ -11,11 +11,14 @@ class EmulatorRemoteController(Node):
         self.get_logger().info("EmulatorRemoteController node started")
         # create timer to start the function
         self.timer = self.create_timer(0.1, self.readLoop)
-        self.exit = False
+        self.has_to_exit = False
         # values should be already automatically be set to 0
         self.previousKey = ' ' # initialise to a random value
         self.previousValue = 0
         self.operation_sign = {"+": 1, "-":-1}
+        self.state = "Normal"
+        normal_value = 0.1
+        self.states = {"Normal": normal_value, "Double": normal_value*2, "Half": normal_value/2}
     
     def readLoop(self):
         with keyboard.Listener(on_press=self.on_press, on_release=self.on_release) as self.listener:
@@ -31,170 +34,121 @@ class EmulatorRemoteController(Node):
             if key.char == 'w':
                 # print("forward")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.left.y = min(1,self.previousValue * 1.1)
-                    self.previousValue = min(1,self.previousValue * 1.1)
+                    message.left.y = min(1,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1,self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.left.y = 0.1
-                    self.previousValue = 0.1
+                    message.left.y = self.states[self.state]
+                    self.previousValue = self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             elif key.char == 's':
                 # print("backward")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.left.y = -min(1,-self.previousValue * 1.1)
-                    self.previousValue = -min(1,-self.previousValue * 1.1)
+                    message.left.y = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.left.y = -0.1
-                    self.previousValue = -0.1
+                    message.left.y = -self.states[self.state]
+                    self.previousValue = -self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             elif key.char == 'a':
                 # print("left")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.left.x = -min(1,-self.previousValue * 1.1)
-                    self.previousValue = -min(1,-self.previousValue * 1.1)
+                    message.left.x = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.left.x = -0.1
-                    self.previousValue = -0.1
+                    message.left.x = -self.states[self.state]
+                    self.previousValue = -self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             elif key.char == 'd':
                 # print("right")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.left.x = min(1,self.previousValue * 1.1)
-                    self.previousValue = min(1,self.previousValue * 1.1)
+                    message.left.x = min(1,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1,self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.left.x = 0.1
-                    self.previousValue = 0.1
+                    message.left.x = self.states[self.state]
+                    self.previousValue = self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             elif key.char == 'q':
                 # print("CCW")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.left.z = -min(1,-self.previousValue * 1.1)
-                    self.previousValue = -min(1,-self.previousValue * 1.1)
+                    message.left.z = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.left.z = -0.1
-                    self.previousValue = -0.1
+                    message.left.z = -self.states[self.state]
+                    self.previousValue = -self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             elif key.char == 'e':
                 # print("CW")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.left.z = min(1,self.previousValue * 1.1)
-                    self.previousValue = -min(1,self.previousValue * 1.1)
+                    message.left.z = min(1,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1,self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.left.z = 0.1
-                    self.previousValue = 0.1
+                    message.left.z = self.states[self.state]
+                    self.previousValue = self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             # Start cmd_vel commands
             elif key.char == 'i':
                 # print("forward")
-                # if the key is equal to the previous one, increase 10% of the previous value, max 1
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.right.y = min(1,self.previousValue * 1.1)
-                    self.previousValue = min(1,self.previousValue * 1.1)
+                    message.right.y = min(1,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1,self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.right.y = 0.1
-                    self.previousValue = 0.1
+                    message.right.y = self.states[self.state]
+                    self.previousValue = self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             elif key.char == 'k':
                 # print("backward")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.right.y = -min(1,-self.previousValue * 1.1)
-                    self.previousValue = -min(1,-self.previousValue * 1.1)
+                    message.right.y = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.right.y = -0.1
-                    self.previousValue = -0.1
+                    message.right.y = -self.states[self.state]
+                    self.previousValue = -self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             elif key.char == 'l':
                 # print("right")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.right.x = min(1,self.previousValue * 1.1)
-                    self.previousValue = min(1,self.previousValue * 1.1)
+                    message.right.x = min(1,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1,self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.right.x = 0.1
-                    self.previousValue = 0.1
+                    message.right.x = self.states[self.state]
+                    self.previousValue = self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
             elif key.char == 'j':
                 # print("left")
                 if (key.char == self.previousKey):
-                    # increase of 0.1 (if previous value was 0), otherwise increase 10%
-                    # if same key, it means value is not 0
-                    message.right.x = -min(1,-self.previousValue * 1.1)
-                    self.previousValue = -min(1,-self.previousValue * 1.1)
+                    message.right.x = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
                 else:
-                    # not the same key, so previous value has to 0
-                    self.previousValue = 0
-                    message.right.x = -0.1
-                    self.previousValue = -0.1
+                    message.right.x = -self.states[self.state]
+                    self.previousValue = -self.states[self.state]
                     self.previousKey = key.char
                 self.publisher.publish(message)
-            # if b pressed, make cmd_vel movements faser
+            # if b pressed, make cmd_vel movements faster
             elif key.char == 'b':
-                print("fast")
-                # it works only if previous key is I,K,J,L
-                if self.previousKey in ['i','k']:
-                    if self.previousKey == 'i':
-                        message.right.y = min(1,self.previousValue * 1.5)
-                        self.previousValue = min(1,self.previousValue * 1.5)
-                    else:
-                        message.right.y = -min(1,-self.previousValue * 1.5)
-                        self.previousValue = -min(1,-self.previousValue * 1.5)
-                    self.publisher.publish(message)
-                elif self.previousKey in ['j','l']:
-                    if self.previousKey == 'j':
-                        message.right.x = -min(1,-self.previousValue * 1.5)
-                        self.previousValue = -min(1,-self.previousValue * 1.5)
-                    else:
-                        message.right.x = min(1,self.previousValue * 1.5)
-                        self.previousValue = min(1,self.previousValue * 1.5)
-                    self.publisher.publish(message)
+                # if already "Half" change to normal
+                if self.state == "Normal":
+                    self.state = "Half"     
+                else:
+                    self.state = "Normal"
+            elif key.char == 'h':
+                if self.state == "Normal":
+                    self.state = "Double" 
+                else:
+                    self.state = "Normal"
             elif key.char == 'z':
                 # stop the listener, otherwise it will keep listening for keys
                 self.listener.stop()
                 # set the flag to true
-                self.exit = True
+                self.has_to_exit = True
             print(f"pressed {key.char}")
         except AttributeError:
             pass
@@ -211,7 +165,7 @@ def main(args = None):
     try:
         emulator_remote_controller = EmulatorRemoteController()
         # spin once, each time check if listener stopped
-        while rclpy.ok() and not emulator_remote_controller.exit:
+        while rclpy.ok() and not emulator_remote_controller.has_to_exit:
             rclpy.spin_once(emulator_remote_controller)
     except Exception as err:
         print("Error while starting EmulatorRemoteController node: " + str(err))
