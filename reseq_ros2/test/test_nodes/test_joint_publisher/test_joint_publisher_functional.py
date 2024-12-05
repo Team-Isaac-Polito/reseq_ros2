@@ -1,8 +1,6 @@
 import unittest
-import pytest
 from math import pi
 import rclpy
-from time import time
 
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import TwistStamped
@@ -10,39 +8,20 @@ from std_msgs.msg import Int32, Float32
 from reseq_interfaces.msg import Motors
 import reseq_ros2.constants as rc
 from rclpy.executors import SingleThreadedExecutor
-from rcl_interfaces.srv import GetParameters, ListParameters
 from reseq_ros2.joint_publisher import JointPublisher, State
 
-from launch import LaunchDescription
-from launch.actions import ExecuteProcess
-from launch_testing.actions import ReadyToTest
 
-# Launch the JointPublisher using the reseq MK1 vcan configurations
-config_file = 'reseq_mk1_vcan.yaml'
+# Function Test
 
-@pytest.mark.launch_test
-def generate_test_description():
-    return LaunchDescription([
-        ExecuteProcess(
-            cmd=[
-                'ros2', 'launch', 'reseq_ros2', 'reseq_launch.py', f'config_file:={config_file}',
-            ],
-        ),
-        ReadyToTest()
-    ])
-
-# Test
-
-class TestJointPublisherNode(unittest.TestCase):
+class TestJointPublisherFunctional(unittest.TestCase):
     """Test class for the JointPublisher node's functionality."""
 
     @classmethod
     def setUpClass(cls):
         rclpy.init(args=None)
         cls.executor = SingleThreadedExecutor()
-        cls.context = rclpy.get_default_context()
-        cls.node = rclpy.create_node('test_node', context=cls.context)
-        cls.executor.add_node(cls.node)
+        cls.joint_publisher = JointPublisher()
+        cls.executor.add_node(cls.joint_publisher)
 
         # Expected parameter values from joint_pub_consts.yaml
         cls.expected_params = {
@@ -57,97 +36,13 @@ class TestJointPublisherNode(unittest.TestCase):
             'vel_gain': 0.52522
         }
 
-        # Wait for the JointPublisher node to be up and running
-        timeout_sec = 10
-        joint_publisher_node_found = False
-        start_time = time()
-        while time() - start_time < timeout_sec and not joint_publisher_node_found:
-            node_names = cls.node.get_node_names()
-            joint_publisher_node_found = 'joint_publisher' in node_names
-            if not joint_publisher_node_found:
-                rclpy.spin_once(cls.node, timeout_sec=1)
-
-        if not joint_publisher_node_found:
-            raise RuntimeError('JointPublisher node was not found running within the timeout period.')
-
-        # Create a client to get parameters of the joint_publisher node
-        cls.parameter_client = cls.node.create_client(GetParameters, '/joint_publisher/get_parameters')
-
-        if not cls.parameter_client.wait_for_service(timeout_sec=timeout_sec):
-            raise RuntimeError('JointPublisher node parameter service not available within the timeout period.')
-        
-        # Create a client to list all parameters of the joint_publisher node
-        cls.list_parameters_client = cls.node.create_client(ListParameters, '/joint_publisher/list_parameters')
-
-        if not cls.list_parameters_client.wait_for_service(timeout_sec=timeout_sec):
-            raise RuntimeError('JointPublisher node list parameters service not available within the timeout period.')
-        
-        # Initialize the joint_publisher node
-        cls.joint_publisher = JointPublisher()
-
     @classmethod
     def tearDownClass(cls):
         cls.executor.shutdown()
-        cls.node.destroy_node()
         cls.joint_publisher.destroy_node()
         rclpy.shutdown()
-
-    def get_parameter(self, node_name, parameter_name):
-        request = GetParameters.Request()
-        request.names = [parameter_name]
-        future = self.parameter_client.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        response = future.result()
-        if response:
-            return self.extract_value(response.values[0])
-        else:
-            self.fail(f"Failed to get parameter {parameter_name} from node {node_name}")
     
-    def list_all_parameters(self, node_name):
-        request = ListParameters.Request()
-        future = self.list_parameters_client.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        response = future.result()
-        if response:
-            return response.result.names
-        else:
-            self.fail(f"Failed to list parameters from node {node_name}")
-
-    def extract_value(self, parameter_value):
-        if parameter_value.type == 1:
-            return parameter_value.bool_value
-        elif parameter_value.type == 2:
-            return parameter_value.integer_value
-        elif parameter_value.type == 3:
-            return parameter_value.double_value
-        elif parameter_value.type == 4:
-            return parameter_value.string_value
-        elif parameter_value.type == 5:
-            return list(parameter_value.byte_array_value)
-        elif parameter_value.type == 6:
-            return list(parameter_value.bool_array_value)
-        elif parameter_value.type == 7:
-            return list(parameter_value.integer_array_value)
-        elif parameter_value.type == 8:
-            return list(parameter_value.double_array_value)
-        elif parameter_value.type == 9:
-            return list(parameter_value.string_array_value)
-        return None
-
-    def test_1_parameters(self):
-        """Test that parameters are correctly set and check for unexpected or missing parameters."""
-        all_parameters = self.list_all_parameters('joint_publisher')
-        unexpected_parameters = set(all_parameters[1:]) - set(self.expected_params.keys())
-        missing_parameters = set(self.expected_params.keys()) - set(all_parameters[1:])
-
-        self.assertEqual(len(unexpected_parameters), 0, f"Unexpected parameters found: {unexpected_parameters}")
-        self.assertEqual(len(missing_parameters), 0, f"Missing parameters found: {missing_parameters}")
-
-        for param_name, expected_value in self.expected_params.items():
-            param_value = self.get_parameter('joint_publisher', param_name)
-            self.assertEqual(param_value, expected_value, f"{param_name} parameter value mismatch")
-    
-    def test_2_init_state(self):
+    def test_4_init_state(self):
         """Test the init_state function."""
         node = self.joint_publisher
         
@@ -181,7 +76,7 @@ class TestJointPublisherNode(unittest.TestCase):
                     self.assertEqual(node.position_states[(mod, x)].name, x + f"_{id}_joint")
                     self.assertEqual(node.position_states[(mod, x)].value, 0.0)
 
-    def test_3_create_subs(self):
+    def test_5_create_subs(self):
         """Test the create_subs function."""
         node = self.joint_publisher
 
@@ -206,7 +101,7 @@ class TestJointPublisherNode(unittest.TestCase):
                     sub_topic = f"/reseq/module{mod}/{topic}"
                     self.assertTrue(any(sub.topic_name == sub_topic for sub in node.subscriptions), f"Subscription not found for {sub_topic}")
 
-    def test_4_motor_feedback(self):
+    def test_6_motor_feedback(self):
         """Test the motor feedback."""
         node = self.joint_publisher
 
@@ -227,7 +122,7 @@ class TestJointPublisherNode(unittest.TestCase):
         # Verify wheel velocities
         self.assertAlmostEqual(node.wheel_velocities[0], [expected_left, expected_right], places=5)
 
-    def test_5_joint_feedback(self):
+    def test_7_joint_feedback(self):
         """Test the joint feedback."""
         node = self.joint_publisher
 
@@ -252,7 +147,7 @@ class TestJointPublisherNode(unittest.TestCase):
         expected_angle = -pi
         self.assertAlmostEqual(node.position_states[(0x12, 'joint_y')].value, expected_angle, places=5)
 
-    def test_6_end_effector_feedback(self):
+    def test_8_end_effector_feedback(self):
         """Test the end effector feedback."""
         node = self.joint_publisher
 
@@ -286,7 +181,7 @@ class TestJointPublisherNode(unittest.TestCase):
         expected_value_head_roll = (int32_msg.data - self.expected_params['head_roll_origin']) * rc.lsb_to_rads
         self.assertAlmostEqual(node.position_states[(0x11, 'arm_head_roll')].value, expected_value_head_roll, places=5)
 
-    def test_7_broadcast_states(self):
+    def test_9_broadcast_states(self):
         """Test the broadcast_states function."""
         node = self.joint_publisher
 
