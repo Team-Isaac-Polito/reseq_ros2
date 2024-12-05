@@ -111,7 +111,7 @@ class TestNodes(unittest.TestCase):
             problems.append("Couldn't get message from '/end_effector' topic.")
         if not bool(self.msgs[1]):
             problems.append("Couldn't get message from '/cmd_vel' topic.")
-        self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
+        self.assertTrue(len(problems) == 0, '\n' + '\n'.join(problems))
         time.sleep(2)  # Wait until launch ends
 
     def test_2_agevar_topics(self):
@@ -150,7 +150,7 @@ class TestNodes(unittest.TestCase):
         for i in range(idx):
             if not bool(self.msgs[i]):
                 problems.append(f"Couldn't get message from '/reseq/module{self.address + i}/motor/setpoint' topic.")
-        self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
+        self.assertTrue(len(problems) == 0, '\n' + '\n'.join(problems))
 
     def test_3_enea_topics(self):
         """Test the message reception from the end effector setpoint topics."""
@@ -191,7 +191,7 @@ class TestNodes(unittest.TestCase):
         for i in range(idx):
             if not bool(self.msgs[i]):
                 problems.append(f"Couldn't get message from '/reseq/module{self.address + (i % (idx//3))}/end_effector/{['pitch', 'head_pitch', 'head_roll'][i // (idx//3)]}/setpoint' topic.")
-        self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
+        self.assertTrue(len(problems) == 0, '\n' + '\n'.join(problems))
 
     @unittest.skipUnless(stat[0], stat[1])
     def test_4_communication_topics(self):
@@ -276,7 +276,7 @@ class TestNodes(unittest.TestCase):
             else:
                 if not bool(self.msgs[i]):
                     problems.append(f"Couldn't get message from '/reseq/module{self.address}/end_effector/{['pitch', 'head_pitch', 'head_roll'][(i-n_motor-n_joint)%3]}/feedback' topic." + "\n")
-        self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
+        self.assertTrue(len(problems) == 0, '\n' + '\n'.join(problems))
 
     def test_5_jointpublisher_topics(self):
         """Test the message reception from the joint states and diff controller topics."""
@@ -317,7 +317,7 @@ class TestNodes(unittest.TestCase):
         for i in range(1, idx):
             if not bool(self.msgs[i]):
                 problems.append(f"Couldn't get message from '/diff_controller{i}/cmd_vel' topic.")
-        self.assertTrue(len(problems) == 0, f"\n{''.join(problems)}")
+        self.assertTrue(len(problems) == 0, '\n' + '\n'.join(problems))
 
     def create_callback(self, index):
         def callback(msg):
