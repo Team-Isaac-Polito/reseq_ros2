@@ -34,8 +34,8 @@ class EmulatorRemoteController(Node):
             if key.char == 'w':
                 # print("forward")
                 if (key.char == self.previousKey):
-                    message.left.y = min(1,self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = min(1,self.previousValue * (self.states[self.state]+1))
+                    message.left.y = min(1.0,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
                 else:
                     message.left.y = self.states[self.state]
                     self.previousValue = self.states[self.state]
@@ -44,8 +44,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 's':
                 # print("backward")
                 if (key.char == self.previousKey):
-                    message.left.y = -min(1,-self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    message.left.y = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
                 else:
                     message.left.y = -self.states[self.state]
                     self.previousValue = -self.states[self.state]
@@ -54,8 +54,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 'a':
                 # print("left")
                 if (key.char == self.previousKey):
-                    message.left.x = -min(1,-self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    message.left.x = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
                 else:
                     message.left.x = -self.states[self.state]
                     self.previousValue = -self.states[self.state]
@@ -64,8 +64,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 'd':
                 # print("right")
                 if (key.char == self.previousKey):
-                    message.left.x = min(1,self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = min(1,self.previousValue * (self.states[self.state]+1))
+                    message.left.x = min(1.0,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
                 else:
                     message.left.x = self.states[self.state]
                     self.previousValue = self.states[self.state]
@@ -74,8 +74,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 'q':
                 # print("CCW")
                 if (key.char == self.previousKey):
-                    message.left.z = -min(1,-self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    message.left.z = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
                 else:
                     message.left.z = -self.states[self.state]
                     self.previousValue = -self.states[self.state]
@@ -84,8 +84,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 'e':
                 # print("CW")
                 if (key.char == self.previousKey):
-                    message.left.z = min(1,self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = -min(1,self.previousValue * (self.states[self.state]+1))
+                    message.left.z = min(1.0,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1.0,self.previousValue * (self.states[self.state]+1))
                 else:
                     message.left.z = self.states[self.state]
                     self.previousValue = self.states[self.state]
@@ -95,8 +95,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 'i':
                 # print("forward")
                 if (key.char == self.previousKey):
-                    message.right.y = min(1,self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = min(1,self.previousValue * (self.states[self.state]+1))
+                    message.right.y = min(1.0,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
                 else:
                     message.right.y = self.states[self.state]
                     self.previousValue = self.states[self.state]
@@ -105,8 +105,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 'k':
                 # print("backward")
                 if (key.char == self.previousKey):
-                    message.right.y = -min(1,-self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    message.right.y = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
                 else:
                     message.right.y = -self.states[self.state]
                     self.previousValue = -self.states[self.state]
@@ -115,8 +115,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 'l':
                 # print("right")
                 if (key.char == self.previousKey):
-                    message.right.x = min(1,self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = min(1,self.previousValue * (self.states[self.state]+1))
+                    message.right.x = min(1.0,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
                 else:
                     message.right.x = self.states[self.state]
                     self.previousValue = self.states[self.state]
@@ -125,8 +125,8 @@ class EmulatorRemoteController(Node):
             elif key.char == 'j':
                 # print("left")
                 if (key.char == self.previousKey):
-                    message.right.x = -min(1,-self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = -min(1,-self.previousValue * (self.states[self.state]+1))
+                    message.right.x = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
                 else:
                     message.right.x = -self.states[self.state]
                     self.previousValue = -self.states[self.state]
