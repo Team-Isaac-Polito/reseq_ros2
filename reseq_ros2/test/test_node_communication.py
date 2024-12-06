@@ -68,11 +68,13 @@ class TestNodes(unittest.TestCase):
         cls.diff_controller_type = TwistStamped
 
         # Initialize the CAN bus interface
-        cls.canbus = can.interface.Bus(channel='vcan0', bustype='socketcan')
+        if cls.stat[0]:
+            cls.canbus = can.interface.Bus(channel='vcan0', bustype='socketcan')
 
     @classmethod
     def tearDownClass(cls):
-        cls.canbus.shutdown()
+        if cls.stat[0]:
+            cls.canbus.shutdown()
         rclpy.shutdown()
 
     def setUp(self):

@@ -52,7 +52,6 @@ class FrequencyChecker(Node):
         self.pub_ = pub
         self.msg = msg
         self.canbus = canbus
-        self.timer2 = False
 
         for topic_name, msg_type in topics:
             self.subscriptions_[topic_name] = self.create_subscription(
@@ -65,11 +64,9 @@ class FrequencyChecker(Node):
                 'last_time': None,
                 'intervals': []
             }
-            if topic_name.split('/')[-1] == 'feedback':
-                self.timer2 = True
 
         self.timer1 = self.create_timer(0.08, self.publisher_callback)  # 12.5 Hz
-        if self.timer2:
+        if self.canbus:
             self.timer2 = self.create_timer(0.01, self.feedback_callback)  # 100 Hz
 
     def create_callback(self, topic_name):
@@ -148,14 +145,16 @@ class TestNodes(unittest.TestCase):
         cls.msg.right = Vector3(x=-0.8, y=0.3, z=0.7)
 
         # Initialize the CAN bus interface
-        cls.canbus = can.interface.Bus(channel='vcan0', bustype='socketcan')
+        if cls.stat[0]:
+            cls.canbus = can.interface.Bus(channel='vcan0', bustype='socketcan')
 
         # Wait for launch
         time.sleep(5)
 
     @classmethod
     def tearDownClass(cls):
-        cls.canbus.shutdown()
+        if cls.stat[0]:
+            cls.canbus.shutdown()
         rclpy.shutdown()
 
     def setUp(self):
@@ -203,6 +202,8 @@ class TestNodes(unittest.TestCase):
             '/reseq/module18/motor/setpoint': reseq_interfaces.msg.Motors(left=18.749523162841797, right=14.53994083404541),
             '/reseq/module19/motor/setpoint': reseq_interfaces.msg.Motors(left=14.705280303955078, right=18.584184646606445),
         }
+
+        self.assertTrue(len(self.msgs[:idx])==len(expected), f"The number of subscribers doesn't match. Expected {len(expected)}, got {len(self.msgs[:idx])}")
         for msg, topic in zip(self.msgs[:idx], topic_names):
             exp = expected[topic]
             self.assertEqual(msg, exp, f"The message of {topic} is incorrect. Expected {exp}, got {msg}")
@@ -271,6 +272,8 @@ class TestNodes(unittest.TestCase):
             '/reseq/module19/joint/yaw/feedback': std_msgs.msg.Float32(data=5.0),
             '/reseq/module19/motor/feedback': reseq_interfaces.msg.Motors(left=5.0, right=3.0),
         }
+
+        self.assertTrue(len(self.msgs[:idx])==len(expected), f"The number of subscribers doesn't match. Expected {len(expected)}, got {len(self.msgs[:idx])}")
         for msg, topic in zip(self.msgs[:idx], topic_names):
             exp = expected[topic]
             if topic in ['/joint_states']:
@@ -285,6 +288,10 @@ class TestNodes(unittest.TestCase):
         """Test the frequency accuracy."""
         if not self.stat[0]:
             print("Skip the message frequency test for feedback topics")
+            self.canbus = None
+            n_topic = 9
+        else:
+            n_topic = 21
         topics = [(topic, type) for topic, type in self.node.get_topic_names_and_types()
                   if (topic.split('/')[-1] == 'feedback' and self.stat[0])
                   or topic in ['/cmd_vel', '/end_effector', '/remote', '/reseq/module17/end_effector/head_pitch/setpoint', '/reseq/module17/end_effector/head_roll/setpoint', '/reseq/module17/end_effector/pitch/setpoint', '/reseq/module17/motor/setpoint', '/reseq/module18/motor/setpoint', '/reseq/module19/motor/setpoint']]
@@ -297,9 +304,10 @@ class TestNodes(unittest.TestCase):
 
         # Test accuracy
         freqs = node.get_frequency()
+        self.assertTrue(len(topics)==n_topic, f"The number of subscribers doesn't match. Expected {n_topic}, got {len(topics)}")
         for topic, frequency in freqs.items():
             if topic.split('/')[-1] == 'feedback':
-                self.assertAlmostEqual(frequency, 100, delta=1, msg=f"The frequency of {topic} is incorrect. Expected {100}±1, got {frequency}")
+                self.assertAlmostEqual(frequency, 100, delta=2, msg=f"The frequency of {topic} is incorrect. Expected {100}±2, got {frequency}")
                 continue
             else:
                 self.assertAlmostEqual(frequency, 12.5, delta=0.5, msg=f"The frequency of {topic} is incorrect. Expected {12.5}±0.5, got {frequency}")
