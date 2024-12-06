@@ -24,13 +24,13 @@ def check_interface_status(interface_name):
 
     # Check if the command was successful
     if result.returncode != 0:
-        return False, f"Failed to get interface status. Error: {result.stderr}"
+        return False, f'Failed to get interface status. Error: {result.stderr}'
 
     # Check if the interface is up
     if 'UP,LOWER_UP' in result.stdout:
-        return True, f"Interface {interface_name} is up and running."
+        return True, f'Interface {interface_name} is up and running.'
     else:
-        return False, f"Interface {interface_name} is not up."
+        return False, f'Interface {interface_name} is not up.'
 
 
 class TestNodes(unittest.TestCase):
@@ -40,6 +40,7 @@ class TestNodes(unittest.TestCase):
     This class contains tests to verify the accuracy and frequency of messages
     published and subscribed by ROS2 nodes.
     """
+
     # Define stat as a class attribute
     stat = check_interface_status('vcan0')
 
@@ -47,11 +48,7 @@ class TestNodes(unittest.TestCase):
     def setUpClass(cls):
         rclpy.init()
         cls.node = rclpy.create_node('test_node')
-        cls.pub_ = cls.node.create_publisher(
-            Remote,
-            '/remote',
-            10
-        )
+        cls.pub_ = cls.node.create_publisher(Remote, '/remote', 10)
         cls.msg = Remote()
         cls.msg.left = Vector3(x=0.5, y=-0.2, z=1.0)
         cls.msg.right = Vector3(x=-0.8, y=0.3, z=0.7)
@@ -60,11 +57,11 @@ class TestNodes(unittest.TestCase):
 
         cls.module_num = 3
         cls.joint_num = 6
-        cls.end_effector_num = 3
+        cls.end_eff_num = 3
 
         cls.motor_type = Motors
         cls.joint_type = Float32
-        cls.end_effector_type = Int32
+        cls.end_eff_type = Int32
         cls.diff_controller_type = TwistStamped
 
         # Initialize the CAN bus interface
@@ -87,18 +84,8 @@ class TestNodes(unittest.TestCase):
 
     def test_1_scaler_topics(self):
         """Test the message reception from the scaler topics."""
-        self.node.create_subscription(
-            EndEffector,
-            '/end_effector',
-            self.create_callback(0),
-            10
-        )
-        self.node.create_subscription(
-            Twist,
-            '/cmd_vel',
-            self.create_callback(1),
-            10
-        )
+        self.node.create_subscription(EndEffector, '/end_effector', self.create_callback(0), 10)
+        self.node.create_subscription(Twist, '/cmd_vel', self.create_callback(1), 10)
 
         # Wait until it transmits message
         endtime = time.time() + 10
@@ -120,22 +107,23 @@ class TestNodes(unittest.TestCase):
         """Test the message reception from the motor setpoint topics."""
         idx = 0
         while 1:
-            topic = f"/reseq/module{self.address + idx}/motor/setpoint"
+            topic = f'/reseq/module{self.address + idx}/motor/setpoint'
             if topic not in self.topic_names:
                 break
 
             # Test topic type
             arg = self.topic_names.index(topic)
-            expected_type_str = f"{self.motor_type.__module__.split('._')[0]}._{self.motor_type.__name__}"
-            topic_type_str = self.topic_types[arg][0].replace('msg/', 'msg._').replace('/', '.')
-            self.assertEqual(topic_type_str, expected_type_str, f"The type of the topic {topic} is {topic_type_str}. Expected {expected_type_str}")
-
-            self.node.create_subscription(
-                self.motor_type,
-                topic,
-                self.create_callback(idx),
-                10
+            module = self.motor_type.__module__.split('._')[0]
+            name = self.motor_type.__name__
+            expected_type_str = f'{module}._{name}'
+            type_str = self.topic_types[arg][0].replace('msg/', 'msg._').replace('/', '.')
+            self.assertEqual(
+                type_str,
+                expected_type_str,
+                f'The type of the topic {topic} is {type_str}. Expected {expected_type_str}',
             )
+
+            self.node.create_subscription(self.motor_type, topic, self.create_callback(idx), 10)
             idx += 1
 
         # Wait until it transmits message
@@ -148,10 +136,13 @@ class TestNodes(unittest.TestCase):
 
         problems = []
         if len(self.msgs[:idx]) != self.module_num:
-            problems.append(f"Number of topics doesn't match. Expected {self.module_num}, got {len(self.msgs[:idx])}.")
+            exp = self.module_num
+            len_msgs = len(self.msgs[:idx])
+            problems.append(f"Number of topics doesn't match. Expected {exp}, got {len_msgs}.")
         for i in range(idx):
             if not bool(self.msgs[i]):
-                problems.append(f"Couldn't get message from '/reseq/module{self.address + i}/motor/setpoint' topic.")
+                topic = f'/reseq/module{self.address + i}/motor/setpoint'
+                problems.append(f"Couldn't get message from '{topic}' topic.")
         self.assertTrue(len(problems) == 0, '\n' + '\n'.join(problems))
 
     def test_3_enea_topics(self):
@@ -160,21 +151,24 @@ class TestNodes(unittest.TestCase):
         for vel in ['pitch', 'head_pitch', 'head_roll']:
             n = 0
             while 1:
-                topic = f"/reseq/module{self.address + n}/end_effector/{vel}/setpoint"
+                topic = f'/reseq/module{self.address + n}/end_effector/{vel}/setpoint'
                 if topic not in self.topic_names:
                     break
 
                 # Test topic type
                 arg = self.topic_names.index(topic)
-                expected_type_str = f"{self.end_effector_type.__module__.split('._')[0]}._{self.end_effector_type.__name__}"
-                topic_type_str = self.topic_types[arg][0].replace('msg/', 'msg._').replace('/', '.')
-                self.assertEqual(topic_type_str, expected_type_str, f"The type of the topic {topic} is {topic_type_str}. Expected {expected_type_str}")
-                
+                module = self.end_eff_type.__module__.split('._')[0]
+                name = self.end_eff_type.__name__
+                expected_type_str = f'{module}._{name}'
+                type_str = self.topic_types[arg][0].replace('msg/', 'msg._').replace('/', '.')
+                self.assertEqual(
+                    type_str,
+                    expected_type_str,
+                    f'The type of the topic {topic} is {type_str}. Expected {expected_type_str}',
+                )
+
                 self.node.create_subscription(
-                    self.end_effector_type,
-                    topic,
-                    self.create_callback(idx),
-                    10
+                    self.end_eff_type, topic, self.create_callback(idx), 10
                 )
                 n += 1
                 idx += 1
@@ -188,11 +182,17 @@ class TestNodes(unittest.TestCase):
                 break
 
         problems = []
-        if len(self.msgs[:idx]) != self.end_effector_num:
-            problems.append(f"Number of topics doesn't match. Expected {self.end_effector_num}, got {len(self.msgs[:idx])}.")
+        if len(self.msgs[:idx]) != self.end_eff_num:
+            exp = self.end_eff_num
+            len_msgs = len(self.msgs[:idx])
+            problems.append(f"Number of topics doesn't match. Expected {exp}, got {len_msgs}.")
         for i in range(idx):
             if not bool(self.msgs[i]):
-                problems.append(f"Couldn't get message from '/reseq/module{self.address + (i % (idx//3))}/end_effector/{['pitch', 'head_pitch', 'head_roll'][i // (idx//3)]}/setpoint' topic.")
+                axis = ['pitch', 'head_pitch', 'head_roll'][i // (idx // 3)]
+                topic = (
+                    f'/reseq/module{self.address + (i % (idx//3))}/end_effector/{axis}/setpoint'
+                )
+                problems.append(f"Couldn't get message from '{topic}' topic.")
         self.assertTrue(len(problems) == 0, '\n' + '\n'.join(problems))
 
     @unittest.skipUnless(stat[0], stat[1])
@@ -201,60 +201,68 @@ class TestNodes(unittest.TestCase):
         idx = 0
         n_motor = -1
         n_joint = -1
-        n_end_effector = -1
+        n_end_eff = -1
         for st in ['motor', 'joint', 'end_effector']:
             while 1:
                 if st == 'motor':
-                    topic = f"/reseq/module{self.address + idx}/{st}/feedback"
+                    topic = f'/reseq/module{self.address + idx}/{st}/feedback'
                     topic_type = self.motor_type
                     n_motor += 1
                 elif st == 'joint':
-                    topic = f"/reseq/module{self.address+1 + ((idx-n_motor)//3)}/{st}/{['pitch', 'roll', 'yaw'][(idx-n_motor)%3]}/feedback"
+                    j_idx = idx - n_motor
+                    axis = ['pitch', 'roll', 'yaw'][j_idx % 3]
+                    topic = f'/reseq/module{self.address+1 + (j_idx//3)}/{st}/{axis}/feedback'
                     topic_type = self.joint_type
                     n_joint += 1
                 else:
-                    topic = f"/reseq/module{self.address + ((idx-n_motor-n_joint)//3)}/{st}/{['pitch', 'head_pitch', 'head_roll'][(idx-n_motor-n_joint)%3]}/feedback"
-                    topic_type = self.end_effector_type
-                    n_end_effector += 1
+                    ee_idx = idx - n_motor - n_joint
+                    axis = ['pitch', 'head_pitch', 'head_roll'][ee_idx % 3]
+                    topic = f'/reseq/module{self.address + (ee_idx//3)}/{st}/{axis}/feedback'
+                    topic_type = self.end_eff_type
+                    n_end_eff += 1
                 if topic not in self.topic_names:
                     break
 
                 # Test topic type
                 arg = self.topic_names.index(topic)
-                expected_type_str = f"{topic_type.__module__.split('._')[0]}._{topic_type.__name__}"
-                topic_type_str = self.topic_types[arg][0].replace('msg/', 'msg._').replace('/', '.')
-                self.assertEqual(topic_type_str, expected_type_str, f"The type of the topic {topic} is {topic_type_str}. Expected {expected_type_str}")
-
-                self.node.create_subscription(
-                    topic_type,
-                    topic,
-                    self.create_callback(idx),
-                    10
+                module = topic_type.__module__.split('._')[0]
+                name = topic_type.__name__
+                expected_type_str = f'{module}._{name}'
+                type_str = self.topic_types[arg][0].replace('msg/', 'msg._').replace('/', '.')
+                self.assertEqual(
+                    type_str,
+                    expected_type_str,
+                    f'The type of the topic {topic} is {type_str}. Expected {expected_type_str}',
                 )
+
+                self.node.create_subscription(topic_type, topic, self.create_callback(idx), 10)
                 idx += 1
 
         # Wait until it transmits message
         endtime = time.time() + 10
         while time.time() < endtime:
             # Loop through various IDs, module numbers, and data
-            for id, module_num, data in [(0x22, 0x11, struct.pack('ff', 5.0, 3.0)),
-                                         (0x22, 0x12, struct.pack('ff', 5.0, 3.0)),
-                                         (0x22, 0x13, struct.pack('ff', 5.0, 3.0)),
-                                         (0x32, 0x12, struct.pack('f', 5.0)),
-                                         (0x34, 0x12, struct.pack('f', 5.0)),
-                                         (0x36, 0x12, struct.pack('f', 5.0)),
-                                         (0x32, 0x13, struct.pack('f', 5.0)),
-                                         (0x34, 0x13, struct.pack('f', 5.0)),
-                                         (0x36, 0x13, struct.pack('f', 5.0)),
-                                         (0x42, 0x11, struct.pack('i', 5)),
-                                         (0x44, 0x11, struct.pack('i', 5)),
-                                         (0x46, 0x11, struct.pack('i', 5)),]:
+            for mod_id, module_num, data in [
+                (0x22, 0x11, struct.pack('ff', 5.0, 3.0)),
+                (0x22, 0x12, struct.pack('ff', 5.0, 3.0)),
+                (0x22, 0x13, struct.pack('ff', 5.0, 3.0)),
+                (0x32, 0x12, struct.pack('f', 5.0)),
+                (0x34, 0x12, struct.pack('f', 5.0)),
+                (0x36, 0x12, struct.pack('f', 5.0)),
+                (0x32, 0x13, struct.pack('f', 5.0)),
+                (0x34, 0x13, struct.pack('f', 5.0)),
+                (0x36, 0x13, struct.pack('f', 5.0)),
+                (0x42, 0x11, struct.pack('i', 5)),
+                (0x44, 0x11, struct.pack('i', 5)),
+                (0x46, 0x11, struct.pack('i', 5)),
+            ]:
                 # Create a CAN message
-                aid = struct.pack('bbbb', 00, id, 0x00, module_num)
+                aid = struct.pack('bbbb', 00, mod_id, 0x00, module_num)
                 msg = can.Message(
                     arbitration_id=int.from_bytes(aid, byteorder='big', signed=False),
                     data=data,
-                    is_extended_id=True)
+                    is_extended_id=True,
+                )
                 # Send the message to trigger the can_callback
                 self.canbus.send(msg)
             rclpy.spin_once(self.node, timeout_sec=0.1)
@@ -263,46 +271,56 @@ class TestNodes(unittest.TestCase):
 
         problems = []
         if n_motor != self.module_num:
-            problems.append(f"Number of motors doesn't match. Expected {self.module_num}, got {n_motor}.")
+            exp = self.module_num
+            problems.append(f"Number of motors doesn't match. Expected {exp}, got {n_motor}.")
         if n_joint != self.joint_num:
-            problems.append(f"Number of joints doesn't match. Expected {self.joint_num}, got {n_joint}.")
-        if n_end_effector != self.end_effector_num:
-            problems.append(f"Number of end effectors doesn't match. Expected {self.end_effector_num}, got {n_end_effector}.")
+            exp = self.joint_num
+            problems.append(f"Number of joints doesn't match. Expected {exp}, got {n_joint}.")
+        if n_end_eff != self.end_eff_num:
+            exp = self.end_eff_num
+            problems.append(
+                f"Number of end effectors doesn't match. Expected {exp}, got {n_end_eff}."
+            )
         for i in range(idx):
-            if n_motor > i: 
+            if n_motor > i:
                 if not bool(self.msgs[i]):
-                    problems.append(f"Couldn't get message from '/reseq/module{self.address + i}/motor/feedback' topic." + "\n")
+                    topic = f'/reseq/module{self.address + i}/motor/feedback'
+                    problems.append(f"Couldn't get message from '{topic}' topic." + '\n')
             elif n_motor + n_joint > i:
                 if not bool(self.msgs[i]):
-                    problems.append(f"Couldn't get message from '/reseq/module{self.address+1 + ((i-n_motor)//3)}/joint/{['pitch', 'roll', 'yaw'][(i-n_motor)%3]}/feedback' topic." + "\n")
+                    j_idx = i - n_motor
+                    axis = ['pitch', 'roll', 'yaw'][j_idx % 3]
+                    topic = f'/reseq/module{self.address+1 + (j_idx//3)}/joint/{axis}/feedback'
+                    problems.append(f"Couldn't get message from '{topic}' topic." + '\n')
             else:
                 if not bool(self.msgs[i]):
-                    problems.append(f"Couldn't get message from '/reseq/module{self.address}/end_effector/{['pitch', 'head_pitch', 'head_roll'][(i-n_motor-n_joint)%3]}/feedback' topic." + "\n")
+                    ee_idx = i - n_motor - n_joint
+                    axis = ['pitch', 'head_pitch', 'head_roll'][ee_idx % 3]
+                    topic = f'/reseq/module{self.address}/end_effector/{axis}/feedback'
+                    problems.append(f"Couldn't get message from '{topic}' topic." + '\n')
         self.assertTrue(len(problems) == 0, '\n' + '\n'.join(problems))
 
     def test_5_jointpublisher_topics(self):
         """Test the message reception from the joint states and diff controller topics."""
-        self.node.create_subscription(
-            JointState,
-            '/joint_states',
-            self.create_callback(0),
-            10
-        )
+        self.node.create_subscription(JointState, '/joint_states', self.create_callback(0), 10)
         idx = self.module_num + 1
         for i in range(1, idx):
-            topic = f"/diff_controller{i}/cmd_vel"
+            topic = f'/diff_controller{i}/cmd_vel'
 
             # Test topic type
             arg = self.topic_names.index(topic)
-            expected_type_str = f"{self.diff_controller_type.__module__.split('._')[0]}._{self.diff_controller_type.__name__}"
-            topic_type_str = self.topic_types[arg][0].replace('msg/', 'msg._').replace('/', '.')
-            self.assertEqual(topic_type_str, expected_type_str, f"The type of the topic {topic} is {topic_type_str}. Expected {expected_type_str}")
+            module = self.diff_controller_type.__module__.split('._')[0]
+            name = self.diff_controller_type.__name__
+            expected_type_str = f'{module}._{name}'
+            type_str = self.topic_types[arg][0].replace('msg/', 'msg._').replace('/', '.')
+            self.assertEqual(
+                type_str,
+                expected_type_str,
+                f'The type of the topic {topic} is {type_str}. Expected {expected_type_str}',
+            )
 
             self.node.create_subscription(
-                self.diff_controller_type,
-                topic,
-                self.create_callback(i),
-                10
+                self.diff_controller_type, topic, self.create_callback(i), 10
             )
 
         # Wait until it transmits message
@@ -324,18 +342,29 @@ class TestNodes(unittest.TestCase):
     def create_callback(self, index):
         def callback(msg):
             self.msgs[index] = msg
+
         return callback
+
 
 @pytest.mark.launch_test
 def generate_test_description():
-    return LaunchDescription([
-        ExecuteProcess(
-            cmd=['ros2', 'launch', 'reseq_ros2', 'reseq_launch.py', 'config_file:=reseq_mk1_vcan.yaml'],
-        ),
-        launch_testing.actions.ReadyToTest()
-    ]), {
+    return LaunchDescription(
+        [
+            ExecuteProcess(
+                cmd=[
+                    'ros2',
+                    'launch',
+                    'reseq_ros2',
+                    'reseq_launch.py',
+                    'config_file:=reseq_mk1_vcan.yaml',
+                ],
+            ),
+            launch_testing.actions.ReadyToTest(),
+        ]
+    ), {
         'TestNodes': TestNodes,
     }
+
 
 if __name__ == '__main__':
     unittest.main()
