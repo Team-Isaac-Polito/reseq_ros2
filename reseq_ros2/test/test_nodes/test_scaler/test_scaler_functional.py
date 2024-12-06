@@ -1,4 +1,5 @@
 import unittest
+
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.executors import SingleThreadedExecutor
@@ -7,8 +8,8 @@ from rclpy.parameter import Parameter
 from reseq_interfaces.msg import EndEffector, Remote
 from reseq_ros2.scaler import Scaler
 
-
 # Function Test
+
 
 class TestScalerFunctional(unittest.TestCase):
     """Test class for the Scaler node's functionality."""
@@ -26,7 +27,7 @@ class TestScalerFunctional(unittest.TestCase):
             'r_inverse_radius': [-1.5385, 1.5385],
             'r_pitch_vel': [-183, 183],
             'r_head_pitch_vel': [-400, 400],
-            'r_head_roll_vel': [-455, 455]
+            'r_head_roll_vel': [-455, 455],
         }
 
     @classmethod
@@ -38,19 +39,19 @@ class TestScalerFunctional(unittest.TestCase):
     def test_4_scale(self):
         """Test the scale function."""
         node = self.scaler
-        
+
         # Test case: Scale linear value
         val = 0.5
-        range = self.expected_params['r_linear_vel']
-        expected_val = (val + 1) / 2 * (range[1] - range[0]) + range[0]
-        scaled_val = node.scale(val, range)
+        scaling_range = self.expected_params['r_linear_vel']
+        expected_val = (val + 1) / 2 * (scaling_range[1] - scaling_range[0]) + scaling_range[0]
+        scaled_val = node.scale(val, scaling_range)
         self.assertAlmostEqual(scaled_val, expected_val, places=5)
 
         # Test case: Scale inverse radius
         val = -0.5
-        range = self.expected_params['r_inverse_radius']
-        expected_val = (val + 1) / 2 * (range[1] - range[0]) + range[0]
-        scaled_val = node.scale(val, range)
+        scaling_range = self.expected_params['r_inverse_radius']
+        expected_val = (val + 1) / 2 * (scaling_range[1] - scaling_range[0]) + scaling_range[0]
+        scaled_val = node.scale(val, scaling_range)
         self.assertAlmostEqual(scaled_val, expected_val, places=5)
 
     def test_5_agevarScaler(self):
@@ -66,8 +67,12 @@ class TestScalerFunctional(unittest.TestCase):
         twist_msg.angular.z = -0.5
 
         # Calculate expected values
-        expected_linear_x = (twist_msg.linear.x + 1) / 2 * (node.r_linear_vel[1] - node.r_linear_vel[0]) + node.r_linear_vel[0]
-        expected_angular_z = (twist_msg.angular.z + 1) / 2 * (node.r_inverse_radius[1] - node.r_inverse_radius[0]) + node.r_inverse_radius[0]
+        expected_linear_x = (twist_msg.linear.x + 1) / 2 * (
+            node.r_linear_vel[1] - node.r_linear_vel[0]
+        ) + node.r_linear_vel[0]
+        expected_angular_z = (twist_msg.angular.z + 1) / 2 * (
+            node.r_inverse_radius[1] - node.r_inverse_radius[0]
+        ) + node.r_inverse_radius[0]
         expected_angular_z *= expected_linear_x
 
         # Call agevarScaler
@@ -92,16 +97,24 @@ class TestScalerFunctional(unittest.TestCase):
         end_effector_msg.head_roll_vel = -0.3
 
         # Calculate expected values
-        expected_pitch_vel = (end_effector_msg.pitch_vel + 1) / 2 * (node.r_pitch_vel[1] - node.r_pitch_vel[0]) + node.r_pitch_vel[0]
-        expected_head_pitch_vel = (end_effector_msg.head_pitch_vel + 1) / 2 * (node.r_head_pitch_vel[1] - node.r_head_pitch_vel[0]) + node.r_head_pitch_vel[0]
-        expected_head_roll_vel = (end_effector_msg.head_roll_vel + 1) / 2 * (node.r_head_roll_vel[1] - node.r_head_roll_vel[0]) + node.r_head_roll_vel[0]
+        expected_pitch_vel = (end_effector_msg.pitch_vel + 1) / 2 * (
+            node.r_pitch_vel[1] - node.r_pitch_vel[0]
+        ) + node.r_pitch_vel[0]
+        expected_head_pitch_vel = (end_effector_msg.head_pitch_vel + 1) / 2 * (
+            node.r_head_pitch_vel[1] - node.r_head_pitch_vel[0]
+        ) + node.r_head_pitch_vel[0]
+        expected_head_roll_vel = (end_effector_msg.head_roll_vel + 1) / 2 * (
+            node.r_head_roll_vel[1] - node.r_head_roll_vel[0]
+        ) + node.r_head_roll_vel[0]
 
         # Call endEffectorScaler
         scaled_end_effector = node.endEffectorScaler(end_effector_msg)
 
         # Verify scaled values
         self.assertAlmostEqual(scaled_end_effector.pitch_vel, expected_pitch_vel, places=5)
-        self.assertAlmostEqual(scaled_end_effector.head_pitch_vel, expected_head_pitch_vel, places=5)
+        self.assertAlmostEqual(
+            scaled_end_effector.head_pitch_vel, expected_head_pitch_vel, places=5
+        )
         self.assertAlmostEqual(scaled_end_effector.head_roll_vel, expected_head_roll_vel, places=5)
 
     def test_7_remote_callback(self):
@@ -109,13 +122,35 @@ class TestScalerFunctional(unittest.TestCase):
         node = self.scaler
 
         # Set initial state
-        node.set_parameters([
-            Parameter('r_linear_vel', rclpy.Parameter.Type.DOUBLE_ARRAY, self.expected_params['r_linear_vel']),
-            Parameter('r_inverse_radius', rclpy.Parameter.Type.DOUBLE_ARRAY, self.expected_params['r_inverse_radius']),
-            Parameter('r_pitch_vel', rclpy.Parameter.Type.INTEGER_ARRAY, self.expected_params['r_pitch_vel']),
-            Parameter('r_head_pitch_vel', rclpy.Parameter.Type.INTEGER_ARRAY, self.expected_params['r_head_pitch_vel']),
-            Parameter('r_head_roll_vel', rclpy.Parameter.Type.INTEGER_ARRAY, self.expected_params['r_head_roll_vel']),
-        ])
+        node.set_parameters(
+            [
+                Parameter(
+                    'r_linear_vel',
+                    rclpy.Parameter.Type.DOUBLE_ARRAY,
+                    self.expected_params['r_linear_vel'],
+                ),
+                Parameter(
+                    'r_inverse_radius',
+                    rclpy.Parameter.Type.DOUBLE_ARRAY,
+                    self.expected_params['r_inverse_radius'],
+                ),
+                Parameter(
+                    'r_pitch_vel',
+                    rclpy.Parameter.Type.INTEGER_ARRAY,
+                    self.expected_params['r_pitch_vel'],
+                ),
+                Parameter(
+                    'r_head_pitch_vel',
+                    rclpy.Parameter.Type.INTEGER_ARRAY,
+                    self.expected_params['r_head_pitch_vel'],
+                ),
+                Parameter(
+                    'r_head_roll_vel',
+                    rclpy.Parameter.Type.INTEGER_ARRAY,
+                    self.expected_params['r_head_roll_vel'],
+                ),
+            ]
+        )
 
         remote_msg = Remote()
         remote_msg.right.y = 0.5
@@ -136,17 +171,27 @@ class TestScalerFunctional(unittest.TestCase):
 
         node.create_subscription(Twist, '/cmd_vel', cmd_vel_callback, 10)
         node.create_subscription(EndEffector, '/end_effector', end_effector_callback, 10)
-        
+
         # Calculate expected agevar values
-        expected_linear_x = (remote_msg.right.y + 1) / 2 * (node.r_linear_vel[1] - node.r_linear_vel[0]) + node.r_linear_vel[0]
-        expected_angular_z = (- remote_msg.right.x + 1) / 2 * (node.r_inverse_radius[1] - node.r_inverse_radius[0]) + node.r_inverse_radius[0]
+        expected_linear_x = (remote_msg.right.y + 1) / 2 * (
+            node.r_linear_vel[1] - node.r_linear_vel[0]
+        ) + node.r_linear_vel[0]
+        expected_angular_z = (-remote_msg.right.x + 1) / 2 * (
+            node.r_inverse_radius[1] - node.r_inverse_radius[0]
+        ) + node.r_inverse_radius[0]
         expected_angular_z *= expected_linear_x
 
         # Calculate expected endeffector values
-        expected_pitch_vel = (remote_msg.left.y + 1) / 2 * (node.r_pitch_vel[1] - node.r_pitch_vel[0]) + node.r_pitch_vel[0]
-        expected_head_pitch_vel = (remote_msg.left.z + 1) / 2 * (node.r_head_pitch_vel[1] - node.r_head_pitch_vel[0]) + node.r_head_pitch_vel[0]
-        expected_head_roll_vel = (remote_msg.left.x + 1) / 2 * (node.r_head_roll_vel[1] - node.r_head_roll_vel[0]) + node.r_head_roll_vel[0]
-        
+        expected_pitch_vel = (remote_msg.left.y + 1) / 2 * (
+            node.r_pitch_vel[1] - node.r_pitch_vel[0]
+        ) + node.r_pitch_vel[0]
+        expected_head_pitch_vel = (remote_msg.left.z + 1) / 2 * (
+            node.r_head_pitch_vel[1] - node.r_head_pitch_vel[0]
+        ) + node.r_head_pitch_vel[0]
+        expected_head_roll_vel = (remote_msg.left.x + 1) / 2 * (
+            node.r_head_roll_vel[1] - node.r_head_roll_vel[0]
+        ) + node.r_head_roll_vel[0]
+
         # Call the remote_callback
         node.remote_callback(remote_msg)
 
@@ -164,8 +209,12 @@ class TestScalerFunctional(unittest.TestCase):
         # Verify end_effector message
         self.assertIsNotNone(self.end_effector_msg)
         self.assertAlmostEqual(self.end_effector_msg.pitch_vel, expected_pitch_vel, places=5)
-        self.assertAlmostEqual(self.end_effector_msg.head_pitch_vel, expected_head_pitch_vel, places=5)
-        self.assertAlmostEqual(self.end_effector_msg.head_roll_vel, expected_head_roll_vel, places=5)
+        self.assertAlmostEqual(
+            self.end_effector_msg.head_pitch_vel, expected_head_pitch_vel, places=5
+        )
+        self.assertAlmostEqual(
+            self.end_effector_msg.head_roll_vel, expected_head_roll_vel, places=5
+        )
 
 
 if __name__ == '__main__':

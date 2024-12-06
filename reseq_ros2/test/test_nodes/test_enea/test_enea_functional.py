@@ -9,8 +9,8 @@ from std_msgs.msg import Int32
 from reseq_interfaces.msg import EndEffector
 from reseq_ros2.enea import EE_Enum, Enea
 
-
 # Function Test
+
 
 class TestEneaFunctional(unittest.TestCase):
     """Test class for the Enea node's functionality."""
@@ -181,17 +181,43 @@ class TestEneaFunctional(unittest.TestCase):
         node = self.enea
 
         # Set initial state
-        node.set_parameters([
-            Parameter('pitch', rclpy.Parameter.Type.INTEGER, self.expected_params['pitch']),
-            Parameter('head_pitch', rclpy.Parameter.Type.INTEGER, self.expected_params['head_pitch']),
-            Parameter('head_roll', rclpy.Parameter.Type.INTEGER, self.expected_params['head_roll']),
-            Parameter('servo_speed', rclpy.Parameter.Type.INTEGER, self.expected_params['servo_speed']),
-            Parameter('r_pitch', rclpy.Parameter.Type.INTEGER_ARRAY, self.expected_params['r_pitch']),
-            Parameter('r_head_pitch', rclpy.Parameter.Type.INTEGER_ARRAY, self.expected_params['r_head_pitch']),
-            Parameter('r_head_roll', rclpy.Parameter.Type.INTEGER_ARRAY, self.expected_params['r_head_roll']),
-            Parameter('pitch_conv', rclpy.Parameter.Type.DOUBLE, self.expected_params['pitch_conv']),
-            Parameter('end_effector', rclpy.Parameter.Type.INTEGER, self.expected_params['end_effector']),
-        ])
+        node.set_parameters(
+            [
+                Parameter('pitch', rclpy.Parameter.Type.INTEGER, self.expected_params['pitch']),
+                Parameter(
+                    'head_pitch', rclpy.Parameter.Type.INTEGER, self.expected_params['head_pitch']
+                ),
+                Parameter(
+                    'head_roll', rclpy.Parameter.Type.INTEGER, self.expected_params['head_roll']
+                ),
+                Parameter(
+                    'servo_speed',
+                    rclpy.Parameter.Type.INTEGER,
+                    self.expected_params['servo_speed'],
+                ),
+                Parameter(
+                    'r_pitch', rclpy.Parameter.Type.INTEGER_ARRAY, self.expected_params['r_pitch']
+                ),
+                Parameter(
+                    'r_head_pitch',
+                    rclpy.Parameter.Type.INTEGER_ARRAY,
+                    self.expected_params['r_head_pitch'],
+                ),
+                Parameter(
+                    'r_head_roll',
+                    rclpy.Parameter.Type.INTEGER_ARRAY,
+                    self.expected_params['r_head_roll'],
+                ),
+                Parameter(
+                    'pitch_conv', rclpy.Parameter.Type.DOUBLE, self.expected_params['pitch_conv']
+                ),
+                Parameter(
+                    'end_effector',
+                    rclpy.Parameter.Type.INTEGER,
+                    self.expected_params['end_effector'],
+                ),
+            ]
+        )
 
         end_effector_msg = EndEffector()
         end_effector_msg.pitch_vel = 0.1
