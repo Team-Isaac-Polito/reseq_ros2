@@ -85,7 +85,7 @@ class EmulatorRemoteController(Node):
                 # print("CW")
                 if (key.char == self.previousKey):
                     message.left.z = min(1.0,self.previousValue * (self.states[self.state]+1))
-                    self.previousValue = -min(1.0,self.previousValue * (self.states[self.state]+1))
+                    self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
                 else:
                     message.left.z = self.states[self.state]
                     self.previousValue = self.states[self.state]
