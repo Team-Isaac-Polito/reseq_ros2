@@ -110,15 +110,21 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(robot_state_publisher_node)
 
-    # frf = Node(
-    #     package='reseq_ros2',
-    #     executable='fake_robot_feedback',
-    #     name='fake_robot_feedback',
-    #     parameters=[{
-    #         'modules': addresses,
-    #     }]
-    # )
-    # launch_config.append(frf)
+    if config['canbus']['channel'].startswith('vcan'):
+        feedback_replicator = Node(
+            package='reseq_ros2',
+            executable='feedback_replicator',
+            name='feedback_replicator',
+            parameters=[
+                {
+                    'modules': addresses,
+                    'joints': joints,
+                    'end_effector': endEffector,
+                }
+            ],
+            arguments=['--ros-args', '--log-level', log_level],
+        )
+        launch_config.append(feedback_replicator)
 
     return launch_config
 
