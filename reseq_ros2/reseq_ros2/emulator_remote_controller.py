@@ -22,7 +22,14 @@ class EmulatorRemoteController(Node):
         self.state = "Normal"
         self.normal_value = 0.1
         self.states = {"Normal": self.normal_value, "Double": self.normal_value*2, "Half": self.normal_value/2}
-    
+        self.defaultMessage = Remote()
+        self.defaultMessage.right.x = 0
+        self.defaultMessage.right.y = 0
+        self.defaultMessage.right.z = 0
+        self.defaultMessage.left.x = 0
+        self.defaultMessage.left.y = 0
+        self.defaultMessage.left.z = 0
+
     def readKey(self):
         tty.setraw(sys.stdin.fileno())
         # add timeout, so select.select() will wait for that time and then it will return
@@ -154,7 +161,10 @@ class EmulatorRemoteController(Node):
                 self.state = "Normal"
         elif key == 'z':
             self.has_to_exit = True
-        print(f"pressed {key}")
+            self.publisher.publish(self.defaultMessage)
+        else:
+            # pass to default
+            self.publisher.publish(self.defaultMessage)
         return self.has_to_exit
 
     def readLoop(self):
