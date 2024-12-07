@@ -38,6 +38,7 @@
   <test_depend>ament_xmllint</test_depend>
   <test_depend>python3-pytest</test_depend>
   <test_depend>launch_testing</test_depend>
+  <test_depend>python3-psutil</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

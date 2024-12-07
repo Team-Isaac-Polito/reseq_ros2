@@ -1,3 +1,4 @@
+import subprocess
 import unittest
 
 import rclpy
@@ -10,6 +11,27 @@ from reseq_ros2.communication import Communication
 # Function Test
 
 
+def check_interface_status(interface_name):
+    """Check if the specified network interface is up and running."""
+    # Run the `ip` command to get interface details
+    result = subprocess.run(['ip', 'link', 'show', interface_name], capture_output=True, text=True)
+
+    # Check if the command was successful
+    if result.returncode != 0:
+        return False, f'Failed to get interface status. Error: {result.stderr.strip()}'
+
+    # Check if the interface is up
+    if 'UP,LOWER_UP' in result.stdout:
+        return True, f'Interface {interface_name} is up and running.'
+    else:
+        return False, f'Interface {interface_name} is not up.'
+
+
+# Define the interface status and message
+interface_status, status_msg = check_interface_status('vcan0')
+
+
+@unittest.skipIf(not interface_status, reason=status_msg)
 class TestCommunicationFunctional(unittest.TestCase):
     """Test class for the Communication node's functionality."""
 

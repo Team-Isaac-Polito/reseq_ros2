@@ -23,7 +23,7 @@ setup(
     maintainer_email='team.isaac@polito.it',
     description='ROS2 code for ReseQ robot',
     license='GNU GPL v3.0',
-    tests_require=['pytest', 'launch_testing'],
+    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'communication = reseq_ros2.communication:main',

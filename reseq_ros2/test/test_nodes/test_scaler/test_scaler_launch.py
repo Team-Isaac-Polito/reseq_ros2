@@ -1,7 +1,10 @@
+import os
+import subprocess
+import sys
 import unittest
 from time import time
 
-import pytest
+import psutil
 import rclpy
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess
@@ -12,7 +15,6 @@ from rcl_interfaces.srv import GetParameters, ListParameters
 config_file = 'reseq_mk1_vcan.yaml'
 
 
-@pytest.mark.launch_test
 def generate_test_description():
     return LaunchDescription(
         [
@@ -41,6 +43,18 @@ class TestScalerLaunch(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        if 'launch_test' in os.path.basename(sys.argv[0]):
+            pass
+        else:
+            cmd = [
+                'ros2',
+                'launch',
+                'reseq_ros2',
+                'reseq_launch.py',
+                f'config_file:={config_file}',
+            ]
+            cls.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
         rclpy.init(args=None)
         cls.node = rclpy.create_node('test_node')
 
@@ -56,6 +70,22 @@ class TestScalerLaunch(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        if 'launch_test' in os.path.basename(sys.argv[0]):
+            pass
+        else:
+            try:
+                # Ensure all child processes are terminated
+                parent_pid = cls.process.pid
+                parent = psutil.Process(parent_pid)
+                for child in parent.children():
+                    child.terminate()
+
+                _, still_alive = psutil.wait_procs(parent.children(), timeout=5)
+                for p in still_alive:
+                    p.kill()  # Force kill if it still alive
+            except psutil.NoSuchProcess:
+                pass  # The process has already exited
+
         cls.node.destroy_node()
         rclpy.shutdown()
 
