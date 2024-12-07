@@ -1,5 +1,6 @@
-from setuptools import setup
 from glob import glob
+
+from setuptools import setup
 
 package_name = 'reseq_ros2'
 
@@ -32,6 +33,7 @@ setup(
             'scaler = reseq_ros2.scaler:main',
             'joint_publisher = reseq_ros2.joint_publisher:main',
             'fake_robot_feedback = reseq_ros2.fake_robot_feedback:main',
+            'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
         ],
     },
 )
