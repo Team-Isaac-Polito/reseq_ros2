@@ -1,0 +1,19 @@
+name: "ROS2 CI/CD"
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs: 
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:jammy
+    steps:
+      - uses: ros-tooling/setup-ros@v0.7
+      - uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          target-ros2-distro: humble
