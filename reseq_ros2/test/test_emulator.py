@@ -32,7 +32,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'w'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'w')
         self.assertEqual(self.sender.previousValue, 0.1)
         # if you send, always spin_once the receiver
@@ -56,7 +56,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 's'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 's')
         self.assertEqual(self.sender.previousValue, -0.1)
         # if you send, always spin_once the receiver
@@ -78,7 +78,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'A'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'a')
         self.assertEqual(self.sender.previousValue, -0.1)
         # if you send, always spin_once the receiver
@@ -102,7 +102,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'd'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'd')
         self.assertEqual(self.sender.previousValue, 0.1)
         # if you send, always spin_once the receiver
@@ -124,7 +124,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'q'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'q')
         self.assertEqual(self.sender.previousValue, -0.1)
         # if you send, always spin_once the receiver
@@ -146,7 +146,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'e'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'e')
         self.assertEqual(self.sender.previousValue, 0.1)
         # if you send, always spin_once the receiver
@@ -168,7 +168,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'i'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'i')
         self.assertEqual(self.sender.previousValue, 0.1)
         # if you send, always spin_once the receiver
@@ -190,7 +190,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'k'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'k')
         self.assertEqual(self.sender.previousValue, -0.1)
         # if you send, always spin_once the receiver
@@ -212,7 +212,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'l'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'l')
         self.assertEqual(self.sender.previousValue, 0.1)
         # if you send, always spin_once the receiver
@@ -234,7 +234,7 @@ class TestEmulator(unittest.TestCase):
         key = MagicMock()
         key = 'j'
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'j')
         self.assertEqual(self.sender.previousValue, -0.1)
         # if you send, always spin_once the receiver
@@ -258,7 +258,7 @@ class TestEmulator(unittest.TestCase):
         key_m = 'i'
         key = 'h'
         self.sender.handleKey(key_m)
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.assertEqual(self.sender.previousKey, 'i')
         self.assertEqual(self.sender.previousValue, 0.1)
         # if you send, always spin_once the receiver
@@ -267,7 +267,7 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.sender.handleKey(key_m)
-        self.assertEqual(self.sender.state, 'Double')
+        self.assertEqual(self.sender.increment, 0.2)
         self.assertEqual(self.sender.previousKey, 'i')
         self.assertEqual(self.sender.previousValue, 0.12)
         # if you send, always spin_once the receiver
@@ -277,18 +277,18 @@ class TestEmulator(unittest.TestCase):
         self.sender.handleKey(key)
         self.sender.handleKey(key_m)
         self.assertEqual(self.sender.previousKey, 'i')
-        self.assertEqual(round(self.sender.previousValue,3), 0.132)
+        self.assertEqual(round(self.sender.previousValue,3), 0.168)
         rclpy.spin_once(self.receiver)
-        self.assertEqual(self.receiver.msg.right.y, 0.132)
+        self.assertEqual(round(self.receiver.msg.right.y,3), 0.168)
 
     def test_bh(self):
         key = MagicMock()
         key_m = MagicMock()
         key_m = 'i'
         key = 'h'
-        self.assertEqual(self.sender.state, 'Normal')
+        self.assertEqual(self.sender.increment, 0.1)
         self.sender.handleKey(key)
-        self.assertEqual(self.sender.state, 'Double')
+        self.assertEqual(self.sender.increment, 0.2)
         self.sender.handleKey(key_m)
         self.assertEqual(self.sender.previousKey, 'i')
         self.assertEqual(self.sender.previousValue, 0.2)
