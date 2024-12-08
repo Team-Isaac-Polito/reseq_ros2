@@ -1,8 +1,8 @@
 import unittest
 import rclpy
 from unittest.mock import MagicMock
-from emulator_remote_controller import EmulatorRemoteController
-from emulator_monitor import EmulatorMonitor
+from reseq_ros2.emulator_remote_controller import EmulatorRemoteController
+from reseq_ros2.emulator_monitor import EmulatorMonitor
 
 class TestEmulator(unittest.TestCase):
 
