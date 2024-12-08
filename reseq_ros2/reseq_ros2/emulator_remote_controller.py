@@ -1,7 +1,7 @@
 import rclpy
 from reseq_interfaces.msg import Remote
 from rclpy.node import Node
-import sys, select, termios, tty, time
+import sys, select, termios, tty
 
 # retrieve settings from file descriptor (stdin)
 settings = termios.tcgetattr(sys.stdin)
@@ -11,24 +11,23 @@ class EmulatorRemoteController(Node):
         super().__init__("emulator_remote_controller")
         # create teleop_twist_keyboard node
         self.emulator = rclpy.create_node("teleop_twist_keyboard")
-        self.publisher = self.emulator.create_publisher(Remote, '/remote',10)
+        self.publisher = self.create_publisher(Remote, '/remote',10)
         self.get_logger().info("EmulatorRemoteController node started")
         # create timer to start the function
-        self.timer = self.create_timer(0.1, self.readLoop)
+        self.timer = self.create_timer(0.08, self.readLoop)
         self.has_to_exit = False
         # values should be already automatically be set to 0
         self.previousKey = ' ' # initialise to a random value
-        self.previousValue = 0
-        self.state = "Normal"
-        self.normal_value = 0.1
-        self.states = {"Normal": self.normal_value, "Double": self.normal_value*2, "Half": self.normal_value/2}
+        self.previousValue = 0.0
+        self.increment = 0.1
+        # self.states = {"Normal": self.normal_value, "Double": self.normal_value*2, "Half": self.normal_value/2}
         self.defaultMessage = Remote()
-        self.defaultMessage.right.x = 0
-        self.defaultMessage.right.y = 0
-        self.defaultMessage.right.z = 0
-        self.defaultMessage.left.x = 0
-        self.defaultMessage.left.y = 0
-        self.defaultMessage.left.z = 0
+        self.defaultMessage.right.x = 0.0
+        self.defaultMessage.right.y = 0.0
+        self.defaultMessage.right.z = 0.0
+        self.defaultMessage.left.x = 0.0
+        self.defaultMessage.left.y = 0.0
+        self.defaultMessage.left.z = 0.0
 
     def readKey(self):
         tty.setraw(sys.stdin.fileno())
@@ -49,116 +48,109 @@ class EmulatorRemoteController(Node):
         if key == 'w':
             # print("forward")
             if (key == self.previousKey):
-                message.left.y = min(1.0,self.previousValue * (self.states[self.state]+1))
-                self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
+                message.left.y = min(1.0,self.previousValue * (self.increment+1))
+                self.previousValue = min(1.0,self.previousValue * (self.increment+1))
             else:
-                message.left.y = self.states[self.state]
-                self.previousValue = self.states[self.state]
+                message.left.y = self.increment
+                self.previousValue = self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         elif key == 's':
             # print("backward")
             if (key == self.previousKey):
-                message.left.y = -min(1.0,-self.previousValue * (self.states[self.state]+1))
-                self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                message.left.y = -min(1.0,-self.previousValue * (self.increment+1))
+                self.previousValue = -min(1.0,-self.previousValue * (self.increment+1))
             else:
-                message.left.y = -self.states[self.state]
-                self.previousValue = -self.states[self.state]
+                message.left.y = -self.increment
+                self.previousValue = -self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         elif key == 'a':
             # print("left")
             if (key == self.previousKey):
-                message.left.x = -min(1.0,-self.previousValue * (self.states[self.state]+1))
-                self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                message.left.x = -min(1.0,-self.previousValue * (self.increment+1))
+                self.previousValue = -min(1.0,-self.previousValue * (self.increment+1))
             else:
-                message.left.x = -self.states[self.state]
-                self.previousValue = -self.states[self.state]
+                message.left.x = -self.increment
+                self.previousValue = -self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         elif key == 'd':
             # print("right")
             if (key == self.previousKey):
-                message.left.x = min(1.0,self.previousValue * (self.states[self.state]+1))
-                self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
+                message.left.x = min(1.0,self.previousValue * (self.increment+1))
+                self.previousValue = min(1.0,self.previousValue * (self.increment+1))
             else:
-                message.left.x = self.states[self.state]
-                self.previousValue = self.states[self.state]
+                message.left.x = self.increment
+                self.previousValue = self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         elif key == 'q':
             # print("CCW")
             if (key == self.previousKey):
-                message.left.z = -min(1.0,-self.previousValue * (self.states[self.state]+1))
-                self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                message.left.z = -min(1.0,-self.previousValue * (self.increment+1))
+                self.previousValue = -min(1.0,-self.previousValue * (self.increment+1))
             else:
-                message.left.z = -self.states[self.state]
-                self.previousValue = -self.states[self.state]
+                message.left.z = -self.increment
+                self.previousValue = -self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         elif key == 'e':
             # print("CW")
             if (key == self.previousKey):
-                message.left.z = min(1.0,self.previousValue * (self.states[self.state]+1))
-                self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
+                message.left.z = min(1.0,self.previousValue * (self.increment+1))
+                self.previousValue = min(1.0,self.previousValue * (self.increment+1))
             else:
-                message.left.z = self.states[self.state]
-                self.previousValue = self.states[self.state]
+                message.left.z = self.increment
+                self.previousValue = self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         # Start cmd_vel commands
         elif key == 'i':
             # print("forward")
             if (key == self.previousKey):
-                message.right.y = min(1.0,self.previousValue * (self.states[self.state]+1))
-                self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
+                message.right.y = min(1.0,self.previousValue * (self.increment+1))
+                self.previousValue = min(1.0,self.previousValue * (self.increment+1))
             else:
-                message.right.y = self.states[self.state]
-                self.previousValue = self.states[self.state]
+                message.right.y = self.increment
+                self.previousValue = self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         elif key == 'k':
             # print("backward")
             if (key == self.previousKey):
-                message.right.y = -min(1.0,-self.previousValue * (self.states[self.state]+1))
-                self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                message.right.y = -min(1.0,-self.previousValue * (self.increment+1))
+                self.previousValue = -min(1.0,-self.previousValue * (self.increment+1))
             else:
-                message.right.y = -self.states[self.state]
-                self.previousValue = -self.states[self.state]
+                message.right.y = -self.increment
+                self.previousValue = -self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         elif key == 'l':
             # print("right")
             if (key == self.previousKey):
-                message.right.x = min(1.0,self.previousValue * (self.states[self.state]+1))
-                self.previousValue = min(1.0,self.previousValue * (self.states[self.state]+1))
+                message.right.x = min(1.0,self.previousValue * (self.increment+1))
+                self.previousValue = min(1.0,self.previousValue * (self.increment+1))
             else:
-                message.right.x = self.states[self.state]
-                self.previousValue = self.states[self.state]
+                message.right.x = self.increment
+                self.previousValue = self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         elif key == 'j':
             # print("left")
             if (key == self.previousKey):
-                message.right.x = -min(1.0,-self.previousValue * (self.states[self.state]+1))
-                self.previousValue = -min(1.0,-self.previousValue * (self.states[self.state]+1))
+                message.right.x = -min(1.0,-self.previousValue * (self.increment+1))
+                self.previousValue = -min(1.0,-self.previousValue * (self.increment+1))
             else:
-                message.right.x = -self.states[self.state]
-                self.previousValue = -self.states[self.state]
+                message.right.x = -self.increment
+                self.previousValue = -self.increment
                 self.previousKey = key
             self.publisher.publish(message)
         # if b pressed, make cmd_vel movements faster
         elif key == 'b':
-            # if already "Half" change to normal
-            if self.state == "Normal":
-                self.state = "Half"     
-            else:
-                self.state = "Normal"
+            self.increment /= 2
         elif key == 'h':
-            if self.state == "Normal":
-                self.state = "Double" 
-            else:
-                self.state = "Normal"
+            self.increment *= 2
         elif key == 'z':
             self.has_to_exit = True
             self.publisher.publish(self.defaultMessage)
@@ -168,19 +160,11 @@ class EmulatorRemoteController(Node):
         return self.has_to_exit
 
     def readLoop(self):
-        try:
-            while(True):
-                message = Remote()
-                key = self.readKey()
-                if self.handleKey(key, message):
-                    # destory node
-                    self.emulator.destroy_node()
-                    break
-                time.sleep(0.08)
-        except Exception as err:
-            print("Error while starting EmulatorRemoteController node: " + str(err))
-        finally:
-            # set stdin to original settings
+        message = Remote()
+        key = self.readKey()
+        if self.handleKey(key, message):
+            # destroy node
+            self.emulator.destroy_node()
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
 
 def main(args = None):
