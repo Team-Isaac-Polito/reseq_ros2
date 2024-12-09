@@ -7,12 +7,17 @@ on:
     branches:
       - main
 
-jobs: 
+jobs:
   test:
     runs-on: ubuntu-latest
     container:
       image: ubuntu:jammy
     steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y iproute2
+
       - uses: ros-tooling/setup-ros@v0.7
       - uses: ros-tooling/action-ros-ci@v0.3
         with:

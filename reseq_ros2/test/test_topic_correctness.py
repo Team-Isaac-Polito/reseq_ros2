@@ -35,6 +35,8 @@ def check_interface_status(interface_name):
     # Check if the interface is up
     if 'UP,LOWER_UP' in result.stdout:
         return True, f'Interface {interface_name} is up and running.'
+    elif f'Device "{interface_name}" does not exist' in result.stdout:
+        return False, f'Interface {interface_name} does not exist.'
     else:
         return False, f'Interface {interface_name} is not up.'
 
@@ -194,22 +196,32 @@ class TestNodes(unittest.TestCase):
     def test_1_forward(self):
         """Test the message accuracy of the publisher topics."""
         # Create the subscribers for each topic
-        topics = [
-            (topic, topic_type)
-            for topic, topic_type in self.node.get_topic_names_and_types()
-            if len(self.node.get_subscriptions_info_by_topic(topic)) != 0
-            and 'joint' not in topic.split('/')
-            and topic.split('/')[-1] != 'feedback'
-            and topic
-            not in [
-                '/joint_states',
-                '/diff_controller1/cmd_vel',
-                '/diff_controller2/cmd_vel',
-                '/diff_controller3/cmd_vel',
-                '/robot_description',
-                '/parameter_events',
+        if not self.stat[0] and self.stat[1].split()[-1] == 'exist.':
+            print('Skip the message accuracy test for setpoint topics')
+            n_topic = 3
+            topics = [
+                (topic, topic_type)
+                for topic, topic_type in self.node.get_topic_names_and_types()
+                if topic in ['/cmd_vel', '/end_effector', '/remote']
             ]
-        ]
+        else:
+            n_topic = 9
+            topics = [
+                (topic, topic_type)
+                for topic, topic_type in self.node.get_topic_names_and_types()
+                if len(self.node.get_subscriptions_info_by_topic(topic)) != 0
+                and 'joint' not in topic.split('/')
+                and topic.split('/')[-1] != 'feedback'
+                and topic
+                not in [
+                    '/joint_states',
+                    '/diff_controller1/cmd_vel',
+                    '/diff_controller2/cmd_vel',
+                    '/diff_controller3/cmd_vel',
+                    '/robot_description',
+                    '/parameter_events',
+                ]
+            ]
         topic_names = []
         idx = 0
         for topic, topic_type in topics:
@@ -260,11 +272,8 @@ class TestNodes(unittest.TestCase):
         }
 
         self.assertTrue(
-            len(self.msgs[:idx]) == len(expected),
-            (
-                f"The number of subscribers doesn't match. "
-                f'Expected {len(expected)}, got {len(self.msgs[:idx])}'
-            ),
+            idx == n_topic,
+            f"The number of subscribers doesn't match. Expected {n_topic}, got {idx}",
         )
         for msg, topic in zip(self.msgs[:idx], topic_names):
             exp = expected[topic]
