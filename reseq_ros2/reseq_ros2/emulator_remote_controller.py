@@ -152,8 +152,7 @@ class EmulatorRemoteController(Node):
         elif key == 'h':
             self.increment *= 2
         elif key == 'z':
-            self.has_to_exit = True
-            self.publisher.publish(self.defaultMessage)
+            raise Exception("Exit requested")
         else:
             # pass to default
             self.publisher.publish(self.defaultMessage)
@@ -171,13 +170,11 @@ def main(args = None):
     rclpy.init(args = args)
     try:
         emulator_remote_controller = EmulatorRemoteController()
-        # spin once, each time check if it has to continue
-        while rclpy.ok() and not emulator_remote_controller.has_to_exit:
-            rclpy.spin_once(emulator_remote_controller)
     except Exception as err:
         print("Error while starting EmulatorRemoteController node: " + str(err))
-        rclpy.shutdown()
-    finally:
+        raise err
+    else:
+        rclpy.spin(emulator_remote_controller)
         emulator_remote_controller.emulator.destroy_node()
         emulator_remote_controller.destroy_node()
         rclpy.shutdown()
