@@ -1,14 +1,12 @@
-import os
 import struct
-import subprocess
 import sys
 import time
 import unittest
+from test.utils.test_utils import check_interface_status, simulate_launch_test, tear_down_process
 
 import can
 import launch_testing
 import launch_testing.actions
-import psutil
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped, Vector3
 from launch import LaunchDescription
@@ -17,22 +15,6 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32, Int32
 
 from reseq_interfaces.msg import EndEffector, Motors, Remote
-
-
-def check_interface_status(interface_name):
-    """Check if the specified network interface is up and running."""
-    # Run the `ip` command to get interface details
-    result = subprocess.run(['ip', 'link', 'show', interface_name], capture_output=True, text=True)
-
-    # Check if the command was successful
-    if result.returncode != 0:
-        return False, f'Failed to get interface status. Error: {result.stderr}'
-
-    # Check if the interface is up
-    if 'UP,LOWER_UP' in result.stdout:
-        return True, f'Interface {interface_name} is up and running.'
-    else:
-        return False, f'Interface {interface_name} is not up.'
 
 
 class TestNodes(unittest.TestCase):
@@ -48,18 +30,7 @@ class TestNodes(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if 'launch_test' in os.path.basename(sys.argv[0]):
-            pass
-        else:
-            cmd = [
-                'ros2',
-                'launch',
-                'reseq_ros2',
-                'reseq_launch.py',
-                'config_file:=reseq_mk1_vcan.yaml',
-            ]
-            cls.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        cls.process = simulate_launch_test(sys.argv[0])
         rclpy.init()
         cls.node = rclpy.create_node('test_node')
         cls.pub_ = cls.node.create_publisher(Remote, '/remote', 10)
@@ -84,22 +55,7 @@ class TestNodes(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if 'launch_test' in os.path.basename(sys.argv[0]):
-            pass
-        else:
-            try:
-                # Ensure all child processes are terminated
-                parent_pid = cls.process.pid
-                parent = psutil.Process(parent_pid)
-                for child in parent.children(recursive=True):
-                    child.terminate()
-
-                _, still_alive = psutil.wait_procs(parent.children(), timeout=5)
-                for p in still_alive:
-                    p.kill()  # Force kill if still alive
-            except psutil.NoSuchProcess:
-                pass  # The process has already exited
-
+        tear_down_process(cls.process)
         if cls.stat[0]:
             cls.canbus.shutdown()
         rclpy.shutdown()
