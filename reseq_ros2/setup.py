@@ -32,6 +32,9 @@ setup(
             'scaler = reseq_ros2.scaler:main',
             'joint_publisher = reseq_ros2.joint_publisher:main',
             'fake_robot_feedback = reseq_ros2.fake_robot_feedback:main',
+            'emulator_monitor = reseq_ros2.emulator_monitor:main',
+            'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
+            'emulator_trajectory = reseq_ros2.emulator_trajectory:main',
         ],
     },
 )
