@@ -1,15 +1,17 @@
-import os
-import subprocess
 import sys
 import unittest
-from time import time
+from test.utils.test_utils import (
+    check_missing_parameters,
+    check_node_up,
+    check_parameters,
+    simulate_launch_test,
+    tear_down_process,
+)
 
-import psutil
 import rclpy
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess
 from launch_testing.actions import ReadyToTest
-from rcl_interfaces.srv import GetParameters, ListParameters
 
 # Launch the Agevar using the reseq MK1 vcan configurations
 config_file = 'reseq_mk1_vcan.yaml'
@@ -43,20 +45,11 @@ class TestAgevarLaunch(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if 'launch_test' in os.path.basename(sys.argv[0]):
-            pass
-        else:
-            cmd = [
-                'ros2',
-                'launch',
-                'reseq_ros2',
-                'reseq_launch.py',
-                f'config_file:={config_file}',
-            ]
-            cls.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cls.process = simulate_launch_test(sys.argv[0])
 
         rclpy.init()
         cls.node = rclpy.create_node('test_node')
+        cls.expected_node = 'agevar'
 
         # Expected parameter values from agevar_consts.yaml
         cls.expected_params = {
@@ -72,119 +65,35 @@ class TestAgevarLaunch(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if 'launch_test' in os.path.basename(sys.argv[0]):
-            pass
-        else:
-            try:
-                # Ensure all child processes are terminated
-                parent_pid = cls.process.pid
-                parent = psutil.Process(parent_pid)
-                for child in parent.children():
-                    child.terminate()
-
-                _, still_alive = psutil.wait_procs(parent.children(), timeout=5)
-                for p in still_alive:
-                    p.kill()  # Force kill if it still alive
-            except psutil.NoSuchProcess:
-                pass  # The process has already exited
+        tear_down_process(cls.process)
 
         cls.node.destroy_node()
         rclpy.shutdown()
 
-    def extract_value(self, parameter_value):
-        if parameter_value.type == 1:
-            return parameter_value.bool_value
-        elif parameter_value.type == 2:
-            return parameter_value.integer_value
-        elif parameter_value.type == 3:
-            return parameter_value.double_value
-        elif parameter_value.type == 4:
-            return parameter_value.string_value
-        elif parameter_value.type == 5:
-            return list(parameter_value.byte_array_value)
-        elif parameter_value.type == 6:
-            return list(parameter_value.bool_array_value)
-        elif parameter_value.type == 7:
-            return list(parameter_value.integer_array_value)
-        elif parameter_value.type == 8:
-            return list(parameter_value.double_array_value)
-        elif parameter_value.type == 9:
-            return list(parameter_value.string_array_value)
-        return None
-
     def test_1_nodes_up(self):
         """Test that the Agevar node is up and running."""
-        expected_node = 'agevar'
-
-        # Wait for the Agevar node to be up and running
-        agevar_node_found = False
-        start_time = time()
-        while time() - start_time < self.timeout_sec and not agevar_node_found:
-            node_names = self.node.get_node_names()
-            agevar_node_found = expected_node in node_names
-            if not agevar_node_found:
-                rclpy.spin_once(self.node, timeout_sec=1)
-
-        # Validate the state of the node
-        self.assertTrue(
-            agevar_node_found, 'Agevar node was not found running within the timeout period.'
-        )
+        success, message = check_node_up(self.node, self.expected_node, self.timeout_sec)
+        self.assertTrue(success, message)
 
     def test_2_parameters_set(self):
         """Test that parameters are correctly set on the Agevar node."""
-        # Create a client to get parameters of the agevar node
-        parameter_client = self.node.create_client(GetParameters, '/agevar/get_parameters')
-        client_found = parameter_client.wait_for_service(timeout_sec=self.timeout_sec)
-        self.assertTrue(
-            client_found, 'Agevar node parameter service not available within the timeout period.'
+        success, message = check_parameters(
+            self.node,
+            f'/{self.expected_node}/get_parameters',
+            self.expected_params,
+            self.timeout_sec,
         )
-
-        for param_name, expected_value in self.expected_params.items():
-            request = GetParameters.Request()
-            request.names = [param_name]
-            future = parameter_client.call_async(request)
-            rclpy.spin_until_future_complete(self.node, future)
-            response = future.result()
-
-            # Verify the response
-            self.assertIsNotNone(response, 'Failed to get parameter {param_name} from Agevar node')
-
-            param_value = response.values[0]
-            self.assertEqual(
-                self.extract_value(param_value),
-                expected_value,
-                f'{param_name} parameter value mismatch',
-            )
+        self.assertTrue(success, message)
 
     def test_3_missing_parameters(self):
         """Test for unexpected or missing parameters on the Agevar node."""
-        # Create a client to list all parameters of the agevar node
-        list_parameters_client = self.node.create_client(ListParameters, '/agevar/list_parameters')
-        client_found = list_parameters_client.wait_for_service(timeout_sec=self.timeout_sec)
-        self.assertTrue(
-            client_found,
-            'Agevar node list parameters service not available within the timeout period.',
+        success, message = check_missing_parameters(
+            self.node,
+            f'/{self.expected_node}/list_parameters',
+            self.expected_params,
+            self.timeout_sec,
         )
-
-        request = ListParameters.Request()
-        future = list_parameters_client.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        response = future.result()
-
-        # Verify the response
-        self.assertIsNotNone(response, 'Failed to list parameters from Agevar node')
-
-        # all params except the 'use_sim_time' parameter
-        all_parameters = response.result.names[1:]
-        unexpected_parameters = set(all_parameters) - set(self.expected_params.keys())
-        missing_parameters = set(self.expected_params.keys()) - set(all_parameters)
-
-        self.assertEqual(
-            len(unexpected_parameters), 0, f'Unexpected parameters found: {unexpected_parameters}'
-        )
-        self.assertEqual(
-            len(missing_parameters), 0, f'Missing parameters found: {missing_parameters}'
-        )
+        self.assertTrue(success, message)
 
 
 if __name__ == '__main__':
