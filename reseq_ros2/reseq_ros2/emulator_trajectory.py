@@ -1,12 +1,13 @@
 import rclpy
-from reseq_interfaces.msg import Remote
 from rclpy.node import Node
+from reseq_interfaces.msg import Remote
+
 
 class EmulatorTrajectory(Node):
     def __init__(self):
-        super().__init__("emulator_trajectory")
-        self.publisher = self.create_publisher(Remote, '/remote',10)
-        self.get_logger().info("EmulatorTrajectory node started")
+        super().__init__('emulator_trajectory')
+        self.publisher = self.create_publisher(Remote, '/remote', 10)
+        self.get_logger().info('EmulatorTrajectory node started')
         self.timer = self.create_timer(0.08, self.readLoop)
         self.circleMessage = Remote()
         self.circleMessage.right.x = 0.1
@@ -22,14 +23,15 @@ class EmulatorTrajectory(Node):
         self.publisher.publish(self.circleMessage)
 
     def stopEmulator(self):
-        raise Exception("Exit requested")
+        raise Exception('Exit requested')
 
-def main(args = None):
-    rclpy.init(args = args)
+
+def main(args=None):
+    rclpy.init(args=args)
     try:
         emulator_trajectory = EmulatorTrajectory()
     except Exception as err:
-        print("Error while starting EmulatorTrajectory node: " + str(err))
+        print('Error while starting EmulatorTrajectory node: ' + str(err))
         raise err
     else:
         rclpy.spin(emulator_trajectory)
@@ -37,5 +39,6 @@ def main(args = None):
         emulator_trajectory.destroy_node()
         rclpy.shutdown()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
