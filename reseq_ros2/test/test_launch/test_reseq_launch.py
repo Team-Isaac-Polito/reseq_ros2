@@ -1,3 +1,4 @@
+import subprocess
 import sys
 import time
 import unittest
@@ -31,6 +32,29 @@ def generate_test_description():
 
 # Check if the CAN interface is up
 interface_status, status_msg = check_interface_status('vcan0')
+
+
+def check_realsense_camera():
+    """Check if realsense camera is connected."""
+    try:
+        result = subprocess.run(['rs-enumerate-devices'], capture_output=True, text=True)
+        if result.returncode != 0 or 'No device detected' in result.stdout:
+            return False, 'No RealSense camera connected'
+        return True
+    except FileNotFoundError:
+        return False, 'RealSense SDK not installed'
+
+
+camera_connected, connection_msg = check_realsense_camera()
+
+
+def check_rplidar():
+    """Check if RPLIDAR is connected."""
+    result = subprocess.run(['lsusb'], capture_output=True, text=True)
+    return 'RoboPeak' in result.stdout or 'RPLIDAR' in result.stdout
+
+
+rplidar_connected = check_rplidar()
 
 
 class TestReseqLaunch(unittest.TestCase):
@@ -78,6 +102,26 @@ class TestReseqLaunch(unittest.TestCase):
             len(nodes_down) == 0,
             f"The following nodes are not running: {', '.join(set(nodes_down))}",
         )
+
+    @unittest.skipIf(not interface_status, reason=status_msg)
+    def test_2_communication_node_up(self):
+        """Test that the communication is up and running."""
+        nodes = self.node.get_node_names()
+        self.assertIn('communication', nodes, 'The communication is not running.')
+
+    @unittest.skipIf(not camera_connected, reason=connection_msg)
+    def test_3_realsense_camera_node_up(self):
+        """Test that the realsense2_camera_node is up and running."""
+        nodes = self.node.get_node_names()
+        self.assertIn(
+            'realsense2_camera_node', nodes, 'The realsense2_camera_node is not running.'
+        )
+
+    @unittest.skipIf(not rplidar_connected, reason='No RPLIDAR connected')
+    def test_4_rplidar_node_up(self):
+        """Test that the rplidar_node is up and running."""
+        nodes = self.node.get_node_names()
+        self.assertIn('rplidar_node', nodes, 'The rplidar_node is not running.')
 
 
 if __name__ == '__main__':
