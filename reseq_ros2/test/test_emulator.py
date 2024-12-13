@@ -1,8 +1,11 @@
 import unittest
-import rclpy
 from unittest.mock import MagicMock
+
+import rclpy
+from rclpy.node import Node
+from reseq_interfaces.msg import Remote
 from reseq_ros2.emulator_remote_controller import EmulatorRemoteController
-from reseq_ros2.emulator_monitor import EmulatorMonitor
+
 
 class TestEmulator(unittest.TestCase):
 
@@ -18,17 +21,24 @@ class TestEmulator(unittest.TestCase):
     def setUp(self):
         # run emulator_remote_controller and a node to read from remote
         self.sender = EmulatorRemoteController()
-        self.receiver = EmulatorMonitor()
+        self.receiver = Node('emulator_monitor')
+        self.receiver.msg = None
+        self.subscription = self.receiver.create_subscription(Remote, '/remote',
+                                                              self.monitor_callback, 10)
 
     def tearDown(self):
         self.sender.emulator.destroy_node()
         self.sender.destroy_node()
         self.receiver.destroy_node()
 
+    def monitor_callback(self, msg):
+        # self.get_logger().info(f"Received: {msg}")
+        self.receiver.msg = msg
+
     # keys are WASDQE and JKLI and HB
     def test_w(self):
-        # use MagicMock instead of directly passing char to function, since it wouldn't be able to understand
-        # the type
+        # use MagicMock instead of directly passing char to function, since
+        # it wouldn't be able to understand the type
         key = MagicMock()
         key = 'w'
         self.sender.handleKey(key)
@@ -39,20 +49,20 @@ class TestEmulator(unittest.TestCase):
         rclpy.spin_once(self.receiver)
         self.assertEqual(self.receiver.msg.left.y, 0.1)
 
-        self.sender.handleKey(key, )
+        self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'w')
-        self.assertEqual(round(self.sender.previousValue,3), 0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), 0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), 1)
-        self.assertEqual(round(self.receiver.msg.left.y,3), 1)
+        self.assertEqual(round(self.sender.previousValue, 3), 1)
+        self.assertEqual(round(self.receiver.msg.left.y, 3), 1)
 
     def test_s(self):
-        # use MagicMock instead of directly passing char to function, since it wouldn't be able to understand
-        # the type
+        # use MagicMock instead of directly passing char to function, since
+        # it wouldn't be able to understand the type
         key = MagicMock()
         key = 's'
         self.sender.handleKey(key)
@@ -65,15 +75,15 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 's')
-        self.assertEqual(round(self.sender.previousValue,3), -0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), -0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), -1)
-        self.assertEqual(round(self.receiver.msg.left.y,3), -1)
-    
+        self.assertEqual(round(self.sender.previousValue, 3), -1)
+        self.assertEqual(round(self.receiver.msg.left.y, 3), -1)
+
     def test_a(self):
         key = MagicMock()
         key = 'A'
@@ -87,18 +97,18 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'a')
-        self.assertEqual(round(self.sender.previousValue,3), -0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), -0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), -1)
-        self.assertEqual(round(self.receiver.msg.left.x,3), -1)
+        self.assertEqual(round(self.sender.previousValue, 3), -1)
+        self.assertEqual(round(self.receiver.msg.left.x, 3), -1)
 
     def test_d(self):
-        # use MagicMock instead of directly passing char to function, since it wouldn't be able to understand
-        # the type
+        # use MagicMock instead of directly passing char to function, since
+        # it wouldn't be able to understand the type
         key = MagicMock()
         key = 'd'
         self.sender.handleKey(key)
@@ -111,14 +121,14 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'd')
-        self.assertEqual(round(self.sender.previousValue,3), 0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), 0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), 1)
-        self.assertEqual(round(self.receiver.msg.left.x,3), 1)
+        self.assertEqual(round(self.sender.previousValue, 3), 1)
+        self.assertEqual(round(self.receiver.msg.left.x, 3), 1)
 
     def test_q(self):
         key = MagicMock()
@@ -133,14 +143,14 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'q')
-        self.assertEqual(round(self.sender.previousValue,3), -0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), -0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), -1)
-        self.assertEqual(round(self.receiver.msg.left.z,3), -1)
+        self.assertEqual(round(self.sender.previousValue, 3), -1)
+        self.assertEqual(round(self.receiver.msg.left.z, 3), -1)
 
     def test_e(self):
         key = MagicMock()
@@ -155,14 +165,14 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'e')
-        self.assertEqual(round(self.sender.previousValue,3), 0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), 0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), 1)
-        self.assertEqual(round(self.receiver.msg.left.z,3), 1)
+        self.assertEqual(round(self.sender.previousValue, 3), 1)
+        self.assertEqual(round(self.receiver.msg.left.z, 3), 1)
 
     def test_i(self):
         key = MagicMock()
@@ -177,14 +187,14 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'i')
-        self.assertEqual(round(self.sender.previousValue,3), 0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), 0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), 1)
-        self.assertEqual(round(self.receiver.msg.right.y,3), 1)
+        self.assertEqual(round(self.sender.previousValue, 3), 1)
+        self.assertEqual(round(self.receiver.msg.right.y, 3), 1)
 
     def test_k(self):
         key = MagicMock()
@@ -199,15 +209,15 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'k')
-        self.assertEqual(round(self.sender.previousValue,3), -0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), -0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), -1)
-        self.assertEqual(round(self.receiver.msg.right.y,3), -1)
-    
+        self.assertEqual(round(self.sender.previousValue, 3), -1)
+        self.assertEqual(round(self.receiver.msg.right.y, 3), -1)
+
     def test_l(self):
         key = MagicMock()
         key = 'l'
@@ -221,14 +231,14 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'l')
-        self.assertEqual(round(self.sender.previousValue,3), 0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), 0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), 1)
-        self.assertEqual(round(self.receiver.msg.right.x,3), 1)
+        self.assertEqual(round(self.sender.previousValue, 3), 1)
+        self.assertEqual(round(self.receiver.msg.right.x, 3), 1)
 
     def test_j(self):
         key = MagicMock()
@@ -243,14 +253,14 @@ class TestEmulator(unittest.TestCase):
 
         self.sender.handleKey(key)
         self.assertEqual(self.sender.previousKey, 'j')
-        self.assertEqual(round(self.sender.previousValue,3), -0.110)
+        self.assertEqual(round(self.sender.previousValue, 3), -0.110)
         rclpy.spin_once(self.receiver)
         # loop many times to check the max is 1
         for _ in range(26):
             self.sender.handleKey(key)
             rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.sender.previousValue,3), -1)
-        self.assertEqual(round(self.receiver.msg.right.x,3), -1)
+        self.assertEqual(round(self.sender.previousValue, 3), -1)
+        self.assertEqual(round(self.receiver.msg.right.x, 3), -1)
 
     def test_bh_exchange(self):
         key = MagicMock()
@@ -277,9 +287,9 @@ class TestEmulator(unittest.TestCase):
         self.sender.handleKey(key)
         self.sender.handleKey(key_m)
         self.assertEqual(self.sender.previousKey, 'i')
-        self.assertEqual(round(self.sender.previousValue,3), 0.168)
+        self.assertEqual(round(self.sender.previousValue, 3), 0.168)
         rclpy.spin_once(self.receiver)
-        self.assertEqual(round(self.receiver.msg.right.y,3), 0.168)
+        self.assertEqual(round(self.receiver.msg.right.y, 3), 0.168)
 
     def test_bh(self):
         key = MagicMock()
@@ -295,5 +305,6 @@ class TestEmulator(unittest.TestCase):
         rclpy.spin_once(self.receiver)
         self.assertEqual(self.receiver.msg.right.y, 0.2)
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     unittest.main()
