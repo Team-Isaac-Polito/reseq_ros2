@@ -58,6 +58,7 @@ class Agevar(Node):
 
         self.joint_subs = []
         self.motors_pubs = []
+        self.yaw_pubs = []
         for i in range(self.n_mod):
             address = self.modules[i]
 
@@ -70,6 +71,12 @@ class Agevar(Node):
                     10,
                 )
                 self.joint_subs.append(s)
+
+                # create publisher for the joint yaw setpoint topics
+                p1 = self.create_publisher(
+                    Float32, f'reseq/module{address}/joint/yaw/setpoint', 10
+                )
+                self.yaw_pubs.append(p1)
 
             # create publisher for the motor topics
             p2 = self.create_publisher(Motors, f'reseq/module{address}/motor/setpoint', 10)
@@ -144,6 +151,12 @@ class Agevar(Node):
             m.right = w_right
             m.left = w_left
             self.motors_pubs[mod_id].publish(m)
+
+            # Publish yaw angle to joint yaw setpoint topic
+            if mod_id in self.joints:
+                yaw_msg = Float32()
+                yaw_msg.data = self.eta[mod_id][0]
+                self.yaw_pubs[mod_id].publish(yaw_msg)
 
             self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
 
