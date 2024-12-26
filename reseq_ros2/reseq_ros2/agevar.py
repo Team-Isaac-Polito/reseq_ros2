@@ -41,7 +41,7 @@ class Agevar(Node):
         self.etad = [[0.0, 0.0, 0.0] for _ in range(self.n_mod)]
 
         self.init_conditions()
-        self.previous_time = 0
+        self.previous_time = time()
 
         # subscribe to remote (parsed by teleop_twist_joy)
         self.create_subscription(
