@@ -1,6 +1,7 @@
 import unittest
 from math import cos, pi, sin
 
+import numpy as np
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.executors import SingleThreadedExecutor
@@ -129,7 +130,41 @@ class TestAgevarFunctional(unittest.TestCase):
         expected_angle = -pi
         self.assertAlmostEqual(node.eta[module_num - 17][0], expected_angle)
 
-    def test_8_remote_callback(self):
+    def test_8_rotz(self):
+        """Test the Rotz function."""
+        node = self.agevar
+
+        # Test case: 90 degrees (pi/2 radians)
+        theta = pi / 2
+        expected_matrix = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+        # Test case: -90 degrees (-pi/2 radians)
+        theta = -pi / 2
+        expected_matrix = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+        # Test case: 180 degrees (pi radians)
+        theta = pi
+        expected_matrix = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+        # Test case: -180 degrees (-pi radians)
+        theta = -pi
+        expected_matrix = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+        # Test case: 0 degrees (0 radians)
+        theta = 0
+        expected_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+    def test_9_remote_callback(self):
         """Test the remote_callback function."""
         node = self.agevar
 

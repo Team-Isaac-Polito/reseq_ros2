@@ -11,11 +11,6 @@ from std_msgs.msg import Float32  # deprecated?
 import reseq_ros2.constants as rc
 from reseq_interfaces.msg import Motors
 
-
-def Rotz(th):
-    return np.array([[cos(th), -sin(th), 0], [sin(th), cos(th), 0], [0, 0, 1]])
-
-
 """ROS node with control algorithm for snake-like movement
 
 It receives data from the remote over a ROS topic and publishes to the ROS topics
@@ -114,7 +109,7 @@ class Agevar(Node):
                 self.eta[mod_id][0] += dt * self.etad[mod_id][0]
 
                 # Calculate linear velocities in the local frame and transform to global frame
-                vs = Rotz(self.eta[mod_id][0]) @ [linear_vel, 0.0, 0.0]
+                vs = self.Rotz(self.eta[mod_id][0]) @ [linear_vel, 0.0, 0.0]
                 self.etad[mod_id][1:3] = vs[0:2]
             else:
                 # Compute relative angle between the current and previous module
@@ -130,7 +125,7 @@ class Agevar(Node):
                 self.eta[mod_id][0] += dt * self.etad[mod_id][0]
 
                 # Calculate linear velocities in the local frame and transform to global frame
-                vs = Rotz(self.eta[mod_id][0]) @ [linear_out, 0.0, 0.0]
+                vs = self.Rotz(self.eta[mod_id][0]) @ [linear_out, 0.0, 0.0]
                 self.etad[mod_id][1:3] = vs[0:2]
 
             # Integrate linear velocities to get new position
@@ -193,6 +188,10 @@ class Agevar(Node):
         w_left = w_left * rc.rads2rpm
 
         return w_right, w_left
+
+    # rotation matrix around z axis
+    def Rotz(self, th):
+        return np.array([[cos(th), -sin(th), 0], [sin(th), cos(th), 0], [0, 0, 1]])
 
 
 def main(args=None):
