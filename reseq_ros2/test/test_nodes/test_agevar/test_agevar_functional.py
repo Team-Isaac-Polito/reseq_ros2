@@ -41,7 +41,18 @@ class TestAgevarFunctional(unittest.TestCase):
         cls.agevar.destroy_node()
         rclpy.shutdown()
 
-    def test_4_vel_motors(self):
+    def test_4_init_conditions(self):
+        node = self.agevar
+
+        node.a = self.expected_params['a']
+        node.b = self.expected_params['b']
+
+        node.init_conditions()
+        for m in range(node.n_mod):
+            self.assertEqual(node.eta[m], [0.0, (m - 1) * (-node.a - node.b), 0.0])
+            self.assertEqual(node.etad[m], [0.0, 0.0, 0.0])
+
+    def test_5_vel_motors(self):
         """Test the vel_motors function."""
         node = self.agevar
 
@@ -66,7 +77,7 @@ class TestAgevarFunctional(unittest.TestCase):
         self.assertAlmostEqual(w_right, expected_w_right, places=5)
         self.assertAlmostEqual(w_left, expected_w_left, places=5)
 
-    def test_5_kinematic(self):
+    def test_6_kinematic(self):
         """Test the kinematic function."""
         node = self.agevar
 
@@ -91,7 +102,7 @@ class TestAgevarFunctional(unittest.TestCase):
         self.assertAlmostEqual(linear_out, expected_linear_out, places=5)
         self.assertAlmostEqual(angular_out, expected_angular_out, places=5)
 
-    def test_6_yaw_feedback_callback(self):
+    def test_7_yaw_feedback_callback(self):
         """Test the yaw_feedback_callback function."""
         node = self.agevar
 
@@ -106,7 +117,7 @@ class TestAgevarFunctional(unittest.TestCase):
 
         # Verify constrained values
         expected_angle = pi / 4
-        self.assertAlmostEqual(node.yaw_angles[module_num - 17], expected_angle)
+        self.assertAlmostEqual(node.eta[module_num - 17][0], expected_angle)
 
         # Test case: values not within constraints
         angle_msg.data = 180.0
@@ -116,9 +127,9 @@ class TestAgevarFunctional(unittest.TestCase):
 
         # Verify constrained values
         expected_angle = -pi
-        self.assertAlmostEqual(node.yaw_angles[module_num - 17], expected_angle)
+        self.assertAlmostEqual(node.eta[module_num - 17][0], expected_angle)
 
-    def test_7_remote_callback(self):
+    def test_8_remote_callback(self):
         """Test the remote_callback function."""
         node = self.agevar
 
