@@ -1,5 +1,6 @@
 import unittest
 from math import cos, pi, sin
+from time import time
 
 import numpy as np
 import rclpy
@@ -213,19 +214,32 @@ class TestAgevarFunctional(unittest.TestCase):
 
         # Capture published messages
         self.motors_msgs = []
+        self.yaw_msgs = []
 
         def motors_callback(msg):
             self.motors_msgs.append(msg)
+
+        def yaw_callback(msg):
+            self.yaw_msgs.append(msg)
 
         for module in node.modules:
             node.create_subscription(
                 Motors, f'reseq/module{module}/motor/setpoint', motors_callback, 10
             )
+            if module in node.joints:
+                node.create_subscription(
+                    Float32, f'reseq/module{module}/joint/yaw/setpoint', yaw_callback, 10
+                )
 
         # Test all cases
         for edge_case_msg in edge_case_twist_msgs:
             # Clear the messages list for each test case
             self.motors_msgs.clear()
+            self.yaw_msgs.clear()
+
+            # Simulate time passage
+            initial_time = time()
+            self.previous_time = initial_time
 
             # Call the remote_callback
             node.remote_callback(edge_case_msg)
@@ -233,7 +247,9 @@ class TestAgevarFunctional(unittest.TestCase):
             # Spin the node to process the publishing and subscription
             for _ in range(10):
                 rclpy.spin_once(node, timeout_sec=0.1)
-                if len(self.motors_msgs) >= len(node.modules):
+                if (len(self.motors_msgs) >= len(node.modules)) and (
+                    len(self.yaw_msgs) >= len(node.joints)
+                ):
                     break
 
             # Verify motors messages
@@ -245,10 +261,46 @@ class TestAgevarFunctional(unittest.TestCase):
             if not sign:  # Handle the backward case by reversing the velocities
                 lin_vel, ang_vel = -lin_vel, -ang_vel
 
-            for msg in self.motors_msgs:
-                expected_w_right, expected_w_left = node.vel_motors(lin_vel, ang_vel, sign)
-                self.assertAlmostEqual(msg.right, expected_w_right, places=4)
-                self.assertAlmostEqual(msg.left, expected_w_left, places=4)
+            # Capture the initial state for comparison
+            initial_eta = [node.eta[m].copy() for m in range(node.n_mod)]
+
+            # Capture the time difference
+            current_time = time()
+            dt = current_time - self.previous_time
+            self.previous_time = current_time
+
+            for mod_id in range(node.n_mod):
+                # Calculate expected eta and etad values
+                if mod_id == 0:
+                    expected_angular_velocity = ang_vel
+                    expected_eta = initial_eta[mod_id][0] + expected_angular_velocity * dt
+                    vs = node.Rotz(expected_eta) @ [lin_vel, 0.0, 0.0]
+                else:
+                    th = initial_eta[mod_id - 1][0] - initial_eta[mod_id][0]
+                    linear_out, expected_angular_velocity = node.kinematic(lin_vel, ang_vel, th)
+                    expected_eta = initial_eta[mod_id][0] + expected_angular_velocity * dt
+                    vs = node.Rotz(expected_eta) @ [linear_out, 0.0, 0.0]
+
+                expected_x = initial_eta[mod_id][1] + vs[0] * dt
+                expected_y = initial_eta[mod_id][2] + vs[1] * dt
+
+                # Verify the yaw angle updates
+                for msg in self.yaw_msgs:
+                    self.assertAlmostEqual(msg.data, expected_eta, places=3)
+
+                # Verify the 2D position updates
+                self.assertAlmostEqual(node.eta[mod_id][1], expected_x, places=3)
+                self.assertAlmostEqual(node.eta[mod_id][2], expected_y, places=3)
+
+                # Compute motor velocities for each module
+                lin_vel = np.linalg.norm(vs[0:2])
+                ang_vel = expected_angular_velocity
+                w_right, w_left = node.vel_motors(lin_vel, ang_vel, sign)
+
+                # Verify motor velocities
+                for msg in self.motors_msgs:
+                    self.assertAlmostEqual(msg.right, w_right, places=4)
+                    self.assertAlmostEqual(msg.left, w_left, places=4)
 
 
 if __name__ == '__main__':
