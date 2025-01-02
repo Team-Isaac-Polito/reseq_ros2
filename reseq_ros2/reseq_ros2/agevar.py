@@ -1,6 +1,8 @@
 import traceback
 from math import cos, pi, sin
+from time import time
 
+import numpy as np
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
@@ -35,7 +37,11 @@ class Agevar(Node):
         )
 
         self.n_mod = len(self.modules)
-        self.yaw_angles = [0] * self.n_mod
+        self.eta = [[0.0, 0.0, 0.0] for _ in range(self.n_mod)]
+        self.etad = [[0.0, 0.0, 0.0] for _ in range(self.n_mod)]
+
+        self.init_conditions()
+        self.previous_time = time()
 
         # subscribe to remote (parsed by teleop_twist_joy)
         self.create_subscription(
@@ -47,6 +53,7 @@ class Agevar(Node):
 
         self.joint_subs = []
         self.motors_pubs = []
+        self.yaw_pubs = []
         for i in range(self.n_mod):
             address = self.modules[i]
 
@@ -60,9 +67,20 @@ class Agevar(Node):
                 )
                 self.joint_subs.append(s)
 
+                # create publisher for the joint yaw setpoint topics
+                p1 = self.create_publisher(
+                    Float32, f'reseq/module{address}/joint/yaw/setpoint', 10
+                )
+                self.yaw_pubs.append(p1)
+
             # create publisher for the motor topics
-            p = self.create_publisher(Motors, f'reseq/module{address}/motor/setpoint', 10)
-            self.motors_pubs.append(p)
+            p2 = self.create_publisher(Motors, f'reseq/module{address}/motor/setpoint', 10)
+            self.motors_pubs.append(p2)
+
+    def init_conditions(self):
+        for m in range(self.n_mod):
+            self.eta[m] = [0.0, (m - 1) * (-self.a - self.b), 0.0]
+            self.etad[m] = [0.0, 0.0, 0.0]
 
     def remote_callback(self, msg: Twist):
         # extract information from ROS Twist message
@@ -76,9 +94,52 @@ class Agevar(Node):
             linear_vel = -linear_vel
             angular_vel = -angular_vel
 
+        # time step
+        t = time()
+        dt = t - self.previous_time
+        self.previous_time = t
+
         for mod_id in modules:
-            # get velocity of left and right motor
-            w_right, w_left = self.vel_motors(linear_vel, angular_vel, sign)
+            # For the first module
+            if mod_id == modules[0]:
+                # Update angular velocity (yaw rate)
+                self.etad[mod_id][0] = angular_vel
+
+                # Integrate angular velocity to get new yaw angle
+                self.eta[mod_id][0] += dt * self.etad[mod_id][0]
+
+                # Calculate linear velocities in the local frame and transform to global frame
+                vs = self.Rotz(self.eta[mod_id][0]) @ [linear_vel, 0.0, 0.0]
+                self.etad[mod_id][1:3] = vs[0:2]
+            else:
+                # Compute relative angle between the current and previous module
+                th = self.eta[mod_id - 1][0] - self.eta[mod_id][0]
+
+                # Compute output linear and angular velocities
+                linear_out, angular_out = self.kinematic(linear_vel, angular_vel, th)
+
+                # Update angular velocity (yaw rate)
+                self.etad[mod_id][0] = angular_out
+
+                # Integrate angular velocity to get new yaw angle
+                self.eta[mod_id][0] += dt * self.etad[mod_id][0]
+
+                # Calculate linear velocities in the local frame and transform to global frame
+                vs = self.Rotz(self.eta[mod_id][0]) @ [linear_out, 0.0, 0.0]
+                self.etad[mod_id][1:3] = vs[0:2]
+
+            # Integrate linear velocities to get new position
+            self.eta[mod_id][1] += dt * self.etad[mod_id][1]
+            self.eta[mod_id][2] += dt * self.etad[mod_id][2]
+
+            # Calculate linear velocity magnitude for vel_motors
+            lin_vel = np.linalg.norm(self.etad[mod_id][1:3])
+
+            # Use angular velocity directly for vel_motors
+            ang_vel = self.etad[mod_id][0]
+
+            # Compute motor velocities for each module
+            w_right, w_left = self.vel_motors(lin_vel, ang_vel, sign)
 
             # publish to ROS motor topics
             m = Motors()
@@ -86,14 +147,13 @@ class Agevar(Node):
             m.left = w_left
             self.motors_pubs[mod_id].publish(m)
 
-            if mod_id != modules[-1]:  # for every module except the last one
-                # invert yaw angle if going backwards
-                yaw_angle = (1 if sign else -1) * self.yaw_angles[mod_id]
+            # Publish yaw angle to joint yaw setpoint topic
+            if mod_id in self.joints:
+                yaw_msg = Float32()
+                yaw_msg.data = self.eta[mod_id][0]
+                self.yaw_pubs[mod_id].publish(yaw_msg)
 
-                # compute linear and angular velocity of the following module
-                linear_vel, angular_vel = self.kinematic(linear_vel, angular_vel, yaw_angle)
-
-                self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
+            self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
 
     # update yaw angle of a joint
     def yaw_feedback_callback(self, msg, module_num):
@@ -103,8 +163,8 @@ class Agevar(Node):
         if angle >= 180:
             angle -= 360
 
-        # store the angle in radiants
-        self.yaw_angles[module_num - 17] = angle * pi / 180.0
+        # store the angle in radians
+        self.eta[module_num - 17][0] = angle * pi / 180.0
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
@@ -123,11 +183,15 @@ class Agevar(Node):
         if sign == 0:  # backwards
             w_left, w_right = -w_left, -w_right
 
-        # from radiants to rpm
+        # from radians to rpm
         w_right = w_right * rc.rads2rpm
         w_left = w_left * rc.rads2rpm
 
         return w_right, w_left
+
+    # rotation matrix around z axis
+    def Rotz(self, th):
+        return np.array([[cos(th), -sin(th), 0], [sin(th), cos(th), 0], [0, 0, 1]])
 
 
 def main(args=None):
