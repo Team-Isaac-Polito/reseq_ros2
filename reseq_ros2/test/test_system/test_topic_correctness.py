@@ -1,5 +1,6 @@
 import importlib
 import struct
+import subprocess
 import sys
 import time
 import unittest
@@ -19,6 +20,18 @@ from rclpy.node import Node
 
 import reseq_interfaces.msg
 from reseq_interfaces.msg import Remote
+
+
+def kill_node(node_name):
+    try:
+        # Use pgrep to find the PID of the node
+        pid = subprocess.check_output(['pgrep', '-f', node_name]).strip()
+
+        if pid:
+            subprocess.run(['kill', pid.decode()])
+
+    except subprocess.CalledProcessError:
+        pass
 
 
 class FrequencyChecker(Node):
@@ -132,6 +145,10 @@ class TestNodes(unittest.TestCase):
 
         # Wait for launch
         time.sleep(5)
+
+        # Kill the feedback_replicator node for CAN frequency test
+        if cls.stat[0]:
+            kill_node('feedback_replicator')
 
     @classmethod
     def tearDownClass(cls):
