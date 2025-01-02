@@ -37,6 +37,7 @@ class TestCommunicationFunctional(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.executor.shutdown()
+        cls.communication.canbus.shutdown()
         cls.communication.destroy_node()
         rclpy.shutdown()
 
