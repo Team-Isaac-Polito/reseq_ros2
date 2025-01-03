@@ -32,3 +32,4 @@ def get_end_effector(config):
     for mod in config['modules']:
         if mod['hasEndEffector']:
             return mod['address']
+    return 0
