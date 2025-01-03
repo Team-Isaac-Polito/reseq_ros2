@@ -1,0 +1,13 @@
+xacro:
+  WheelBase: 0.2059
+  ModuleWidth: 0.2046
+  TrackWidth: 0.0765
+  ChassisTopAndBottomClearance: 0.0184
+  WheelMass: 0.1
+  ChassisMass: 2.5
+
+  JointDiameter: 0.0709
+  JointABottomClearance: 0.0379
+  JointAMass: 0.1
+  JointBMass: 0.05
+  JointWidth: 0.046
