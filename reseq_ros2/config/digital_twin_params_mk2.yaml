@@ -1,0 +1,27 @@
+xacro:
+  WheelBase: 0.2059
+  ModuleWidth: 0.2046
+  TrackWidth: 0.0765
+  ChassisTopAndBottomClearance: 0.0184
+  WheelMass: 0.1
+  ChassisMass: 2.5
+
+  JointDiameter: 0.0709
+  JointABottomClearance: 0.0379
+  JointAMass: 0.1
+  JointBMass: 0.05
+  JointWidth: 0.046
+
+  ForkThickness: 0.02
+  ForkHeight: 0.05
+  JetsonHolderWidth: 0.085
+  JetsonHolderLength: 0.158
+  CylinderOnJetsonLength: 0.085
+  CylinderOnJetsonRadius: 0.026
+  CylinderOnJetsonShift: 0.012
+  CylinderRealsenseLength: 0.055
+  CylinderRealsenseRadius: 0.026
+  RealsenseHeight: 0.02
+  RealsenseLength: 0.026
+  RealsenseWidth: 0.09
+  RealsenseOriginSystem: 0.0162
