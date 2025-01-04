@@ -3,7 +3,7 @@
 
   <!-- import values from config.yaml file -->
 
-  <xacro:arg name="config_path" default="$(find reseq_ros2)/config/reseq_mk1_can.yaml"/>
+  <xacro:arg name="config_path" default="$(find reseq_ros2)/config/reseq_mk2_can.yaml"/>
   <xacro:property name="config_path_prop" value="$(arg config_path)"/>
 
   <xacro:property name="config" value="${xacro.load_yaml(config_path_prop)}"/>
@@ -42,6 +42,7 @@
   <xacro:property name="JointBMass" value="${config['xacro']['JointBMass']}"/>
 
   <!-- arm related (only mk1) -->
+  <!--
   <xacro:property name="ForkThickness" value="${config['xacro']['ForkThickness']}"/>
   <xacro:property name="ForkHeight" value="${config['xacro']['ForkHeight']}"/>
   <xacro:property name="JetsonHolderLength" value="${config['xacro']['JetsonHolderLength']}"/>
@@ -55,6 +56,7 @@
   <xacro:property name="RealsenseWidth" value="${config['xacro']['RealsenseWidth']}"/>
   <xacro:property name="RealsenseHeight" value="${config['xacro']['RealsenseHeight']}"/>
   <xacro:property name="RealsenseOriginSystem" value="${config['xacro']['RealsenseOriginSystem']}"/>
+  -->
 
   <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->
   <material name="ChassisColor">
@@ -66,9 +68,11 @@
   <material name="JointColor">
     <color rgba="0.5 0.5 0.5 1" />
   </material>
+  <!--
   <material name="ArmColor">
     <color rgba="0.5 0.5 0.5 1" />
   </material>
+  -->
   <material name="LidarColor">
     <color rgba="0.5 0.5 0.5 1" />
   </material>
