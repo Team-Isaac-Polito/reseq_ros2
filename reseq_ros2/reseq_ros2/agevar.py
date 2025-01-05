@@ -37,7 +37,14 @@ class Agevar(Node):
             m: {'angular_vel': 0.0, 'x_vel': 0.0, 'y_vel': 0.0} for m in self.modules
         }
 
+        # PD controller parameters
+        self.kp = 0.7  # Proportional gain
+        self.kd = 0.01  # Derivative gain
+        self.previous_error = {m: 0.0 for m in self.modules}
+
         self.init_conditions()
+
+        # time variables
         self.previous_time = time()
 
         # subscribe to remote (parsed by teleop_twist_joy)
@@ -80,6 +87,7 @@ class Agevar(Node):
                 'y_coord': 0.0,
             }
             self.velocities[m] = {'angular_vel': 0.0, 'x_vel': 0.0, 'y_vel': 0.0}
+            self.previous_error[m] = 0.0
 
     def remote_callback(self, msg: Twist):
         # extract information from ROS Twist message
@@ -105,10 +113,20 @@ class Agevar(Node):
                 # Update angular velocity (yaw rate)
                 self.velocities[mod_id]['angular_vel'] = angular_vel
 
-                # Integrate angular velocity to get new yaw angle
-                self.position_orientation[mod_id]['yaw_angle'] += (
-                    dt * self.velocities[mod_id]['angular_vel']
+                # Calculate the desired yaw angle directly
+                desired_yaw_angle = -np.arctan2(
+                    self.b * angular_vel,
+                    linear_vel + (self.a + self.b) * angular_vel * np.cos(0),
                 )
+
+                # PD controller for yaw angle adjustment
+                error = desired_yaw_angle - self.position_orientation[mod_id]['yaw_angle']
+                derivative = (error - self.previous_error[mod_id]) / dt
+                correction = self.kp * error + self.kd * derivative
+                self.previous_error[mod_id] = error
+
+                # Integrate angular velocity to get new yaw angle
+                self.position_orientation[mod_id]['yaw_angle'] += correction * dt
 
                 # Calculate linear velocities in the local frame and transform to global frame
                 vs = self.Rotz(self.position_orientation[mod_id]['yaw_angle']) @ [
@@ -119,10 +137,9 @@ class Agevar(Node):
                 self.velocities[mod_id]['x_vel'], self.velocities[mod_id]['y_vel'] = vs[0], vs[1]
             else:
                 # Compute relative angle between the current and previous module
-                th = (
-                    self.position_orientation[modules[idx - 1]]['yaw_angle']
-                    - self.position_orientation[mod_id]['yaw_angle']
-                )
+                prev_yaw = self.position_orientation[modules[idx - 1]]['yaw_angle']
+                current_yaw = self.position_orientation[mod_id]['yaw_angle']
+                th = prev_yaw - current_yaw
 
                 # Compute output linear and angular velocities
                 linear_out, angular_out = self.kinematic(linear_vel, angular_vel, th)
@@ -130,10 +147,20 @@ class Agevar(Node):
                 # Update angular velocity (yaw rate)
                 self.velocities[mod_id]['angular_vel'] = angular_out
 
-                # Integrate angular velocity to get new yaw angle
-                self.position_orientation[mod_id]['yaw_angle'] += (
-                    dt * self.velocities[mod_id]['angular_vel']
+                # Calculate the desired yaw angle directly
+                desired_yaw_angle = -np.arctan2(
+                    self.b * angular_vel + (self.a + self.b) * linear_vel * np.sin(th),
+                    linear_vel + (self.a + self.b) * angular_vel * np.cos(th),
                 )
+
+                # PD controller for yaw angle adjustment
+                error = desired_yaw_angle - self.position_orientation[mod_id]['yaw_angle']
+                derivative = (error - self.previous_error[mod_id]) / dt
+                correction = self.kp * error + self.kd * derivative
+                self.previous_error[mod_id] = error
+
+                # Integrate angular velocity to get new yaw angle
+                self.position_orientation[mod_id]['yaw_angle'] += correction * dt
 
                 # Calculate linear velocities in the local frame and transform to global frame
                 vs = self.Rotz(self.position_orientation[mod_id]['yaw_angle']) @ [
