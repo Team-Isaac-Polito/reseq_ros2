@@ -14,7 +14,16 @@
   <xacro:include filename="macros/control_wheel.xacro" />
 
   <xacro:include filename="reseq_body.xacro" />
-  <!-- <xacro:include filename="reseq_arm_mk1.xacro" /> --> <!-- replace it with mk2 -->
+
+  <xacro:if value="${config['version'] == 'mk1'}">
+    <xacro:include filename="reseq_arm_mk1.xacro" />
+  </xacro:if>
+  <!-- 
+  <xacro:if value="${config['version'] == 'mk2'}">
+    <xacro:include filename="reseq_arm_mk2.xacro" />
+  </xacro:if>
+  -->
+
   <xacro:include filename="lidar.xacro" />
 
   <xacro:include filename="ros2_control.xacro" />
