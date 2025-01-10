@@ -6,6 +6,7 @@
 
   <xacro:include filename="inertial_macros.xacro" />
   <xacro:include filename="reseq_parameters.xacro" />
+  <xacro:include filename="reseq_arm_parameters.xacro" />
 
   <xacro:include filename="macros/utils.xacro" />
   <xacro:include filename="macros/joint.xacro" />
@@ -29,4 +30,3 @@
   <xacro:include filename="ros2_control.xacro" />
 
 </robot>
-
