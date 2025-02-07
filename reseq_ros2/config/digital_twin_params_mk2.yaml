@@ -1,7 +1,7 @@
 xacro:
   WheelBase: 0.2059
   ModuleWidth: 0.2046
-  TrackWidth: 0.0765
+  TrackWidth: 0.051    # narrow tracks
   ChassisTopAndBottomClearance: 0.0184
   WheelMass: 0.1
   ChassisMass: 2.5
