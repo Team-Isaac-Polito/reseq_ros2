@@ -20,6 +20,8 @@ modules:
     hasJoint: true
     hasEndEffector: false
 realsense_config: "realsense_rgb_motion.yaml"
+usb_camera_config: "usb_camera.yaml"
 sensors:
   - realsense: true
   - lidar: true
+  - usb_cameras: 2
