@@ -1,4 +1,10 @@
 ---
+include:
+  xacro: digital_twin_params.yaml
+  joint_pub_consts: joint_pub_consts.yaml
+  enea_consts: enea_consts.yaml
+  scaler_consts: scaler_consts.yaml
+  agevar_consts: agevar_consts_mk1.yaml
 version: "mk1"
 canbus:
   channel: "vcan0"
@@ -14,71 +20,6 @@ modules:
     hasJoint: true
     hasEndEffector: false
 realsense_config: "realsense_rgb_motion.yaml"
-agevar_consts:
-  a: 0.1695                  # [m] Distance between the center of every module and the previous yaw joint
-  b: 0.18395                 # [m] Distance between the center of every module and the following yaw joint
-  d: 0.223                   # [m] Distance between pair of equivalent wheels
-  r_eq: 0.0465               # [m] Radius of the equivalent wheels
-scaler_consts:
-  r_linear_vel:              # [m/s] Range of the linear velocity
-    - -0.27017
-    - 0.27017
-  r_inverse_radius:          # [1/m] Range of the inverse radius of curvature
-    - -1.5385
-    - 1.5385
-  r_pitch_vel:               # [LSB/s] Range of pitch velocity
-    - -183
-    - 183
-  r_head_pitch_vel:          # [LSB/s] Range of indepepndent head pitch velocity
-    - -400
-    - 400
-  r_head_roll_vel:            # [LSB/s] Range of head roll velocity
-    - -455
-    - 455
-enea_consts:
-  i_pitch: 567               # [LSB] Initial arm pitch
-  i_head_pitch: 663          # [LSB] Initial head pitch
-  i_head_roll: 512            # [LSB] Initial head roll
-  servo_speed: 200           # [LSB] Speed of the servomotor
-  r_pitch:                   # [LSB] Range of arm pitch angles
-    - 200
-    - 750
-  r_head_pitch:              # [LSB] Range of head pitch angles
-    - 0
-    - 800 
-  r_head_roll:                # [LSB] Range of head roll angles
-    - 0
-    - 1023
-  pitch_conv:  0.75          # [ ] Conversion of pitch increase to head pitch increase
-joint_pub_consts:
-  arm_pitch_origin: 200      # [LSB] Origin for arm pitch joint (horizontal)
-  head_pitch_origin: 800     # [LSB] Origin for head pitch joint (facing downwards)
-  head_roll_origin: 512       # [LSB] Origin for head roll joint (center)
-  arm_pitch_gain: 0.50943    # [ ] Ratio arm pitch rotations over motor rotations
-  vel_gain: 0.52522          # [ ] Ratio wheel rotations over motor rotations
-xacro:
-  WheelBase: 0.137
-  ModuleWidth: 0.27
-  TrackWidth: 0.052
-  ChassisTopAndBottomClearance: 0.013
-  WheelMass: 0.1
-  ChassisMass: 2.5
-
-  JointDiameter: 0.048
-  JointABottomClearance: 0.013
-  JointAMass: 0.1
-  JointBMass: 0.05
-  JointWidth: 0.067 # At the moment ${EquivalentWheelDiameter-2*JointABottomClearance}
-
-  ForkThickness: 0.02
-  ForkHeight: 0.05
-  JetsonHolderWidth: 0.085
-  JetsonHolderLength: 0.158
-  CylinderOnJetsonLength: 0.085
-  CylinderOnJetsonRadius: 0.026
-  CylinderOnJetsonShift: 0.012
-  CylinderRealsenseLength: 0.055
-  CylinderRealsenseRadius: 0.026
-  RealsenseLength: 0.026
-  RealsenseWidth: 0.09
-  RealsenseOriginSystem: 0.0162
+sensors:
+  - realsense: true
+  - lidar: true
