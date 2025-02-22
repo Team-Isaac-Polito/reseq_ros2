@@ -27,6 +27,7 @@ def launch_setup(context, *args, **kwargs):
     # Get the configuration file path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     log_level = LaunchConfiguration('log_level').perform(context)
+    external_log_level = LaunchConfiguration('external_log_level').perform(context)
     launch_config = []
 
     # add optional nodes for sensors
@@ -57,6 +58,7 @@ def launch_setup(context, *args, **kwargs):
                 PythonLaunchDescriptionSource(sensors_launch_file),
                 launch_arguments={
                     'config_file': config_filename,
+                    'external_log_level': external_log_level,
                 }.items(),
             )
         )
@@ -72,6 +74,7 @@ def launch_setup(context, *args, **kwargs):
                 launch_arguments={
                     'config_file': config_filename,
                     'log_level': log_level,
+                    'external_log_level': external_log_level,
                 }.items(),
             )
         )
@@ -106,6 +109,11 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 'log_level', default_value='info', description='Set log level for reseq nodes'
+            ),
+            DeclareLaunchArgument(
+                'external_log_level',
+                default_value='warn',
+                description='Set log level for external nodes',
             ),
             generate_configs,
             # Wait for the config generation process to complete before proceeding
