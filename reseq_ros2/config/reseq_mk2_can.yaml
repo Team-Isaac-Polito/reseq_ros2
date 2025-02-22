@@ -7,7 +7,7 @@ include:
   agevar_consts: agevar_consts_mk2.yaml
 version: "mk2"
 canbus:
-  channel: "can1"
+  channel: "can0"
 num_modules: 2
 modules:
   - address: 0x21
