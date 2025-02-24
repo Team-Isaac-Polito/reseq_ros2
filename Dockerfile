@@ -19,7 +19,7 @@ RUN apt update && apt install -y --no-install-recommends \
         libusb-1.0-0-dev \
         libudev-dev \
         pkg-config \
-        libgtk-3-dev \ 
+        libgtk-3-dev \
         libglfw3-dev \
         libgl1-mesa-dev \
         libglu1-mesa-dev \
@@ -76,8 +76,9 @@ ENV SKIP_KEYS "libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-
 ADD compile_ros_pkgs.py /
 RUN python3 compile_ros_pkgs.py realsense2_camera realsense2_description xacro
 RUN python3 compile_ros_pkgs.py image_transport_plugins
-RUN python3 compile_ros_pkgs.py rplidar_ros 
-RUN python3 compile_ros_pkgs.py ros2_control diff_drive_controller joint_state_broadcaster 
+RUN python3 compile_ros_pkgs.py rplidar_ros
+RUN python3 compile_ros_pkgs.py ros2_control diff_drive_controller joint_state_broadcaster
+RUN python3 compile_ros_pkgs.py usb_cam  
 
 RUN pip install python-can
 
