@@ -5,8 +5,8 @@ realsense:
       enable_depth: false
       enable_infra1: false
       enable_infra2: false
-      enable_gyro: true
-      enable_accel: true
+      enable_gyro: false
+      enable_accel: false
 
       rgb_camera:
         profile: 960x540x30
