@@ -77,6 +77,7 @@ RUN apt update && python3 compile_ros_pkgs.py realsense2_camera realsense2_descr
 RUN apt update && python3 compile_ros_pkgs.py image_transport_plugins
 RUN apt update && python3 compile_ros_pkgs.py rplidar_ros 
 RUN apt update && python3 compile_ros_pkgs.py controller_manager diff_drive_controller joint_state_broadcaster 
+RUN apt update && python3 compile_ros_pkgs.py usb_cam  
 
 FROM reseq-base AS reseq
 
