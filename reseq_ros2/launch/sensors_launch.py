@@ -32,7 +32,8 @@ def launch_setup(context, *args, **kwargs):
                     IncludeLaunchDescription(
                         f'{get_package_share_directory("rplidar_ros")}'
                         '/launch/rplidar_a2m8_launch.py'
-                    )
+                    ),
+                    launch_arguments={'frame_id': 'laser_frame'}.items(),
                 )
             if name == 'realsense':
                 launch_config.append(
