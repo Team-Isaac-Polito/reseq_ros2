@@ -112,7 +112,7 @@ class Communication(Node):
     # publish data received from CAN to ROS topic
     def can_callback(self, msg):
         decoded_aid = struct.unpack('4b', msg.arbitration_id.to_bytes(4, 'big'))
-        module_id = decoded_aid[3] - 17
+        module_id = decoded_aid[3] % 16 -1
         topic = self.topic_from_id(decoded_aid[1])
 
         self.get_logger().debug(f'Publishing to {topic.name} on module{module_id+17}')
