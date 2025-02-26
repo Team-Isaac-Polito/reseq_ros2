@@ -1,20 +1,23 @@
-import os
+import logging
 import re
-import sys
 import subprocess
-           
-#python script that automatically find the ros packages'dependencies and install them
+import sys
 
-def solve_dep(pkgs):
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('RPKG Solver')
+
+
+def install_dependencies(pkgs):
     """
-    Resolves dependencies for a given list of ROS packages and builds them using colcon.
+    Resolves dependencies for a given list of ROS packages.
 
     Args:
         pkgs (list): A list of ROS package names.
 
     The function performs the following steps:
     1. Creates a directory name based on the first package name.
-    2. Constructs a command to source the ROS entry point, create necessary directories, 
+    2. Constructs a command to source the ROS entry point, create necessary directories,
        generate a .rosinstall file, import the packages, install dependencies, and build the packages.
     3. Executes the command in a subprocess.
     4. If the command fails due to missing dependencies, it extracts the missing dependency from the error message,
@@ -28,68 +31,80 @@ def solve_dep(pkgs):
     Exits:
         - If an unrelated error occurs during the subprocess execution.
     """
-    #create package directory name
-    if '_' in pkgs[0]:
-        pkg_dir = pkgs[0].split('_')
-        pkg_dir = '-'.join(pkg_dir)
-    else:
-        pkg_dir = pkgs[0]
-    deps = " ".join(pkgs)
-    cmd = f"""source /ros_entrypoint.sh && \
+    pkg_dir = pkgs[0].replace('_', '-')
+    deps = ' '.join(pkgs)
+    cmd_template = f"""source /ros_entrypoint.sh && \
             mkdir -p /{pkg_dir}/src && \
             cd /{pkg_dir} && \
-            rosinstall_generator --rosdistro ${{ROS_DISTRO}} \
-                {deps} \
+            rosinstall_generator --rosdistro $ROS_DISTRO \
+                {{deps}} \
             > {pkg_dir}.rosinstall && \
             vcs import src < {pkg_dir}.rosinstall && \
-            rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" && \
-            colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
-            sed -i "\$i ros_source_env /{pkg_dir}/install/local_setup.bash \n" /ros_entrypoint.sh"""
+            rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" """  # noqa
     deps_set = set()
     missing_deps = True
-    while (missing_deps):
-        #run command
-        process = subprocess.Popen(cmd, text=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, executable="/bin/bash")
-        stdout, stderr = process.communicate()
-        print(stdout.strip(), flush=True)
-        found = False
+    while missing_deps:
+        cmd = cmd_template.format(deps=deps)
+        process = subprocess.Popen(
+            cmd,
+            text=True,
+            shell=True,
+            stderr=subprocess.PIPE,
+            executable='/bin/bash',
+        )
+        _, stderr = process.communicate()
         if process.returncode != 0:
-            #find the dependency in the error using regular expressions
-            dep_re1 = re.compile(f"No definition of \[([^\"]+)\] for OS version")
-            dep_re2 = re.compile(f"Cannot locate rosdep definition for \[([^\"]+)\]")
+            dep_re = re.compile(
+                r'No definition of \[([^"]+)\] for OS version|Cannot locate rosdep definition for \[([^"]+)\]'  # noqa
+            )
+            found = False
             for line in stderr.splitlines():
-                match1 = dep_re1.search(str(line))
-                match2 = dep_re2.search(str(line))
-                if ((match1 and match1 not in deps_set) or (match2 and match2 not in deps_set)):
-                    found = True
-                    if match1:
-                        dep = match1.group(1)
-                    elif match2:
-                        dep = match2.group(1)
-                    deps += f" {dep}"
-                    cmd = f"""source /ros_entrypoint.sh && \
-                            mkdir -p /{pkg_dir}/src && \
-                            cd /{pkg_dir} && \
-                            rosinstall_generator --rosdistro ${{ROS_DISTRO}} \
-                                {deps} \
-                            > {pkg_dir}.rosinstall && \
-                            vcs import src < {pkg_dir}.rosinstall && \
-                            rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" && \
-                            colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
-                            sed -i "\$i ros_source_env /{pkg_dir}/install/local_setup.bash \n" /ros_entrypoint.sh"""
-                    print(f"Dependency added: {dep}", flush=True)
-                    deps_set.add(dep)
-            if (not found):
-                #error unrelated to missing depedendencies
-                print(stderr.strip(), flush=True)
-                missing_deps = False   
+                match = dep_re.search(str(line))
+                if match:
+                    dep = match.group(1) or match.group(2)
+                    if dep not in deps_set:
+                        found = True
+                        deps += f' {dep}'
+                        deps_set.add(dep)
+                        logger.info(f'Dependency added: {dep}')
+            if not found:
+                logger.error(stderr.strip())
+                missing_deps = False
                 exit(1)
         else:
             missing_deps = False
+    logger.info(f'All dependencies: {", ".join(deps_set)}')
+    return pkg_dir
+
+
+def build_and_cleanup(pkg_dir):
+    """
+    Builds the ROS packages using colcon and cleans up the src, build, and log directories.
+
+    Args:
+        pkg_dir (str): The directory name based on the first package name.
+    """
+    cmd = f"""source /ros_entrypoint.sh && \
+            cd /{pkg_dir} && \
+            colcon build --event-handlers=console_direct+ --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+            sed -i "\$i ros_source_env /{pkg_dir}/install/local_setup.bash \n" /ros_entrypoint.sh && \
+            rm -rf src build log"""  # noqa
+    process = subprocess.Popen(
+        cmd,
+        text=True,
+        shell=True,
+        executable='/bin/bash',
+    )
+    process.communicate()
+    if process.returncode != 0:
+        exit(1)
+
 
 def main():
-    #ros packages passed by command line
-    solve_dep(sys.argv[1:])
+    pkgs = sys.argv[1:]
+    pkg_dir = install_dependencies(pkgs)
+    build_and_cleanup(pkg_dir)
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
