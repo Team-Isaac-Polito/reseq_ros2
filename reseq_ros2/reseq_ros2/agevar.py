@@ -39,9 +39,11 @@ class Agevar(Node):
 
         # PD controller parameters
         self.kp = 1.0  # Proportional gain
-        self.kd = 0.01  # Derivative gain
+        self.kd = 0.03  # Derivative gain
         self.kv = 100  # Linear velocity scaling factor
         self.previous_error = {m: 0.0 for m in self.modules}
+        self.distance_travelled = {m: 0.0 for m in self.modules}
+        self.previous_position = {m: {'x_coord': 0.0, 'y_coord': 0.0} for m in self.modules}
 
         self.init_conditions()
 
@@ -90,6 +92,8 @@ class Agevar(Node):
             }
             self.velocities[m] = {'angular_vel': 0.0, 'x_vel': 0.0, 'y_vel': 0.0}
             self.previous_error[m] = 0.0
+            self.distance_travelled[m] = 0.0
+            self.previous_position[m] = {'x_coord': (m - 17) * (-self.a - self.b), 'y_coord': 0.0}
 
     def remote_callback(self, msg: Twist):
         # Extract information from ROS Twist message
@@ -130,6 +134,11 @@ class Agevar(Node):
                     * sign
                 )
 
+                distance_ratio = min(
+                    self.distance_travelled[mod_id] / (self.a + self.b),
+                    1.0,
+                )
+
                 # PD controller for yaw angle adjustment
                 error = desired_yaw_angle - self.position_orientation[mod_id]['yaw_angle']
                 derivative = (error - self.previous_error[mod_id]) / dt
@@ -137,7 +146,7 @@ class Agevar(Node):
                 self.previous_error[mod_id] = error
 
                 # Integrate angular velocity to get new yaw angle
-                self.position_orientation[mod_id]['yaw_angle'] += correction * dt
+                self.position_orientation[mod_id]['yaw_angle'] += correction * dt * distance_ratio
 
                 # Calculate linear velocities in the local frame and transform to global frame
                 vs = self.Rotz(self.position_orientation[mod_id]['yaw_angle']) @ [
@@ -176,6 +185,26 @@ class Agevar(Node):
             self.position_orientation[mod_id]['y_coord'] += (
                 self.velocities[mod_id]['y_vel'] * dt * 180 / pi
             )
+
+            dx = (
+                self.position_orientation[mod_id]['x_coord']
+                - self.previous_position[mod_id]['x_coord']
+            )
+            dy = (
+                self.position_orientation[mod_id]['y_coord']
+                - self.previous_position[mod_id]['y_coord']
+            )
+
+            # Compute distance traveled
+            distance_increment = np.sqrt(dx**2 + dy**2)
+            self.distance_travelled[mod_id] += distance_increment
+
+            self.previous_position[mod_id]['x_coord'] = self.position_orientation[mod_id][
+                'x_coord'
+            ]
+            self.previous_position[mod_id]['y_coord'] = self.position_orientation[mod_id][
+                'y_coord'
+            ]
 
             # Calculate linear velocity magnitude for vel_motors
             lin_vel = np.linalg.norm(
