@@ -54,7 +54,12 @@ def launch_setup(context, *args, **kwargs):
                             executable='usb_cam_node_exe',
                             name=f"usb_cam_{i}",
                             namespace=f"usb_cam_{i}",
-                            parameters=[ParameterFile(f"{config_path}/{usb_cam_config}")],
+                            parameters=[ParameterFile(f"{config_path}/{usb_cam_config}"), 
+                                {   
+                                    ".image_raw.jpeg_quality": 30,  
+                                    ".image_raw.png_level": 3,      
+                                }
+                            ],
                             arguments=['--ros-args'],
                         )
                     )
