@@ -8,14 +8,7 @@ from rclpy.node import Node
 
 from reseq_interfaces.msg import Remote
 
-# retrieve settings from file descriptor (stdin)
-try:
-    sys.stdin.fileno()
-    boolStdin = True
-    settings = termios.tcgetattr(sys.stdin)
-except Exception:
-    boolStdin = False
-    settings = None
+settings = termios.tcgetattr(sys.stdin)
 
 
 class EmulatorRemoteController(Node):
@@ -119,8 +112,6 @@ class EmulatorRemoteController(Node):
             self.destroy_node()
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
             return
-        else:
-            print(self.has_to_exit)
 
 
 def main(args=None):
