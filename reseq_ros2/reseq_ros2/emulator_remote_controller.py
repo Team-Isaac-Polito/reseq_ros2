@@ -21,8 +21,6 @@ except Exception:
 class EmulatorRemoteController(Node):
     def __init__(self):
         super().__init__('emulator_remote_controller')
-        # create teleop_twist_keyboard node
-        self.emulator = rclpy.create_node('teleop_twist_keyboard')
         self.publisher = self.create_publisher(Remote, '/remote', 10)
         # create timer to start the function
         self.timer = self.create_timer(0.08, self.readLoop)
@@ -106,19 +104,23 @@ class EmulatorRemoteController(Node):
             self.increment *= 2
             self.publisher.publish(self.previousMessage)
         elif key == 'z':
-            raise Exception('Exit requested')
+            self.has_to_exit = True
+            self.publisher.publish(self.previousMessage)
         else:
-            # pass to default
-            self.publisher.publish(message)
+            self.publisher.publish(self.previousMessage)
         return self.has_to_exit
 
     def readLoop(self):
+        # create a default message
         message = Remote()
         key = self.readKey()
         if self.handleKey(key, message):
-            # destroy node
-            self.emulator.destroy_node()
+            self.timer.cancel()
+            self.destroy_node()
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+            return
+        else:
+            print(self.has_to_exit)
 
 
 def main(args=None):
@@ -129,9 +131,10 @@ def main(args=None):
         print('Error while starting EmulatorRemoteController node: ' + str(err))
         raise err
     else:
-        rclpy.spin(emulator_remote_controller)
-        emulator_remote_controller.emulator.destroy_node()
-        emulator_remote_controller.destroy_node()
+        # if there were no exceptions in running the section inside try, run the following
+        # loop until the exit key is pressed
+        while (rclpy.ok() and not emulator_remote_controller.has_to_exit):
+            rclpy.spin_once(emulator_remote_controller)
         rclpy.shutdown()
 
 
