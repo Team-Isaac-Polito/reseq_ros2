@@ -24,21 +24,11 @@ class EmulatorRemoteController(Node):
         # create teleop_twist_keyboard node
         self.emulator = rclpy.create_node('teleop_twist_keyboard')
         self.publisher = self.create_publisher(Remote, '/remote', 10)
-        self.get_logger().info('EmulatorRemoteController node started')
         # create timer to start the function
         self.timer = self.create_timer(0.08, self.readLoop)
         self.has_to_exit = False
-        # values should be already automatically be set to 0
-        self.previousKey = ' '  # initialise to a random value
-        self.previousValue = 0.0
+        self.previousMessage = Remote()
         self.increment = 0.1
-        self.defaultMessage = Remote()
-        self.defaultMessage.right.x = 0.0
-        self.defaultMessage.right.y = 0.0
-        self.defaultMessage.right.z = 0.0
-        self.defaultMessage.left.x = 0.0
-        self.defaultMessage.left.y = 0.0
-        self.defaultMessage.left.z = 0.0
 
     def readKey(self):
         tty.setraw(sys.stdin.fileno())
@@ -56,117 +46,70 @@ class EmulatorRemoteController(Node):
     def handleKey(self, key, message=Remote()):
         # make lower case
         key = key.lower()
+        # go forward
         if key == 'w':
-            # print("forward")
-            if (key == self.previousKey):
-                message.left.y = min(1.0, self.previousValue * (self.increment+1))
-                self.previousValue = min(1.0, self.previousValue * (self.increment+1))
-            else:
-                message.left.y = self.increment
-                self.previousValue = self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.left.y += self.increment
+            # the value must be smaller or equal to 1
+            self.previousMessage.left.y = min(1.0, self.previousMessage.left.y)
+            self.publisher.publish(self.previousMessage)
+        # go backward
         elif key == 's':
-            # print("backward")
-            if (key == self.previousKey):
-                message.left.y = -min(1.0, -self.previousValue * (self.increment+1))
-                self.previousValue = -min(1.0, -self.previousValue * (self.increment+1))
-            else:
-                message.left.y = -self.increment
-                self.previousValue = -self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.left.y -= self.increment
+            self.previousMessage.left.y = max(-1.0, self.previousMessage.left.y)
+            self.publisher.publish(self.previousMessage)
+        # turn left
         elif key == 'a':
-            # print("left")
-            if (key == self.previousKey):
-                message.left.x = -min(1.0, -self.previousValue * (self.increment+1))
-                self.previousValue = -min(1.0, -self.previousValue * (self.increment+1))
-            else:
-                message.left.x = -self.increment
-                self.previousValue = -self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.left.x -= self.increment
+            self.previousMessage.left.x = max(-1.0, self.previousMessage.left.x)
+            self.publisher.publish(self.previousMessage)
+        # turn right
         elif key == 'd':
-            # print("right")
-            if (key == self.previousKey):
-                message.left.x = min(1.0, self.previousValue * (self.increment+1))
-                self.previousValue = min(1.0, self.previousValue * (self.increment+1))
-            else:
-                message.left.x = self.increment
-                self.previousValue = self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.left.x += self.increment
+            self.previousMessage.left.x = min(1.0, self.previousMessage.left.x)
+            self.publisher.publish(self.previousMessage)
+        # counter clockwise
         elif key == 'q':
-            # print("CCW")
-            if (key == self.previousKey):
-                message.left.z = -min(1.0, -self.previousValue * (self.increment+1))
-                self.previousValue = -min(1.0, -self.previousValue * (self.increment+1))
-            else:
-                message.left.z = -self.increment
-                self.previousValue = -self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.left.z -= self.increment
+            self.previousMessage.left.z = max(-1.0, self.previousMessage.left.z)
+            self.publisher.publish(self.previousMessage)
+        # clockwise
         elif key == 'e':
-            # print("CW")
-            if (key == self.previousKey):
-                message.left.z = min(1.0, self.previousValue * (self.increment+1))
-                self.previousValue = min(1.0, self.previousValue * (self.increment+1))
-            else:
-                message.left.z = self.increment
-                self.previousValue = self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.left.z += self.increment
+            self.previousMessage.left.z = min(1.0, self.previousMessage.left.z)
+            self.publisher.publish(self.previousMessage)
         # Start cmd_vel commands
+        # go forward
         elif key == 'i':
-            # print("forward")
-            if (key == self.previousKey):
-                message.right.y = min(1.0, self.previousValue * (self.increment+1))
-                self.previousValue = min(1.0, self.previousValue * (self.increment+1))
-            else:
-                message.right.y = self.increment
-                self.previousValue = self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.right.y += self.increment
+            self.previousMessage.right.y = min(1.0, self.previousMessage.right.y)
+            self.publisher.publish(self.previousMessage)
+        # go backward
         elif key == 'k':
-            # print("backward")
-            if (key == self.previousKey):
-                message.right.y = -min(1.0, -self.previousValue * (self.increment+1))
-                self.previousValue = -min(1.0, -self.previousValue * (self.increment+1))
-            else:
-                message.right.y = -self.increment
-                self.previousValue = -self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.right.y -= self.increment
+            self.previousMessage.right.y = max(-1.0, self.previousMessage.right.y)
+            self.publisher.publish(self.previousMessage)
+        # turn right
         elif key == 'l':
-            # print("right")
-            if (key == self.previousKey):
-                message.right.x = min(1.0, self.previousValue * (self.increment+1))
-                self.previousValue = min(1.0, self.previousValue * (self.increment+1))
-            else:
-                message.right.x = self.increment
-                self.previousValue = self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.right.x += self.increment
+            self.previousMessage.right.x = min(1.0, self.previousMessage.right.x)
+            self.publisher.publish(self.previousMessage)
+        # turn left
         elif key == 'j':
-            # print("left")
-            if (key == self.previousKey):
-                message.right.x = -min(1.0, -self.previousValue * (self.increment+1))
-                self.previousValue = -min(1.0, -self.previousValue * (self.increment+1))
-            else:
-                message.right.x = -self.increment
-                self.previousValue = -self.increment
-                self.previousKey = key
-            self.publisher.publish(message)
+            self.previousMessage.right.x -= self.increment
+            self.previousMessage.right.x = max(-1.0, self.previousMessage.right.x)
+            self.publisher.publish(self.previousMessage)
         # if b pressed, make cmd_vel movements faster
         elif key == 'b':
             self.increment /= 2
+            self.publisher.publish(self.previousMessage)
         elif key == 'h':
             self.increment *= 2
+            self.publisher.publish(self.previousMessage)
         elif key == 'z':
             raise Exception('Exit requested')
         else:
             # pass to default
-            self.publisher.publish(self.defaultMessage)
+            self.publisher.publish(message)
         return self.has_to_exit
 
     def readLoop(self):
