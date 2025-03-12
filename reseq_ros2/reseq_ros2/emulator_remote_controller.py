@@ -21,6 +21,10 @@ class EmulatorRemoteController(Node):
         self.previousMessage = Remote()
         self.increment = 0.1
 
+    '''
+        The following function is the adaptation of the one linked below:
+        https://github.com/ros2/teleop_twist_keyboard/blob/8a2b696be2461373d6b573eb7a504a9161307b57/teleop_twist_keyboard.py#L105-L114
+    '''
     def readKey(self):
         tty.setraw(sys.stdin.fileno())
         # add timeout, so select.select() will wait for that time and then it will return
