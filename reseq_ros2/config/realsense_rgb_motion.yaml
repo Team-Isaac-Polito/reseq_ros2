@@ -8,6 +8,8 @@ realsense:
       enable_gyro: true
       enable_accel: true
 
-      rgb_camera.profile: 960x540x30
+      rgb_camera:
+        color_format: RGB8
+        color_profile: 960X540X30
 
       wait_for_device_timeout: 10.0
