@@ -41,7 +41,11 @@ def copy_realsense_config(realsense_config):
 
 # Function to find the '/dev/video' device corresponding to each usb camera
 def find_video_devices(num_cam):
-    video_dev_output = subprocess.check_output(["v4l2-ctl", "--list-devices"]).decode()
+    try:
+        video_dev_output = subprocess.check_output(["v4l2-ctl", "--list-devices"]).decode()
+    except Exception as e:
+        print(f'Error in finding USB cameras: {e}')
+        return []
     if 'UC60 Video' not in video_dev_output:
         print('No camera device was found!')
         return []
