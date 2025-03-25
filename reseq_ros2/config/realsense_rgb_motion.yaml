@@ -13,5 +13,7 @@ realsense:
         color_profile: 960X540X30
 
       ".realsense2_camera_node.color.image_raw.jpeg_quality": 30
-
-      wait_for_device_timeout: 10.0
+      ".realsense2_camera_node.depth.image_rect_raw.format": png
+      ".realsense2_camera_node.depth.image_rect_raw.png_level": 9
+      
+      wait_for_device_timeout: 10.0 
