@@ -1,7 +1,7 @@
 import os
 import shutil
-import sys
 import subprocess
+import sys
 
 import yaml
 
@@ -39,10 +39,11 @@ def copy_realsense_config(realsense_config):
         with open(src, 'r') as f_src, open(dst, 'w') as f_dst:
             f_dst.write(f_src.read())
 
+
 # Function to find the '/dev/video' device corresponding to each usb camera
 def find_video_devices(num_cam):
     try:
-        video_dev_output = subprocess.check_output(["v4l2-ctl", "--list-devices"]).decode()
+        video_dev_output = subprocess.check_output(['v4l2-ctl', '--list-devices']).decode()
     except Exception as e:
         print(f'Error in finding USB cameras: {e}')
         return []
@@ -53,23 +54,25 @@ def find_video_devices(num_cam):
     dev_found = 0
     video_dev = []
     for i in range(0, len(video_dev_output)):
-        if (video_dev_output[i].startswith('UC60 Video')):
-            video_dev.append(video_dev_output[i+1].strip('\t'))
+        if video_dev_output[i].startswith('UC60 Video'):
+            video_dev.append(video_dev_output[i + 1].strip('\t'))
             dev_found += 1
         if dev_found == num_cam:
             break
     return video_dev
 
+
 # Function to copy the i-th usb camera config file to the temp directory
 def copy_usb_camera_config(usb_camera_config, devices, i):
     src = os.path.join(config_path, usb_camera_config)
-    dst = os.path.join(temp_config_path, f"usb_camera_config_{i}")
+    dst = os.path.join(temp_config_path, f'usb_camera_config_{i}')
     if os.path.exists(src):
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(src, 'r') as f_src, open(dst, 'w') as f_dst:
             f_src_yaml = yaml.safe_load(f_src)
             f_src_yaml['/**']['ros__parameters']['video_device'] = devices[i]
             yaml.dump(f_src_yaml, f_dst)
+
 
 # Function to generate final YAML configuration file
 def generate_final_config(include_file):
@@ -95,11 +98,13 @@ def generate_final_config(include_file):
                     if sensor[name]:
                         num_usb_cam = sensor[name]
                         devices = find_video_devices(num_usb_cam)
-                        if (len(devices) < num_usb_cam):
-                            print(f'{num_usb_cam-len(devices)} cameras were not found!')
+                        if len(devices) < num_usb_cam:
+                            print(f'{num_usb_cam - len(devices)} cameras were not found!')
                         if devices:
                             for i in range(0, len(devices)):
-                                copy_usb_camera_config(main_config['usb_camera_config'], devices, i)
+                                copy_usb_camera_config(
+                                    main_config['usb_camera_config'], devices, i
+                                )
                         else:
                             cameras = False
 
@@ -113,7 +118,8 @@ def generate_final_config(include_file):
         # Save the final merged configuration to a temporary YAML file
         temp_filename = f'{os.path.splitext(include_file)[0]}.yaml'
         with open(os.path.join(temp_config_path, temp_filename), 'w') as outfile:
-            yaml.dump(main_config, outfile, default_flow_style=False)           
+            yaml.dump(main_config, outfile, default_flow_style=False)
+
 
 # Function to generate reseq_controllers.yaml based on the number of modules and parameters
 # from the generic file
