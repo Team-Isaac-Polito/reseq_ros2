@@ -1,0 +1,5 @@
+[format]
+quote-style = "single"
+
+[lint.pycodestyle]
+max-line-length = 99
