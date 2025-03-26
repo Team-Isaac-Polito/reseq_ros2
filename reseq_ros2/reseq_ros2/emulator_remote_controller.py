@@ -38,7 +38,7 @@ class EmulatorRemoteController(Node):
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
         return key
 
-    def handleKey(self, key, message=Remote()):
+    def handleKey(self, key):
         # make lower case
         key = key.lower()
         # go forward
@@ -108,10 +108,8 @@ class EmulatorRemoteController(Node):
         return self.has_to_exit
 
     def readLoop(self):
-        # create a default message
-        message = Remote()
         key = self.readKey()
-        if self.handleKey(key, message):
+        if self.handleKey(key):
             self.timer.cancel()
             self.destroy_node()
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
