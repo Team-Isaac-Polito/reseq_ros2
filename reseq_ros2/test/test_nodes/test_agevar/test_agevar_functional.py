@@ -1,6 +1,8 @@
 import unittest
 from math import cos, pi, sin
+from time import time
 
+import numpy as np
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.executors import SingleThreadedExecutor
@@ -41,7 +43,18 @@ class TestAgevarFunctional(unittest.TestCase):
         cls.agevar.destroy_node()
         rclpy.shutdown()
 
-    def test_4_vel_motors(self):
+    def test_4_init_conditions(self):
+        node = self.agevar
+
+        node.a = self.expected_params['a']
+        node.b = self.expected_params['b']
+
+        node.init_conditions()
+        for m in range(node.n_mod):
+            self.assertEqual(node.eta[m], [0.0, (m - 1) * (-node.a - node.b), 0.0])
+            self.assertEqual(node.etad[m], [0.0, 0.0, 0.0])
+
+    def test_5_vel_motors(self):
         """Test the vel_motors function."""
         node = self.agevar
 
@@ -66,7 +79,7 @@ class TestAgevarFunctional(unittest.TestCase):
         self.assertAlmostEqual(w_right, expected_w_right, places=5)
         self.assertAlmostEqual(w_left, expected_w_left, places=5)
 
-    def test_5_kinematic(self):
+    def test_6_kinematic(self):
         """Test the kinematic function."""
         node = self.agevar
 
@@ -91,7 +104,7 @@ class TestAgevarFunctional(unittest.TestCase):
         self.assertAlmostEqual(linear_out, expected_linear_out, places=5)
         self.assertAlmostEqual(angular_out, expected_angular_out, places=5)
 
-    def test_6_yaw_feedback_callback(self):
+    def test_7_yaw_feedback_callback(self):
         """Test the yaw_feedback_callback function."""
         node = self.agevar
 
@@ -106,7 +119,7 @@ class TestAgevarFunctional(unittest.TestCase):
 
         # Verify constrained values
         expected_angle = pi / 4
-        self.assertAlmostEqual(node.yaw_angles[module_num - 17], expected_angle)
+        self.assertAlmostEqual(node.eta[module_num - 17][0], expected_angle)
 
         # Test case: values not within constraints
         angle_msg.data = 180.0
@@ -116,9 +129,43 @@ class TestAgevarFunctional(unittest.TestCase):
 
         # Verify constrained values
         expected_angle = -pi
-        self.assertAlmostEqual(node.yaw_angles[module_num - 17], expected_angle)
+        self.assertAlmostEqual(node.eta[module_num - 17][0], expected_angle)
 
-    def test_7_remote_callback(self):
+    def test_8_rotz(self):
+        """Test the Rotz function."""
+        node = self.agevar
+
+        # Test case: 90 degrees (pi/2 radians)
+        theta = pi / 2
+        expected_matrix = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+        # Test case: -90 degrees (-pi/2 radians)
+        theta = -pi / 2
+        expected_matrix = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+        # Test case: 180 degrees (pi radians)
+        theta = pi
+        expected_matrix = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+        # Test case: -180 degrees (-pi radians)
+        theta = -pi
+        expected_matrix = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+        # Test case: 0 degrees (0 radians)
+        theta = 0
+        expected_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        result_matrix = node.Rotz(theta)
+        np.testing.assert_array_almost_equal(result_matrix, expected_matrix, decimal=5)
+
+    def test_9_remote_callback(self):
         """Test the remote_callback function."""
         node = self.agevar
 
@@ -167,19 +214,32 @@ class TestAgevarFunctional(unittest.TestCase):
 
         # Capture published messages
         self.motors_msgs = []
+        self.yaw_msgs = []
 
         def motors_callback(msg):
             self.motors_msgs.append(msg)
+
+        def yaw_callback(msg):
+            self.yaw_msgs.append(msg)
 
         for module in node.modules:
             node.create_subscription(
                 Motors, f'reseq/module{module}/motor/setpoint', motors_callback, 10
             )
+            if module in node.joints:
+                node.create_subscription(
+                    Float32, f'reseq/module{module}/joint/yaw/setpoint', yaw_callback, 10
+                )
 
         # Test all cases
         for edge_case_msg in edge_case_twist_msgs:
             # Clear the messages list for each test case
             self.motors_msgs.clear()
+            self.yaw_msgs.clear()
+
+            # Simulate time passage
+            initial_time = time()
+            self.previous_time = initial_time
 
             # Call the remote_callback
             node.remote_callback(edge_case_msg)
@@ -187,7 +247,9 @@ class TestAgevarFunctional(unittest.TestCase):
             # Spin the node to process the publishing and subscription
             for _ in range(10):
                 rclpy.spin_once(node, timeout_sec=0.1)
-                if len(self.motors_msgs) >= len(node.modules):
+                if (len(self.motors_msgs) >= len(node.modules)) and (
+                    len(self.yaw_msgs) >= len(node.joints)
+                ):
                     break
 
             # Verify motors messages
@@ -199,10 +261,46 @@ class TestAgevarFunctional(unittest.TestCase):
             if not sign:  # Handle the backward case by reversing the velocities
                 lin_vel, ang_vel = -lin_vel, -ang_vel
 
-            for msg in self.motors_msgs:
-                expected_w_right, expected_w_left = node.vel_motors(lin_vel, ang_vel, sign)
-                self.assertAlmostEqual(msg.right, expected_w_right, places=4)
-                self.assertAlmostEqual(msg.left, expected_w_left, places=4)
+            # Capture the initial state for comparison
+            initial_eta = [node.eta[m].copy() for m in range(node.n_mod)]
+
+            # Capture the time difference
+            current_time = time()
+            dt = current_time - self.previous_time
+            self.previous_time = current_time
+
+            for mod_id in range(node.n_mod):
+                # Calculate expected eta and etad values
+                if mod_id == 0:
+                    expected_angular_velocity = ang_vel
+                    expected_eta = initial_eta[mod_id][0] + expected_angular_velocity * dt
+                    vs = node.Rotz(expected_eta) @ [lin_vel, 0.0, 0.0]
+                else:
+                    th = initial_eta[mod_id - 1][0] - initial_eta[mod_id][0]
+                    linear_out, expected_angular_velocity = node.kinematic(lin_vel, ang_vel, th)
+                    expected_eta = initial_eta[mod_id][0] + expected_angular_velocity * dt
+                    vs = node.Rotz(expected_eta) @ [linear_out, 0.0, 0.0]
+
+                expected_x = initial_eta[mod_id][1] + vs[0] * dt
+                expected_y = initial_eta[mod_id][2] + vs[1] * dt
+
+                # Verify the yaw angle updates
+                for msg in self.yaw_msgs:
+                    self.assertAlmostEqual(msg.data, expected_eta, places=3)
+
+                # Verify the 2D position updates
+                self.assertAlmostEqual(node.eta[mod_id][1], expected_x, places=3)
+                self.assertAlmostEqual(node.eta[mod_id][2], expected_y, places=3)
+
+                # Compute motor velocities for each module
+                lin_vel = np.linalg.norm(vs[0:2])
+                ang_vel = expected_angular_velocity
+                w_right, w_left = node.vel_motors(lin_vel, ang_vel, sign)
+
+                # Verify motor velocities
+                for msg in self.motors_msgs:
+                    self.assertAlmostEqual(msg.right, w_right, places=4)
+                    self.assertAlmostEqual(msg.left, w_left, places=4)
 
 
 if __name__ == '__main__':
