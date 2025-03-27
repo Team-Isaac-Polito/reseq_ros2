@@ -112,10 +112,10 @@ class Communication(Node):
     # publish data received from CAN to ROS topic
     def can_callback(self, msg):
         decoded_aid = struct.unpack('4b', msg.arbitration_id.to_bytes(4, 'big'))
-        module_id = decoded_aid[3] % 16 -1
+        module_id = decoded_aid[3] % 16 - 1
         topic = self.topic_from_id(decoded_aid[1])
 
-        self.get_logger().debug(f'Publishing to {topic.name} on module{module_id+17}')
+        self.get_logger().debug(f'Publishing to {topic.name} on module{decoded_aid[3]}')
 
         # check if the message contains one or two floats
         if topic.data_type == Float32:
@@ -144,7 +144,7 @@ class Communication(Node):
             self.get_logger().error(
                 f'IndexError in can_callback: {str(e)}\n{traceback.format_exc()}'
             )
-            self.get_logger().error(f'{module_id} out of range 0 to {len(self.pubs)-1}')
+            self.get_logger().error(f'{module_id} out of range 0 to {len(self.pubs) - 1}')
 
     # send data received from ROS to CAN
     def ros_listener_callback(self, msg, module_num, topic_name):

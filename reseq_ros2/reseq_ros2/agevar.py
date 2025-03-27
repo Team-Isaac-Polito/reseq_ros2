@@ -104,7 +104,7 @@ class Agevar(Node):
             angle -= 360
 
         # store the angle in radiants
-        self.yaw_angles[module_num % 16 -1] = angle * pi / 180.0
+        self.yaw_angles[module_num % 16 - 1] = angle * pi / 180.0
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
