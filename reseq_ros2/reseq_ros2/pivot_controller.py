@@ -38,7 +38,8 @@ class PivotController(Node):
             if len(buttons) > 4:
                 self.pivot_on_first_module = not buttons[4]
                 self.get_logger().info(
-                    f'Pivoting on {"first" if self.pivot_on_first_module else "last"} module (switch state = {buttons[4]})'
+                    f'Pivoting on {"first" if self.pivot_on_first_module else "last"} module '
+                    f'(switch state = {buttons[4]})'
                 )
             self.is_pivot_mode = True
 
@@ -55,7 +56,9 @@ class PivotController(Node):
             if new_state != self.pivot_on_first_module:
                 self.pivot_on_first_module = new_state
                 self.get_logger().info(
-                    f'Pivot target changed to {"first" if self.pivot_on_first_module else "last"} module (switch state = {buttons[4]})'
+                    'Pivot target changed to '
+                    f'{"first" if self.pivot_on_first_module else "last"} module '
+                    f'(switch state = {buttons[4]})'
                 )
 
         self.prev_blue_pressed = blue_pressed

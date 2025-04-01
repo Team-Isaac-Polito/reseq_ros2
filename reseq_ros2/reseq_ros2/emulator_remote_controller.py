@@ -140,7 +140,8 @@ class EmulatorRemoteController(Node):
     def publish_message(self):
         # only republish if blue button (index 5) is pressed, or any joystick value is non zero.
         # otherwise we're just yelling into the void every 0.2s for no reason, which is rude :D
-        # not only that, but it also interferes with the logic that depends on message changes (like detecting when pivoting starts/stops)
+        # not only that, but it also interferes with the logic that
+        # depends on message changes (like detecting when pivoting starts/stops)
         buttons = self.previousMessage.buttons
         while len(buttons) < 6:
             buttons.append(False)
