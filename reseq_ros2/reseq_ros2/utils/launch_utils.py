@@ -5,7 +5,7 @@ from yaml import SafeLoader
 # Default config file path
 share_folder = get_package_share_directory('reseq_ros2')
 config_path = f'{share_folder}/config/temp'
-default_filename = 'reseq_mk1_can.yaml'
+default_filename = 'reseq_mk2_can.yaml'
 
 
 def parse_config(filename):
@@ -32,3 +32,4 @@ def get_end_effector(config):
     for mod in config['modules']:
         if mod['hasEndEffector']:
             return mod['address']
+    return 0

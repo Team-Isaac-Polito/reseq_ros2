@@ -1,3 +1,5 @@
+line-length = 99
+
 [format]
 quote-style = "single"
 

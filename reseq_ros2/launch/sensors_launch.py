@@ -16,6 +16,8 @@ def launch_setup(context, *args, **kwargs):
     # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
 
+    external_log_level = LaunchConfiguration('external_log_level').perform(context)
+
     launch_config = []
 
     # for each sensor in the config file
@@ -29,8 +31,9 @@ def launch_setup(context, *args, **kwargs):
                 launch_config.append(
                     IncludeLaunchDescription(
                         f'{get_package_share_directory("rplidar_ros")}'
-                        '/launch/rplidar_a2m8_launch.py'
-                    )
+                        '/launch/rplidar_a2m8_launch.py',
+                        launch_arguments={'frame_id': 'laser_frame'}.items(),
+                    ),
                 )
             if name == 'realsense':
                 launch_config.append(
@@ -40,7 +43,7 @@ def launch_setup(context, *args, **kwargs):
                         name='realsense2_camera_node',
                         namespace='realsense',
                         parameters=[ParameterFile(f'{config_path}/{config["realsense_config"]}')],
-                        arguments=['--ros-args', '--log-level', 'warn'],
+                        arguments=['--ros-args', '--log-level', external_log_level],
                     )
                 )
             # Launch a usb_cam node for each usb_camera present
@@ -61,7 +64,7 @@ def launch_setup(context, *args, **kwargs):
                                     '.image_raw.png_level': 3,
                                 },
                             ],
-                            arguments=['--ros-args'],
+                            arguments=['--ros-args', '--log-level', external_log_level],
                         )
                     )
 
@@ -72,6 +75,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument('config_file', default_value=default_filename),
+            DeclareLaunchArgument('external_log_level', default_value='warn'),
             OpaqueFunction(function=launch_setup),
         ]
     )

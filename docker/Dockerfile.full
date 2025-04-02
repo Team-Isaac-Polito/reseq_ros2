@@ -1,11 +1,12 @@
-# docker run --gpus all --privileged -it --rm --net=host reseq
-# docker run --rm --privileged --net=host --gpus all --runtime=nvidia -it 
-#    -v /dev:/dev --device-cgroup-rule "c 81:* rmw" --device-cgroup-rule "c 189:* rmw" real-ros
-# docker build . --target reseq-base --tag reseq-base
-# docker build . --tag reseq
+# RUN WITH:
+# docker run --rm --privileged --net=host --gpus all --runtime=nvidia -it reseq:full
+# BUILD WITH:
+# docker build -t reseq:full -f src/docker/Dockerfile.full src
 
 # At the moment an amd64 alternative with CUDA and ROS2 is yet to be chosen
-ARG BASE_IMAGE=dustynv/ros:humble-ros-base-l4t-r35.4.1
+ARG BASE_IMAGE=dustynv/ros:humble-ros-base-l4t-r35.1.0
+
+ARG CONFIG_FILE=reseq_mk1_can.yaml
 
 FROM ${BASE_IMAGE} AS reseq-base
 
@@ -36,9 +37,9 @@ RUN git clone https://github.com/IntelRealSense/librealsense.git && \
     cd librealsense && \
     mkdir build && cd build && \
     cmake .. \
-        -DBUILD_EXAMPLES=true \
+        -DBUILD_EXAMPLES=false \
         -DCMAKE_BUILD_TYPE=release \
-        -DFORCE_RSUSB_BACKEND=false \
+        -DFORCE_RSUSB_BACKEND=true \
         -DBUILD_WITH_CUDA=true \
         -DBUILD_GRAPHICAL_EXAMPLES=OFF \
         -DBUILD_PYTHON_BINDINGS=bool:true \
@@ -68,19 +69,16 @@ RUN colcon mixin add default \
         https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
     colcon metadata update
 
-RUN apt update && apt install python3-rosdep -y 
-
 ENV SKIP_KEYS "libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-opencv python3-opencv librealsense2"
 
 # Compile automatically dependency packages
 ADD compile_ros_pkgs.py /
-RUN python3 compile_ros_pkgs.py realsense2_camera realsense2_description xacro
-RUN python3 compile_ros_pkgs.py image_transport_plugins
-RUN python3 compile_ros_pkgs.py rplidar_ros
-RUN python3 compile_ros_pkgs.py ros2_control diff_drive_controller joint_state_broadcaster
-RUN python3 compile_ros_pkgs.py usb_cam  
 
-RUN pip install python-can
+RUN apt update && python3 compile_ros_pkgs.py realsense2_camera realsense2_description xacro
+RUN apt update && python3 compile_ros_pkgs.py image_transport_plugins
+RUN apt update && python3 compile_ros_pkgs.py rplidar_ros 
+RUN apt update && python3 compile_ros_pkgs.py controller_manager diff_drive_controller joint_state_broadcaster 
+RUN apt update && python3 compile_ros_pkgs.py usb_cam
 
 FROM reseq-base AS reseq
 
@@ -94,4 +92,5 @@ RUN source /ros_entrypoint.sh && \
     colcon build && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh
 
-CMD /bin/bash -c "ros2 launch reseq_ros2 reseq_launch.py"
+ENV CONFIG_FILE=${CONFIG_FILE}
+CMD /bin/bash -c "source /ros_entrypoint.sh && ros2 launch reseq_ros2 reseq_launch.py config_file:=$CONFIG_FILE"
