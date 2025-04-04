@@ -42,10 +42,31 @@ def launch_setup(context, *args, **kwargs):
                         executable='realsense2_camera_node',
                         name='realsense2_camera_node',
                         namespace='realsense',
-                        parameters=[ParameterFile(f"{config_path}/{config['realsense_config']}")],
+                        parameters=[ParameterFile(f'{config_path}/{config["realsense_config"]}')],
                         arguments=['--ros-args', '--log-level', external_log_level],
                     )
                 )
+            # Launch a usb_cam node for each usb_camera present
+            if name == 'usb_cameras':
+                num_usb_cam = sensor[name]
+                for i in range(0, num_usb_cam):
+                    usb_cam_config = f'usb_camera_config_{i}'
+                    launch_config.append(
+                        Node(
+                            package='usb_cam',
+                            executable='usb_cam_node_exe',
+                            name=f'usb_cam_{i}',
+                            namespace=f'usb_cam_{i}',
+                            parameters=[
+                                ParameterFile(f'{config_path}/{usb_cam_config}'),
+                                {
+                                    '.image_raw.jpeg_quality': 30,
+                                    '.image_raw.png_level': 3,
+                                },
+                            ],
+                            arguments=['--ros-args', '--log-level', external_log_level],
+                        )
+                    )
 
     return launch_config
 
