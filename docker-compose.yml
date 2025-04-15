@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  reseq:
+    build:
+      dockerfile: docker/Dockerfile.full
+    image: reseq:full
+    privileged: true
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    runtime: nvidia
+    stdin_open: true
+    tty: true
+    restart: "no"
+    volumes:
+      - ../output:/output
