@@ -79,6 +79,14 @@ RUN apt update && python3 compile_ros_pkgs.py image_transport_plugins
 RUN apt update && python3 compile_ros_pkgs.py rplidar_ros 
 RUN apt update && python3 compile_ros_pkgs.py controller_manager diff_drive_controller joint_state_broadcaster 
 RUN apt update && python3 compile_ros_pkgs.py usb_cam
+RUN apt update && rosdep update && python3 compile_ros_pkgs.py slam_toolbox
+
+RUN apt update && source /ros_entrypoint.sh && \
+    cd /is-slam && \ git clone https://github.com/Team-Isaac-Polito/is-slam.git src && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y -t exec -t build && \
+    colcon build && \
+    sed -i "\$i ros_source_env /is-slam/install/setup.bash \n" /ros_entrypoint.sh
+
 
 FROM reseq-base AS reseq
 
