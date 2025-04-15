@@ -40,7 +40,7 @@ def install_dependencies(pkgs):
                 {{deps}} \
             > {pkg_dir}.rosinstall && \
             vcs import src < {pkg_dir}.rosinstall && \
-            rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y --skip-keys="$SKIP_KEYS" """  # noqa
+            rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y -t buildtool -t build -t build_export -t buildtool_export -t exec --skip-keys="$SKIP_KEYS" """  # noqa
     deps_set = set()
     missing_deps = True
     while missing_deps:
@@ -86,7 +86,7 @@ def build_and_cleanup(pkg_dir):
     """
     cmd = f"""source /ros_entrypoint.sh && \
             cd /{pkg_dir} && \
-            colcon build --event-handlers=console_direct+ --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+            colcon build --event-handlers=console_direct+ --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF && \
             sed -i "\$i ros_source_env /{pkg_dir}/install/local_setup.bash \n" /ros_entrypoint.sh && \
             rm -rf src build log"""  # noqa
     process = subprocess.Popen(
