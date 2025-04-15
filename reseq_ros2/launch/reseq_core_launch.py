@@ -86,6 +86,23 @@ def launch_setup(context, *args, **kwargs):
     launch_config.append(
         Node(
             package='reseq_ros2',
+            executable='pivot_controller',
+            name='pivot_controller',
+            parameters=[
+                {
+                    'modules': addresses,
+                    'joints': joints,
+                    'end_effector': endEffector,
+                }
+            ],
+            arguments=['--ros-args', '--log-level', log_level],
+            on_exit=Shutdown(),
+        )
+    )
+
+    launch_config.append(
+        Node(
+            package='reseq_ros2',
             executable='scaler',
             name='scaler',
             parameters=[

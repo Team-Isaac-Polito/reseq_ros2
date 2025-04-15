@@ -115,14 +115,21 @@ class EmulatorRemoteController(Node):
             self.publisher.publish(self.previousMessage)
         # turn right
         elif key == 'l':
-            self.previousMessage.right.x = 1.0
+            self.previousMessage.right.x += self.increment
+            self.previousMessage.right.x = min(1.0, self.previousMessage.right.x)
+            self.get_logger().info(
+                f'[DEBUG] Key l pressed = {self.previousMessage.right.x}'
+            )  # for debugging purposes
             self.publisher.publish(self.previousMessage)
-            self.previousMessage.right.x = 0.0  # Reset after sending
         # turn left
         elif key == 'j':
-            self.previousMessage.right.x = -1.0
+            self.previousMessage.right.x -= self.increment
+            self.previousMessage.right.x = max(-1.0, self.previousMessage.right.x)
+            self.get_logger().info(
+                f'[DEBUG] key j pressed = {self.previousMessage.right.x}'
+            )  # for debugging purposes
             self.publisher.publish(self.previousMessage)
-            self.previousMessage.right.x = 0.0  # Reset after sending
+
         # if b pressed, make cmd_vel movements faster
         elif key == 'b':
             self.increment /= 2
