@@ -111,6 +111,7 @@ def launch_setup(context, *args, **kwargs):
                         'r_linear_vel': config['scaler_consts']['r_linear_vel'],
                         'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
                         'r_angular_vel': config['scaler_consts']['r_angular_vel'],
+                        'version': config['version'],
                     },
                     **(
                         {
