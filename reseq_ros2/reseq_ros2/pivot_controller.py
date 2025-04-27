@@ -31,8 +31,8 @@ class PivotController(Node):
 
         self.enabled = False
         self.pivot_on_head = True
-        self.create_service(SetBool, 'enable', self.handle_enable)
-        self.create_service(SetBool, 'pivot_on_head', self.handle_pivot_on_head)
+        self.create_service(SetBool, '/pivot_controller/enable', self.handle_enable)
+        self.create_service(SetBool, '/pivot_controller/pivot_on_head', self.handle_pivot_on_head)
 
     def handle_enable(
         self, request: SetBool.Request, response: SetBool.Response
@@ -70,7 +70,7 @@ class PivotController(Node):
         ang_speed = msg.angular.z
 
         # differential drive with V=0
-        m = Motors
+        m = Motors()
         m.right = ang_speed * self.d / (2 * self.r_eq) * rc.rads2rpm
         m.left = -m.right
 
@@ -91,7 +91,7 @@ def main(args=None):
         rclpy.spin(pivot_controller)
     except Exception as err:
         rclpy.logging.get_logger('pivot_controller').fatal(
-            f'Error in the Agevar node: {str(err)}\n{traceback.format_exc()}'
+            f'Error in the Pivot Controller node: {str(err)}\n{traceback.format_exc()}'
         )
         raise err
     else:

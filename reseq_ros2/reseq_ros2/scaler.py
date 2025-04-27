@@ -1,5 +1,5 @@
 import traceback
-from enum import Enum
+from enum import Enum, IntEnum
 
 import rclpy
 from geometry_msgs.msg import Twist
@@ -24,7 +24,7 @@ and an optional hook function to be executed after the service is called.
 
 class Scaler(Node):
     control_mode_enum: Enum = Enum('ControlMode', 'AGEVAR, PIVOT')
-    buttons_enum: Enum = Enum(
+    buttons_enum: IntEnum = IntEnum(
         'Buttons', 'S1, S2, S3, S4, S5 BGREEN, BBLACK, BRED, BWHITE, BBLUE', start=0
     )
 
@@ -109,13 +109,13 @@ class Scaler(Node):
     def handle_buttons(self, buttons: list[bool]):
         for handler in self.handlers:
             if buttons[handler['button']] != self.previous_buttons[handler['button']]:
-                if handler['condition'] and handler['condition'](buttons):
+                if 'condition' not in handler or handler['condition'](buttons):
                     data = handler['inverted'] ^ buttons[handler['button']]
                     handler['service'].call_async(SetBool.Request(data=data))
-                    if handler['hook']:
+                    if 'hook' in handler:
                         handler['hook'](self)
                     self.get_logger().debug(
-                        f"Called service '{handler['name']}' for {handler['button']}={buttons[handler['button']]}, value={data}"  # noqa
+                        f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}, value={data}"  # noqa
                     )
         self.previous_buttons = buttons
 
@@ -143,7 +143,7 @@ class Scaler(Node):
             self.enea_pub.publish(end_e)
 
     def pivotScaler(self, data: Twist):
-        data.linear.x = 0
+        data.linear.x = 0.0
         data.angular.z = self.scale(data.angular.z, self.r_angular_vel)
         return data
 

@@ -91,8 +91,8 @@ def launch_setup(context, *args, **kwargs):
             parameters=[
                 {
                     'modules': addresses,
-                    'joints': joints,
-                    'end_effector': endEffector,
+                    'd': config['agevar_consts']['d'],
+                    'r_eq': config['agevar_consts']['r_eq'],
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
@@ -107,18 +107,21 @@ def launch_setup(context, *args, **kwargs):
             name='scaler',
             parameters=[
                 {
-                    'r_linear_vel': config['scaler_consts']['r_linear_vel'],
-                    'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
-                    'r_angular_vel': config['scaler_consts']['r_angular_vel'],
-                }.update(
-                    {
-                        'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
-                        'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
-                        'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
-                    }
-                    if config['version'] == 'mk1'
-                    else {}
-                )
+                    **{
+                        'r_linear_vel': config['scaler_consts']['r_linear_vel'],
+                        'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
+                        'r_angular_vel': config['scaler_consts']['r_angular_vel'],
+                    },
+                    **(
+                        {
+                            'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
+                            'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
+                            'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
+                        }
+                        if config['version'] == 'mk1'
+                        else {}
+                    ),
+                }
             ],
             arguments=['--ros-args', '--log-level', log_level],
             on_exit=Shutdown(),

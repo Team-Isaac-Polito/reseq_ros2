@@ -38,7 +38,7 @@ class Agevar(Node):
 
         # create the enable/disable service
         self.enabled = True
-        self.create_service(SetBool, 'enable', self.handle_enable)
+        self.create_service(SetBool, '/agevar/enable', self.handle_enable)
 
         self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
