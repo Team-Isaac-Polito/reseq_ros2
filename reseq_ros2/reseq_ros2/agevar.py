@@ -5,9 +5,10 @@ import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from std_msgs.msg import Float32  # deprecated?
+from std_srvs.srv import SetBool
 
 import reseq_ros2.constants as rc
-from reseq_interfaces.msg import Motors, Remote
+from reseq_interfaces.msg import Motors
 
 """ROS node with control algorithm for snake-like movement
 
@@ -19,7 +20,7 @@ used by the Communication node to set motors velocities.
 class Agevar(Node):
     def __init__(self):
         super().__init__('agevar')
-        self.blue_button_active = False
+
         # Declaring parameters and getting values
         self.a = self.declare_parameter('a', 0.0).get_parameter_value().double_value
         self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
@@ -35,6 +36,10 @@ class Agevar(Node):
             self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
         )
 
+        # create the enable/disable service
+        self.enabled = True
+        self.create_service(SetBool, 'enable', self.handle_enable)
+
         self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
 
@@ -45,7 +50,6 @@ class Agevar(Node):
             self.remote_callback,
             10,
         )
-        self.create_subscription(Remote, '/remote', self.remote_button_callback, 10)
 
         self.joint_subs = []
         self.motors_pubs = []
@@ -66,14 +70,25 @@ class Agevar(Node):
             p = self.create_publisher(Motors, f'reseq/module{address}/motor/setpoint', 10)
             self.motors_pubs.append(p)
 
-    def remote_button_callback(self, msg: Remote):
-        if len(msg.buttons) > 5:
-            self.blue_button_active = msg.buttons[5]
+    def handle_enable(
+        self, request: SetBool.Request, response: SetBool.Response
+    ) -> SetBool.Response:
+        self.enabled = request.data
+
+        if not self.enabled:
+            for pub in self.motors_pubs:
+                pub.publish(Motors())  # stop all motors
+
+        response.success = True
+        response.message = 'Agevar node enabled' if self.enabled else 'Agevar node disabled'
+        self.get_logger().info(response.message)
+        return response
 
     def remote_callback(self, msg: Twist):
-        if self.blue_button_active:
-            self.get_logger().info('Blue button is active — skipping AGeVaR motion.')
+        if not self.enabled:
+            self.get_logger().debug('Agevar node is disabled, ignoring command')
             return
+
         # extract information from ROS Twist message
         linear_vel = msg.linear.x
         angular_vel = msg.angular.z
@@ -93,7 +108,9 @@ class Agevar(Node):
             m = Motors()
             m.right = w_right
             m.left = w_left
-            self.motors_pubs[mod_id].publish(m)
+
+            if self.enabled:
+                self.motors_pubs[mod_id].publish(m)
 
             if mod_id != modules[-1]:  # for every module except the last one
                 # invert yaw angle if going backwards
