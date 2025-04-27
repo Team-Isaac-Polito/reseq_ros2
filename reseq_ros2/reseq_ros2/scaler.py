@@ -62,7 +62,7 @@ class Scaler(Node):
         self.enea_enabled = False
 
         # Declaring parameters and getting values
-        version = self.declare_parameter('version', '').get_parameter_value().string_value
+        version = self.declare_parameter('version', 'mk1').get_parameter_value().string_value
 
         self.r_linear_vel = (
             self.declare_parameter('r_linear_vel', [0.0]).get_parameter_value().double_array_value
@@ -107,6 +107,9 @@ class Scaler(Node):
         self.get_logger().info('Scaler node started')
 
     def handle_buttons(self, buttons: list[bool]):
+        if buttons == self.previous_buttons:
+            return
+
         for handler in self.handlers:
             if buttons[handler['button']] != self.previous_buttons[handler['button']]:
                 if 'condition' not in handler or handler['condition'](buttons):
