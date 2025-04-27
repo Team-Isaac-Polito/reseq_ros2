@@ -1,8 +1,10 @@
 import traceback
+from enum import Enum
 
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
+from std_srvs.srv import SetBool
 
 from reseq_interfaces.msg import EndEffector, Remote
 
@@ -13,10 +15,45 @@ by the motors
 It receives a packet from the remote controller and rescales end_effector data
 (pitch, head_pitch, head_roll) and the Twist data used by Agevar
 (linear velocity, angular velocity)
+
+It also handles the button presses and switches of the remote controller
+using a system of handlers that call the appropriate service, given an optional condition
+and an optional hook function to be executed after the service is called.
 """
 
 
 class Scaler(Node):
+    control_mode_enum: Enum = Enum('ControlMode', 'AGEVAR, PIVOT')
+    buttons_enum: Enum = Enum(
+        'Buttons', 'S1, S2, S3, S4, S5 BGREEN, BBLACK, BRED, BWHITE, BBLUE', start=0
+    )
+
+    # OBSERVATIONS: The switches are zero in the upwards position,
+    #               The buttons are zero when pressed
+    handlers: list[dict] = [  # {button, service, inverted, condition, hook}
+        {
+            'name': 'Enable/Disable Agevar',
+            'button': buttons_enum.BBLUE,
+            'service': '/agevar/enable',
+            'inverted': False,
+            'hook': lambda self: setattr(self, 'control_mode', Scaler.control_mode_enum.AGEVAR),
+        },
+        {
+            'name': 'Enable/Disable Pivot',
+            'button': buttons_enum.BBLUE,
+            'service': '/pivot_controller/enable',
+            'inverted': True,
+            'hook': lambda self: setattr(self, 'control_mode', Scaler.control_mode_enum.PIVOT),
+        },
+        {
+            'name': 'Enable/Disable Pivot on Head',
+            'button': buttons_enum.S5,
+            'service': '/pivot_controller/pivot_on_head',
+            'inverted': True,
+            'condition': lambda b: not b[Scaler.buttons_enum.BBLUE],
+        },
+    ]
+
     def __init__(self):
         super().__init__('scaler')
         # Declaring parameters and getting values
@@ -42,6 +79,12 @@ class Scaler(Node):
             .integer_array_value
         )
 
+        for h in self.handlers:
+            h['service'] = self.create_client(SetBool, h['service'])
+
+        # initialize the button/switch handlers
+        self.previous_buttons = [False, False, False, False, False, True, True, True, True, True]
+
         self.create_subscription(Remote, '/remote', self.remote_callback, 10)
 
         self.enea_pub = self.create_publisher(EndEffector, '/end_effector', 10)
@@ -50,8 +93,21 @@ class Scaler(Node):
 
         self.get_logger().info('Scaler node started')
 
+    def handle_buttons(self, buttons: list[bool]):
+        for handler in self.handlers:
+            if buttons[handler['button']] != self.previous_buttons[handler['button']]:
+                if handler['condition'] and handler['condition'](buttons):
+                    data = handler['inverted'] ^ buttons[handler['button']]
+                    handler['service'].call_async(SetBool.Request(data=data))
+                    if handler['hook']:
+                        handler['hook'](self)
+                    self.get_logger().debug(
+                        f"Called service '{handler['name']}' for {handler['button']}={buttons[handler['button']]}, value={data}"  # noqa
+                    )
+        self.previous_buttons = buttons
+
     def remote_callback(self, data: Remote):
-        # TODO: buttons, switches
+        self.handle_buttons(data.buttons)
 
         cmd_vel = Twist()
         cmd_vel.linear.x = data.right.y  # Linear velocity (-1:1)
