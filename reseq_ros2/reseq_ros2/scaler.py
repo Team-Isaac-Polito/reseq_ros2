@@ -56,7 +56,14 @@ class Scaler(Node):
 
     def __init__(self):
         super().__init__('scaler')
+        # initialize the button/switch handlers
+        self.previous_buttons = [False, False, False, False, False, True, True, True, True, True]
+        self.control_mode = Scaler.control_mode_enum.AGEVAR
+        self.enea_enabled = False
+
         # Declaring parameters and getting values
+        version = self.declare_parameter('version', '').get_parameter_value().string_value
+
         self.r_linear_vel = (
             self.declare_parameter('r_linear_vel', [0.0]).get_parameter_value().double_array_value
         )
@@ -65,31 +72,37 @@ class Scaler(Node):
             .get_parameter_value()
             .double_array_value
         )
-        self.r_pitch_vel = (
-            self.declare_parameter('r_pitch_vel', [0]).get_parameter_value().integer_array_value
+        self.r_angular_vel = (
+            self.declare_parameter('r_angular_vel', [0.0]).get_parameter_value().double_array_value
         )
-        self.r_head_pitch_vel = (
-            self.declare_parameter('r_head_pitch_vel', [0])
-            .get_parameter_value()
-            .integer_array_value
-        )
-        self.r_head_roll_vel = (
-            self.declare_parameter('r_head_roll_vel', [0])
-            .get_parameter_value()
-            .integer_array_value
-        )
+
+        if version == 'mk1':
+            self.enea_enabled = True
+            self.r_pitch_vel = (
+                self.declare_parameter('r_pitch_vel', [0])
+                .get_parameter_value()
+                .integer_array_value
+            )
+            self.r_head_pitch_vel = (
+                self.declare_parameter('r_head_pitch_vel', [0])
+                .get_parameter_value()
+                .integer_array_value
+            )
+            self.r_head_roll_vel = (
+                self.declare_parameter('r_head_roll_vel', [0])
+                .get_parameter_value()
+                .integer_array_value
+            )
 
         for h in self.handlers:
             h['service'] = self.create_client(SetBool, h['service'])
 
-        # initialize the button/switch handlers
-        self.previous_buttons = [False, False, False, False, False, True, True, True, True, True]
-
         self.create_subscription(Remote, '/remote', self.remote_callback, 10)
 
-        self.enea_pub = self.create_publisher(EndEffector, '/end_effector', 10)
+        if self.enea_enabled:
+            self.enea_pub = self.create_publisher(EndEffector, '/end_effector', 10)
 
-        self.agevar_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.speed_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
         self.get_logger().info('Scaler node started')
 
@@ -111,18 +124,28 @@ class Scaler(Node):
 
         cmd_vel = Twist()
         cmd_vel.linear.x = data.right.y  # Linear velocity (-1:1)
-        cmd_vel.angular.z = -data.right.x  # inverse of Radius of curvature (-1:1)
+        # inverse of Radius of curvature (AGEVAR) or angular velocity (PIVOT) (-1:1)
+        cmd_vel.angular.z = -data.right.x
 
-        cmd_vel = self.agevarScaler(cmd_vel)
-        self.agevar_pub.publish(cmd_vel)
+        if self.control_mode == Scaler.control_mode_enum.AGEVAR:
+            cmd_vel = self.agevarScaler(cmd_vel)
+        else:
+            cmd_vel = self.pivotScaler(cmd_vel)
+        self.speed_pub.publish(cmd_vel)
 
-        end_e = EndEffector()
-        end_e.pitch_vel = data.left.y
-        end_e.head_pitch_vel = data.left.z
-        end_e.head_roll_vel = data.left.x
+        if self.enea_enabled:
+            end_e = EndEffector()
+            end_e.pitch_vel = data.left.y
+            end_e.head_pitch_vel = data.left.z
+            end_e.head_roll_vel = data.left.x
 
-        end_e = self.endEffectorScaler(end_e)
-        self.enea_pub.publish(end_e)
+            end_e = self.endEffectorScaler(end_e)
+            self.enea_pub.publish(end_e)
+
+    def pivotScaler(self, data: Twist):
+        data.linear.x = 0
+        data.angular.z = self.scale(data.angular.z, self.r_angular_vel)
+        return data
 
     def agevarScaler(self, data: Twist):
         data.linear.x = self.scale(data.linear.x, self.r_linear_vel)

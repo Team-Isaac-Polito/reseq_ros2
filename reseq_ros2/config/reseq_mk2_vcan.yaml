@@ -2,7 +2,7 @@
 include:
   xacro: digital_twin_params_mk2.yaml
   joint_pub_consts: joint_pub_consts.yaml
-  scaler_consts: scaler_consts.yaml
+  scaler_consts: scaler_consts_mk2.yaml
   agevar_consts: agevar_consts_mk2.yaml
 version: "mk2"
 canbus:
