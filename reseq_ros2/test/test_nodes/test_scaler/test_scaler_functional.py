@@ -23,8 +23,10 @@ class TestScalerFunctional(unittest.TestCase):
 
         # Expected parameter values from scaler_consts.yaml
         cls.expected_params = {
+            'version': 'mk1',
             'r_linear_vel': [-0.27017, 0.27017],
             'r_inverse_radius': [-1.5385, 1.5385],
+            'r_angular_vel': [-2.8387, 2.8387],
             'r_pitch_vel': [-183, 183],
             'r_head_pitch_vel': [-400, 400],
             'r_head_roll_vel': [-455, 455],
@@ -149,6 +151,16 @@ class TestScalerFunctional(unittest.TestCase):
                     rclpy.Parameter.Type.INTEGER_ARRAY,
                     self.expected_params['r_head_roll_vel'],
                 ),
+                Parameter(
+                    'version',
+                    rclpy.Parameter.Type.STRING,
+                    self.expected_params['version'],
+                ),
+                Parameter(
+                    'r_angular_vel',
+                    rclpy.Parameter.Type.DOUBLE_ARRAY,
+                    self.expected_params['r_angular_vel'],
+                ),
             ]
         )
 
@@ -158,6 +170,7 @@ class TestScalerFunctional(unittest.TestCase):
         remote_msg.left.y = 1.0
         remote_msg.left.z = 0.7
         remote_msg.left.x = -0.3
+        remote_msg.buttons = [False, False, False, False, False, True, True, True, True, True]
 
         # Capture published messages
         self.cmd_vel_msg = None

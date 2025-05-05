@@ -5,6 +5,7 @@ import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from std_msgs.msg import Float32  # deprecated?
+from std_srvs.srv import SetBool
 
 import reseq_ros2.constants as rc
 from reseq_interfaces.msg import Motors
@@ -19,6 +20,7 @@ used by the Communication node to set motors velocities.
 class Agevar(Node):
     def __init__(self):
         super().__init__('agevar')
+
         # Declaring parameters and getting values
         self.a = self.declare_parameter('a', 0.0).get_parameter_value().double_value
         self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
@@ -33,6 +35,10 @@ class Agevar(Node):
         self.end_effector = (
             self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
         )
+
+        # create the enable/disable service
+        self.enabled = True
+        self.create_service(SetBool, '/agevar/enable', self.handle_enable)
 
         self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
@@ -64,7 +70,25 @@ class Agevar(Node):
             p = self.create_publisher(Motors, f'reseq/module{address}/motor/setpoint', 10)
             self.motors_pubs.append(p)
 
+    def handle_enable(
+        self, request: SetBool.Request, response: SetBool.Response
+    ) -> SetBool.Response:
+        self.enabled = request.data
+
+        if not self.enabled:
+            for pub in self.motors_pubs:
+                pub.publish(Motors())  # stop all motors
+
+        response.success = True
+        response.message = 'Agevar node enabled' if self.enabled else 'Agevar node disabled'
+        self.get_logger().info(response.message)
+        return response
+
     def remote_callback(self, msg: Twist):
+        if not self.enabled:
+            self.get_logger().debug('Agevar node is disabled, ignoring command')
+            return
+
         # extract information from ROS Twist message
         linear_vel = msg.linear.x
         angular_vel = msg.angular.z
@@ -84,7 +108,9 @@ class Agevar(Node):
             m = Motors()
             m.right = w_right
             m.left = w_left
-            self.motors_pubs[mod_id].publish(m)
+
+            if self.enabled:
+                self.motors_pubs[mod_id].publish(m)
 
             if mod_id != modules[-1]:  # for every module except the last one
                 # invert yaw angle if going backwards
