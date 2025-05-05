@@ -1,0 +1,70 @@
+ARG BASE_IMAGE=nvcr.io/nvidia/isaac/ros:aarch64-ros2_humble_fd3cefe09df8d19bf6cc82b0d57de78d
+
+FROM ${BASE_IMAGE} AS nvidia-realsense
+
+ARG LIBREALSENSE_SOURCE_VERSION=v2.55.1
+ARG REALSENSE_ROS_GIT_URL=https://github.com/NVIDIA-ISAAC-ROS/realsense-ros.git
+ARG REALSENSE_ROS_VERSION=release/4.51.1-isaac
+
+COPY docker/utils/scripts/build-librealsense.sh /opt/realsense/build-librealsense.sh
+COPY docker/utils/scripts/install-realsense-dependencies.sh /opt/realsense/install-realsense-dependencies.sh
+
+RUN chmod +x /opt/realsense/install-realsense-dependencies.sh && \
+    /opt/realsense/install-realsense-dependencies.sh; \
+    chmod +x /opt/realsense/build-librealsense.sh && /opt/realsense/build-librealsense.sh -v ${LIBREALSENSE_SOURCE_VERSION};
+
+# Copy hotplug script for udev rules/hotplug for RealSense
+RUN mkdir -p /opt/realsense/
+COPY docker/utils/scripts/hotplug-realsense.sh /opt/realsense/hotplug-realsense.sh
+COPY docker/utils/udev_rules/99-realsense-libusb-custom.rules /etc/udev/rules.d/99-realsense-libusb-custom.rules
+
+# Install realsense-ros ROS 2 package
+RUN --mount=type=cache,target=/var/cache/apt \
+    mkdir -p ${ROS_ROOT}/src && cd ${ROS_ROOT}/src \
+    && git clone ${REALSENSE_ROS_GIT_URL} -b ${REALSENSE_ROS_VERSION} \
+    && cd realsense-ros && source ${ROS_ROOT}/setup.bash \
+    && cd realsense2_camera_msgs && bloom-generate rosdebian && fakeroot debian/rules binary \
+    && cd ../ && apt-get install -y ./*.deb && rm ./*.deb \
+    && cd realsense2_description && bloom-generate rosdebian && fakeroot debian/rules binary \
+    && cd ../ && apt-get install -y ./*.deb && rm ./*.deb \
+    && cd realsense2_camera && bloom-generate rosdebian \
+    && sed -i 's/dh_shlibdeps -/dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info -/g' debian/rules \
+    && sed -i 's/ros-humble-librealsense2, //g' debian/control \
+    && fakeroot debian/rules binary \
+    && cd ../ && apt-get install -y ./*.deb && rm ./*.deb \
+    && cd ../ && rm -Rf realsense-ros
+
+FROM nvidia-realsense AS reseq-base
+
+COPY docker/utils/ros_entrypoint.sh /ros_entrypoint.sh
+
+RUN apt update && apt install -y --no-install-recommends \
+    ros-humble-xacro \
+    ros-humble-image-transport-plugins \
+    ros-humble-rplidar-ros \
+    ros-humble-usb-cam \
+    ros-humble-controller-manager \
+    ros-humble-diff-drive-controller \
+    ros-humble-joint-state-broadcaster \
+    ros-humble-slam-toolbox
+
+RUN apt update && rosdep update &&  source /ros_entrypoint.sh && \
+    mkdir /is-slam && cd /is-slam && git clone https://github.com/Team-Isaac-Polito/is-slam.git src && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y -t exec -t build && \
+    colcon build && \
+    sed -i "\$i ros_source_env /is-slam/install/setup.bash \n" /ros_entrypoint.sh
+
+FROM reseq-base AS reseq
+
+RUN mkdir -p /ros2_ws/src/
+WORKDIR /ros2_ws
+COPY reseq_interfaces src/reseq_interfaces
+COPY reseq_ros2 src/reseq_ros2
+
+RUN source /ros_entrypoint.sh && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y -t exec && \
+    colcon build && \
+    sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh
+
+ENV CONFIG_FILE=${CONFIG_FILE}
+CMD /bin/bash -c "source /ros_entrypoint.sh && ros2 launch reseq_ros2 reseq_launch.py config_file:=$CONFIG_FILE"
