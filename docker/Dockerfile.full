@@ -1,7 +1,7 @@
 # RUN WITH:
-# docker run --rm --privileged --net=host --gpus all --runtime=nvidia -it reseq:full
+# docker run --rm --privileged --net=host --gpus all --runtime=nvidia -it reseq-full
 # BUILD WITH:
-# docker build -t reseq:full -f src/docker/Dockerfile.full src
+# docker build -t reseq-full -f src/docker/Dockerfile.full src
 
 # At the moment an amd64 alternative with CUDA and ROS2 is yet to be chosen
 ARG BASE_IMAGE=dustynv/ros:humble-ros-base-l4t-r35.1.0
