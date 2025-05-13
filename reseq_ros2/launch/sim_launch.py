@@ -18,7 +18,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory(
                 package_name), 'launch', 'reseq_launch.py'
-        )]), launch_arguments={'use_sim_time': 'true', 'use_ros2_control': 'true'}.items()  
+        )]), launch_arguments={'use_sim_time': 'true', 'use_ros2_control': 'true', 'sim_mode': 'true', 'sensors': 'false', 'config_file': 'reseq_mk1_vcan.yaml'}.items()  
     )
 
     default_world = os.path.join(
