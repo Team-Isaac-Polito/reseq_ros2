@@ -19,6 +19,8 @@
   <!-- chassis related -->
   <xacro:property name="NumModules" value="${config['num_modules']}"/>
   <xacro:property name="WheelBase" value="${config['xacro']['WheelBase']}"/>
+  <xacro:property name="WheelMu1" value="${config['xacro']['WheelMu1']}"/>
+  <xacro:property name="WheelMu2" value="${config['xacro']['WheelMu2']}"/>
   <xacro:property name="EquivalentWheelDiameter" value="${r_eq*2}"/>
   <xacro:property name="ModuleWidth" value="${config['xacro']['ModuleWidth']}"/>
   <xacro:property name="TrackWidth" value="${config['xacro']['TrackWidth']}"/>
