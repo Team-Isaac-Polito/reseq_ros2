@@ -2,7 +2,8 @@ import traceback
 from math import cos, pi, sin
 
 import rclpy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, TwistStamped
+from sensor_msgs.msg import JointState
 from rclpy.node import Node
 from std_msgs.msg import Float32  # deprecated?
 
@@ -45,24 +46,38 @@ class Agevar(Node):
             10,
         )
 
-        self.joint_subs = []
-        self.motors_pubs = []
-        for i in range(self.n_mod):
-            address = self.modules[i]
+        self.diff_controller_pub = []
+        for mod in range(1, self.n_mod+1):
+            self.diff_controller_pub.append(
+                self.create_publisher(TwistStamped, f'/diff_controller{mod}/cmd_vel', 10)
+            )
 
-            # subscribe to feedback from joints
-            if address in self.joints:
-                s = self.create_subscription(
-                    Float32,
-                    f'reseq/module{address}/joint/yaw/feedback',
-                    lambda msg, x=address: self.yaw_feedback_callback(msg, x),
-                    10,
-                )
-                self.joint_subs.append(s)
+        self.joints_sub = self.create_subscription(
+            JointState,
+            'joint_states',
+            self.feedback_callback,
+            10
+        )
+            
+    def feedback_callback(self, msg: JointState):
+        feedback = {}
+        for i, name in enumerate(msg.name):
+            feedback[name] = {
+                "position": msg.position[i],
+                "velocity": msg.velocity[i],
+                "effort": msg.effort[i],
+            }
 
-            # create publisher for the motor topics
-            p = self.create_publisher(Motors, f'reseq/module{address}/motor/setpoint', 10)
-            self.motors_pubs.append(p)
+        # update yaw angle of a joint (joint between one module and another)
+        for mod in range(2, self.n_mod+1):
+            joint = feedback.get(f"joint_y_{mod}_joint")
+            if joint == None:
+                continue
+            angle = joint.get("position")
+            if angle == None:
+                continue
+            # store the angle in radiants
+            self.yaw_angles[mod - 1] = angle
 
     def remote_callback(self, msg: Twist):
         # extract information from ROS Twist message
@@ -78,13 +93,16 @@ class Agevar(Node):
 
         for mod_id in modules:
             # get velocity of left and right motor
-            w_right, w_left = self.vel_motors(linear_vel, angular_vel, sign)
-
-            # publish to ROS motor topics
-            m = Motors()
-            m.right = w_right
-            m.left = w_left
-            self.motors_pubs[mod_id].publish(m)
+            # send to each diff_controller the TwistStamped msg with the according linear_vel
+            # and angular_vel
+            t = Twist()
+            t.linear.x = linear_vel
+            t.angular.z = angular_vel
+            msg = TwistStamped()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.twist = t
+            # publish to /diff_controller{i}/cmd_vel
+            self.diff_controller_pub[mod_id].publish(msg)
 
             if mod_id != modules[-1]:  # for every module except the last one
                 # invert yaw angle if going backwards
@@ -95,16 +113,6 @@ class Agevar(Node):
 
                 self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
 
-    # update yaw angle of a joint
-    def yaw_feedback_callback(self, msg, module_num):
-        angle = msg.data
-
-        # keep the angle between -180 and +180
-        if angle >= 180:
-            angle -= 360
-
-        # store the angle in radiants
-        self.yaw_angles[module_num % 16 - 1] = angle * pi / 180.0
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):

@@ -31,28 +31,6 @@ def launch_setup(context, *args, **kwargs):
     endEffector = get_end_effector(config)
     launch_config = []
 
-    launch_config.append(
-        Node(
-            package='reseq_ros2',
-            executable='joint_publisher',
-            name='joint_publisher',
-            parameters=[
-                {
-                    'modules': addresses,
-                    'joints': joints,
-                    'end_effector': endEffector,
-                    'arm_pitch_origin': config['joint_pub_consts']['arm_pitch_origin'],
-                    'head_pitch_origin': config['joint_pub_consts']['head_pitch_origin'],
-                    'head_roll_origin': config['joint_pub_consts']['head_roll_origin'],
-                    'vel_gain': config['joint_pub_consts']['vel_gain'],
-                    'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
-                    'b': config['agevar_consts']['b'],
-                }
-            ],
-            arguments=['--ros-args', '--log-level', log_level],
-        )
-    )
-
     robot_controllers = f'{config_path}/reseq_controllers.yaml'
     control_node = Node(
         package='controller_manager',
