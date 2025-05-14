@@ -7,10 +7,10 @@ def generate_launch_description():
         [
             Node(
                 package='reseq_ros2',
-                executable='detection_data_handler',
-                name='detection_data_handler',
+                executable='batch_data_handler',
+                name='batch_data_handler',
                 output='screen',
-                parameters=[{'output_path': 'object_detections.csv'}],
+                parameters=[{'team_name': 'ISAAC'}, {'country': 'Italy'}, {'mission': 1}],
             )
         ]
     )
