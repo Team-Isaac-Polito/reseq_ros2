@@ -6,18 +6,28 @@
 
   <xacro:include filename="inertial_macros.xacro" />
   <xacro:include filename="reseq_parameters.xacro" />
+  <xacro:include filename="reseq_arm_parameters.xacro" />
 
   <xacro:include filename="macros/utils.xacro" />
   <xacro:include filename="macros/joint.xacro" />
   <xacro:include filename="macros/chassis.xacro" />
   <xacro:include filename="macros/wheel.xacro" />
   <xacro:include filename="macros/control_wheel.xacro" />
+  <xacro:include filename="macros/control_chassis_joint.xacro" />
 
   <xacro:include filename="reseq_body.xacro" />
-  <xacro:include filename="reseq_arm_mk1.xacro" />
+
+  <xacro:if value="${config['version'] == 'mk1'}">
+    <xacro:include filename="reseq_arm_mk1.xacro" />
+  </xacro:if>
+  <!-- 
+  <xacro:if value="${config['version'] == 'mk2'}">
+    <xacro:include filename="reseq_arm_mk2.xacro" />
+  </xacro:if>
+  -->
+
   <xacro:include filename="lidar.xacro" />
 
   <xacro:include filename="ros2_control.xacro" />
 
 </robot>
-

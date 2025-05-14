@@ -23,34 +23,13 @@ def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     log_level = LaunchConfiguration('log_level').perform(context)
+    external_log_level = LaunchConfiguration('external_log_level').perform(context)
     # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
     joints = get_joints(config)
     endEffector = get_end_effector(config)
     launch_config = []
-
-    launch_config.append(
-        Node(
-            package='reseq_ros2',
-            executable='joint_publisher',
-            name='joint_publisher',
-            parameters=[
-                {
-                    'modules': addresses,
-                    'joints': joints,
-                    'end_effector': endEffector,
-                    'arm_pitch_origin': config['joint_pub_consts']['arm_pitch_origin'],
-                    'head_pitch_origin': config['joint_pub_consts']['head_pitch_origin'],
-                    'head_roll_origin': config['joint_pub_consts']['head_roll_origin'],
-                    'vel_gain': config['joint_pub_consts']['vel_gain'],
-                    'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
-                    'b': config['agevar_consts']['b'],
-                }
-            ],
-            arguments=['--ros-args', '--log-level', log_level],
-        )
-    )
 
     robot_controllers = f'{config_path}/reseq_controllers.yaml'
     control_node = Node(
@@ -61,7 +40,7 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ('~/robot_description', '/robot_description'),
         ],
-        arguments=['--ros-args', '--log-level', 'warn'],
+        arguments=['--ros-args', '--log-level', external_log_level],
     )
     launch_config.append(control_node)
 
@@ -74,7 +53,7 @@ def launch_setup(context, *args, **kwargs):
             '/controller_manager',
             '--ros-args',
             '--log-level',
-            'warn',
+            external_log_level,
         ],
     )
     launch_config.append(joint_state_broadcaster_spawner)
@@ -90,7 +69,7 @@ def launch_setup(context, *args, **kwargs):
                 '/controller_manager',
                 '--ros-args',
                 '--log-level',
-                'warn',
+                external_log_level,
             ],
         )
         launch_config.append(module_controller)
@@ -106,7 +85,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             {'robot_description': robot_description}
         ],  # add other parameters here if required
-        arguments=['--ros-args', '--log-level', 'warn'],
+        arguments=['--ros-args', '--log-level', external_log_level],
     )
     launch_config.append(robot_state_publisher_node)
 
@@ -134,6 +113,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('log_level', default_value='info'),
+            DeclareLaunchArgument('external_log_level', default_value='warn'),
             OpaqueFunction(function=launch_setup),
         ]
     )

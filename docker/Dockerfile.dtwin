@@ -1,0 +1,28 @@
+# RUN WITH:
+# docker run --rm --net=host -it reseq:dtwin
+# BUILD WITH:
+# docker build -t reseq:dtwin -f src/docker/Dockerfile.dtwin src
+
+FROM ros:humble-ros-core
+
+ARG CONFIG_FILE=reseq_mk1_can.yaml
+
+RUN apt update && \
+    apt install -y --no-install-recommends python3-rosdep gcc g++ make python3-colcon-common-extensions && \
+    rosdep init
+
+RUN mkdir -p /ros2_ws/src/
+WORKDIR /ros2_ws
+COPY reseq_interfaces src/reseq_interfaces
+COPY reseq_ros2 src/reseq_ros2
+
+ENV SKIP_KEYS "realsense2_camera rplidar_ros image_transport_plugins"
+
+
+RUN apt update && \
+    rosdep update && \
+    rosdep install -iy --from-path src --rosdistro humble --skip-keys "$SKIP_KEYS" -t exec -t build
+RUN bash -c "source /opt/ros/humble/setup.bash && colcon build --event-handlers console_direct+"
+
+ENV CONFIG_FILE=${CONFIG_FILE}
+CMD /bin/bash "-c" "source ./install/local_setup.bash && ros2 launch reseq_ros2 reseq_launch.py sensors:=false config_file:=$CONFIG_FILE"

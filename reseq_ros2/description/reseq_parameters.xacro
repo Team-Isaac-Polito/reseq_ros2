@@ -3,7 +3,7 @@
 
   <!-- import values from config.yaml file -->
 
-  <xacro:arg name="config_path" default="$(find reseq_ros2)/config/reseq_mk1_can.yaml"/>
+  <xacro:arg name="config_path" default="$(find reseq_ros2)/config/reseq_mk2_can.yaml"/>
   <xacro:property name="config_path_prop" value="$(arg config_path)"/>
 
   <xacro:property name="config" value="${xacro.load_yaml(config_path_prop)}"/>
@@ -19,6 +19,8 @@
   <!-- chassis related -->
   <xacro:property name="NumModules" value="${config['num_modules']}"/>
   <xacro:property name="WheelBase" value="${config['xacro']['WheelBase']}"/>
+  <xacro:property name="WheelMu1" value="${config['xacro']['WheelMu1']}"/>
+  <xacro:property name="WheelMu2" value="${config['xacro']['WheelMu2']}"/>
   <xacro:property name="EquivalentWheelDiameter" value="${r_eq*2}"/>
   <xacro:property name="ModuleWidth" value="${config['xacro']['ModuleWidth']}"/>
   <xacro:property name="TrackWidth" value="${config['xacro']['TrackWidth']}"/>
@@ -41,21 +43,6 @@
   <xacro:property name="JointAMass" value="${config['xacro']['JointAMass']}"/>
   <xacro:property name="JointBMass" value="${config['xacro']['JointBMass']}"/>
 
-  <!-- arm related (only mk1) -->
-  <xacro:property name="ForkThickness" value="${config['xacro']['ForkThickness']}"/>
-  <xacro:property name="ForkHeight" value="${config['xacro']['ForkHeight']}"/>
-  <xacro:property name="JetsonHolderLength" value="${config['xacro']['JetsonHolderLength']}"/>
-  <xacro:property name="JetsonHolderWidth" value="${config['xacro']['JetsonHolderWidth']}"/>
-  <xacro:property name="CylinderOnJetsonLength" value="${config['xacro']['CylinderOnJetsonLength']}"/>
-  <xacro:property name="CylinderOnJetsonRadius" value="${config['xacro']['CylinderOnJetsonRadius']}"/>
-  <xacro:property name="CylinderOnJetsonShift" value="${config['xacro']['CylinderOnJetsonShift']}"/>
-  <xacro:property name="CylinderRealsenseLength" value="${config['xacro']['CylinderRealsenseLength']}"/>
-  <xacro:property name="CylinderRealsenseRadius" value="${config['xacro']['CylinderRealsenseRadius']}"/>
-  <xacro:property name="RealsenseLength" value="${config['xacro']['RealsenseLength']}"/>
-  <xacro:property name="RealsenseWidth" value="${config['xacro']['RealsenseWidth']}"/>
-  <xacro:property name="RealsenseHeight" value="${config['xacro']['RealsenseHeight']}"/>
-  <xacro:property name="RealsenseOriginSystem" value="${config['xacro']['RealsenseOriginSystem']}"/>
-
   <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->
   <material name="ChassisColor">
     <color rgba="1 1 1 1" />
@@ -64,9 +51,6 @@
     <color rgba="0 0 0 1" />
   </material>
   <material name="JointColor">
-    <color rgba="0.5 0.5 0.5 1" />
-  </material>
-  <material name="ArmColor">
     <color rgba="0.5 0.5 0.5 1" />
   </material>
   <material name="LidarColor">
