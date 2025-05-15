@@ -106,7 +106,7 @@ class TestAgevarFunctional(unittest.TestCase):
 
         # Verify constrained values
         expected_angle = pi / 4
-        self.assertAlmostEqual(node.yaw_angles[module_num - 17], expected_angle)
+        self.assertAlmostEqual(node.yaw_angles[module_num % 16 - 1], expected_angle)
 
         # Test case: values not within constraints
         angle_msg.data = 180.0
@@ -116,7 +116,7 @@ class TestAgevarFunctional(unittest.TestCase):
 
         # Verify constrained values
         expected_angle = -pi
-        self.assertAlmostEqual(node.yaw_angles[module_num - 17], expected_angle)
+        self.assertAlmostEqual(node.yaw_angles[module_num % 16 - 1], expected_angle)
 
     def test_7_remote_callback(self):
         """Test the remote_callback function."""
