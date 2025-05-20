@@ -50,6 +50,17 @@ def generate_launch_description():
             executable='create',
             arguments=['-name', 'reseq', '-topic', '/robot_description'],
             output='screen')
+    
+    bridge_params = os.path.join(get_package_share_directory(package_name),'config','gz_bridge.yaml')
+    ros_gz_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=[
+            '--ros-args',
+            '-p',
+            f'config_file:={bridge_params}',
+        ]
+    )
 
     return LaunchDescription([
         # ExecuteProcess(
@@ -59,4 +70,5 @@ def generate_launch_description():
         rsp,
         gazebo,
         spawn_entity,
+        ros_gz_bridge,
     ])
