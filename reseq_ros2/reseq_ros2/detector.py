@@ -1,3 +1,7 @@
+import sys
+import os
+import traceback
+
 import rclpy
 import rclpy.logging
 from rclpy.node import Node
@@ -5,10 +9,6 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from ultralytics import YOLO
 import cv2
-import traceback
-
-import sys
-import os
 
 # Add `/src` to PYTHONPATH to import the necessary modules from reseq_cv
 sys.path.append(os.path.expanduser('~/ros2_ws/src'))
