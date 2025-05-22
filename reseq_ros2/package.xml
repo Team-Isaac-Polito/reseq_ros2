@@ -18,6 +18,13 @@
   <exec_depend>sensor_msgs</exec_depend>
 
   <exec_depend>realsense2_camera</exec_depend>
+  <exec_depend>python3-pyzbar</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-sklearn</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>cv-bridge</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>python3-ultralytics</exec_depend>
 
   <exec_depend>rplidar_ros</exec_depend>
 
