@@ -30,7 +30,13 @@ RUN apt update && apt install -y --no-install-recommends \
         ca-certificates \
         libusb-1.0-0 \
         udev \
-        apt-transport-https
+        apt-transport-https \
+        python3-opencv \
+        libopencv-contrib-dev \
+        python3-pyzbar \
+        python3-numpy \
+        python3-sklearn \
+        python3-scipy 
 
 # Compile librealsense with CUDA and Linux Modules
 RUN git clone https://github.com/IntelRealSense/librealsense.git && \
@@ -60,7 +66,8 @@ ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 # Setup ROS2 environment to compile ROS packages
 RUN pip install \
         colcon-common-extensions \
-        colcon-mixin 
+        colcon-mixin \
+        ultralytics 
 
 RUN colcon mixin add default \
         https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
