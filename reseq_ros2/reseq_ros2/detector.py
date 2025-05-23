@@ -48,23 +48,15 @@ class Detector(Node):
 
         # Create publishers for the model output
         self.model_pub = self.create_publisher(Image, '/detector/model_output', 10)
-        self.detection_pub = self.create_publisher(
-            Detection, '/object_detection/detections', 10
-        )
-        self.depth_pub = self.create_publisher(
-            Image, '/object_detection/depthsized', 10
-        )
+        self.detection_pub = self.create_publisher(Detection, '/object_detection/detections', 10)
+        self.depth_pub = self.create_publisher(Image, '/object_detection/depthsized', 10)
 
         # Set the image size for the YOLO model
         self.img_size = (1280, 720)
 
         # Define the model path
-        model_path1 = os.path.expanduser(
-            '~/ros2_ws/src/reseq_cv/hazmat_detection/best.pt'
-        )
-        model_path2 = os.path.expanduser(
-            '~/ros2_ws/src/reseq_cv/object_detection/best.pt'
-        )
+        model_path1 = os.path.expanduser('~/ros2_ws/src/reseq_cv/hazmat_detection/best.pt')
+        model_path2 = os.path.expanduser('~/ros2_ws/src/reseq_cv/object_detection/best.pt')
 
         # Initialize the YOLO model
         self.model1 = YOLO(model_path1)
@@ -117,12 +109,8 @@ class Detector(Node):
                         detection_msg.type = 'hazmat_sign'
                         detection_msg.name = str(label)
                         detection_msg.z = float(self.depth_image[mid_y, mid_x]) / 1e3
-                        detection_msg.x = float(
-                            (mid_x - self.c_x) * detection_msg.z / self.f_x
-                        )
-                        detection_msg.y = float(
-                            (mid_y - self.c_y) * detection_msg.z / self.f_y
-                        )
+                        detection_msg.x = float((mid_x - self.c_x) * detection_msg.z / self.f_x)
+                        detection_msg.y = float((mid_y - self.c_y) * detection_msg.z / self.f_y)
                         cv2.circle(
                             color_image,
                             (mid_x, mid_y),
@@ -188,12 +176,8 @@ class Detector(Node):
                         detection_msg.type = 'real_object'
                         detection_msg.name = str(label)
                         detection_msg.z = float(self.depth_image[mid_y, mid_x]) / 1e3
-                        detection_msg.x = float(
-                            (mid_x - self.c_x) * detection_msg.z / self.f_x
-                        )
-                        detection_msg.y = float(
-                            (mid_y - self.c_y) * detection_msg.z / self.f_y
-                        )
+                        detection_msg.x = float((mid_x - self.c_x) * detection_msg.z / self.f_x)
+                        detection_msg.y = float((mid_y - self.c_y) * detection_msg.z / self.f_y)
                         detection_msg.robot = 'reseq'
                         detection_msg.mode = 'A'
                         detection_msg.confidence = float(conf)
@@ -228,9 +212,7 @@ class Detector(Node):
             cv2.destroyAllWindows()
 
     def depth_callback(self, msg):
-        self.depth_image = self.bridge.imgmsg_to_cv2(
-            msg, desired_encoding='passthrough'
-        )
+        self.depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
 
 
 def main(args=None):
