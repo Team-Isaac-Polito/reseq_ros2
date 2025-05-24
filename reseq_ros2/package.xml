@@ -24,7 +24,6 @@
   <exec_depend>python3-scipy</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>python3-opencv</exec_depend>
-  <exec_depend>python3-ultralytics</exec_depend>
 
   <exec_depend>rplidar_ros</exec_depend>
 
