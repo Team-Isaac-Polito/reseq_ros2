@@ -18,7 +18,6 @@
   <exec_depend>sensor_msgs</exec_depend>
 
   <exec_depend>realsense2_camera</exec_depend>
-  <exec_depend>python3-pyzbar</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-sklearn</exec_depend>
   <exec_depend>python3-scipy</exec_depend>
