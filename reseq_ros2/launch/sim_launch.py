@@ -55,6 +55,9 @@ def generate_launch_description():
     ros_gz_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
+        parameters = [{
+            'use_sim_time': True
+        }],
         arguments=[
             '--ros-args',
             '-p',
