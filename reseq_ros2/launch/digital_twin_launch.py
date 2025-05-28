@@ -66,19 +66,20 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(control_node)
 
-    joint_state_broadcaster_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=[
-            'joint_state_broadcaster',
-            '--controller-manager',
-            '/controller_manager',
-            '--ros-args',
-            '--log-level',
-            external_log_level,
-        ],
-    )
-    launch_config.append(joint_state_broadcaster_spawner)
+    if config['version'] == 'mk1':
+        joint_state_broadcaster_spawner = Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=[
+                'joint_state_broadcaster',
+                '--controller-manager',
+                '/controller_manager',
+                '--ros-args',
+                '--log-level',
+                external_log_level,
+            ],
+        )
+        launch_config.append(joint_state_broadcaster_spawner)
 
     num_modules = config.get('num_modules', 0)
     for i in range(num_modules):
@@ -110,7 +111,6 @@ def launch_setup(context, *args, **kwargs):
         arguments=['--ros-args', '--log-level', external_log_level],
     )
     launch_config.append(robot_state_publisher_node)
-
     if config['canbus']['channel'].startswith('vcan'):
         feedback_replicator = Node(
             package='reseq_ros2',
