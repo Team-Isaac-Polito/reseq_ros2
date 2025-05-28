@@ -1,0 +1,9 @@
+# Default initial positions for simplified_arm_assembly's ros2_control fake system
+
+initial_positions:
+  pitch_joint_1: 0
+  pitch_joint_3: 0
+  pitch_joint_5: 0
+  roll_joint_2: 0
+  roll_joint_4: 0
+  roll_joint_6: 0
