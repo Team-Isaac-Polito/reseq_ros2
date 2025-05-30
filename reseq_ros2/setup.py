@@ -14,6 +14,7 @@ setup(
         (f'share/{package_name}/scripts', glob('scripts/*.py')),
         (f'share/{package_name}/description', glob('description/*.xacro')),
         (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),
+        (f'share/{package_name}/ml-ckpt', glob('ml-ckpt/*.pt')),
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
@@ -34,6 +35,7 @@ setup(
             'joint_publisher = reseq_ros2.joint_publisher:main',
             'feedback_replicator = reseq_ros2.feedback_replicator:main',
             'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
+            'detector = reseq_ros2.detector:main',
         ],
     },
 )
