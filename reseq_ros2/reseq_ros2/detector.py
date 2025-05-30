@@ -6,18 +6,19 @@ import rclpy
 import rclpy.logging
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 from ultralytics import YOLO
 import cv2
 
-# Add `/src` to PYTHONPATH to import the necessary modules from reseq_cv
-sys.path.append(os.path.expanduser('~/ros2_ws/src'))
-
-from reseq_cv.orientation_detection.concentric_c import OrientationDetection
-from reseq_cv.motion_detection.motion_detection import MotionDetection
-from reseq_cv.qr_apriltag_detection.qr_reader import process_qr_codes
-from reseq_interfaces.msg import Detection
+from reseq_ros2.reseq_cv.orientation_detection.concentric_c import OrientationDetection
+from reseq_ros2.reseq_cv.motion_detection.motion_detection import MotionDetection
+from reseq_ros2.reseq_cv.qr_apriltag_detection.qr_reader import process_qr_codes
+from reseq_ros2.reseq_interfaces.msg import Detection
 # from reseq_cv.qr_apriltag_detection.apriltag_reader import process_apriltags  # not available
+
+share_folder = get_package_share_directory('reseq_ros2')
+models_path = f'{share_folder}/ml-ckpt'
 
 """
 ROS node for detection and processing images using YOLO and custom models.
@@ -55,8 +56,8 @@ class Detector(Node):
         self.img_size = (1280, 720)
 
         # Define the model path
-        model_path1 = os.path.expanduser('~/ros2_ws/src/reseq_cv/hazmat_detection/best.pt')
-        model_path2 = os.path.expanduser('~/ros2_ws/src/reseq_cv/object_detection/best.pt')
+        model_path1 = f"{models_path}/hazmat_detection.pt"
+        model_path2 = f"{models_path}/object_detection.pt"
 
         # Initialize the YOLO model
         self.model1 = YOLO(model_path1)
