@@ -13,7 +13,7 @@
       <child link="module_joint"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </joint>
-  
+
 
   <link
     name="module_joint">
@@ -108,7 +108,7 @@
     <axis
       xyz="0 0 -1" />
     <limit
-      lower="-1.309"
+      lower="-3.14"
       upper="1.309"
       effort="6"
       velocity="2" />
@@ -166,7 +166,7 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="0"
+      lower="-6.28"
       upper="6.28"
       effort="6"
       velocity="2" />
@@ -282,7 +282,7 @@
     <axis
       xyz="0 0 1" />
     <limit
-      lower="0"
+      lower="-6.28"
       upper="6.28"
       effort="3"
       velocity="1" />
