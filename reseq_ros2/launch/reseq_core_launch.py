@@ -92,15 +92,42 @@ def launch_setup(context, *args, **kwargs):
     launch_config.append(
         Node(
             package='reseq_ros2',
+            executable='pivot_controller',
+            name='pivot_controller',
+            parameters=[
+                {
+                    'modules': addresses,
+                    'd': config['agevar_consts']['d'],
+                    'r_eq': config['agevar_consts']['r_eq'],
+                }
+            ],
+            arguments=['--ros-args', '--log-level', log_level],
+            on_exit=Shutdown(),
+        )
+    )
+
+    launch_config.append(
+        Node(
+            package='reseq_ros2',
             executable='scaler',
             name='scaler',
             parameters=[
                 {
-                    'r_linear_vel': config['scaler_consts']['r_linear_vel'],
-                    'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
-                    'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
-                    'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
-                    'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
+                    **{
+                        'r_linear_vel': config['scaler_consts']['r_linear_vel'],
+                        'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
+                        'r_angular_vel': config['scaler_consts']['r_angular_vel'],
+                        'version': config['version'],
+                    },
+                    **(
+                        {
+                            'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
+                            'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
+                            'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
+                        }
+                        if config['version'] == 'mk1'
+                        else {}
+                    ),
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
