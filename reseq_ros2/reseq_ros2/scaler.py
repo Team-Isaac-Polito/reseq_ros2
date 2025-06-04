@@ -2,7 +2,7 @@ import traceback
 from enum import Enum, IntEnum
 
 import rclpy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Vector3
 from rclpy.node import Node
 from std_srvs.srv import SetBool
 
@@ -25,7 +25,7 @@ and an optional hook function to be executed after the service is called.
 class Scaler(Node):
     control_mode_enum: Enum = Enum('ControlMode', 'AGEVAR, PIVOT')
     buttons_enum: IntEnum = IntEnum(
-        'Buttons', 'S1, S2, S3, S4, S5 BGREEN, BBLACK, BRED, BWHITE, BBLUE', start=0
+        'Buttons', 'S1, S2, S3, S4, S5, BGREEN, BBLACK, BRED, BWHITE, BBLUE', start=0
     )
 
     # OBSERVATIONS: The switches are zero in the upwards position,
@@ -51,6 +51,12 @@ class Scaler(Node):
             'service': '/pivot_controller/pivot_on_head',
             'inverted': True,
             'condition': lambda b: not b[Scaler.buttons_enum.BBLUE],
+        },
+        {
+            'name': 'Switch type of velocity of mk2 arm',
+            'button': buttons_enum.BGREEN,
+            'service': '/moveit_controller/switch_vel',
+            'inverted': False,
         },
     ]
 
@@ -101,6 +107,8 @@ class Scaler(Node):
 
         if self.enea_enabled:
             self.enea_pub = self.create_publisher(EndEffector, '/end_effector', 10)
+        else:
+            self.moveit_pub = self.create_publisher(Vector3, '/mk2_arm_vel', 10)
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
@@ -123,7 +131,7 @@ class Scaler(Node):
         self.previous_buttons = buttons
 
     def remote_callback(self, data: Remote):
-        self.handle_buttons(data.buttons)
+        self.handle_buttons(data.switches + data.buttons)
 
         cmd_vel = Twist()
         cmd_vel.linear.x = data.right.y  # Linear velocity (-1:1)
@@ -144,6 +152,13 @@ class Scaler(Node):
 
             end_e = self.endEffectorScaler(end_e)
             self.enea_pub.publish(end_e)
+        else:
+            moveit_msg = Vector3()
+            moveit_msg.x = data.left.x
+            moveit_msg.y = data.left.z
+            moveit_msg.z = data.left.y
+            
+            self.moveit_pub.publish(moveit_msg)
 
     def pivotScaler(self, data: Twist):
         data.linear.x = 0.0
