@@ -3,6 +3,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch.events import Shutdown
 from launch_param_builder import ParameterBuilder
 
 from moveit_configs_utils import MoveItConfigsBuilder
@@ -103,6 +104,16 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
     launch_config.append(servo_node)
+
+    moveit_controller_node = Node(
+        package='reseq_ros2',
+        executable='moveit_controller',
+        name='moveit_controller',
+        #parameters=[],
+        arguments=['--ros-args', '--log-level', log_level],
+        on_exit=Shutdown(),
+    )
+    launch_config.append(moveit_controller_node)
 
     if digital_twin_enabled == 'false':
         robot_state_publisher_node = Node(
