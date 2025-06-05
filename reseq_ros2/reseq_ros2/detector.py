@@ -14,11 +14,10 @@ from geometry_msgs.msg import PointStamped
 from tf2_ros import Buffer, TransformListener
 import tf2_geometry_msgs
 
-from reseq_ros2.reseq_cv.orientation_detection.concentric_c import OrientationDetection
-from reseq_ros2.reseq_cv.motion_detection.motion_detection import MotionDetection
-from reseq_ros2.reseq_cv.qr_apriltag_detection.qr_reader import process_qr_codes
+from reseq_ros2.reseq_cv.orientation import OrientationDetection
+from reseq_ros2.reseq_cv.motion import MotionDetection
+from reseq_ros2.reseq_cv.qr_reader import process_qr_codes
 from reseq_ros2.reseq_interfaces.msg import Detection
-# from reseq_cv.qr_apriltag_detection.apriltag_reader import process_apriltags  # not available
 
 share_folder = get_package_share_directory('reseq_ros2')
 models_path = f'{share_folder}/ml-ckpt'
