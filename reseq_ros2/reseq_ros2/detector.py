@@ -10,6 +10,9 @@ from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 from ultralytics import YOLO
 import cv2
+from geometry_msgs.msg import PointStamped
+from tf2_ros import Buffer, TransformListener
+import tf2_geometry_msgs
 
 from reseq_ros2.reseq_cv.orientation_detection.concentric_c import OrientationDetection
 from reseq_ros2.reseq_cv.motion_detection.motion_detection import MotionDetection
@@ -73,6 +76,12 @@ class Detector(Node):
         self.c_x = 648.6353
         self.c_y = 369.6105
 
+        # TF2 setup
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.fixed_frame = 'odom'
+        self.camera_frame = 'camera_depth_optical_frame'
+
     def image_callback(self, msg):
         # Convert ROS Image message to OpenCV image
         color_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -109,9 +118,30 @@ class Detector(Node):
                         detection_msg.time = self.get_clock().now().to_msg()
                         detection_msg.type = 'hazmat_sign'
                         detection_msg.name = str(label)
-                        detection_msg.z = float(self.depth_image[mid_y, mid_x]) / 1e3
-                        detection_msg.x = float((mid_x - self.c_x) * detection_msg.z / self.f_x)
-                        detection_msg.y = float((mid_y - self.c_y) * detection_msg.z / self.f_y)
+                        # --- TF2 transform to fixed frame ---
+                        point_cam = PointStamped()
+                        point_cam.header.stamp = rclpy.time.Time().to_msg()
+                        point_cam.header.frame_id = self.camera_frame
+                        point_cam.point.z = float(self.depth_image[mid_y, mid_x]) / 1e3
+                        point_cam.point.x = float(
+                            (mid_x - self.c_x) * point_cam.point.z / self.f_x
+                        )
+                        point_cam.point.y = float(
+                            (mid_y - self.c_y) * point_cam.point.z / self.f_y
+                        )
+                        try:
+                            trans = self.tf_buffer.lookup_transform(
+                                self.fixed_frame,
+                                self.camera_frame,
+                                rclpy.time.Time(),
+                            )
+                            point_world = tf2_geometry_msgs.do_transform_point(point_cam, trans)
+                            detection_msg.x = point_world.point.x
+                            detection_msg.y = point_world.point.y
+                            detection_msg.z = point_world.point.z
+                        except Exception as e:
+                            self.get_logger().warn(f'TF transform failed: {e}')
+                        # --- End TF2 transform ---
                         cv2.circle(
                             color_image,
                             (mid_x, mid_y),
@@ -176,9 +206,30 @@ class Detector(Node):
                         detection_msg.time = self.get_clock().now().to_msg()
                         detection_msg.type = 'real_object'
                         detection_msg.name = str(label)
-                        detection_msg.z = float(self.depth_image[mid_y, mid_x]) / 1e3
-                        detection_msg.x = float((mid_x - self.c_x) * detection_msg.z / self.f_x)
-                        detection_msg.y = float((mid_y - self.c_y) * detection_msg.z / self.f_y)
+                        # --- TF2 transform to fixed frame ---
+                        point_cam = PointStamped()
+                        point_cam.header.stamp = rclpy.time.Time().to_msg()
+                        point_cam.header.frame_id = self.camera_frame
+                        point_cam.point.z = float(self.depth_image[mid_y, mid_x]) / 1e3
+                        point_cam.point.x = float(
+                            (mid_x - self.c_x) * point_cam.point.z / self.f_x
+                        )
+                        point_cam.point.y = float(
+                            (mid_y - self.c_y) * point_cam.point.z / self.f_y
+                        )
+                        try:
+                            trans = self.tf_buffer.lookup_transform(
+                                self.fixed_frame,
+                                self.camera_frame,
+                                rclpy.time.Time(),
+                            )
+                            point_world = tf2_geometry_msgs.do_transform_point(point_cam, trans)
+                            detection_msg.x = point_world.point.x
+                            detection_msg.y = point_world.point.y
+                            detection_msg.z = point_world.point.z
+                        except Exception as e:
+                            self.get_logger().warn(f'TF transform failed: {e}')
+                        # --- End TF2 transform ---
                         detection_msg.robot = 'reseq'
                         detection_msg.mode = 'A'
                         detection_msg.confidence = float(conf)
