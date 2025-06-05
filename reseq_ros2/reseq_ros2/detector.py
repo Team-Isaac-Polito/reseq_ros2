@@ -1,5 +1,3 @@
-import sys
-import os
 import traceback
 
 import rclpy
@@ -17,7 +15,7 @@ import tf2_geometry_msgs
 from reseq_ros2.reseq_cv.orientation import OrientationDetection
 from reseq_ros2.reseq_cv.motion import MotionDetection
 from reseq_ros2.reseq_cv.qr_reader import process_qr_codes
-from reseq_ros2.reseq_interfaces.msg import Detection
+from reseq_interfaces.msg import Detection
 
 share_folder = get_package_share_directory('reseq_ros2')
 models_path = f'{share_folder}/ml-ckpt'
@@ -58,8 +56,8 @@ class Detector(Node):
         self.img_size = (1280, 720)
 
         # Define the model path
-        model_path1 = f"{models_path}/hazmat_detection.pt"
-        model_path2 = f"{models_path}/object_detection.pt"
+        model_path1 = f'{models_path}/hazmat_detection.pt'
+        model_path2 = f'{models_path}/object_detection.pt'
 
         # Initialize the YOLO model
         self.model1 = YOLO(model_path1)
