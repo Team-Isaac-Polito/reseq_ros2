@@ -38,11 +38,14 @@ class Detector(Node):
 
         # Subscribe to the camera color and depth image topic
         self.color_subscription = self.create_subscription(
-            Image, '/camera/camera/color/image_raw', self.image_callback, 10
+            Image,
+            '/realsense/realsense2_camera_node/color/image_raw',
+            self.image_callback,
+            10,
         )
         self.depth_subscription = self.create_subscription(
             Image,
-            '/camera/camera/aligned_depth_to_color/image_raw',
+            '/realsense/realsense2_camera_node/aligned_depth_to_color/image_raw',
             self.depth_callback,
             10,
         )
@@ -173,7 +176,7 @@ class Detector(Node):
                         )
                         self.depth_pub.publish(depth_image)
                         detection_msg.robot = 'reseq'
-                        detection_msg.mode = 'A'
+                        detection_msg.mode = 'T'
                         detection_msg.confidence = float(conf)
                         self.detection_pub.publish(detection_msg)
 
@@ -243,7 +246,7 @@ class Detector(Node):
                             self.get_logger().warn(f'TF transform failed: {e}')
                         # --- End TF2 transform ---
                         detection_msg.robot = 'reseq'
-                        detection_msg.mode = 'A'
+                        detection_msg.mode = 'T'
                         detection_msg.confidence = float(conf)
                         self.detection_pub.publish(detection_msg)
 
