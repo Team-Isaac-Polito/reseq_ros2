@@ -16,6 +16,7 @@ from reseq_ros2.reseq_cv.orientation import OrientationDetection
 from reseq_ros2.reseq_cv.motion import MotionDetection
 from reseq_ros2.reseq_cv.qr_reader import process_qr_codes
 from reseq_interfaces.msg import Detection
+from std_srvs.srv import SetBool
 
 share_folder = get_package_share_directory('reseq_ros2')
 models_path = f'{share_folder}/ml-ckpt'
@@ -79,7 +80,21 @@ class Detector(Node):
         self.fixed_frame = 'odom'
         self.camera_frame = 'camera_depth_optical_frame'
 
+        # Detection control
+        self.active = True  # Detection is active by default
+        self.srv = self.create_service(SetBool, '/detector_control', self.handle_detector_control)
+
+    def handle_detector_control(self, request, response):
+        self.active = request.data
+        response.success = True
+        response.message = f'Detector {"started" if self.active else "stopped"}'
+        self.get_logger().info(response.message)
+        return response
+
     def image_callback(self, msg):
+        if not self.active:
+            return  # Do nothing if detector is stopped
+
         # Convert ROS Image message to OpenCV image
         color_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
@@ -261,6 +276,9 @@ class Detector(Node):
             cv2.destroyAllWindows()
 
     def depth_callback(self, msg):
+        if not self.active:
+            return  # Do nothing if detector is stopped
+
         self.depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
 
 
