@@ -2,7 +2,7 @@ realsense:
   realsense2_camera_node: 
     ros__parameters:
       enable_color: true
-      enable_depth: false
+      enable_depth: true
       enable_infra1: false
       enable_infra2: false
       enable_gyro: true
@@ -11,6 +11,8 @@ realsense:
       rgb_camera:
         color_format: RGB8
         color_profile: 960X540X30
+      align_depth:
+        enable: true
 
       ".realsense2_camera_node.color.image_raw.jpeg_quality": 30
       ".realsense2_camera_node.depth.image_rect_raw.format": png
