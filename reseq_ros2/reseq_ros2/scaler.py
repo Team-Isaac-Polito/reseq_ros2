@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import traceback
 from enum import Enum, IntEnum
 
@@ -25,7 +27,7 @@ and an optional hook function to be executed after the service is called.
 class Scaler(Node):
     control_mode_enum: Enum = Enum('ControlMode', 'AGEVAR, PIVOT')
     buttons_enum: IntEnum = IntEnum(
-        'Buttons', 'S1, S2, S3, S4, S5 BGREEN, BBLACK, BRED, BWHITE, BBLUE', start=0
+        'Buttons', 'S1, S2, S3, S4, S5, BGREEN, BBLACK, BRED, BWHITE, BBLUE', start=0
     )
 
     # OBSERVATIONS: The switches are zero in the upwards position,
@@ -115,7 +117,7 @@ class Scaler(Node):
                 if 'condition' not in handler or handler['condition'](buttons):
                     data = handler['inverted'] ^ buttons[handler['button']]
                     handler['service'].call_async(SetBool.Request(data=data))
-                    if 'hook' in handler:
+                    if 'hook' in handler and data:
                         handler['hook'](self)
                     self.get_logger().debug(
                         f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}, value={data}"  # noqa
