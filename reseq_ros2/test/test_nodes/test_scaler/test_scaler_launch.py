@@ -55,6 +55,8 @@ class TestScalerLaunch(unittest.TestCase):
         cls.expected_params = {
             'r_linear_vel': [-0.27017, 0.27017],
             'r_inverse_radius': [-1.5385, 1.5385],
+            'r_angular_vel': [-2.8387, 2.8387],
+            'version': 'mk1',
             'r_pitch_vel': [-183, 183],
             'r_head_pitch_vel': [-400, 400],
             'r_head_roll_vel': [-455, 455],
