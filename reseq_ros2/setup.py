@@ -36,6 +36,7 @@ setup(
             'feedback_replicator = reseq_ros2.feedback_replicator:main',
             'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
             'detector = reseq_ros2.detector:main',
+            'pivot_controller = reseq_ros2.pivot_controller:main',
         ],
     },
 )
