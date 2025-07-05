@@ -115,7 +115,17 @@ class Communication(Node):
         module_id = decoded_aid[3] % 16 - 1
         topic = self.topic_from_id(decoded_aid[1])
 
-        self.get_logger().debug(f'Publishing to {topic.name} on module{decoded_aid[3]}')
+        if topic is None:
+            self.get_logger().warn(
+                f'Unknown topic with CAN ID {hex(decoded_aid[1])} from module {hex(decoded_aid[3])}',  # noqa
+                once=True,
+            )
+            self.get_logger().debug(
+                f'Unknown topic with CAN ID {hex(decoded_aid[1])} from module {hex(decoded_aid[3])}'  # noqa
+            )
+            return
+
+        self.get_logger().debug(f'Publishing to {topic.name} on module {hex(decoded_aid[3])}')
 
         # check if the message contains one or two floats
         if topic.data_type == Float32:
@@ -170,8 +180,8 @@ class Communication(Node):
     def topics_from_direction(self, d: rc.Direction):
         return list(filter(lambda x: x.direction == d, rc.topics))
 
-    def topic_from_id(self, topic_id: int) -> rc.ReseQTopic:
-        return next(filter(lambda x: x.can_id == topic_id, rc.topics))
+    def topic_from_id(self, topic_id: int) -> rc.ReseQTopic | None:
+        return next(filter(lambda x: x.can_id == topic_id, rc.topics), None)
 
     def topic_from_name(self, name: str) -> rc.ReseQTopic:
         return next(filter(lambda x: x.name == name, rc.topics))
