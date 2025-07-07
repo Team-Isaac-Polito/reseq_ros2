@@ -118,6 +118,9 @@ class Scaler(Node):
         if buttons == self.previous_buttons:
             return
 
+        if len(buttons) == 0:
+            return
+
         for handler in self.handlers:
             if buttons[handler['button']] != self.previous_buttons[handler['button']]:
                 if 'condition' not in handler or handler['condition'](buttons):
