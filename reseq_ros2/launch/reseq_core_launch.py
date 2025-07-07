@@ -42,6 +42,7 @@ def launch_setup(context, *args, **kwargs):
                 name='communication',
                 parameters=[
                     {
+                        'version': config['version'],
                         'can_channel': config['canbus']['channel'],
                         'modules': addresses,
                         'joints': joints,
@@ -60,6 +61,7 @@ def launch_setup(context, *args, **kwargs):
                 name='communication',
                 parameters=[
                     {
+                        'version': config['version'],
                         'can_channel': config['canbus']['channel'],
                         'modules': addresses,
                         'joints': joints,
@@ -166,6 +168,7 @@ def launch_setup(context, *args, **kwargs):
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(mk2_arm_launch_file),
             launch_arguments={
+                'config_file': config_filename,
                 'log_level': log_level,
                 'd_twin': digital_twin_enabled,
             }.items(),
