@@ -5,12 +5,12 @@ realsense:
       enable_depth: true
       enable_infra1: false
       enable_infra2: false
-      enable_gyro: true
-      enable_accel: true
+      enable_gyro: false
+      enable_accel: false
 
       rgb_camera:
         color_format: RGB8
-        color_profile: 960X540X30
+        color_profile: 640X480X30
       align_depth:
         enable: true
 
