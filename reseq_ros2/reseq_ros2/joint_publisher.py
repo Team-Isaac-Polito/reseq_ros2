@@ -158,8 +158,8 @@ class JointPublisher(Node):
         """
         # Send wheel velocities for each module
         for i, vel in enumerate(self.wheel_velocities):
-            vl = vel[0] * rc.rpm2rads * self.r
-            vr = vel[1] * rc.rpm2rads * self.r
+            vl = vel[0] * rc.rpm2rads * self.r_eq
+            vr = vel[1] * rc.rpm2rads * self.r_eq
 
             # compute velocity of the module given the feedback velocity of its wheels
             w = (vr - vl) / self.d
