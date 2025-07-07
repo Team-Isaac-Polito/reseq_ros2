@@ -46,7 +46,8 @@ def launch_setup(context, *args, **kwargs):
                     'head_roll_origin': config['joint_pub_consts']['head_roll_origin'],
                     'vel_gain': config['joint_pub_consts']['vel_gain'],
                     'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
-                    'b': config['agevar_consts']['b'],
+                    'd': config['agevar_consts']['d'],
+                    'r_eq': config['agevar_consts']['r_eq'],
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
