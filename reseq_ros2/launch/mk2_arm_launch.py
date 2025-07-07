@@ -33,7 +33,7 @@ def launch_setup(context, *args, **kwargs):
         )
         .robot_description(file_path="config/simplified_arm_assembly.urdf.xacro")
         .robot_description_semantic(file_path="config/simplified_arm_assembly.srdf")
-        .robot_description_kinematics(file_path="config/bio_ik_kinematics.yaml")
+        .robot_description_kinematics(file_path="config/kinematics.yaml")
         .joint_limits(file_path="config/joint_limits.yaml")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
         .pilz_cartesian_limits(file_path="config/pilz_cartesian_limits.yaml")
@@ -50,8 +50,15 @@ def launch_setup(context, *args, **kwargs):
         .to_dict()    
     }
 
-    acceleration_filter_update_period = {"update_period": 0.01}
-    planning_group_name = {"planning_group_name": "mk2_arm"}
+    if digital_twin_enabled == 'false':
+        robot_state_publisher_node = Node(
+            package="robot_state_publisher",
+            executable="robot_state_publisher",
+            name="robot_state_publisher",
+            output="log",
+            parameters=[moveit_config.robot_description],
+        )
+        launch_config.append(robot_state_publisher_node)
 
     robot_controllers = f'{config_path}/reseq_controllers.yaml'
     control_node = Node(
@@ -89,16 +96,13 @@ def launch_setup(context, *args, **kwargs):
 
     servo_node = Node(
         package="moveit_servo",
-        executable="servo_node",
+        executable="servo_node_main",
         name="servo_node",
         parameters=[
             servo_params,
-            acceleration_filter_update_period,
-            planning_group_name,
             moveit_config.robot_description,
             moveit_config.robot_description_semantic,
             moveit_config.robot_description_kinematics,
-            moveit_config.joint_limits
         ],
         arguments=['--ros-args', '--log-level', external_log_level],
         output="screen",
@@ -115,15 +119,6 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(moveit_controller_node)
 
-    if digital_twin_enabled == 'false':
-        robot_state_publisher_node = Node(
-            package="robot_state_publisher",
-            executable="robot_state_publisher",
-            name="robot_state_publisher",
-            output="log",
-            parameters=[moveit_config.robot_description],
-        )
-        launch_config.append(robot_state_publisher_node)
 
     return launch_config
 
@@ -131,6 +126,7 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('log_level', default_value='info'),
             DeclareLaunchArgument('external_log_level', default_value='warn'),
             DeclareLaunchArgument('d_twin', default_value='true'),

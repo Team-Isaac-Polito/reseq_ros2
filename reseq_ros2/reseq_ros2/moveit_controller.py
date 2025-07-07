@@ -3,9 +3,7 @@ import traceback
 import rclpy
 from geometry_msgs.msg import TwistStamped, Vector3
 from rclpy.node import Node
-from std_srvs.srv import SetBool
-
-from moveit_msgs.srv import ServoCommandType
+from std_srvs.srv import SetBool, Trigger
 
 """
 ROS node that handles communication between Moveit Servo and the data coming from the remote
@@ -32,7 +30,7 @@ class MoveitController(Node):
 
         self.speed_pub = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
 
-        self.set_input_type_to_twist()
+        self.activate_servo()
         
         self.get_logger().info('Moveit controller node started')
 
@@ -58,16 +56,14 @@ class MoveitController(Node):
         return response
 
     
-    def set_input_type_to_twist(self):
-        self.switch_input = self.create_client(ServoCommandType, '/servo_node/switch_command_type')
-        while not self.switch_input.wait_for_service(timeout_sec=1.0):
+    def activate_servo(self):
+        self.activate_service = self.create_client(Trigger, '/servo_node/start_servo')
+        while not self.activate_service.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Switch input service not available, waiting ...')
         
-        self.req = ServoCommandType.Request()
-        self.req.command_type = ServoCommandType.Request().TWIST
-        self.switch_input.call_async(self.req)
+        self.req = Trigger.Request()
+        self.activate_service.call_async(self.req)
         
-
 def main(args=None):
     rclpy.init(args=args)
     try:
