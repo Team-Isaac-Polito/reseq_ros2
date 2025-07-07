@@ -1,7 +1,7 @@
 ---
 include:
   xacro: digital_twin_params_mk2.yaml
-  joint_pub_consts: joint_pub_consts.yaml
+  joint_pub_consts: joint_pub_consts_mk2.yaml
   enea_consts: enea_consts.yaml
   scaler_consts: scaler_consts_mk2.yaml
   agevar_consts: agevar_consts_mk2.yaml
