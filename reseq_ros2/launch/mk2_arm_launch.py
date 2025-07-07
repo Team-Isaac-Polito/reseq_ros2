@@ -12,6 +12,8 @@ import os
 from reseq_ros2.utils.launch_utils import (
     config_path,
     default_filename,
+    get_end_effector,
+    parse_config,
 )
 
 share_folder = get_package_share_directory('reseq_ros2')
@@ -20,9 +22,12 @@ share_folder = get_package_share_directory('reseq_ros2')
 # command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
+    config_filename = LaunchConfiguration('config_file').perform(context)
     log_level = LaunchConfiguration('log_level').perform(context)
     digital_twin_enabled = LaunchConfiguration('d_twin').perform(context)
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
+    config = parse_config(f'{config_path}/{config_filename}')
+    addr = get_end_effector(config)
    
     launch_config = []
 
@@ -113,7 +118,11 @@ def launch_setup(context, *args, **kwargs):
         package='reseq_ros2',
         executable='moveit_controller',
         name='moveit_controller',
-        #parameters=[],
+        parameters=[
+            {
+                'arm_module_address': addr,
+            }
+        ],
         arguments=['--ros-args', '--log-level', log_level],
         on_exit=Shutdown(),
     )
