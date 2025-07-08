@@ -160,20 +160,20 @@ def launch_setup(context, *args, **kwargs):
                 on_exit=Shutdown(),
             )
         )
-    elif config['version'] == 'mk2':
-        mk2_arm_launch_file = os.path.join(
-            get_package_share_directory('reseq_ros2'), 'launch', 'mk2_arm_launch.py'
-        )
-        launch_config.append(
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(mk2_arm_launch_file),
-            launch_arguments={
-                'config_file': config_filename,
-                'log_level': log_level,
-                'd_twin': digital_twin_enabled,
-            }.items(),
-        )
-    )
+    # elif config['version'] == 'mk2':
+    #     mk2_arm_launch_file = os.path.join(
+    #         get_package_share_directory('reseq_ros2'), 'launch', 'mk2_arm_launch.py'
+    #     )
+    #     launch_config.append(
+    #     IncludeLaunchDescription(
+    #         PythonLaunchDescriptionSource(mk2_arm_launch_file),
+    #         launch_arguments={
+    #             'config_file': config_filename,
+    #             'log_level': log_level,
+    #             'd_twin': digital_twin_enabled,
+    #         }.items(),
+    #     )
+    # )
 
     return launch_config
 
