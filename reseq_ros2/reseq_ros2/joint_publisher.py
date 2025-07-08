@@ -51,7 +51,8 @@ class JointPublisher(Node):
             self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
         )
 
-        self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
+        self.d = self.declare_parameter('d', 0.0).get_parameter_value().double_value
+        self.r_eq = self.declare_parameter('r_eq', 0.0).get_parameter_value().double_value
 
         self.arm_pitch_origin = (
             self.declare_parameter('arm_pitch_origin', 0).get_parameter_value().integer_value
@@ -157,11 +158,11 @@ class JointPublisher(Node):
         """
         # Send wheel velocities for each module
         for i, vel in enumerate(self.wheel_velocities):
-            vl = vel[0]
-            vr = vel[1]
+            vl = vel[0] * rc.rpm2rads * self.r_eq
+            vr = vel[1] * rc.rpm2rads * self.r_eq
 
             # compute velocity of the module given the feedback velocity of its wheels
-            w = (vr - vl) / self.b
+            w = (vr - vl) / self.d
             v = (vr + vl) / 2
 
             # publish Twist to differential controller

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import traceback
 from enum import Enum, IntEnum
 
@@ -126,7 +128,7 @@ class Scaler(Node):
                 if 'condition' not in handler or handler['condition'](buttons):
                     data = handler['inverted'] ^ buttons[handler['button']]
                     handler['service'].call_async(SetBool.Request(data=data))
-                    if 'hook' in handler:
+                    if 'hook' in handler and data:
                         handler['hook'](self)
                     self.get_logger().debug(
                         f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}, value={data}"  # noqa

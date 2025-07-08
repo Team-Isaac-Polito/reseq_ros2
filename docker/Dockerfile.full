@@ -60,7 +60,7 @@ ENV LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 # Setup ROS2 environment to compile ROS packages
 RUN pip install \
         colcon-common-extensions \
-        colcon-mixin 
+        colcon-mixin
 
 RUN colcon mixin add default \
         https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
@@ -69,16 +69,18 @@ RUN colcon mixin add default \
         https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
     colcon metadata update
 
-ENV SKIP_KEYS "libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-opencv python3-opencv librealsense2"
+ENV SKIP_KEYS "libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-opencv python3-opencv librealsense2 python3-sklearn python3-scipy python3-numpy"
 
 # Compile automatically dependency packages
 ADD compile_ros_pkgs.py /
+ADD docker/utils/scripts/configure-cv-pipeline.sh /
 
 RUN apt update && python3 compile_ros_pkgs.py realsense2_camera realsense2_description xacro
 RUN apt update && python3 compile_ros_pkgs.py image_transport_plugins
 RUN apt update && python3 compile_ros_pkgs.py rplidar_ros 
 RUN apt update && python3 compile_ros_pkgs.py controller_manager diff_drive_controller joint_state_broadcaster 
 RUN apt update && python3 compile_ros_pkgs.py usb_cam
+RUN configure-cv-pipeline.sh
 
 FROM reseq-base AS reseq
 

@@ -7,7 +7,7 @@ package_name = 'reseq_ros2'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name, f'{package_name}.utils'],
+    packages=[package_name, f'{package_name}.utils', f'{package_name}.reseq_cv'],
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
         (f'share/{package_name}/config', glob('config/*.yaml')),
@@ -16,6 +16,7 @@ setup(
         (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),
         (f'share/{package_name}/description/meshes', glob('description/meshes/*.STL')),
         (f'share/{package_name}/config', glob('config/reseq_mk2_arm/*')),
+        (f'share/{package_name}/ml-ckpt', glob('ml-ckpt/*.pt')),
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
@@ -36,6 +37,7 @@ setup(
             'joint_publisher = reseq_ros2.joint_publisher:main',
             'feedback_replicator = reseq_ros2.feedback_replicator:main',
             'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
+            'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
             'moveit_controller = reseq_ros2.moveit_controller:main',
         ],
