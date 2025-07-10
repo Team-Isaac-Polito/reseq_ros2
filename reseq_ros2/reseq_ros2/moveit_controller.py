@@ -3,9 +3,9 @@ import traceback
 import rclpy
 from geometry_msgs.msg import TwistStamped, Vector3
 from rclpy.node import Node
-from std_msgs.msg import Float32, Float32MultiArray
-from trajectory_msgs.msg import JointTrajectory
+from std_msgs.msg import Float32, Float32MultiArray, Int32
 from std_srvs.srv import SetBool, Trigger
+from trajectory_msgs.msg import JointTrajectory
 
 """
 ROS node that handles communication between Moveit Servo and the data coming from the remote
@@ -27,6 +27,7 @@ class MoveitController(Node):
         # Service that manages linear/angular velocities 
         self.linear_vel_enabled = True
         self.create_service(SetBool, '/moveit_controller/switch_vel', self.switch_vel_type)
+        self.create_service(SetBool, '/moveit_controller/close_beak', self.handle_beak)
 
         self.planning_frame_id = self.declare_parameter('planning_frame_id', 'roll_6').get_parameter_value().string_value
        
@@ -70,6 +71,11 @@ class MoveitController(Node):
             f'reseq/module{addr}/mk2_arm/roll_joint_6/setpoint',
             10,
         )
+        self.beak_pub = self.create_publisher(
+            Int32,
+            f'reseq/module{addr}/mk2_arm/beak/setpoint',
+            10,
+        )
         self.get_logger().info('Node Moveit Controller started successfully')
 
     def handle_velocities(self, msg: Vector3):
@@ -92,7 +98,13 @@ class MoveitController(Node):
         response.message = 'Input velocity set to LINEAR' if self.linear_vel_enabled else 'Input velocity set to ANGULAR'
         self.get_logger().info(response.message)
         return response
-
+    
+    def handle_beak(self, request: SetBool.Request, response: SetBool.Response) -> SetBool.Response:
+        self.beak_pub.publish(Int32(data=int(request.data)))
+        response.success = True
+        response.message = f'Sent request to {"CLOSE" if request.data else "OPEN"} the arm beak'
+        self.get_logger().info(response.message)
+        return response
     
     def activate_servo(self):
         self.activate_service = self.create_client(Trigger, '/servo_node/start_servo')

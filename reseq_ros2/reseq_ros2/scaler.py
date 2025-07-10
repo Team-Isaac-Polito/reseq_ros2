@@ -60,6 +60,12 @@ class Scaler(Node):
             'service': '/moveit_controller/switch_vel',
             'inverted': False,
         },
+        {
+            'name': 'Open/Close MK2 Arm Beak',
+            'button': buttons_enum.S1,
+            'service': '/moveit_controller/close_beak',
+            'inverted': False,
+        },
     ]
 
     def __init__(self):
@@ -162,7 +168,7 @@ class Scaler(Node):
             moveit_msg.x = data.left.x
             moveit_msg.y = data.left.z
             moveit_msg.z = data.left.y
-            
+
             self.moveit_pub.publish(moveit_msg)
 
     def pivotScaler(self, data: Twist):

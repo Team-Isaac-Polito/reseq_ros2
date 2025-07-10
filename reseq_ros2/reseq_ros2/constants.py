@@ -5,7 +5,7 @@ from math import pi
 from typing import Final, NamedTuple
 
 from ament_index_python.packages import get_package_share_directory
-from std_msgs.msg import Float32, Int32, Float32MultiArray
+from std_msgs.msg import Float32, Float32MultiArray, Int32
 
 from reseq_interfaces.msg import Motors
 
@@ -83,12 +83,12 @@ topics = (
     ReseQTopic('end_effector/head_pitch/feedback', 0x44, Direction.IN, Int32),
     ReseQTopic('end_effector/head_roll/setpoint', 0x45, Direction.OUT, Int32),
     ReseQTopic('end_effector/head_roll/feedback', 0x46, Direction.IN, Int32),
-
     ReseQTopic('mk2_arm/pitch_joint_1_2/setpoint', 0x51, Direction.OUT, Float32MultiArray),
     ReseQTopic('mk2_arm/pitch_joint_3/setpoint', 0x53, Direction.OUT, Float32),
     ReseQTopic('mk2_arm/roll_joint_4/setpoint', 0x55, Direction.OUT, Float32),
     ReseQTopic('mk2_arm/pitch_joint_5/setpoint', 0x57, Direction.OUT, Float32),
     ReseQTopic('mk2_arm/roll_joint_6/setpoint', 0x59, Direction.OUT, Float32),
+    ReseQTopic('mk2_arm/beak/setpoint', 0x5B, Direction.OUT, Int32),
 )
 
 share_folder = get_package_share_directory('reseq_ros2')
