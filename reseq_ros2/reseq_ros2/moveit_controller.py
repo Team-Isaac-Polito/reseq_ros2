@@ -114,8 +114,8 @@ class MoveitController(Node):
         servo_msg.header.stamp = self.get_clock().now().to_msg()
         servo_msg.header.frame_id = self.planning_frame_id
         servo_msg.joint_names = ['pitch_joint_1', 'roll_joint_2', 'pitch_joint_3', 'roll_joint_2', 'pitch_joint_4', 'roll_joint_6']
-        servo_msg.displacements = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        servo_msg.velocities = 0.05*[1, 1, 1, 1, 1, 1]
+        servo_msg.displacements = [0.0]*6
+        servo_msg.velocities = [0.05]*6
         servo_msg.duration = 0.01
         self.joints_pos_pub.publish(servo_msg)
         response.success = True
