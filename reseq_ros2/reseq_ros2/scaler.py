@@ -66,6 +66,12 @@ class Scaler(Node):
             'service': '/moveit_controller/close_beak',
             'inverted': False,
         },
+        {
+            'name': 'Move mk2 arm to home position',
+            'button': buttons_enum.BWHITE,
+            'service': '/moveit_controller/home_pose',
+            'inverted': False,
+        },
     ]
 
     def __init__(self):

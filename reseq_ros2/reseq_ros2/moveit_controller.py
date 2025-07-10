@@ -2,6 +2,7 @@ import traceback
 
 import rclpy
 from geometry_msgs.msg import TwistStamped, Vector3
+from control_msgs.msg import JointJog
 from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray, Int32
 from std_srvs.srv import SetBool, Trigger
@@ -28,12 +29,14 @@ class MoveitController(Node):
         self.linear_vel_enabled = True
         self.create_service(SetBool, '/moveit_controller/switch_vel', self.switch_vel_type)
         self.create_service(SetBool, '/moveit_controller/close_beak', self.handle_beak)
+        self.create_service(SetBool, '/moveit_controller/home_pose', self.send_home_pose)
 
         self.planning_frame_id = self.declare_parameter('planning_frame_id', 'roll_6').get_parameter_value().string_value
        
         self.create_subscription(Vector3, '/mk2_arm_vel', self.handle_velocities, 10)
 
         self.speed_pub = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
+        self.joints_pos_pub = self.create_publisher(JointJog, '/servo_node/delta_joint_cmds', 10)
 
         self.activate_servo()
 
@@ -105,6 +108,21 @@ class MoveitController(Node):
         response.message = f'Sent request to {"CLOSE" if request.data else "OPEN"} the arm beak'
         self.get_logger().info(response.message)
         return response
+
+    def send_home_pose(self, request: SetBool.Request, response: SetBool.Response) -> SetBool.Response:
+        servo_msg = JointJog()
+        servo_msg.header.stamp = self.get_clock().now().to_msg()
+        servo_msg.header.frame_id = self.planning_frame_id
+        servo_msg.joint_names = ['pitch_joint_1', 'roll_joint_2', 'pitch_joint_3', 'roll_joint_2', 'pitch_joint_4', 'roll_joint_6']
+        servo_msg.displacements = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        servo_msg.velocities = 0.05*[1, 1, 1, 1, 1, 1]
+        servo_msg.duration = 0.01
+        self.joints_pos_pub.publish(servo_msg)
+        response.success = True
+        response.message = 'Moving arm to HOME position'
+        self.get_logger().info(response.message)
+        return response
+
     
     def activate_servo(self):
         self.activate_service = self.create_client(Trigger, '/servo_node/start_servo')
