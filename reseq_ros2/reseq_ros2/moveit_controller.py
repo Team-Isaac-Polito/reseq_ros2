@@ -100,15 +100,18 @@ class MoveitController(Node):
     def mirror_states(self, msg: JointState):
         fmsg = JointState()
         fmsg.header = msg.header
+        is_to_pub = False
         for i, name in enumerate(msg.name):
             if name in self.state_to_mirror:
+                is_to_pub = True
                 fmsg.name.append(name)
                 fmsg.position.append(msg.position[i])
                 if msg.velocity != []:
                     fmsg.velocity.append(msg.velocity[i])
                 if msg.effort != []:
                     fmsg.effort.append(msg.effort[i])
-        self.mirror_pub.publish(fmsg)
+        if is_to_pub:
+            self.mirror_pub.publish(fmsg)
 
     def handle_velocities(self, msg: Vector3):
         servo_msg = TwistStamped()
