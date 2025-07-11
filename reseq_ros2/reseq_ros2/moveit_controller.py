@@ -1,8 +1,8 @@
 import traceback
 
 import rclpy
-from geometry_msgs.msg import TwistStamped, Vector3
 from control_msgs.msg import JointJog
+from geometry_msgs.msg import TwistStamped, Vector3
 from rclpy.node import Node
 from std_msgs.msg import Float32, Float32MultiArray, Int32
 from std_srvs.srv import SetBool, Trigger
@@ -16,8 +16,8 @@ It receives a Twist message from Scaler which contains linear and angular veloci
 of mk2 arm. It prepares the TwistStamped message for Moveit Servo.
 """
 
+
 class MoveitController(Node):
-   
     def __init__(self):
         super().__init__('moveit_controller')
         # Declaring parameters and getting values
@@ -25,14 +25,18 @@ class MoveitController(Node):
             self.declare_parameter('arm_module_address', 0).get_parameter_value().integer_value
         )
 
-        # Service that manages linear/angular velocities 
+        # Service that manages linear/angular velocities
         self.linear_vel_enabled = True
         self.create_service(SetBool, '/moveit_controller/switch_vel', self.switch_vel_type)
         self.create_service(SetBool, '/moveit_controller/close_beak', self.handle_beak)
         self.create_service(SetBool, '/moveit_controller/home_pose', self.send_home_pose)
 
-        self.planning_frame_id = self.declare_parameter('planning_frame_id', 'roll_6').get_parameter_value().string_value
-       
+        self.planning_frame_id = (
+            self.declare_parameter('planning_frame_id', 'roll_6')
+            .get_parameter_value()
+            .string_value
+        )
+
         self.create_subscription(Vector3, '/mk2_arm_vel', self.handle_velocities, 10)
 
         self.speed_pub = self.create_publisher(TwistStamped, '/servo_node/delta_twist_cmds', 10)
@@ -46,7 +50,7 @@ class MoveitController(Node):
             self.send_joint_trajectory,
             10,
         )
-        
+
         self.pubs = {}
         addr = self.arm_module_address
         self.pubs['pitch_joint_1_2'] = self.create_publisher(
@@ -90,32 +94,48 @@ class MoveitController(Node):
             servo_msg.twist.linear = msg
         else:
             servo_msg.twist.angular = msg
-        
-        self.speed_pub.publish(servo_msg)
-    
 
-    def switch_vel_type(self, request: SetBool.Request, response: SetBool.Response) -> SetBool.Response:
+        self.speed_pub.publish(servo_msg)
+
+    def switch_vel_type(
+        self, request: SetBool.Request, response: SetBool.Response
+    ) -> SetBool.Response:
         self.linear_vel_enabled = request.data
 
         response.success = True
-        response.message = 'Input velocity set to LINEAR' if self.linear_vel_enabled else 'Input velocity set to ANGULAR'
+        response.message = (
+            'Input velocity set to LINEAR'
+            if self.linear_vel_enabled
+            else 'Input velocity set to ANGULAR'
+        )
         self.get_logger().info(response.message)
         return response
-    
-    def handle_beak(self, request: SetBool.Request, response: SetBool.Response) -> SetBool.Response:
+
+    def handle_beak(
+        self, request: SetBool.Request, response: SetBool.Response
+    ) -> SetBool.Response:
         self.beak_pub.publish(Int32(data=int(request.data)))
         response.success = True
         response.message = f'Sent request to {"CLOSE" if request.data else "OPEN"} the arm beak'
         self.get_logger().info(response.message)
         return response
 
-    def send_home_pose(self, request: SetBool.Request, response: SetBool.Response) -> SetBool.Response:
+    def send_home_pose(
+        self, request: SetBool.Request, response: SetBool.Response
+    ) -> SetBool.Response:
         servo_msg = JointJog()
         servo_msg.header.stamp = self.get_clock().now().to_msg()
         servo_msg.header.frame_id = self.planning_frame_id
-        servo_msg.joint_names = ['pitch_joint_1', 'roll_joint_2', 'pitch_joint_3', 'roll_joint_2', 'pitch_joint_4', 'roll_joint_6']
-        servo_msg.displacements = [0.0]*6
-        servo_msg.velocities = [0.05]*6
+        servo_msg.joint_names = [
+            'pitch_joint_1',
+            'roll_joint_2',
+            'pitch_joint_3',
+            'roll_joint_2',
+            'pitch_joint_4',
+            'roll_joint_6',
+        ]
+        servo_msg.displacements = [0.0] * 6
+        servo_msg.velocities = [0.05] * 6
         servo_msg.duration = 0.01
         self.joints_pos_pub.publish(servo_msg)
         response.success = True
@@ -123,29 +143,30 @@ class MoveitController(Node):
         self.get_logger().info(response.message)
         return response
 
-    
     def activate_servo(self):
         self.activate_service = self.create_client(Trigger, '/servo_node/start_servo')
         while not self.activate_service.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Switch input service not available, waiting ...')
-        
+
         self.req = Trigger.Request()
         self.activate_service.call_async(self.req)
-    
+
     def send_joint_trajectory(self, msg: JointTrajectory):
         update_diff = True
         names = msg.joint_names
         positions = msg.points[len(msg.points) - 1].positions
 
         for i in range(0, len(names)):
-            if (names[i] == "pitch_joint_1" or names[i] == "roll_joint_2"):
+            if names[i] == 'pitch_joint_1' or names[i] == 'roll_joint_2':
                 if update_diff:
-                    i0 = self.find_index_by_name(names, "pitch_joint_1")
-                    i1 = self.find_index_by_name(names, "roll_joint_2")
+                    i0 = self.find_index_by_name(names, 'pitch_joint_1')
+                    i1 = self.find_index_by_name(names, 'roll_joint_2')
                     update_diff = False
-                    self.pubs["pitch_joint_1_2"].publish(Float32MultiArray(data = [positions[i0], positions[i1]]))
+                    self.pubs['pitch_joint_1_2'].publish(
+                        Float32MultiArray(data=[positions[i0], positions[i1]])
+                    )
             else:
-                self.pubs[names[i]].publish(Float32(data = positions[i]))
+                self.pubs[names[i]].publish(Float32(data=positions[i]))
 
     def find_index_by_name(self, joints, joint_name):
         for i in range(0, len(joints)):
