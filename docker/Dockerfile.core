@@ -8,16 +8,33 @@ FROM ros:humble-ros-core
 ARG CONFIG_FILE=reseq_mk2_can.yaml
 
 RUN apt update && \
-    apt install -y --no-install-recommends python3-rosdep gcc g++ make python3-colcon-common-extensions && \
-    rosdep init
+    apt install -y --no-install-recommends python3-rosdep gcc g++ make git \
+	python3-colcon-common-extensions python3-colcon-mixin ros-humble-ament-cmake
 
+# Moveit installation from source
+RUN rosdep init && rosdep update && apt update
+
+RUN colcon mixin add default \
+	https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
+	colcon mixin update default
+
+# Compile Moveit packages
+RUN mkdir -p /ws_moveit/src && cd /ws_moveit/src && \
+	git clone -b main https://github.com/moveit/moveit2.git && \
+	git clone -b ros2 https://github.com/moveit/moveit_msgs.git moveit_msgs
+
+WORKDIR /ws_moveit
+RUN apt update && rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
+RUN bash -c "source /opt/ros/humble/setup.bash && colcon build --mixin release --parallel-workers 1"
+
+RUN source /ws_moveit/install/setup.bash
+	
 RUN mkdir -p /ros2_ws/src/
 WORKDIR /ros2_ws
 COPY reseq_interfaces src/reseq_interfaces
 COPY reseq_ros2 src/reseq_ros2
 
-ENV SKIP_KEYS "realsense2_camera rplidar_ros controller_manager diff_drive_controller joint_state_broadcaster image_transport_plugins xacro robot_state_publisher"
-
+ENV SKIP_KEYS "realsense2_camera rplidar_ros diff_drive_controller image_transport_plugins"
 
 RUN apt update && \
     rosdep update && \

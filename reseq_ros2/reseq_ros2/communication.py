@@ -6,7 +6,7 @@ import traceback
 import can
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32, Int32  # deprecated?
+from std_msgs.msg import Float32, Int32, Float32MultiArray  # deprecated?
 
 import reseq_ros2.constants as rc
 from reseq_interfaces.msg import Motors
@@ -26,6 +26,8 @@ class Communication(Node):
     def __init__(self):
         super().__init__('communication')
         # Declaring parameters and getting values
+        self.version = self.declare_parameter('version', 'mk1').get_parameter_value().string_value
+        
         self.can_channel = (
             self.declare_parameter('can_channel', 'vcan0').get_parameter_value().string_value
         )
@@ -80,7 +82,10 @@ class Communication(Node):
             if topic.name.split('/')[0] == 'joint' and not hasJoint:
                 continue
 
-            if topic.name.split('/')[0] == 'end_effector' and not hasEndEffector:
+            if topic.name.split('/')[0] == 'end_effector' and (not hasEndEffector or self.version != 'mk1'):
+                continue
+            
+            if topic.name.split('/')[0] == 'mk2_arm' and (not hasEndEffector or self.version != 'mk2'):
                 continue
 
             d[topic.name] = self.create_publisher(
@@ -98,7 +103,10 @@ class Communication(Node):
             if topic.name.split('/')[0] == 'joint' and not hasJoint:
                 continue
 
-            if topic.name.split('/')[0] == 'end_effector' and not hasEndEffector:
+            if topic.name.split('/')[0] == 'end_effector' and (not hasEndEffector or self.version != 'mk1'):
+                continue
+            
+            if topic.name.split('/')[0] == 'mk2_arm' and (not hasEndEffector or self.version != 'mk2'):
                 continue
 
             d[topic.name] = self.create_subscription(
@@ -171,6 +179,8 @@ class Communication(Node):
             data = struct.pack('i', msg.data)
         elif topic.data_type is Motors:
             data = struct.pack('ff', msg.left, msg.right)
+        elif topic.data_type is Float32MultiArray:
+            data = struct.pack('ff', msg.data[0], msg.data[1])
 
         m = can.Message(
             arbitration_id=int.from_bytes(aid, byteorder='big', signed=False),

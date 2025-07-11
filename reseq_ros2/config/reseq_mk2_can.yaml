@@ -12,7 +12,7 @@ num_modules: 2
 modules:
   - address: 0x21
     hasJoint: true
-    hasEndEffector: false
+    hasEndEffector: true
   - address: 0x22
     hasJoint: true
     hasEndEffector: false
@@ -21,4 +21,4 @@ usb_camera_config: "usb_camera.yaml"
 sensors:
   - realsense: true
   - lidar: true
-  - usb_cameras: 5
+  - usb_cameras: 2
