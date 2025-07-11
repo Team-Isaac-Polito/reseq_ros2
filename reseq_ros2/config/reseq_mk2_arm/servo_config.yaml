@@ -55,7 +55,7 @@ num_outgoing_halt_msgs_to_publish: 4
 ## Topic names
 cartesian_command_in_topic: ~/delta_twist_cmds  # Topic for incoming Cartesian twist commands
 joint_command_in_topic: ~/delta_joint_cmds  # Topic for incoming joint angle commands
-joint_topic: /joint_states  # Get joint states from this topic
+joint_topic: /arm_joint_states  # Get joint states from this topic
 status_topic: ~/status  # Publish status to this topic
 command_out_topic: /mk2_arm_controller/joint_trajectory  # Publish outgoing commands here
 

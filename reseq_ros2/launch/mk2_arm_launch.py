@@ -105,7 +105,7 @@ def launch_setup(context, *args, **kwargs):
             moveit_config.robot_description_semantic,
             moveit_config.robot_description_kinematics,
         ],
-        arguments=['--ros-args', '--log-level', 'fatal'],
+        arguments=['--ros-args', '--log-level', external_log_level],
         output='screen',
     )
     launch_config.append(servo_node)

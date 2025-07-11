@@ -4,6 +4,7 @@ import rclpy
 from control_msgs.msg import JointJog
 from geometry_msgs.msg import TwistStamped, Vector3
 from rclpy.node import Node
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32, Float32MultiArray, Int32
 from std_srvs.srv import SetBool, Trigger
 from trajectory_msgs.msg import JointTrajectory
@@ -51,6 +52,17 @@ class MoveitController(Node):
             10,
         )
 
+        self.mirror_pub = self.create_publisher(JointState, '/arm_joint_states', 10)
+        self.create_subscription(JointState, '/joint_states', self.mirror_states, 10)
+        self.state_to_mirror = [
+            'pitch_joint_1',
+            'roll_joint_2',
+            'pitch_joint_3',
+            'roll_joint_2',
+            'pitch_joint_4',
+            'roll_joint_6',
+        ]
+
         self.pubs = {}
         addr = self.arm_module_address
         self.pubs['pitch_joint_1_2'] = self.create_publisher(
@@ -84,6 +96,19 @@ class MoveitController(Node):
             10,
         )
         self.get_logger().info('Node Moveit Controller started successfully')
+
+    def mirror_states(self, msg: JointState):
+        fmsg = JointState()
+        fmsg.header = msg.header
+        for i, name in enumerate(msg.name):
+            if name in self.state_to_mirror:
+                fmsg.name.append(name)
+                fmsg.position.append(msg.position[i])
+                if msg.velocity != []:
+                    fmsg.velocity.append(msg.velocity[i])
+                if msg.effort != []:
+                    fmsg.effort.append(msg.effort[i])
+        self.mirror_pub.publish(fmsg)
 
     def handle_velocities(self, msg: Vector3):
         servo_msg = TwistStamped()
