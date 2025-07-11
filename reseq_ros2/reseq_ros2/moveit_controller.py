@@ -58,8 +58,8 @@ class MoveitController(Node):
             'pitch_joint_1',
             'roll_joint_2',
             'pitch_joint_3',
-            'roll_joint_2',
-            'pitch_joint_4',
+            'roll_joint_4',
+            'pitch_joint_5',
             'roll_joint_6',
         ]
 
@@ -155,8 +155,8 @@ class MoveitController(Node):
             'pitch_joint_1',
             'roll_joint_2',
             'pitch_joint_3',
-            'roll_joint_2',
-            'pitch_joint_4',
+            'roll_joint_4',
+            'pitch_joint_5',
             'roll_joint_6',
         ]
         servo_msg.displacements = [0.0] * 6
