@@ -21,4 +21,4 @@ usb_camera_config: "usb_camera.yaml"
 sensors:
   - realsense: true
   - lidar: true
-  - usb_cameras: 5
+  - usb_cameras: 2
