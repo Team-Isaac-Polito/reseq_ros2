@@ -12,7 +12,7 @@ num_modules: 2
 modules:
   - address: 0x21
     hasJoint: true
-    hasEndEffector: false
+    hasEndEffector: true
   - address: 0x22
     hasJoint: true
     hasEndEffector: false

@@ -1,8 +1,13 @@
+import os
+
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from ament_index_python.packages import get_package_share_directory
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
 from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+
 
 from reseq_ros2.utils.launch_utils import (
     config_path,
@@ -20,6 +25,7 @@ def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     log_level = LaunchConfiguration('log_level').perform(context)
+    digital_twin_enabled = LaunchConfiguration('d_twin').perform(context)
     # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
@@ -36,6 +42,7 @@ def launch_setup(context, *args, **kwargs):
                 name='communication',
                 parameters=[
                     {
+                        'version': config['version'],
                         'can_channel': config['canbus']['channel'],
                         'modules': addresses,
                         'joints': joints,
@@ -54,6 +61,7 @@ def launch_setup(context, *args, **kwargs):
                 name='communication',
                 parameters=[
                     {
+                        'version': config['version'],
                         'can_channel': config['canbus']['channel'],
                         'modules': addresses,
                         'joints': joints,
@@ -152,9 +160,22 @@ def launch_setup(context, *args, **kwargs):
                 on_exit=Shutdown(),
             )
         )
+    # elif config['version'] == 'mk2':
+    #     mk2_arm_launch_file = os.path.join(
+    #         get_package_share_directory('reseq_ros2'), 'launch', 'mk2_arm_launch.py'
+    #     )
+    #     launch_config.append(
+    #     IncludeLaunchDescription(
+    #         PythonLaunchDescriptionSource(mk2_arm_launch_file),
+    #         launch_arguments={
+    #             'config_file': config_filename,
+    #             'log_level': log_level,
+    #             'd_twin': digital_twin_enabled,
+    #         }.items(),
+    #     )
+    # )
 
     return launch_config
-    # return launch_config
 
 
 def generate_launch_description():
@@ -162,6 +183,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('log_level', default_value='info'),
+            DeclareLaunchArgument('d_twin', default_value='true'),
             OpaqueFunction(function=launch_setup),
         ]
     )

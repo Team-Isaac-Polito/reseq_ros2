@@ -14,6 +14,8 @@ setup(
         (f'share/{package_name}/scripts', glob('scripts/*.py')),
         (f'share/{package_name}/description', glob('description/*.xacro')),
         (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),
+        (f'share/{package_name}/description/meshes', glob('description/meshes/*.STL')),
+        (f'share/{package_name}/config', glob('config/reseq_mk2_arm/*')),
         (f'share/{package_name}/ml-ckpt', glob('ml-ckpt/*.pt')),
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
@@ -37,6 +39,7 @@ setup(
             'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
             'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
+            'moveit_controller = reseq_ros2.moveit_controller:main',
         ],
     },
 )
