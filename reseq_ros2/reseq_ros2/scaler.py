@@ -6,6 +6,7 @@ from enum import Enum, IntEnum
 import rclpy
 from geometry_msgs.msg import Twist, Vector3
 from rclpy.node import Node
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_srvs.srv import SetBool
 
 from reseq_interfaces.msg import EndEffector, Remote
@@ -74,6 +75,12 @@ class Scaler(Node):
         },
     ]
 
+    qos = QoSProfile(
+        reliability=ReliabilityPolicy.BEST_EFFORT,
+        history=HistoryPolicy.KEEP_LAST,
+        depth=1,
+    )
+
     def __init__(self):
         super().__init__('scaler')
         # initialize the button/switch handlers
@@ -117,7 +124,7 @@ class Scaler(Node):
         for h in self.handlers:
             h['service'] = self.create_client(SetBool, h['service'])
 
-        self.create_subscription(Remote, '/remote', self.remote_callback, 10)
+        self.create_subscription(Remote, '/remote', self.remote_callback, self.qos)
 
         if self.enea_enabled:
             self.enea_pub = self.create_publisher(EndEffector, '/end_effector', 10)
