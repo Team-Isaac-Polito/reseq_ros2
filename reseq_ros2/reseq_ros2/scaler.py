@@ -63,7 +63,7 @@ class Scaler(Node):
         },
         {
             'name': 'Open/Close MK2 Arm Beak',
-            'button': buttons_enum.S1,
+            'button': buttons_enum.S2,
             'service': '/moveit_controller/close_beak',
             'inverted': False,
         },
