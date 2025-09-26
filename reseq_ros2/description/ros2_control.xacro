@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <ros2_control name="Rviz" type="system">
-        <!-- Mirror commands to their states -->
+    <ros2_control name="ReseqHardwareSystem" type="system">
         <hardware>
-            <plugin>mock_components/GenericSystem</plugin>
-            <param name="calculate_dynamics">true</param>
+            <plugin>reseq_hardware/ReseqHardware</plugin>
+            <param name="num_modules">${NumModules}</param>
+            <!-- TODO: vcan, and gazebo alternatives -->
         </hardware>
 
         <!-- Create n_modules modules by recursively calling the loop macro -->
