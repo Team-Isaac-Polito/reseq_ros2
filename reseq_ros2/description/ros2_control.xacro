@@ -22,12 +22,12 @@
                     <xacro:control_joint_factory id="${module}" />
                 </xacro:if>
 
-                <xacro:loop module="${module + 1}" n_modules="${n_modules}"/>
+                <xacro:loop module="${module + 1}" n_modules="${n_modules}" />
 
             </xacro:if>
         </xacro:macro>
 
-        <xacro:loop module="1" n_modules="${NumModules}"/>
+        <xacro:loop module="1" n_modules="${NumModules}" />
 
     </ros2_control>
 </robot>
