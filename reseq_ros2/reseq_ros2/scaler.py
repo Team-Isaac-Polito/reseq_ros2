@@ -9,7 +9,7 @@ from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_srvs.srv import SetBool
 
-from reseq_interfaces.msg import EndEffector, Remote
+from reseq_interfaces.msg import Remote
 
 """
 ROS node that handles scaling of the remote controller data into physical variables used
@@ -68,10 +68,6 @@ class Scaler(Node):
         # initialize the button/switch handlers
         self.previous_buttons = [False, False, False, False, False, True, True, True, True, True]
         self.control_mode = Scaler.control_mode_enum.AGEVAR
-        self.enea_enabled = False
-
-        # Declaring parameters and getting values
-        version = self.declare_parameter('version', 'mk1').get_parameter_value().string_value
 
         self.r_linear_vel = (
             self.declare_parameter('r_linear_vel', [0.0]).get_parameter_value().double_array_value
@@ -85,31 +81,10 @@ class Scaler(Node):
             self.declare_parameter('r_angular_vel', [0.0]).get_parameter_value().double_array_value
         )
 
-        if version == 'mk1':
-            self.enea_enabled = True
-            self.r_pitch_vel = (
-                self.declare_parameter('r_pitch_vel', [0])
-                .get_parameter_value()
-                .integer_array_value
-            )
-            self.r_head_pitch_vel = (
-                self.declare_parameter('r_head_pitch_vel', [0])
-                .get_parameter_value()
-                .integer_array_value
-            )
-            self.r_head_roll_vel = (
-                self.declare_parameter('r_head_roll_vel', [0])
-                .get_parameter_value()
-                .integer_array_value
-            )
-
         for h in self.handlers:
             h['service'] = self.create_client(SetBool, h['service'])
 
         self.create_subscription(Remote, '/remote', self.remote_callback, self.qos)
-
-        if self.enea_enabled:
-            self.enea_pub = self.create_publisher(EndEffector, '/end_effector', 10)
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
@@ -145,15 +120,6 @@ class Scaler(Node):
             cmd_vel = self.pivotScaler(cmd_vel)
         self.speed_pub.publish(cmd_vel)
 
-        if self.enea_enabled:
-            end_e = EndEffector()
-            end_e.pitch_vel = data.left.y
-            end_e.head_pitch_vel = data.left.z
-            end_e.head_roll_vel = data.left.x
-
-            end_e = self.endEffectorScaler(end_e)
-            self.enea_pub.publish(end_e)
-
     def pivotScaler(self, data: Twist):
         data.linear.x = 0.0
         data.angular.z = self.scale(data.angular.z, self.r_angular_vel)
@@ -163,12 +129,6 @@ class Scaler(Node):
         data.linear.x = self.scale(data.linear.x, self.r_linear_vel)
         data.angular.z = self.scale(data.angular.z, self.r_inverse_radius)
         data.angular.z *= data.linear.x  # Angular vel
-        return data
-
-    def endEffectorScaler(self, data: EndEffector):
-        data.pitch_vel = self.scale(data.pitch_vel, self.r_pitch_vel)
-        data.head_pitch_vel = self.scale(data.head_pitch_vel, self.r_head_pitch_vel)
-        data.head_roll_vel = self.scale(data.head_roll_vel, self.r_head_roll_vel)
         return data
 
     def scale(self, val, scaling_range):
