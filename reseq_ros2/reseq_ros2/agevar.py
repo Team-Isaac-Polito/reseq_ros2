@@ -68,6 +68,8 @@ class Agevar(Node):
         angular_vel = msg.angular.z
         sign = 1 if linear_vel >= 0 else -1
 
+        self.update_yaw_angles()
+
         modules = list(range(self.n_mod))
         if sign == -1:  # going backwards
             modules.reverse()
@@ -105,8 +107,8 @@ class Agevar(Node):
     def joint_state_callback(self, msg):
         self.latest_feedback = msg
 
-    # extract yaw angles from the latest joint states
-    def get_yaw_angles(self):
+    # update yaw angles from the latest joint states
+    def update_yaw_angles(self):
         if self.latest_feedback is None:
             return
         for i in range(self.n_mod):
