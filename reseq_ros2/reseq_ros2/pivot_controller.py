@@ -1,12 +1,9 @@
 import traceback
 
 import rclpy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, TwistStamped
 from rclpy.node import Node
 from std_srvs.srv import SetBool
-
-import reseq_ros2.constants as rc
-from reseq_interfaces.msg import Motors
 
 
 class PivotController(Node):
@@ -16,15 +13,11 @@ class PivotController(Node):
         addresses = (
             self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
         )
-        self.d = self.declare_parameter('d', 0.0).get_parameter_value().double_value
-        self.r_eq = self.declare_parameter('r_eq', 0.0).get_parameter_value().double_value
 
         # Publishers for sending motor commands to individual modules
-        self.head_publisher = self.create_publisher(
-            Motors, f'/reseq/module{min(addresses)}/motor/setpoint', 10
-        )
+        self.head_publisher = self.create_publisher(TwistStamped, 'diff_controller1/cmd_vel', 10)
         self.tail_publisher = self.create_publisher(
-            Motors, f'/reseq/module{max(addresses)}/motor/setpoint', 10
+            TwistStamped, f'diff_controller{max(addresses)}/cmd_vel', 10
         )
 
         self.create_subscription(Twist, '/cmd_vel', self.remote_callback, 10)
@@ -44,8 +37,8 @@ class PivotController(Node):
         )
         self.get_logger().info(response.message)
 
-        self.head_publisher.publish(Motors())
-        self.tail_publisher.publish(Motors())
+        self.head_publisher.publish(TwistStamped())
+        self.tail_publisher.publish(TwistStamped())
 
         return response
 
@@ -57,8 +50,8 @@ class PivotController(Node):
         response.message = 'Pivoting on head' if self.pivot_on_head else 'Pivoting on tail'
         self.get_logger().info(response.message)
 
-        self.head_publisher.publish(Motors())
-        self.tail_publisher.publish(Motors())
+        self.head_publisher.publish(TwistStamped())
+        self.tail_publisher.publish(TwistStamped())
 
         return response
 
@@ -67,21 +60,18 @@ class PivotController(Node):
             self.get_logger().debug('Pivot controller is disabled. Skipping command.')
             return
 
-        ang_speed = msg.angular.z
-
-        # differential drive with V=0
-        m = Motors()
-        m.right = ang_speed * self.d / (2 * self.r_eq) * rc.rads2rpm
-        m.left = -m.right
+        out_msg = TwistStamped()
+        out_msg.header.stamp = self.get_clock().now().to_msg()
+        out_msg.twist.angular.z = msg.angular.z
 
         self.get_logger().debug(
-            f"Pivoting {'on head' if self.pivot_on_head else 'on tail'} with values: R={m.right}, L={m.left}"  # noqa
+            f'Pivoting {"on head" if self.pivot_on_head else "on tail"} with W={out_msg.twist.angular.z}'  # noqa
         )
 
         if self.pivot_on_head:
-            self.head_publisher.publish(m)
+            self.head_publisher.publish(out_msg)
         else:
-            self.tail_publisher.publish(m)
+            self.tail_publisher.publish(out_msg)
 
 
 def main(args=None):
