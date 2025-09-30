@@ -44,6 +44,7 @@ def launch_setup(context, *args, **kwargs):
             launch_arguments={
                 'config_file': config_filename,
                 'log_level': log_level,
+                'd_twin': digital_twin_enabled,
             }.items(),
         )
     )

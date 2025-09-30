@@ -3,6 +3,7 @@
 
   <xacro:arg name="use_ros2_control" default="true"/>
   <xacro:arg name="sim_mode" default="false"/>
+  <xacro:arg name="initial_positions_file" default="$(find reseq_ros2)/config/initial_positions.yaml" />
 
   <xacro:include filename="inertial_macros.xacro" />
   <xacro:include filename="reseq_parameters.xacro" />
@@ -19,11 +20,13 @@
   <xacro:if value="${config['version'] == 'mk1'}">
     <xacro:include filename="reseq_arm_mk1.xacro" />
   </xacro:if>
-  <!-- 
+  
   <xacro:if value="${config['version'] == 'mk2'}">
+    <xacro:include filename="mk2_arm.ros2_control.xacro" />
     <xacro:include filename="reseq_arm_mk2.xacro" />
+    <xacro:mk2_arm_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
   </xacro:if>
-  -->
+ 
 
   <xacro:include filename="lidar.xacro" />
 
