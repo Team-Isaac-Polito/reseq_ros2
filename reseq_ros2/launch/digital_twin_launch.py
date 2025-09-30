@@ -5,14 +5,7 @@ from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-from reseq_ros2.utils.launch_utils import (
-    config_path,
-    default_filename,
-    get_addresses,
-    get_end_effector,
-    get_joints,
-    parse_config,
-)
+from reseq_ros2.utils.launch_utils import config_path, default_filename, parse_config
 
 share_folder = get_package_share_directory('reseq_ros2')
 
@@ -22,45 +15,10 @@ share_folder = get_package_share_directory('reseq_ros2')
 def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
-    log_level = LaunchConfiguration('log_level').perform(context)
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
     # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
-    addresses = get_addresses(config)
-    joints = get_joints(config)
-    endEffector = get_end_effector(config)
     launch_config = []
-
-    launch_config.append(
-        Node(
-            package='reseq_ros2',
-            executable='joint_publisher',
-            name='joint_publisher',
-            parameters=[
-                {
-                    **{
-                        'modules': addresses,
-                        'joints': joints,
-                        'end_effector': endEffector,
-                        'vel_gain': config['joint_pub_consts']['vel_gain'],
-                        'd': config['agevar_consts']['d'],
-                        'r_eq': config['agevar_consts']['r_eq'],
-                    },
-                    **(
-                        {
-                            'arm_pitch_origin': config['joint_pub_consts']['arm_pitch_origin'],
-                            'head_pitch_origin': config['joint_pub_consts']['head_pitch_origin'],
-                            'head_roll_origin': config['joint_pub_consts']['head_roll_origin'],
-                            'arm_pitch_gain': config['joint_pub_consts']['arm_pitch_gain'],
-                        }
-                        if config['version'] == 'mk1'
-                        else {}
-                    ),
-                }
-            ],
-            arguments=['--ros-args', '--log-level', log_level],
-        )
-    )
 
     robot_controllers = f'{config_path}/reseq_controllers.yaml'
     control_node = Node(
@@ -119,22 +77,6 @@ def launch_setup(context, *args, **kwargs):
         arguments=['--ros-args', '--log-level', external_log_level],
     )
     launch_config.append(robot_state_publisher_node)
-
-    if config['canbus']['channel'].startswith('vcan'):
-        feedback_replicator = Node(
-            package='reseq_ros2',
-            executable='feedback_replicator',
-            name='feedback_replicator',
-            parameters=[
-                {
-                    'modules': addresses,
-                    'joints': joints,
-                    'end_effector': endEffector,
-                }
-            ],
-            arguments=['--ros-args', '--log-level', log_level],
-        )
-        launch_config.append(feedback_replicator)
 
     return launch_config
 

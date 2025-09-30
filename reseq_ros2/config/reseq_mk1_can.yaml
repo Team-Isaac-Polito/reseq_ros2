@@ -1,8 +1,6 @@
 ---
 include:
   xacro: digital_twin_params_mk1.yaml
-  joint_pub_consts: joint_pub_consts_mk1.yaml
-  enea_consts: enea_consts.yaml
   scaler_consts: scaler_consts_mk1.yaml
   agevar_consts: agevar_consts_mk1.yaml
 version: "mk1"
@@ -17,8 +15,5 @@ modules:
     hasJoint: true
     hasEndEffector: false
 realsense_config: "realsense_rgb_motion.yaml"
-usb_camera_config: "usb_camera.yaml"
 sensors:
   - realsense: true
-  - lidar: true
-  - usb_cameras: 2

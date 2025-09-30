@@ -146,12 +146,12 @@ def generate_controllers_config(generic_config_file):
         controllers_config[controller_name] = {
             'ros__parameters': {
                 'left_wheel_names': [
-                    f'left_front_wheel_{i + 1}_joint',
-                    f'left_back_wheel_{i + 1}_joint',
+                    f'mod{i + 1}__left_front_wheel',
+                    f'mod{i + 1}__left_back_wheel',
                 ],
                 'right_wheel_names': [
-                    f'right_front_wheel_{i + 1}_joint',
-                    f'right_back_wheel_{i + 1}_joint',
+                    f'mod{i + 1}__right_front_wheel',
+                    f'mod{i + 1}__right_back_wheel',
                 ],
                 'odom_frame_id': 'odom',
                 'base_frame_id': 'base_link',

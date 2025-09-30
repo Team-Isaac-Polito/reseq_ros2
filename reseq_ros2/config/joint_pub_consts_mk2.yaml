@@ -1,2 +1,0 @@
-joint_pub_consts:
-  vel_gain: 1.0          # [ ] Ratio wheel rotations over motor rotations
