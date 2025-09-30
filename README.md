@@ -47,7 +47,13 @@ code --install-extension charliermarsh.ruff
 In `ros_ws`, modify the file `.vscode/settings.json` by adding the following configuration:
 
 ```json
-    "flake8.args": ["--config", "src/reseq_ros2/test/flake8.cfg"],
+{
+    // OTHER SETTINGS ...
+    // BEGIN: LINTERS
+    "flake8.args": [
+        "--config",
+        "src/reseq_ros2/test/flake8.cfg"
+    ],
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
@@ -56,11 +62,10 @@ In `ros_ws`, modify the file `.vscode/settings.json` by adding the following con
             "python.sortImports": "explicit"
         }
     },
-    "ruff.format.args": [
-        "--config=src/ruff.toml",
-        "--line-length=99"
-    ],
-    "ruff.organizeImports": false
+    "ruff.configuration": "${workspaceFolder}/src/ruff.toml",
+    "ruff.organizeImports": false,
+    // END: LINTERS
+}
 ```
 
 The files should format correctly on save
@@ -71,14 +76,4 @@ To execute ROS2 tests, run the following command which generates a more detailed
 
 ```
 colcon test --event-handlers=console_direct+
-```
-
-## Gazebo Simulator
-Due to problems with wsl, the project uses _Gazebo Harmonic_, which can be installed from the official Gazebo repositories.
-
-```bash
-sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
-sudo apt-get update
-sudo apt install ros-humble-ros-gzharmonic
 ```
