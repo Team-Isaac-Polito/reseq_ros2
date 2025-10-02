@@ -3,8 +3,8 @@ from math import cos, pi, sin
 
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped
-from sensor_msgs.msg import JointState
 from rclpy.node import Node
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32  # deprecated?
 
 import reseq_ros2.constants as rc
@@ -47,33 +47,30 @@ class Agevar(Node):
         )
 
         self.diff_controller_pub = []
-        for mod in range(1, self.n_mod+1):
+        for mod in range(1, self.n_mod + 1):
             self.diff_controller_pub.append(
                 self.create_publisher(TwistStamped, f'/diff_controller{mod}/cmd_vel', 10)
             )
 
         self.joints_sub = self.create_subscription(
-            JointState,
-            'joint_states',
-            self.feedback_callback,
-            10
+            JointState, 'joint_states', self.feedback_callback, 10
         )
-            
+
     def feedback_callback(self, msg: JointState):
         feedback = {}
         for i, name in enumerate(msg.name):
             feedback[name] = {
-                "position": msg.position[i],
-                "velocity": msg.velocity[i],
-                "effort": msg.effort[i],
+                'position': msg.position[i],
+                'velocity': msg.velocity[i],
+                'effort': msg.effort[i],
             }
 
         # update yaw angle of a joint (joint between one module and another)
-        for mod in range(2, self.n_mod+1):
-            joint = feedback.get(f"joint_y_{mod}_joint")
+        for mod in range(2, self.n_mod + 1):
+            joint = feedback.get(f'joint_y_{mod}_joint')
             if joint == None:
                 continue
-            angle = joint.get("position")
+            angle = joint.get('position')
             if angle == None:
                 continue
             # store the angle in radiants
@@ -96,8 +93,12 @@ class Agevar(Node):
             # send to each diff_controller the TwistStamped msg with the according linear_vel
             # and angular_vel
             t = Twist()
-            t.linear.x = linear_vel
-            t.angular.z = angular_vel
+            if sign == 0:
+                t.linear.x = -linear_vel
+                t.angular.z = -angular_vel
+            else:
+                t.linear.x = linear_vel
+                t.angular.z = angular_vel
             msg = TwistStamped()
             msg.header.stamp = self.get_clock().now().to_msg()
             msg.twist = t
@@ -112,7 +113,6 @@ class Agevar(Node):
                 linear_vel, angular_vel = self.kinematic(linear_vel, angular_vel, yaw_angle)
 
                 self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
-
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
