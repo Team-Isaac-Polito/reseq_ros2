@@ -53,12 +53,6 @@
 
         <gazebo reference="${side}_${pos}_wheel_${id}_link">
             <material>Gazebo/Black</material>
-            <!-- mu1 and mu2 are two respectively friction coefficients for respectively primary
-                 direction and the secondary direction. the secondary direction is perpendicular to
-                 the primary direction. mu1 is important for forward/backward grip, while mu2 is
-                 critical for sideways grip (you dont want the model to slip when it turns)  -->
-            <mu1 value="${WheelMu1}"/>
-            <mu2 value="${WheelMu2}"/>
         </gazebo>
 
     </xacro:macro>

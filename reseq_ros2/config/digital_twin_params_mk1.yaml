@@ -1,7 +1,5 @@
 xacro:
   WheelBase: 0.137
-  WheelMu1: 0.7
-  WheelMu2: 0.5
   ModuleWidth: 0.27
   TrackWidth: 0.052
   ChassisTopAndBottomClearance: 0.013
