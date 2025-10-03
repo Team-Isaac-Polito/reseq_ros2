@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+    <gazebo reference="rgdb_camera_frame">
+        <!--http://sdformat.org/spec?ver=1.12&elem=sensor-->
+        <material>Gazebo/Red</material>
+
+        <sensor name="rgbd_camera" type="rgbd_camera">
+            <pose> 0 0 0 0 0 0 </pose>
+            <visualize>true</visualize>
+            <update_rate>10</update_rate>
+            <camera>
+                <horizontal_fov>1.0469999999999999</horizontal_fov> <!--default value corresponds to 60 degrees horizontal field of view-->
+                <image>
+                    <width>TODO</width> 
+                    <height>TODO</height>
+                    <!-- format is okay the default value since the realsense is rgb8-->
+                    
+                </image>
+                <clip>
+                    <near>TODO</near>
+                    <far>TODO</far>
+                </clip>
+                <depth_camera>
+                    
+                </depth_camera>
+                <!-- <scan>
+                    <horizontal>
+                    <samples>360</samples>
+                    <resolution>1</resolution>
+                    <min_angle>-3.14</min_angle>
+                    <max_angle>3.14</max_angle>
+                    </horizontal>
+                </scan> -->
+                <!-- <range>
+                    <min>0.1</min>
+                    <max>12</max>
+                    <resolution>0.01</resolution>
+                </range> -->
+            </camera>
+            <topic>scan</topic>
+            <gz_frame_id>laser_frame</gz_frame_id>
+        </sensor>
+    </gazebo>
+</robot>
