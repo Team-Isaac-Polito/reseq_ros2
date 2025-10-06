@@ -1,45 +1,70 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
-    <gazebo reference="rgdb_camera_frame">
+    <joint name="depth_camera" type="fixed">
+        <parent link="chassis2_link"/>
+        <child link="depth_camera_frame"/>
+        <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    </joint>
+    <link name="depth_camera_frame">
+        <!-- lidar -->
+        <visual>
+            <geometry>
+                <cylinder radius="0.05" length="0.04"/>
+            </geometry>
+            <material name="DepthCameraColor"/>
+        </visual>
+        <!-- pole to lidar -->
+        <visual>
+            <origin xyz="0 0 -0.1" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.01" length="0.1"/>
+            </geometry>
+            <material name="DepthCameraColor"/>
+        </visual>
+
+        <collision>
+            <geometry>
+                <cylinder radius="0.05" length="0.04"/>
+            </geometry>
+        </collision>
+
+        <xacro:inertial_cylinder_z mass="0.1" length="0.04" radius="0.05">
+        <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
+        </xacro:inertial_cylinder_z>
+    </link>
+    <gazebo reference="depth_camera_frame">
         <!--http://sdformat.org/spec?ver=1.12&elem=sensor-->
         <material>Gazebo/Red</material>
 
-        <sensor name="rgbd_camera" type="rgbd_camera">
+        <sensor name="depth_camera" type="depth">
             <pose> 0 0 0 0 0 0 </pose>
             <visualize>true</visualize>
             <update_rate>10</update_rate>
+            <always_on>true</always_on>
+            <topic>depth_camera</topic>
             <camera>
                 <horizontal_fov>1.0469999999999999</horizontal_fov> <!--default value corresponds to 60 degrees horizontal field of view-->
                 <image>
-                    <width>TODO</width> 
-                    <height>TODO</height>
+                    <width>1280</width>
+                    <height>720</height>
                     <!-- format is okay the default value since the realsense is rgb8-->
-                    
                 </image>
                 <clip>
-                    <near>TODO</near>
-                    <far>TODO</far>
+                    <near>0.3</near>
+                    <far>3</far>
                 </clip>
                 <depth_camera>
-                    
+                    <clip>
+                        <near>0.3</near>
+                        <far>3</far>
+                    </clip>
                 </depth_camera>
-                <!-- <scan>
-                    <horizontal>
-                    <samples>360</samples>
-                    <resolution>1</resolution>
-                    <min_angle>-3.14</min_angle>
-                    <max_angle>3.14</max_angle>
-                    </horizontal>
-                </scan> -->
-                <!-- <range>
-                    <min>0.1</min>
-                    <max>12</max>
-                    <resolution>0.01</resolution>
-                </range> -->
             </camera>
-            <topic>scan</topic>
-            <gz_frame_id>laser_frame</gz_frame_id>
+            <gz_frame_id>depth_camera_frame</gz_frame_id>
+            <!-- <plugin name="depth_camera" filename="">
+                <frame_name>depth_camera_frame</frame_name>
+            </plugin> -->
         </sensor>
     </gazebo>
 </robot>
