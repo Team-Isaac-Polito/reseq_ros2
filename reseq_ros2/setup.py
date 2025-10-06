@@ -7,7 +7,12 @@ package_name = 'reseq_ros2'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name, f'{package_name}.utils', f'{package_name}.reseq_cv'],
+    packages=[
+        package_name,
+        f'{package_name}.utils',
+        f'{package_name}.reseq_cv',
+        f'{package_name}.detection_manager',
+    ],
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
         (f'share/{package_name}/config', glob('config/*.yaml')),
@@ -37,6 +42,7 @@ setup(
             'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
             'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
+            'reseq_ros2.detection_manager = reseq_ros2.detection_manager.detection_manager_node:main',
         ],
     },
 )
