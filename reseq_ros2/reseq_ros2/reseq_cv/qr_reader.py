@@ -1,24 +1,18 @@
-from pyzbar.pyzbar import decode
 import cv2
 
 
-def process_qr_codes(frame):
-    qr_codes = decode(frame)
-    for qr in qr_codes:
-        # Get bounding box and data
-        x, y, w, h = qr.rect
-        qr_data = qr.data.decode('utf-8')
+def process_qr_codes(image):
+    """
+    Detects QR codes in an image and returns the annotated image along with detection data.
+    """
+    qr_decoder = cv2.QRCodeDetector()
+    data, bbox, _ = qr_decoder.detectAndDecode(image)
 
-        # Draw bounding box and display data
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(
-            frame,
-            f'QR: {qr_data}',
-            (x, y - 10),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.9,
-            (0, 255, 0),
-            2,
-        )
-        print(f'QR Code Data: {qr_data}')
-    return frame
+    detections = []
+    # If a QR code is detected, bbox will not be None
+    if bbox is not None and data:
+        points = bbox[0].astype(int)
+        detection_data = {'text': data, 'bbox': points}
+        detections.append(detection_data)
+
+    return image, detections
