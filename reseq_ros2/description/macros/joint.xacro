@@ -10,7 +10,7 @@
    -->
   <xacro:macro name="chassis_joint_factory" params="id">
     <!-- JointR -->
-    <joint name="joint_r_${id}_joint" type="revolute">
+    <joint name="mod${id}__roll_joint" type="revolute">
       <parent link="chassis${id-1}_link" />
       <child link="joint_r_${id}_link" />
       <!-- Effort in Nm -->
@@ -43,7 +43,7 @@
     </gazebo>
 
     <!-- JointY -->
-    <joint name="joint_y_${id}_joint" type="revolute">
+    <joint name="mod${id}__yaw_joint" type="revolute">
       <parent link="joint_r_${id}_link" />
       <child link="joint_y_${id}_link" />
       <!-- Effort in Nm -->
@@ -87,7 +87,7 @@
 
 
     <!-- JointP -->
-    <joint name="joint_p_${id}_joint" type="revolute">
+    <joint name="mod${id}__pitch_joint" type="revolute">
       <parent link="joint_y_${id}_link" />
       <child link="joint_p_${id}_link" />
       <!-- Effort in Nm -->

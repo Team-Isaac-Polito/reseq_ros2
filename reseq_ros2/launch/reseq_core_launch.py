@@ -8,8 +8,6 @@ from reseq_ros2.utils.launch_utils import (
     config_path,
     default_filename,
     get_addresses,
-    get_end_effector,
-    get_joints,
     parse_config,
 )
 
@@ -24,48 +22,7 @@ def launch_setup(context, *args, **kwargs):
     # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     addresses = get_addresses(config)
-    joints = get_joints(config)
-    endEffector = get_end_effector(config)
     launch_config = []
-
-    # check if it is can
-    if config['canbus']['channel'].startswith('can'):
-        launch_config.append(
-            Node(
-                package='reseq_ros2',
-                executable='communication',
-                name='communication',
-                parameters=[
-                    {
-                        'can_channel': config['canbus']['channel'],
-                        'modules': addresses,
-                        'joints': joints,
-                        'end_effector': endEffector,
-                        'use_sim_time': use_sim_time=='true',
-                    }
-                ],
-                arguments=['--ros-args', '--log-level', log_level],
-                on_exit=Shutdown(),
-            )
-        )
-    else:
-        launch_config.append(
-            Node(
-                package='reseq_ros2',
-                executable='communication',
-                name='communication',
-                parameters=[
-                    {
-                        'can_channel': config['canbus']['channel'],
-                        'modules': addresses,
-                        'joints': joints,
-                        'end_effector': endEffector,
-                        'use_sim_time': use_sim_time=='true',
-                    }
-                ],
-                arguments=['--ros-args', '--log-level', log_level],
-            )
-        )
     launch_config.append(
         Node(
             package='reseq_ros2',
@@ -75,12 +32,7 @@ def launch_setup(context, *args, **kwargs):
                 {
                     'a': config['agevar_consts']['a'],
                     'b': config['agevar_consts']['b'],
-                    'd': config['agevar_consts']['d'],
-                    'r_eq': config['agevar_consts']['r_eq'],
                     'modules': addresses,
-                    'joints': joints,
-                    'end_effector': endEffector,
-                    'use_sim_time': use_sim_time == 'true',
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
@@ -90,16 +42,11 @@ def launch_setup(context, *args, **kwargs):
     launch_config.append(
         Node(
             package='reseq_ros2',
-            executable='scaler',
-            name='scaler',
+            executable='pivot_controller',
+            name='pivot_controller',
             parameters=[
                 {
-                    'r_linear_vel': config['scaler_consts']['r_linear_vel'],
-                    'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
-                    'r_pitch_vel': config['scaler_consts']['r_pitch_vel'],
-                    'r_head_pitch_vel': config['scaler_consts']['r_head_pitch_vel'],
-                    'r_head_roll_vel': config['scaler_consts']['r_head_roll_vel'],
-                    'use_sim_time': use_sim_time == 'true',
+                    'modules': addresses,
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
@@ -107,33 +54,25 @@ def launch_setup(context, *args, **kwargs):
         )
     )
 
-    if config['version'] == 'mk1':
-        launch_config.append(
-            Node(
-                package='reseq_ros2',
-                executable='enea',
-                name='enea',
-                parameters=[
-                    {
-                        'pitch': config['enea_consts']['i_pitch'],
-                        'head_pitch': config['enea_consts']['i_head_pitch'],
-                        'head_roll': config['enea_consts']['i_head_roll'],
-                        'servo_speed': config['enea_consts']['servo_speed'],
-                        'r_pitch': config['enea_consts']['r_pitch'],
-                        'r_head_pitch': config['enea_consts']['r_head_pitch'],
-                        'r_head_roll': config['enea_consts']['r_head_roll'],
-                        'pitch_conv': config['enea_consts']['pitch_conv'],
-                        'end_effector': endEffector,
-                        'use_sim_time': use_sim_time == 'true',
-                    }
-                ],
-                arguments=['--ros-args', '--log-level', log_level],
-                on_exit=Shutdown(),
-            )
+    launch_config.append(
+        Node(
+            package='reseq_ros2',
+            executable='scaler',
+            name='scaler',
+            parameters=[
+                {
+                    'r_linear_vel': config['scaler_consts']['r_linear_vel'],
+                    'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
+                    'r_angular_vel': config['scaler_consts']['r_angular_vel'],
+                    'version': config['version'],
+                }
+            ],
+            arguments=['--ros-args', '--log-level', log_level],
+            on_exit=Shutdown(),
         )
+    )
 
     return launch_config
-    # return launch_config
 
 
 def generate_launch_description():

@@ -1,11 +1,11 @@
 # RUN WITH:
-# docker run --rm --net=host -it reseq:dtwin
+# docker run --rm --net=host -it reseq-dtwin
 # BUILD WITH:
-# docker build -t reseq:dtwin -f src/docker/Dockerfile.dtwin src
+# docker build -t reseq-dtwin -f src/docker/Dockerfile.dtwin src
 
 FROM ros:humble-ros-core
 
-ARG CONFIG_FILE=reseq_mk1_can.yaml
+ARG CONFIG_FILE=reseq_mk2_can.yaml
 
 RUN apt update && \
     apt install -y --no-install-recommends python3-rosdep gcc g++ make python3-colcon-common-extensions && \

@@ -138,6 +138,7 @@ class TestNodes(unittest.TestCase):
         cls.msg = Remote()
         cls.msg.left = Vector3(x=0.5, y=-0.2, z=1.0)
         cls.msg.right = Vector3(x=-0.8, y=0.3, z=0.7)
+        cls.msg.buttons = [False, False, False, False, False, True, True, True, True, True]
 
         # Initialize the CAN bus interface
         if cls.stat[0]:
@@ -225,8 +226,7 @@ class TestNodes(unittest.TestCase):
             '/remote': reseq_interfaces.msg.Remote(
                 left=geometry_msgs.msg.Vector3(x=0.5, y=-0.2, z=1.0),
                 right=geometry_msgs.msg.Vector3(x=-0.8, y=0.3, z=0.7),
-                buttons=[],
-                switches=[],
+                buttons=[False, False, False, False, False, True, True, True, True, True],
             ),
             '/reseq/module17/end_effector/head_pitch/setpoint': std_msgs.msg.Int32(data=800),
             '/reseq/module17/end_effector/head_roll/setpoint': std_msgs.msg.Int32(data=0),

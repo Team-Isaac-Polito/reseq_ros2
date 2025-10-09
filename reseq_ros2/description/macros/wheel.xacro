@@ -20,7 +20,7 @@
             <xacro:property name="side_sign" value="-1" />
         </xacro:if>
 
-        <joint name="${side}_${pos}_wheel_${id}_joint" type="continuous">
+        <joint name="mod${id}__${side}_${pos}_wheel" type="continuous">
         <parent link="chassis${id}_link" />
         <child link="${side}_${pos}_wheel_${id}_link" />
         <origin xyz="${pos_sign*WheelBase/2} ${side_sign*(ModuleWidth/2-TrackWidth/2)} 0" rpy="0 0 0" />

@@ -5,14 +5,7 @@ from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-from reseq_ros2.utils.launch_utils import (
-    config_path,
-    default_filename,
-    get_addresses,
-    get_end_effector,
-    get_joints,
-    parse_config,
-)
+from reseq_ros2.utils.launch_utils import config_path, default_filename, parse_config
 
 share_folder = get_package_share_directory('reseq_ros2')
 
@@ -22,15 +15,11 @@ share_folder = get_package_share_directory('reseq_ros2')
 def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
-    log_level = LaunchConfiguration('log_level').perform(context)
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context) # it's a string either 'true' or 'false'
     
     # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
-    addresses = get_addresses(config)
-    joints = get_joints(config)
-    endEffector = get_end_effector(config)
     launch_config = []
 
     robot_controllers = f'{config_path}/reseq_controllers.yaml'
@@ -91,6 +80,7 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(robot_state_publisher_node)
 
+<<<<<<< HEAD
     if config['canbus']['channel'].startswith('vcan'):
         feedback_replicator = Node(
             package='reseq_ros2',
@@ -108,6 +98,8 @@ def launch_setup(context, *args, **kwargs):
         )
         launch_config.append(feedback_replicator)
 
+=======
+>>>>>>> origin/feat-ros2-control
     return launch_config
 
 
