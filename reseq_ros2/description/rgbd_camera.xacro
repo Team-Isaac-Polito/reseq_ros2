@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
-    <joint name="depth_camera" type="fixed">
+    <joint name="rgbd_camera_joint" type="fixed">
         <parent link="chassis2_link"/>
-        <child link="depth_camera_frame"/>
+        <child link="rgbd_camera_frame"/>
         <origin xyz="0 0 0.1" rpy="0 0 0"/>
     </joint>
-    <link name="depth_camera_frame">
+    <link name="rgbd_camera_frame">
         <!-- lidar -->
         <visual>
             <geometry>
@@ -33,16 +33,16 @@
         <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
         </xacro:inertial_cylinder_z>
     </link>
-    <gazebo reference="depth_camera_frame">
+    <gazebo reference="rgbd_camera_frame">
         <!--http://sdformat.org/spec?ver=1.12&elem=sensor-->
         <material>Gazebo/Red</material>
 
-        <sensor name="depth_camera" type="depth">
+        <sensor name="rgbd_camera" type="rgbd_camera">
             <pose> 0 0 0 0 0 0 </pose>
             <visualize>true</visualize>
             <update_rate>10</update_rate>
             <always_on>true</always_on>
-            <topic>depth_camera</topic>
+            <topic>rgbd_camera</topic>
             <camera>
                 <horizontal_fov>1.0469999999999999</horizontal_fov> <!--default value corresponds to 60 degrees horizontal field of view-->
                 <image>
@@ -61,7 +61,7 @@
                     </clip>
                 </depth_camera>
             </camera>
-            <gz_frame_id>depth_camera_frame</gz_frame_id>
+            <gz_frame_id>rgbd_camera_frame</gz_frame_id>
             <!-- <plugin name="depth_camera" filename="">
                 <frame_name>depth_camera_frame</frame_name>
             </plugin> -->

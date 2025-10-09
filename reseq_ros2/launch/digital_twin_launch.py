@@ -80,26 +80,6 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(robot_state_publisher_node)
 
-<<<<<<< HEAD
-    if config['canbus']['channel'].startswith('vcan'):
-        feedback_replicator = Node(
-            package='reseq_ros2',
-            executable='feedback_replicator',
-            name='feedback_replicator',
-            parameters=[
-                {
-                    'modules': addresses,
-                    'joints': joints,
-                    'end_effector': endEffector,
-                    'use_sim_time': use_sim_time=='true',
-                }
-            ],
-            arguments=['--ros-args', '--log-level', log_level],
-        )
-        launch_config.append(feedback_replicator)
-
-=======
->>>>>>> origin/feat-ros2-control
     return launch_config
 
 
