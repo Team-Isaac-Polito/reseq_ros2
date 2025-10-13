@@ -27,14 +27,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'communication = reseq_ros2.communication:main',
             'agevar = reseq_ros2.agevar:main',
-            'remote_test = reseq_ros2.remote_test:main',
-            'enea = reseq_ros2.enea:main',
             'scaler = reseq_ros2.scaler:main',
-            'joint_publisher = reseq_ros2.joint_publisher:main',
-            'feedback_replicator = reseq_ros2.feedback_replicator:main',
-            'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
+            'rcemu = reseq_ros2.rcemu:main',
             'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
             'thermal_node = reseq_ros2.thermal_node:main',
