@@ -29,7 +29,7 @@ setup(
         'console_scripts': [
             'agevar = reseq_ros2.agevar:main',
             'scaler = reseq_ros2.scaler:main',
-            'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
+            'rcemu = reseq_ros2.rcemu:main',
             'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
         ],
