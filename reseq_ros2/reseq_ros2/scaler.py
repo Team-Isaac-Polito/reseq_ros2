@@ -70,15 +70,19 @@ class Scaler(Node):
         self.control_mode = Scaler.control_mode_enum.AGEVAR
 
         self.r_linear_vel = (
-            self.declare_parameter('r_linear_vel', [0.0]).get_parameter_value().double_array_value
+            self.declare_parameter('r_linear_vel', [-0.1600, -0.1600])
+            .get_parameter_value()
+            .double_array_value
         )
         self.r_inverse_radius = (
-            self.declare_parameter('r_inverse_radius', [0.0])
+            self.declare_parameter('r_inverse_radius', [-2.5478, -2.5478])
             .get_parameter_value()
             .double_array_value
         )
         self.r_angular_vel = (
-            self.declare_parameter('r_angular_vel', [0.0]).get_parameter_value().double_array_value
+            self.declare_parameter('r_angular_vel', [-2.4912, -2.4912])
+            .get_parameter_value()
+            .double_array_value
         )
 
         for h in self.handlers:
@@ -95,6 +99,7 @@ class Scaler(Node):
             return
 
         for handler in self.handlers:
+            self.get_logger().debug(str(handler['button']))
             if buttons[handler['button']] != self.previous_buttons[handler['button']]:
                 if 'condition' not in handler or handler['condition'](buttons):
                     data = handler['inverted'] ^ buttons[handler['button']]
