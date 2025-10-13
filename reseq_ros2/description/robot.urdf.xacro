@@ -13,6 +13,7 @@
   <xacro:include filename="macros/chassis.xacro" />
   <xacro:include filename="macros/wheel.xacro" />
   <xacro:include filename="macros/control_macros.xacro" />
+  <xacro:include filename="macros/control_chassis_joint.xacro"/> 
 
   <xacro:include filename="reseq_body.xacro" />
 
