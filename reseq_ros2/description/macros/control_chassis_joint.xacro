@@ -8,13 +8,13 @@
 
     <xacro:macro name="control_chassis_joint_factory" params="id">
 
-        <joint name="joint_y_${id}_joint">
+        <joint name="mod${id}__yaw_joint">
             <state_interface name="position" />
         </joint>
-        <joint name="joint_r_${id}_joint">
+        <joint name="mod${id}__roll_joint">
             <state_interface name="position" />
         </joint>
-        <joint name="joint_p_${id}_joint">
+        <joint name="mod${id}__pitch_joint">
             <state_interface name="position" />
         </joint>
 
