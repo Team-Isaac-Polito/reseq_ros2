@@ -20,6 +20,18 @@ class EmulatorRemoteController(Node):
         self.publish_timer = self.create_timer(0.2, self.publish_message)
         self.has_to_exit = False
         self.previousMessage = Remote()
+        self.previousMessage.buttons = [
+            False,
+            False,
+            False,
+            False,
+            False,
+            True,
+            True,
+            True,
+            True,
+            True,
+        ]
         self.increment = 0.1
 
     """
@@ -150,10 +162,10 @@ class EmulatorRemoteController(Node):
         # not only that, but it also interferes with the logic that
         # depends on message changes (like detecting when pivoting starts/stops)
         buttons = self.previousMessage.buttons
-        while len(buttons) < 6:
+        while len(buttons) < 10:
             buttons.append(False)
 
-        blue_held = buttons[5]
+        blue_held = buttons[9]
         active_axes = any(
             [
                 abs(self.previousMessage.left.x) > 0.01,
