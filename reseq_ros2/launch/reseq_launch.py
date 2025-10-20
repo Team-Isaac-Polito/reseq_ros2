@@ -36,6 +36,7 @@ def launch_setup(context, *args, **kwargs):
 
     # use simulation time: should only be used with gazebo that's why default value is 'false'
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
+    sim_mode = LaunchConfiguration('sim_mode').perform(context)
 
     # Core launch file
     core_launch_file = os.path.join(
@@ -80,6 +81,7 @@ def launch_setup(context, *args, **kwargs):
                     'log_level': log_level,
                     'external_log_level': external_log_level,
                     'use_sim_time': use_sim_time,
+                    'sim_mode': sim_mode,
                 }.items(),
             )
         )
@@ -137,6 +139,7 @@ def generate_launch_description():
             ),
             # this argument is passed as 'true' by sim_launch.py file
             DeclareLaunchArgument('use_sim_time', default_value='false'),
+            DeclareLaunchArgument('sim_mode', default_value='false'),
             OpaqueFunction(function=generate_config_setup),
         ]
     )

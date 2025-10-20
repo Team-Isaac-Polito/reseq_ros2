@@ -17,7 +17,7 @@ def launch_setup(context, *args, **kwargs):
     config_filename = LaunchConfiguration('config_file').perform(context)
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context) # it's a string either 'true' or 'false'
-    
+    sim_mode = LaunchConfiguration('sim_mode').perform(context)
     # Parse the config file
     config = parse_config(f'{config_path}/{config_filename}')
     launch_config = []
@@ -67,7 +67,7 @@ def launch_setup(context, *args, **kwargs):
 
     xacro_file = share_folder + '/description/robot.urdf.xacro'
     robot_description = xacro.process_file(
-        xacro_file, mappings={'config_path': f'{config_path}/{config_filename}'}
+        xacro_file, mappings={'config_path': f'{config_path}/{config_filename}', 'sim_mode': sim_mode}
     ).toxml()
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -96,6 +96,7 @@ def generate_launch_description():
                                     but instead is passed by other launch files that use this launch file.\
                                     Setting this arg to 'true', it will set the use_sim_time parameter of all nodes launched in this file \
                                     to True."),
+            DeclareLaunchArgument('sim_mode', default_value='false'),
             OpaqueFunction(function=launch_setup),
         ]
     )

@@ -2,7 +2,8 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <ros2_control name="ReseqHardwareSystem" type="system">
         <hardware>
-            <plugin>reseq_hardware/ReseqHardware</plugin>
+            <!-- <plugin>reseq_hardware/ReseqHardware</plugin> -->
+            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
             <param name="num_modules">${NumModules}</param>
             <!-- TODO: vcan, and gazebo alternatives -->
         </hardware>
@@ -29,37 +30,6 @@
 
         <xacro:loop module="1" n_modules="${NumModules}" />
 
-    </ros2_control>
-
-    <ros2_control name="GazeboSimSystem" type="system">
-        <hardware>
-            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-        </hardware>
-        <!-- Create n_modules modules by recursively calling the loop macro -->
-        <xacro:macro name="loop" params="module n_modules">
-            <xacro:if value="${module &lt;= n_modules}">
-
-                <!-- Wheels -->
-                <xacro:control_wheel_factory id="${module}" pos="front" side="left" />
-                <xacro:control_wheel_factory id="${module}" pos="front" side="right" />
-                <xacro:control_wheel_factory id="${module}" pos="back" side="left" />
-                <xacro:control_wheel_factory id="${module}" pos="back" side="right" />
-
-                <xacro:loop module="${module + 1}" n_modules="${n_modules}"/>
-            </xacro:if>
-        </xacro:macro>
-
-        <xacro:loop module="1" n_modules="${NumModules}"/>
-
-        <!-- Create n_modules modules by recursively calling the loop macro -->
-        <xacro:macro name="loop2" params="module n_modules">
-            <xacro:if value="${module &lt; n_modules}">
-                <xacro:control_chassis_joint_factory id="${module + 1}"/>
-                <xacro:loop2 module="${module + 1}" n_modules="${n_modules}"/>
-            </xacro:if>
-        </xacro:macro>
-
-        <xacro:loop2 module="1" n_modules="${NumModules}"/>
     </ros2_control>
 
     <gazebo>
