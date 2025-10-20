@@ -35,6 +35,26 @@
 
         <xacro:loop module="1" n_modules="${NumModules}" />
 
+        <!-- ARM CONTROLLER INTERFACES -->
+        <joint name="arm_pitch_1_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="arm_head_pitch_1_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="arm_head_roll_1_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity" />
+        </joint>
+
+
     </ros2_control>
 
     <xacro:if value="$(arg sim_mode)">
