@@ -112,7 +112,12 @@
   </joint>
 
   <link name="arm_camera_holder_intermediate">
-
+    <inertial>
+      <mass value="0.05"/> <!-- 50 grams -->
+      <inertia ixx="1e-4" ixy="0" ixz="0"
+             iyy="1e-4" iyz="0"
+             izz="1e-4"/>
+    </inertial>
   </link>
 
   <gazebo reference="arm_camera_holder_intermediate">
