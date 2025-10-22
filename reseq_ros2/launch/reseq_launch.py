@@ -64,6 +64,7 @@ def launch_setup(context, *args, **kwargs):
                 launch_arguments={
                     'config_file': config_filename,
                     'external_log_level': external_log_level,
+                    'use_sim_time': use_sim_time,
                 }.items(),
             )
         )
@@ -88,6 +89,7 @@ def launch_setup(context, *args, **kwargs):
 
     return launch_config
 
+
 def generate_config_setup(context, *args, **kwargs):
     config_file = LaunchConfiguration('config_file').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
@@ -95,10 +97,11 @@ def generate_config_setup(context, *args, **kwargs):
     use_sim_time_arg = '--use_sim_time' if use_sim_time == 'true' else ''
 
     generate_configs = ExecuteProcess(
-        cmd=['python3',
+        cmd=[
+            'python3',
             os.path.join(share_folder, 'scripts/generate_configs.py'),
             config_file,
-            use_sim_time_arg
+            use_sim_time_arg,
         ],
         name='generate_configs',
         output='screen',
@@ -112,7 +115,7 @@ def generate_config_setup(context, *args, **kwargs):
             ]
         else:
             return [EmitEvent(event=Shutdown(reason='Configuration generation failed'))]
-    
+
     return [
         generate_configs,
         # Wait for the config generation process to complete before proceeding
@@ -120,6 +123,7 @@ def generate_config_setup(context, *args, **kwargs):
             OnProcessExit(target_action=generate_configs, on_exit=on_process_exit)
         ),
     ]
+
 
 def generate_launch_description():
     return LaunchDescription(
