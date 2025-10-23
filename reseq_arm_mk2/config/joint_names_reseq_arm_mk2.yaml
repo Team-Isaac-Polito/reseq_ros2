@@ -1,0 +1,8 @@
+controller_joint_names: [
+    "mod1__base_pitch_arm_joint",
+    "mod1__base_roll_arm_joint",
+    "mod1__elbow_pitch_arm_joint",
+    "mod1__forearm_roll_arm_joint",
+    "mod1__wrist_pitch_arm_joint",
+    "mod1__wrist_roll_arm_joint",
+  ]
