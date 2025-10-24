@@ -1,9 +1,0 @@
-<library path="reseq_hardware">
-  <class name="reseq_hardware/ReseqHardware"
-         type="reseq_hardware::ReseqHardware"
-         base_class_type="hardware_interface::SystemInterface">
-    <description>
-      Hardware interface for the RESE.Q robot, using the CAN interface.
-    </description>
-  </class>
-</library>

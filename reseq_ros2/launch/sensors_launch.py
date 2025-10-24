@@ -17,6 +17,7 @@ def launch_setup(context, *args, **kwargs):
     config = parse_config(f'{config_path}/{config_filename}')
 
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
 
     launch_config = []
 
@@ -32,7 +33,10 @@ def launch_setup(context, *args, **kwargs):
                     IncludeLaunchDescription(
                         f'{get_package_share_directory("rplidar_ros")}'
                         '/launch/rplidar_a2m8_launch.py',
-                        launch_arguments={'frame_id': 'laser_frame'}.items(),
+                        launch_arguments={
+                            'frame_id': 'laser_frame',
+                            'use_sim_time': use_sim_time,
+                        }.items(),
                     ),
                 )
             if name == 'realsense':
@@ -42,7 +46,12 @@ def launch_setup(context, *args, **kwargs):
                         executable='realsense2_camera_node',
                         name='realsense2_camera_node',
                         namespace='realsense',
-                        parameters=[ParameterFile(f'{config_path}/{config["realsense_config"]}')],
+                        parameters=[
+                            ParameterFile(f'{config_path}/{config["realsense_config"]}'),
+                            {
+                                'use_sim_time': use_sim_time,
+                            },
+                        ],
                         arguments=['--ros-args', '--log-level', external_log_level],
                     )
                 )
@@ -76,6 +85,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('external_log_level', default_value='warn'),
+            DeclareLaunchArgument('use_sim_time', default_value='false'),
             OpaqueFunction(function=launch_setup),
         ]
     )

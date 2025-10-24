@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 import yaml
+import argparse
 
 # Set the path to the config directory relative to the scripts directory
 config_path = os.path.join(os.path.dirname(__file__), '../config')
@@ -123,7 +124,7 @@ def generate_final_config(include_file):
 
 # Function to generate reseq_controllers.yaml based on the number of modules and parameters
 # from the generic file
-def generate_controllers_config(generic_config_file):
+def generate_controllers_config(generic_config_file, use_sim_time: bool):
     with open(os.path.join(temp_config_path, generic_config_file), 'r') as file:
         generic_config = yaml.safe_load(file)
 
@@ -137,6 +138,8 @@ def generate_controllers_config(generic_config_file):
     num_modules = generic_config['num_modules']
     wheel_separation = agevar_config['agevar_consts']['d']
     wheel_radius = agevar_config['agevar_consts']['r_eq']
+
+    controllers_config['controller_manager']['ros__parameters']['use_sim_time'] = use_sim_time
 
     for i in range(num_modules):
         controller_name = f'diff_controller{i + 1}'
@@ -169,17 +172,36 @@ def generate_controllers_config(generic_config_file):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print('Usage: python generate_configs.py <config_file>')
-    else:
-        config_file = sys.argv[1]
-        try:
-            # Clear the temp directory before generating new configs
-            clear_temp_directory(temp_config_path)
-            generate_final_config(config_file)
-            # Generate reseq_controllers.yaml to avoid fatal errors
-            generate_controllers_config(config_file)
-            sys.exit(0)
-        except Exception as e:
-            print(f'Error generating configuration files: {e}')
-            sys.exit(1)
+    # Using argparse to tidily manage args from command line
+    parser = argparse.ArgumentParser(
+        usage='Usage: python generate_configs.py <config_file>',
+        description='Use this python file to generate configurations in the /config/temp folder.'
+    )
+    parser.add_argument(
+        'config_file',
+        help='Configuration file name',
+    )
+    parser.add_argument(
+        '--use_sim_time',
+        '-s',
+        action='store_true',
+        required=False,
+        default=False,
+        help='Set this to true if you want all nodes described\
+            in the configuration files to use the Simulation Time',
+    )
+
+    args = parser.parse_args()
+    config_file = args.config_file
+    use_sim_time = args.use_sim_time
+
+    try:
+        # Clear the temp directory before generating new configs
+        clear_temp_directory(temp_config_path)
+        generate_final_config(config_file)
+        # Generate reseq_controllers.yaml to avoid fatal errors
+        generate_controllers_config(config_file, use_sim_time)
+        sys.exit(0)
+    except Exception as e:
+        print(f'Error generating configuration files: {e}')
+        sys.exit(1)

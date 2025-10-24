@@ -2,7 +2,13 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <ros2_control name="ReseqHardwareSystem" type="system">
         <hardware>
-            <plugin>reseq_hardware/ReseqHardware</plugin>
+            <xacro:if value="$(arg sim_mode)" >
+                <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+            </xacro:if>
+            <xacro:unless value="$(arg sim_mode)">
+                <plugin>reseq_hardware/ReseqHardware</plugin>
+            </xacro:unless>
+
             <param name="num_modules">${NumModules}</param>
             <!-- TODO: vcan, and gazebo alternatives -->
         </hardware>
@@ -29,5 +35,33 @@
 
         <xacro:loop module="1" n_modules="${NumModules}" />
 
+        <!-- ARM CONTROLLER INTERFACES -->
+        <joint name="arm_pitch_1_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="arm_head_pitch_1_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="arm_head_roll_1_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity" />
+        </joint>
+
+
     </ros2_control>
+
+    <xacro:if value="$(arg sim_mode)">
+        <gazebo>
+            <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
+                <parameters>$(find reseq_ros2)/config/temp/reseq_controllers.yaml</parameters>
+            </plugin>
+        </gazebo>
+    </xacro:if>
 </robot>

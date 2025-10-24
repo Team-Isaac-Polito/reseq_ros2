@@ -45,7 +45,7 @@
         </geometry>
         <material name="ArmColor"/>
       </visual>
-    </xacro:replicate_collision>
+    </xacro:replicate_collision>   
 
     <!-- left side of the fork -->
     <xacro:replicate_collision>
@@ -56,7 +56,7 @@
         </geometry>
         <material name="ArmColor"/>
       </visual>
-    </xacro:replicate_collision>
+    </xacro:replicate_collision>       
 
     <!-- front side of the fork -->
     <xacro:replicate_collision>
@@ -67,7 +67,7 @@
         </geometry>
         <material name="ArmColor"/>
       </visual>
-    </xacro:replicate_collision>
+    </xacro:replicate_collision>  
 
     <!-- Jetson holder -->
     <xacro:replicate_collision>
@@ -80,6 +80,10 @@
       </visual>
     </xacro:replicate_collision>
 
+    <xacro:inertial_box mass="${0.5}" x="${JetsonHolderLength}" z="${ForkHeight}" y="${JetsonHolderWidth}">
+      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" rpy="0 0 0"/>
+    </xacro:inertial_box>
+
     <!-- cylinder on the jetson holder-->
     <xacro:replicate_collision>
       <visual>
@@ -91,11 +95,11 @@
       </visual>
     </xacro:replicate_collision>
 
-    <xacro:inertial_box mass="${0.5}" x="${JetsonHolderLength}" y="${ForkHeight}" z="${JetsonHolderWidth}">
-      <origin xyz="${ForkThickness/2+toll+EquivalentWheelDiameter/2+JetsonHolderLength/2} 0 0" rpy="0 0 0"/>
-    </xacro:inertial_box>
-
   </link>
+
+  <gazebo reference="arm_mk1_link">
+    <material>Gazebo/Grey</material>
+  </gazebo>
 
   <!-- head pitch joint-->
   <joint name="arm_head_pitch_1_joint" type="revolute">
@@ -108,8 +112,17 @@
   </joint>
 
   <link name="arm_camera_holder_intermediate">
-
+    <inertial>
+      <mass value="0.05"/> <!-- 50 grams -->
+      <inertia ixx="1e-4" ixy="0" ixz="0"
+             iyy="1e-4" iyz="0"
+             izz="1e-4"/>
+    </inertial>
   </link>
+
+  <gazebo reference="arm_camera_holder_intermediate">
+    <material>Gazebo/Grey</material>
+  </gazebo>
 
   <!-- head roll joint -->
   <joint name="arm_head_roll_1_joint" type="revolute">
@@ -133,7 +146,7 @@
         </geometry>
         <material name="ArmColor"/>
       </visual>
-    </xacro:replicate_collision>
+    </xacro:replicate_collision>   
   
     <!-- sphere -->
     <xacro:replicate_collision>
@@ -156,13 +169,22 @@
         <material name="ArmColor"/>
       </visual>
     </xacro:replicate_collision>
+
+    <xacro:inertial_box mass="0.5" x="${RealsenseLength}" y="${RealsenseWidth}" z="${RealsenseHeight}">
+      <origin xyz ="0 0 -${CylinderRealsenseLength + RealsenseLength/2}" rpy="0 ${pi/2} 0"/>
+    </xacro:inertial_box>       
     
   </link>
 
-  <joint name="arm_camera_joint" type="fixed">
+  <gazebo reference="arm_camera_holder">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+
+  <!-- <joint name="arm_camera_joint" type="fixed">
     <parent link="arm_camera_holder"/>
     <child link="camera_link"/>
-    <!-- Effort in Nm, angle in radians -->
+    Effort in Nm, angle in radians
     <origin xyz ="0 ${RealsenseOriginSystem} -${CylinderRealsenseLength}" rpy="0 ${pi/2} 0"/>
     <axis xyz="1 0 0"/>
   </joint>
@@ -171,8 +193,10 @@
 
   </link>
 
-  <gazebo reference="arm_mK1_link">
+  <gazebo reference="camera_link">
     <material>Gazebo/Grey</material>
   </gazebo>
 
+   -->
+  
 </robot>

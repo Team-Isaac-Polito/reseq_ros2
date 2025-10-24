@@ -10,6 +10,7 @@ setup(
     packages=[package_name, f'{package_name}.utils', f'{package_name}.reseq_cv'],
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
+        (f'share/{package_name}/worlds', glob('worlds/*.world')),
         (f'share/{package_name}/config', glob('config/*.yaml')),
         (f'share/{package_name}/scripts', glob('scripts/*.py')),
         (f'share/{package_name}/description', glob('description/*.xacro')),

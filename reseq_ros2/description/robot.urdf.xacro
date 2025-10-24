@@ -26,6 +26,7 @@
   -->
 
   <xacro:include filename="lidar.xacro" />
+  <xacro:include filename="rgbd_camera.xacro" />
 
   <xacro:include filename="ros2_control.xacro" />
 

@@ -43,10 +43,17 @@
             </geometry>
         </collision>
 
-        <xacro:inertial_cylinder mass="${WheelMass}" length="${TrackWidth}"
+        <xacro:inertial_cylinder_y mass="${WheelMass}" length="${TrackWidth}"
             radius="${EquivalentWheelDiameter/2}">
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
-        </xacro:inertial_cylinder>
+            <origin xyz="0 0 0" rpy="-${pi/2} 0 0" />
+        </xacro:inertial_cylinder_y>
         </link>
+
+
+
+        <gazebo reference="${side}_${pos}_wheel_${id}_link">
+            <material>Gazebo/Black</material>
+        </gazebo>
+
     </xacro:macro>
 </robot>

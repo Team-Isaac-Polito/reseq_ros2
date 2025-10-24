@@ -29,7 +29,18 @@
           <material name="JointColor" />
         </visual>
       </xacro:replicate_collision>
+
+      <xacro:inertial_cylinder_x mass = "${JointBMass}"
+        length = "${JointB}"
+        radius = "${JointWidth/2}">
+        <origin xyz="-${JointB/2} 0 0" rpy="0 ${pi/2} 0" />
+      </xacro:inertial_cylinder_x>  
+
     </link>
+
+    <gazebo reference="joint_r_${id}_link">
+      <material>Gazebo/Grey</material>
+    </gazebo>
 
     <!-- JointY -->
     <joint name="mod${id}__yaw_joint" type="revolute">
@@ -64,7 +75,17 @@
         </visual>
       </xacro:replicate_collision>
 
+      <xacro:inertial_box mass="${JointAMass}" x="${JointA}" y="${EquivalentWheelDiameter-2*JointABottomClearance}" z="${JointWidth}">
+        <origin xyz="-${JointA/2} 0 0" rpy="0 0 0" />
+      </xacro:inertial_box>
+
     </link>
+
+    <gazebo reference="joint_y_${id}_link">
+      <material>Gazebo/Grey</material>
+    </gazebo>
+
+
     <!-- JointP -->
     <joint name="mod${id}__pitch_joint" type="revolute">
       <parent link="joint_y_${id}_link" />
@@ -87,6 +108,10 @@
         </visual>
       </xacro:replicate_collision>
     </link>
+
+    <gazebo reference="joint_p_${id}_link">
+      <material>Gazebo/Grey</material>
+    </gazebo>
 
     <joint name="chassis${id}_joint" type="fixed">
       <parent link="joint_p_${id}_link" />

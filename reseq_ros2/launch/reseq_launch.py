@@ -34,6 +34,10 @@ def launch_setup(context, *args, **kwargs):
     sensors_enabled = LaunchConfiguration('sensors').perform(context)
     digital_twin_enabled = LaunchConfiguration('d_twin').perform(context)
 
+    # use simulation time: should only be used with gazebo that's why default value is 'false'
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
+    sim_mode = LaunchConfiguration('sim_mode').perform(context)
+
     # Core launch file
     core_launch_file = os.path.join(
         get_package_share_directory('reseq_ros2'), 'launch', 'reseq_core_launch.py'
@@ -44,6 +48,7 @@ def launch_setup(context, *args, **kwargs):
             launch_arguments={
                 'config_file': config_filename,
                 'log_level': log_level,
+                'use_sim_time': use_sim_time,
             }.items(),
         )
     )
@@ -59,6 +64,7 @@ def launch_setup(context, *args, **kwargs):
                 launch_arguments={
                     'config_file': config_filename,
                     'external_log_level': external_log_level,
+                    'use_sim_time': use_sim_time,
                 }.items(),
             )
         )
@@ -75,6 +81,8 @@ def launch_setup(context, *args, **kwargs):
                     'config_file': config_filename,
                     'log_level': log_level,
                     'external_log_level': external_log_level,
+                    'use_sim_time': use_sim_time,
+                    'sim_mode': sim_mode,
                 }.items(),
             )
         )
@@ -82,11 +90,19 @@ def launch_setup(context, *args, **kwargs):
     return launch_config
 
 
-def generate_launch_description():
-    config_file = LaunchConfiguration('config_file')
+def generate_config_setup(context, *args, **kwargs):
+    config_file = LaunchConfiguration('config_file').perform(context)
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
+
+    use_sim_time_arg = '--use_sim_time' if use_sim_time == 'true' else ''
 
     generate_configs = ExecuteProcess(
-        cmd=['python3', os.path.join(share_folder, 'scripts/generate_configs.py'), config_file],
+        cmd=[
+            'python3',
+            os.path.join(share_folder, 'scripts/generate_configs.py'),
+            config_file,
+            use_sim_time_arg,
+        ],
         name='generate_configs',
         output='screen',
     )
@@ -100,6 +116,16 @@ def generate_launch_description():
         else:
             return [EmitEvent(event=Shutdown(reason='Configuration generation failed'))]
 
+    return [
+        generate_configs,
+        # Wait for the config generation process to complete before proceeding
+        RegisterEventHandler(
+            OnProcessExit(target_action=generate_configs, on_exit=on_process_exit)
+        ),
+    ]
+
+
+def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument('config_file', default_value=default_filename),
@@ -115,10 +141,9 @@ def generate_launch_description():
                 default_value='warn',
                 description='Set log level for external nodes',
             ),
-            generate_configs,
-            # Wait for the config generation process to complete before proceeding
-            RegisterEventHandler(
-                OnProcessExit(target_action=generate_configs, on_exit=on_process_exit)
-            ),
+            # this argument is passed as 'true' by sim_launch.py file
+            DeclareLaunchArgument('use_sim_time', default_value='false'),
+            DeclareLaunchArgument('sim_mode', default_value='false'),
+            OpaqueFunction(function=generate_config_setup),
         ]
     )

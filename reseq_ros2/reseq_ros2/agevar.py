@@ -35,6 +35,7 @@ class Agevar(Node):
         # subscribe to remote (parsed by teleop_twist_joy)
         self.create_subscription(Twist, '/cmd_vel', self.remote_callback, 10)
 
+
         self.latest_feedback = None
         self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1)
 
