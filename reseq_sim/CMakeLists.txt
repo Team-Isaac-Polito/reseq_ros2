@@ -24,3 +24,9 @@ if(BUILD_TESTING)
 endif()
 
 ament_package()
+
+foreach(dir config launch worlds)
+  install(DIRECTORY ${dir}/
+    DESTINATION share/${PROJECT_NAME}/${dir})
+endforeach(dir)
+
