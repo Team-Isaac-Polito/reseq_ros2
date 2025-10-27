@@ -39,13 +39,13 @@ class Detector(Node):
         # Subscribe to the camera color and depth image topic
         self.color_subscription = self.create_subscription(
             Image,
-            '/realsense/realsense2_camera_node/color/image_raw',
+            '/camera/color/image_raw',
             self.image_callback,
             10,
         )
         self.depth_subscription = self.create_subscription(
             Image,
-            '/realsense/realsense2_camera_node/aligned_depth_to_color/image_raw',
+            '/camera/aligned_depth_to_color/image_raw',
             self.depth_callback,
             10,
         )
