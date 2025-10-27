@@ -1,3 +1,11 @@
+# Build the docker in ~/ros2_ws directory:
+# docker build -t reseq-orin -f src/docker/Dockerfile.orin src
+# Run the docker:
+# docker run -it --rm --privileged --runtime nvidia --gpus all --network host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/isaac/.Xauthority:/root/.Xauthority:ro --entrypoint /bin/bash reseq-orin
+
+# --- See https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common/blob/release-3.1/docker/Dockerfile.aarch64 for the source of the code
+# (ends in line 270)
+
 # Copyright (c) 2021-2024, NVIDIA CORPORATION.  All rights reserved.
 #
 # NVIDIA CORPORATION and its licensors retain all intellectual property
@@ -261,6 +269,10 @@ apt-get update && apt-get install -y \
 # Store list of packages (must be last)
 RUN mkdir -p /opt/nvidia/isaac_ros_dev_base && dpkg-query -W | sort > /opt/nvidia/isaac_ros_dev_base/aarch64-end-packages.csv
 
+# --- End the code
+
+# --- See https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common/blob/release-3.1/docker/Dockerfile.realsense
+
 # Install librealsense from source
 ARG LIBREALSENSE_SOURCE_VERSION=v2.55.1
 ARG REALSENSE_ROS_GIT_URL=https://github.com/NVIDIA-ISAAC-ROS/realsense-ros.git
@@ -278,7 +290,9 @@ RUN mkdir -p /opt/realsense/
 COPY docker/utils/scripts/hotplug-realsense.sh /opt/realsense/hotplug-realsense.sh
 COPY docker/utils/udev_rules/99-realsense-libusb-custom.rules /etc/udev/rules.d/99-realsense-libusb-custom.rules
 
-# Install ros humble
+# --- End the code
+
+# Install ROS Humble
 # 1. Configure locale and install apt-tooling
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -298,14 +312,14 @@ RUN wget -qO - https://isaac.download.nvidia.com/isaac-ros/repos.key \
        $(lsb_release -cs) release-3.0" \
       | tee /etc/apt/sources.list.d/isaac-ros.list
 
-# 3. Add the official ROS 2 apt repository
+# 3. Add the official ROS2 apt repository
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
       | gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg \
  && echo "deb [arch=arm64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
        http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
       | tee /etc/apt/sources.list.d/ros2.list
 
-# 4. Install ROS 2 Humble and Isaac-ROS packages
+# 4. Install ROS2 Humble and Isaac-ROS packages
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ros-humble-ros-base \
@@ -328,13 +342,13 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-humble-slam-toolbox \
     ros-humble-geometry-msgs
 
-# -- Add necessary build packages 
+# Add necessary build packages 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     python3-rosdep \
     python3-colcon-common-extensions
-# --
 
+# Install Pyzbar and Ultralytics
 RUN pip install pyzbar ultralytics --no-cache-dir \
     # Download PyTorch, TorchVision, and ONNX Runtime GPU wheels for JetPack 6.0 / CUDA 12.2
     && wget https://nvidia.box.com/shared/static/mp164asf3sceb570wvjsrezk1p4ftj8t.whl -O torch-2.3.0-cp310-cp310-linux_aarch64.whl \
@@ -365,7 +379,7 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-humble-rqt-common-plugins \
     ros-humble-rviz2
 
-
+# Final stage: build reseq_ros2
 FROM reseq-base AS reseq
 
 RUN mkdir -p /ros2_ws
@@ -384,8 +398,3 @@ RUN apt update && \
 
 ENV CONFIG_FILE=${CONFIG_FILE}
 CMD /bin/bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && cd ~/realsense2_camera && . install/local_setup.bash"
-
-# Build the docker in ~/ros2_ws directory:
-# docker build -t reseq-orin -f src/docker/Dockerfile.orin src
-# Run the docker:
-# docker run -it --rm --privileged --runtime nvidia --gpus all --network host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/isaac/.Xauthority:/root/.Xauthority:ro --entrypoint /bin/bash reseq-orin
