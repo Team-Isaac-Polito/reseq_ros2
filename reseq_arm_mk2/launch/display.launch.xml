@@ -1,0 +1,14 @@
+<launch>
+  <arg name="model" default="" />
+  
+  <node pkg="robot_state_publisher" exec="robot_state_publisher">
+    <param name="robot_description" 
+           value="$(command 'xacro $(find-pkg-share reseq_arm_mk2)/urdf/reseq_arm_mk2.xacro')" />
+  </node>
+  
+  <node pkg="joint_state_publisher_gui" exec="joint_state_publisher_gui" />
+  
+  <node pkg="rviz2" exec="rviz2" 
+        args="-d $(find-pkg-share reseq_arm_mk2)/viz/arm.rviz" />
+  
+</launch>
