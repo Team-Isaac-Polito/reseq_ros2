@@ -8,6 +8,7 @@ from launch_ros.actions import Node
 from reseq_ros2.utils.launch_utils import config_path, default_filename, parse_config
 
 share_folder = get_package_share_directory('reseq_ros2')
+description_share_folder = get_package_share_directory('reseq_description')
 
 
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a
@@ -68,7 +69,7 @@ def launch_setup(context, *args, **kwargs):
         )
         launch_config.append(module_controller)
 
-    xacro_file = share_folder + '/description/robot.urdf.xacro'
+    xacro_file = description_share_folder + '/description/reseq_mk1.urdf.xacro'
     robot_description = xacro.process_file(
         xacro_file,
         mappings={'config_path': f'{config_path}/{config_filename}', 'sim_mode': sim_mode},
