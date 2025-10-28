@@ -275,8 +275,6 @@ RUN mkdir -p /opt/nvidia/isaac_ros_dev_base && dpkg-query -W | sort > /opt/nvidi
 
 # Install librealsense from source
 ARG LIBREALSENSE_SOURCE_VERSION=v2.55.1
-ARG REALSENSE_ROS_GIT_URL=https://github.com/NVIDIA-ISAAC-ROS/realsense-ros.git
-ARG REALSENSE_ROS_VERSION=release/4.51.1-isaac
 
 COPY docker/utils/scripts/build-librealsense.sh /opt/realsense/build-librealsense.sh
 COPY docker/utils/scripts/install-realsense-dependencies.sh /opt/realsense/install-realsense-dependencies.sh
@@ -326,10 +324,34 @@ RUN apt-get update \
       ros-humble-isaac-ros-common \
  && rm -rf /var/lib/apt/lists/*
 
-# ROS2 and Ultralytics setup
-FROM nvidia-realsense AS reseq-base
+# Add necessary build packages for realsense-ros2 installation
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    python3-rosdep \
+    python3-colcon-common-extensions
+
+# See https://github.com/NVIDIA-ISAAC-ROS/realsense-ros for realsense-ros2 installation
+# 1. Define build arguments
+ARG REALSENSE_ROS_GIT_URL=https://github.com/NVIDIA-ISAAC-ROS/realsense-ros.git
+ARG REALSENSE_ROS_VERSION=release/4.51.1-isaac
+
+ENV ROS_DISTRO=humble
+ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
 
 COPY docker/utils/ros_entrypoint.sh /ros_entrypoint.sh
+
+# 2. Clone, build, and install realsense-ros
+RUN apt update && rosdep init && rosdep update && source /ros_entrypoint.sh && \
+    mkdir -p /realsense-ros/src && cd /realsense-ros/src && \
+    git clone ${REALSENSE_ROS_GIT_URL} -b ${REALSENSE_ROS_VERSION} ros2-development && cd /realsense-ros && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys=librealsense2 -y && \
+    colcon build && \
+    sed -i "\$i ros_source_env /realsense-ros/install/setup.bash \n" /ros_entrypoint.sh
+
+CMD /bin/bash -c "source $ROS_ROOT/setup.bash && cd ~/realsense-ros && . install/local_setup.bash"
+
+# ROS2 and Ultralytics setup
+FROM nvidia-realsense AS reseq-base
 
 RUN apt update && apt install -y --no-install-recommends \
     ros-humble-xacro \
@@ -340,13 +362,11 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-humble-diff-drive-controller \
     ros-humble-joint-state-broadcaster \
     ros-humble-slam-toolbox \
-    ros-humble-geometry-msgs
-
-# Add necessary build packages 
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-    python3-rosdep \
-    python3-colcon-common-extensions
+    ros-humble-geometry-msgs \
+    # for visualizations and debugging
+    ros-humble-rqt \
+    ros-humble-rqt-common-plugins \
+    ros-humble-rviz2
 
 # Install Pyzbar and Ultralytics
 RUN pip install pyzbar ultralytics --no-cache-dir \
@@ -373,12 +393,6 @@ RUN pip install pyzbar ultralytics --no-cache-dir \
     \
     && echo "Ultralytics and dependencies successfully installed using JetPack 6.0 compatible wheels."
 
-# for visualizations and debugging
-RUN apt update && apt install -y --no-install-recommends \
-    ros-humble-rqt \
-    ros-humble-rqt-common-plugins \
-    ros-humble-rviz2
-
 # Final stage: build reseq_ros2
 FROM reseq-base AS reseq
 
@@ -386,15 +400,8 @@ RUN mkdir -p /ros2_ws
 WORKDIR /ros2_ws
 
 RUN apt update && \
-    git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src && cd src/ && \
-    git clone ${REALSENSE_ROS_GIT_URL} -b ${REALSENSE_ROS_VERSION} ros2-development && cd .. && \
-    source /opt/ros/humble/setup.bash && \ 
+    git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src && \
     source /ros_entrypoint.sh && \ 
-    rosdep init && \
-    rosdep update && \
-    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys="realsense2_camera librealsense2" -y -t exec -t build && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys="librealsense2 realsense2_camera" -y -t exec -t build && \
     colcon build && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh
-
-ENV CONFIG_FILE=${CONFIG_FILE}
-CMD /bin/bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && cd ~/realsense2_camera && . install/local_setup.bash"
