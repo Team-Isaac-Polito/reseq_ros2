@@ -19,7 +19,7 @@ setup(
         (f'share/{package_name}/scripts', glob('scripts/*.py')),
         (f'share/{package_name}/description', glob('description/*.xacro')),
         (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),
-        (f'share/{package_name}/ml-ckpt', glob('ml-ckpt/*.pt')),
+        (f'share/{package_name}/ml-ckpt', glob('ml-ckpt/*')),
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
