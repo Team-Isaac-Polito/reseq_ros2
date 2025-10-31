@@ -20,8 +20,8 @@ def launch_setup(context, *args, **kwargs):
         ]
     else:
         remappings = [
-            ('image_rect', '/realsense/realsense2_camera_node/color/image_raw'),
-            ('camera_info', '/realsense/realsense2_camera_node/color/camera_info'),
+            ('image_rect', '/camera/color/image_raw'),
+            ('camera_info', '/camera/color/camera_info'),
             ('detections', '/tag_detections'),
         ]
 

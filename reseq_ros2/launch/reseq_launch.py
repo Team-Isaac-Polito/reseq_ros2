@@ -98,11 +98,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # Start detector node and set the correct image topic
-    image_topic = (
-        '/webcam/image_raw'
-        if use_webcam == 'true'
-        else '/realsense/realsense2_camera_node/color/image_raw'
-    )
+    image_topic = '/webcam/image_raw' if use_webcam == 'true' else '/camera/color/image_raw'
 
     detector_node = Node(
         package='reseq_ros2',
