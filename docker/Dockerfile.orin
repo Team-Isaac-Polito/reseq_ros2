@@ -393,6 +393,10 @@ RUN pip install pyzbar ultralytics --no-cache-dir \
     \
     && echo "Ultralytics and dependencies successfully installed using JetPack 6.0 compatible wheels."
 
+RUN apt update && apt install -y --no-install-recommends \
+    ros-humble-apriltag-ros \
+    && pip install opencv-contrib-python numpy==1.23.5
+
 # Final stage: build reseq_ros2
 FROM reseq-base AS reseq
 
