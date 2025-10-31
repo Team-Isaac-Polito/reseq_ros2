@@ -43,6 +43,7 @@ setup(
             'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
             'reseq_ros2.detection_manager = reseq_ros2.detection_manager.detection_manager_node:main',
+            'thermal_node = reseq_ros2.thermal_node:main',
         ],
     },
 )
