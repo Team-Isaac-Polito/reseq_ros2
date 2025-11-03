@@ -47,7 +47,7 @@ class Detector(Node):
         # Use the topic from the parameter for the color image subscription
         self.color_subscription = self.create_subscription(
             Image,
-            '/camera/color/image_raw',
+            image_topic,
             self.image_callback,
             10,
         )
