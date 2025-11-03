@@ -60,7 +60,7 @@ def generate_launch_description():
     )
 
     bridge_params = os.path.join(
-        get_package_share_directory('reseq_ros2'),
+        package_name,
         'config',
         'gz_bridge.yaml',  # TODO: move gazebo_bridge node in this package
     )
