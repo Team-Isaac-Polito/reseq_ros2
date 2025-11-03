@@ -10,6 +10,14 @@ ARG CONFIG_FILE=reseq_mk2_can.yaml
 
 FROM ${BASE_IMAGE} AS reseq-base
 
+# Fix ROS2 installation (because it likes to be broken)
+RUN apt-key del F42ED6FBAB17C654 && \
+    rm -rf /etc/apt/sources.list.d/ && \
+    sudo apt update && sudo apt install curl -y && \
+    export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F\" '{print $4}') && \
+    curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb" && \
+    sudo dpkg -i /tmp/ros2-apt-source.deb
+
 # Install the tools needed to compile and use librealsense
 # N.B. Some of these tools are not needed to run reseq and should be removed by using multiple stages
 RUN apt update && apt install -y --no-install-recommends \
@@ -77,10 +85,15 @@ ADD docker/utils/scripts/configure-cv-pipeline.sh /
 
 RUN apt update && python3 compile_ros_pkgs.py realsense2_camera realsense2_description xacro
 RUN apt update && python3 compile_ros_pkgs.py image_transport_plugins
-RUN apt update && python3 compile_ros_pkgs.py rplidar_ros 
-RUN apt update && python3 compile_ros_pkgs.py controller_manager diff_drive_controller joint_state_broadcaster 
+RUN apt update && python3 compile_ros_pkgs.py rplidar_ros
 RUN apt update && python3 compile_ros_pkgs.py usb_cam
-RUN configure-cv-pipeline.sh
+RUN chmod +x /configure-cv-pipeline.sh && /configure-cv-pipeline.sh
+
+# Set up thermal camera
+RUN pip3 install adafruit-circuitpython-mlx90640 Jetson.GPIO
+
+ADD docker/utils/scripts/build_audio.sh /
+RUN chmod +x /build_audio.sh && /build_audio.sh
 
 FROM reseq-base AS reseq
 
