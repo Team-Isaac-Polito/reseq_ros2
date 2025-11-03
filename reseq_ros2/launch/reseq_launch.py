@@ -24,6 +24,7 @@ share_folder = get_package_share_directory('reseq_ros2')
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a
 # command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
+    version = LaunchConfiguration('version').perform(context)
     # Get the configuration file path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     log_level = LaunchConfiguration('log_level').perform(context)
@@ -46,6 +47,7 @@ def launch_setup(context, *args, **kwargs):
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(core_launch_file),
             launch_arguments={
+                'version': version,
                 'config_file': config_filename,
                 'log_level': log_level,
                 'use_sim_time': use_sim_time,
@@ -62,6 +64,7 @@ def launch_setup(context, *args, **kwargs):
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(sensors_launch_file),
                 launch_arguments={
+                    'version': version,
                     'config_file': config_filename,
                     'external_log_level': external_log_level,
                     'use_sim_time': use_sim_time,
@@ -78,6 +81,7 @@ def launch_setup(context, *args, **kwargs):
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(digital_twin_launch_file),
                 launch_arguments={
+                    'version': version,
                     'config_file': config_filename,
                     'log_level': log_level,
                     'external_log_level': external_log_level,
@@ -93,6 +97,7 @@ def launch_setup(context, *args, **kwargs):
 def generate_config_setup(context, *args, **kwargs):
     config_file = LaunchConfiguration('config_file').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
+    version = LaunchConfiguration('version').perform(context)
 
     use_sim_time_arg = '--use_sim_time' if use_sim_time == 'true' else ''
 
@@ -102,6 +107,8 @@ def generate_config_setup(context, *args, **kwargs):
             os.path.join(share_folder, 'scripts/generate_configs.py'),
             config_file,
             use_sim_time_arg,
+            '--version',
+            {version},
         ],
         name='generate_configs',
         output='screen',
@@ -128,6 +135,7 @@ def generate_config_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument('version', default_value='mk1', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('sensors', default_value='true', description='Enable sensors'),
             DeclareLaunchArgument(

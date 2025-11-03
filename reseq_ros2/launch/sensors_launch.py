@@ -11,10 +11,11 @@ from reseq_ros2.utils.launch_utils import config_path, default_filename, parse_c
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command
 # line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
+    version = LaunchConfiguration('version').perform(context)
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     # Parse the config file
-    config = parse_config(f'{config_path}/{config_filename}')
+    config = parse_config(f'{config_path}/{version}/{config_filename}')
 
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
@@ -83,6 +84,7 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument('version', default_value='mk1', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('external_log_level', default_value='warn'),
             DeclareLaunchArgument('use_sim_time', default_value='false'),

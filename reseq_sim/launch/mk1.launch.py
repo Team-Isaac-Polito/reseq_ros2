@@ -22,6 +22,7 @@ def generate_launch_description():
             ]
         ),
         launch_arguments={
+            'version': 'mk1',
             'use_sim_time': 'true',
             'use_ros2_control': 'true',
             'sim_mode': 'true',

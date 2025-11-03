@@ -14,6 +14,7 @@ description_share_folder = get_package_share_directory('reseq_description')
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a
 # command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
+    version = LaunchConfiguration('version').perform(context)
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
@@ -22,7 +23,7 @@ def launch_setup(context, *args, **kwargs):
     )  # it's a string either 'true' or 'false'
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
     # Parse the config file
-    config = parse_config(f'{config_path}/{config_filename}')
+    config = parse_config(f'{config_path}/{version}/{config_filename}')
     launch_config = []
 
     robot_controllers = f'{config_path}/reseq_controllers.yaml'
@@ -72,7 +73,10 @@ def launch_setup(context, *args, **kwargs):
     xacro_file = description_share_folder + '/description/reseq_mk1.urdf.xacro'
     robot_description = xacro.process_file(
         xacro_file,
-        mappings={'config_path': f'{config_path}/{config_filename}', 'sim_mode': sim_mode},
+        mappings={
+            'config_path': f'{config_path}/{version}/{config_filename}',
+            'sim_mode': sim_mode,
+        },
     ).toxml()
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -91,6 +95,7 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument('version', default_value='mk1', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('log_level', default_value='info'),
             DeclareLaunchArgument('external_log_level', default_value='warn'),
