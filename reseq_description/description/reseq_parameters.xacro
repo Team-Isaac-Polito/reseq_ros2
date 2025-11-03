@@ -3,7 +3,7 @@
 
   <!-- import values from config.yaml file -->
 
-  <xacro:arg name="config_path" default="$(find reseq_ros2)/config/reseq_mk2_can.yaml"/>
+  <xacro:arg name="config_path" default="$(find reseq_description)/config/mk2/reseq_mk2_can.yaml"/>
   <xacro:property name="config_path_prop" value="$(arg config_path)"/>
 
   <xacro:property name="config" value="${xacro.load_yaml(config_path_prop)}"/>

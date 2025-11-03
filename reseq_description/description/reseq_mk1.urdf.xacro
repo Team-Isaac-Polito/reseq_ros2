@@ -11,9 +11,7 @@
 
   <xacro:include filename="reseq_body.xacro" />
 
-  <xacro:if value="${config['version'] == 'mk1'}">
-    <xacro:include filename="arm_mk1/reseq_arm_mk1.xacro" />
-  </xacro:if>
+  <xacro:include filename="arm_mk1/reseq_arm_mk1.xacro" />
 
   <xacro:include filename="$(find reseq_ros2)/description/ros2_control.xacro" />
 
