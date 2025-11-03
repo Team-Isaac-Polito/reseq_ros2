@@ -1,0 +1,19 @@
+---
+include:
+  xacro: digital_twin_params.yaml
+  scaler_consts: scaler_consts.yaml
+  agevar_consts: agevar_consts.yaml
+version: "mk1"
+canbus:
+  channel: "can0"
+num_modules: 2
+modules:
+  - address: 0x11
+    hasJoint: false
+    hasEndEffector: true
+  - address: 0x12
+    hasJoint: true
+    hasEndEffector: false
+realsense_config: "realsense_rgb_motion.yaml"
+sensors:
+  - realsense: true

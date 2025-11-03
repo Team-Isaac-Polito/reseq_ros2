@@ -1,0 +1,22 @@
+---
+include:
+  xacro: digital_twin_params.yaml
+  scaler_consts: scaler_consts.yaml
+  agevar_consts: agevar_consts.yaml
+version: "mk2"
+canbus:
+  channel: "vcan0"
+num_modules: 4
+modules:
+  - address: 0x21
+    hasJoint: true
+    hasEndEffector: false
+  - address: 0x22
+    hasJoint: true
+    hasEndEffector: false
+  - address: 0x23
+    hasJoint: true
+    hasEndEffector: false
+  - address: 0x24
+    hasJoint: true
+    hasEndEffector: false

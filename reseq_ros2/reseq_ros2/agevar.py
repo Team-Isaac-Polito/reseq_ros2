@@ -1,14 +1,11 @@
 import traceback
-from math import cos, pi, sin
+from math import cos, sin
 
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped
-from sensor_msgs.msg import JointState
 from rclpy.node import Node
-from std_msgs.msg import Float32  # deprecated?
-
-import reseq_ros2.constants as rc
-from reseq_interfaces.msg import Motors
+from sensor_msgs.msg import JointState
+from std_srvs.srv import SetBool
 
 """ROS node with control algorithm for snake-like movement
 
@@ -20,99 +17,83 @@ used by the Communication node to set motors velocities.
 class Agevar(Node):
     def __init__(self):
         super().__init__('agevar')
+
         # Declaring parameters and getting values
         self.a = self.declare_parameter('a', 0.0).get_parameter_value().double_value
         self.b = self.declare_parameter('b', 0.0).get_parameter_value().double_value
-        self.d = self.declare_parameter('d', 0.0).get_parameter_value().double_value
-        self.r_eq = self.declare_parameter('r_eq', 0.0).get_parameter_value().double_value
         self.modules = (
             self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
         )
-        self.joints = (
-            self.declare_parameter('joints', [0]).get_parameter_value().integer_array_value
-        )
-        self.end_effector = (
-            self.declare_parameter('end_effector', 0).get_parameter_value().integer_value
-        )
+
+        # create the enable/disable service
+        self.enabled = True
+        self.create_service(SetBool, '/agevar/enable', self.handle_enable)
 
         self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
 
         # subscribe to remote (parsed by teleop_twist_joy)
-        self.create_subscription(
-            Twist,
-            '/cmd_vel',
-            self.remote_callback,
-            10,
-        )
+        self.create_subscription(Twist, '/cmd_vel', self.remote_callback, 10)
 
-        self.diff_controller_pub = []
-        for mod in range(1, self.n_mod+1):
-            self.diff_controller_pub.append(
-                self.create_publisher(TwistStamped, f'/diff_controller{mod}/cmd_vel', 10)
-            )
 
-        self.joints_sub = self.create_subscription(
-            JointState,
-            'joint_states',
-            self.feedback_callback,
-            10
-        )
-            
-    def feedback_callback(self, msg: JointState):
-        feedback = {}
-        for i, name in enumerate(msg.name):
-            feedback[name] = {
-                "position": msg.position[i],
-                "velocity": msg.velocity[i],
-                "effort": msg.effort[i],
-            }
+        self.latest_feedback = None
+        self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1)
 
-        # update yaw angle of a joint (joint between one module and another)
-        for mod in range(2, self.n_mod+1):
-            joint = feedback.get(f"joint_y_{mod}_joint")
-            if joint == None:
-                continue
-            angle = joint.get("position")
-            if angle == None:
-                continue
-            # store the angle in radiants
-            self.yaw_angles[mod - 1] = angle
+        self.controller_pubs = []
+        for i in range(self.n_mod):
+            # create publisher for the controllers
+            pub = self.create_publisher(TwistStamped, f'/diff_controller{i + 1}/cmd_vel', 10)
+            self.controller_pubs.append(pub)
+
+    def handle_enable(
+        self, request: SetBool.Request, response: SetBool.Response
+    ) -> SetBool.Response:
+        self.enabled = request.data
+
+        if not self.enabled:
+            for pub in self.controller_pubs:
+                pub.publish(TwistStamped())  # stop all controllers
+
+        response.success = True
+        response.message = 'Agevar node enabled' if self.enabled else 'Agevar node disabled'
+        self.get_logger().info(response.message)
+        return response
 
     def remote_callback(self, msg: Twist):
+        if not self.enabled:
+            self.get_logger().debug('Agevar node is disabled, ignoring command')
+            return
+
         # extract information from ROS Twist message
         linear_vel = msg.linear.x
         angular_vel = msg.angular.z
-        sign = linear_vel > 0
+        sign = 1 if linear_vel >= 0 else -1
+
+        self.update_yaw_angles()
 
         modules = list(range(self.n_mod))
-        if sign == 0:  # going backwards
+        if sign == -1:  # going backwards
             modules.reverse()
             linear_vel = -linear_vel
             angular_vel = -angular_vel
 
         for mod_id in modules:
-            # get velocity of left and right motor
-            # send to each diff_controller the TwistStamped msg with the according linear_vel
-            # and angular_vel
-            t = Twist()
-            t.linear.x = linear_vel
-            t.angular.z = angular_vel
-            msg = TwistStamped()
-            msg.header.stamp = self.get_clock().now().to_msg()
-            msg.twist = t
-            # publish to /diff_controller{i}/cmd_vel
-            self.diff_controller_pub[mod_id].publish(msg)
+            out_msg = TwistStamped()
+            out_msg.header.stamp = self.get_clock().now().to_msg()
+            out_msg.twist.linear.x = sign * linear_vel
+            out_msg.twist.angular.z = sign * angular_vel
+
+            if self.enabled:
+                self.controller_pubs[mod_id].publish(out_msg)
 
             if mod_id != modules[-1]:  # for every module except the last one
                 # invert yaw angle if going backwards
-                yaw_angle = (1 if sign else -1) * self.yaw_angles[mod_id]
+                yaw_angle = sign * self.yaw_angles[mod_id]
 
                 # compute linear and angular velocity of the following module
                 linear_vel, angular_vel = self.kinematic(linear_vel, angular_vel, yaw_angle)
 
                 self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
-
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
@@ -123,19 +104,19 @@ class Agevar(Node):
 
         return linear_out, angular_out
 
-    # compute motors velocity for each module
-    def vel_motors(self, lin_vel, ang_vel, sign):
-        w_right = (lin_vel + ang_vel * self.d / 2) / self.r_eq
-        w_left = (lin_vel - ang_vel * self.d / 2) / self.r_eq
+    # update the latest joint states
+    def joint_state_callback(self, msg):
+        self.latest_feedback = msg
 
-        if sign == 0:  # backwards
-            w_left, w_right = -w_left, -w_right
-
-        # from radiants to rpm
-        w_right = w_right * rc.rads2rpm
-        w_left = w_left * rc.rads2rpm
-
-        return w_right, w_left
+    # update yaw angles from the latest joint states
+    def update_yaw_angles(self):
+        if self.latest_feedback is None:
+            return
+        for i in range(self.n_mod):
+            joint_name = f'mod{i + 1}__yaw_joint'
+            if joint_name in self.latest_feedback.name:
+                idx = self.latest_feedback.name.index(joint_name)
+                self.yaw_angles[i] = self.latest_feedback.position[idx]
 
 
 def main(args=None):

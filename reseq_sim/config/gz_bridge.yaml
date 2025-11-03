@@ -1,0 +1,23 @@
+# This file is used as a config for bridging topics between ros2 and gazebo
+# Topics and messages between ros2 and gazebo are different and in order for
+# two frameworks to communicate we need to specify the conversion which is 
+# called "bridge".
+# More on this on https://docs.teamisaac.it/doc/gazebo-ros2-interoperability-2zADEb1xwk
+
+- ros_topic_name: "scan"
+  gz_topic_name: "/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS  # BIDIRECTIONAL or ROS_TO_GZ
+
+- ros_topic_name: "clock"
+  gz_topic_name: "clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "rgbd_camera/points"
+  gz_topic_name: "rgbd_camera/points"
+  ros_type_name: "sensor_msgs/msg/PointCloud2"
+  gz_type_name: "gz.msgs.PointCloudPacked"
+  direction: GZ_TO_ROS

@@ -37,6 +37,7 @@ class TestNodes(unittest.TestCase):
         cls.msg = Remote()
         cls.msg.left = Vector3(x=0.5, y=-0.2, z=1.0)
         cls.msg.right = Vector3(x=-0.8, y=0.3, z=0.7)
+        cls.msg.buttons = [False, False, False, False, False, True, True, True, True, True]
 
         cls.address = 17
 

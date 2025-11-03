@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!--   
+        Creates the hardware interface for a wheel of a chassis given its position
+
+        @param id: the id of the chassis (starting from 1)
+        @param pos: front/back
+        @param side: left/right
+    -->
+
+    <xacro:macro name="control_wheel_factory" params="id pos side">
+
+        <joint name="mod${id}__${side}_${pos}_wheel">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <command_interface name="velocity" />
+            <state_interface name="velocity" />
+        </joint>
+
+    </xacro:macro>
+
+    <!--   
+        Creates the hardware interface for the 3DOF Joint between modules
+
+        @param id: the id of the chassis (starting from 1)
+    -->
+
+    <xacro:macro name="control_joint_factory" params="id">
+
+        <joint name="mod${id}__roll_joint">
+            <state_interface name="position" />
+        </joint>
+        <joint name="mod${id}__pitch_joint">
+            <state_interface name="position" />
+        </joint>
+        <joint name="mod${id}__yaw_joint">
+            <state_interface name="position" />
+        </joint>
+
+    </xacro:macro>
+</robot>

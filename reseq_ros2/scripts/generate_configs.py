@@ -1,29 +1,41 @@
+import argparse
 import os
 import shutil
 import subprocess
 import sys
+import traceback
 
 import yaml
+from ament_index_python.packages import get_package_share_directory
 
 # Set the path to the config directory relative to the scripts directory
-config_path = os.path.join(os.path.dirname(__file__), '../config')
+description_pkg_dir = get_package_share_directory('reseq_description')
+config_path = os.path.join(description_pkg_dir, 'config')
 temp_config_path = os.path.join(config_path, 'temp')
+
+reseq_ros2_temp_config_path = os.path.join(
+    get_package_share_directory('reseq_ros2'), 'config', 'temp'
+)  # TO BE ELIMINATED WHEN CONFIGS ARE CORRECTLY REFACTORED
 
 # Ensure the temp directory exists
 os.makedirs(temp_config_path, exist_ok=True)
 
 
 # Function to clear the temp directory
-def clear_temp_directory(temp_path):
-    if os.path.exists(temp_path):
-        shutil.rmtree(temp_path)
-        os.makedirs(temp_path, exist_ok=True)
+def clear_temp_directory(temp_path, version: str):
+    if os.path.exists(os.path.join(temp_path, version)):
+        shutil.rmtree(os.path.join(temp_path, version))
+    os.makedirs(os.path.join(temp_path, version), exist_ok=True)
+
+    if os.path.exists(reseq_ros2_temp_config_path):
+        shutil.rmtree(reseq_ros2_temp_config_path)
+    os.makedirs(reseq_ros2_temp_config_path, exist_ok=True)
 
 
 # Function to include and merge additional YAML files specified in the 'include' section
-def create_configs(main_config, include_files):
+def create_configs(main_config, version: str, include_files):
     for key, file in include_files.items():
-        file_path = os.path.join(config_path, file)
+        file_path = os.path.join(config_path, version, file)
         with open(file_path, 'r') as f:
             included_config = yaml.safe_load(f)
             main_config.setdefault(key, {}).update(included_config[key])
@@ -75,15 +87,15 @@ def copy_usb_camera_config(usb_camera_config, devices, i):
 
 
 # Function to generate final YAML configuration file
-def generate_final_config(include_file):
+def generate_final_config(version: str, include_file):
     # Initialize main configuration with the include file content
-    with open(os.path.join(config_path, include_file), 'r') as file:
+    with open(os.path.join(config_path, version, include_file), 'r') as file:
         main_config = yaml.safe_load(file)
 
     # If include key is present, merge the included files
     if 'include' in main_config:
         include_files = main_config['include']
-        main_config = create_configs(main_config, include_files)
+        main_config = create_configs(main_config, version, include_files)
 
         # Copy the RealSense config file to the temp directory
         if 'realsense_config' in main_config:
@@ -117,26 +129,29 @@ def generate_final_config(include_file):
 
         # Save the final merged configuration to a temporary YAML file
         temp_filename = f'{os.path.splitext(include_file)[0]}.yaml'
-        with open(os.path.join(temp_config_path, temp_filename), 'w') as outfile:
+        with open(os.path.join(temp_config_path, version, temp_filename), 'w') as outfile:
             yaml.dump(main_config, outfile, default_flow_style=False)
 
 
 # Function to generate reseq_controllers.yaml based on the number of modules and parameters
 # from the generic file
-def generate_controllers_config(generic_config_file):
-    with open(os.path.join(temp_config_path, generic_config_file), 'r') as file:
+def generate_controllers_config(version: str, generic_config_file, use_sim_time: bool):
+    with open(os.path.join(temp_config_path, version, generic_config_file), 'r') as file:
         generic_config = yaml.safe_load(file)
 
     agevar_file = generic_config['include']['agevar_consts']
-    with open(os.path.join(config_path, agevar_file), 'r') as file:
+    with open(os.path.join(config_path, version, agevar_file), 'r') as file:
         agevar_config = yaml.safe_load(file)
 
-    with open(os.path.join(config_path, 'reseq_controllers.yaml'), 'r') as file:
+    controllers_config_path = get_package_share_directory('reseq_ros2')
+    with open(os.path.join(controllers_config_path, 'config/reseq_controllers.yaml'), 'r') as file:
         controllers_config = yaml.safe_load(file)
 
     num_modules = generic_config['num_modules']
     wheel_separation = agevar_config['agevar_consts']['d']
     wheel_radius = agevar_config['agevar_consts']['r_eq']
+
+    controllers_config['controller_manager']['ros__parameters']['use_sim_time'] = use_sim_time
 
     for i in range(num_modules):
         controller_name = f'diff_controller{i + 1}'
@@ -146,12 +161,12 @@ def generate_controllers_config(generic_config_file):
         controllers_config[controller_name] = {
             'ros__parameters': {
                 'left_wheel_names': [
-                    f'left_front_wheel_{i + 1}_joint',
-                    f'left_back_wheel_{i + 1}_joint',
+                    f'mod{i + 1}__left_front_wheel',
+                    f'mod{i + 1}__left_back_wheel',
                 ],
                 'right_wheel_names': [
-                    f'right_front_wheel_{i + 1}_joint',
-                    f'right_back_wheel_{i + 1}_joint',
+                    f'mod{i + 1}__right_front_wheel',
+                    f'mod{i + 1}__right_back_wheel',
                 ],
                 'odom_frame_id': 'odom',
                 'base_frame_id': 'base_link',
@@ -164,22 +179,51 @@ def generate_controllers_config(generic_config_file):
             }
         }
 
-    with open(os.path.join(temp_config_path, 'reseq_controllers.yaml'), 'w') as outfile:
+    with open(os.path.join(reseq_ros2_temp_config_path, 'reseq_controllers.yaml'), 'w') as outfile:
         yaml.dump(controllers_config, outfile, default_flow_style=False)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print('Usage: python generate_configs.py <config_file>')
-    else:
-        config_file = sys.argv[1]
-        try:
-            # Clear the temp directory before generating new configs
-            clear_temp_directory(temp_config_path)
-            generate_final_config(config_file)
-            # Generate reseq_controllers.yaml to avoid fatal errors
-            generate_controllers_config(config_file)
-            sys.exit(0)
-        except Exception as e:
-            print(f'Error generating configuration files: {e}')
-            sys.exit(1)
+    # Using argparse to tidily manage args from command line
+    parser = argparse.ArgumentParser(
+        usage='Usage: python generate_configs.py <config_file>',
+        description='Use this python file to generate configurations in the /config/temp folder.',
+    )
+    parser.add_argument(
+        'config_file',
+        help='Configuration file name/realative path',
+    )
+    parser.add_argument(
+        '--use_sim_time',
+        '-s',
+        action='store_true',
+        required=False,
+        default=False,
+        help='Set this to true if you want all nodes described\
+            in the configuration files to use the Simulation Time',
+    )
+    parser.add_argument(
+        '--version',
+        '-v',
+        help='Version of the robot [mk1-mk2]',
+        default='mk1',
+        required=True,
+        choices=['mk1', 'mk2'],
+    )
+
+    args = parser.parse_args()
+    config_file = args.config_file
+    use_sim_time = args.use_sim_time
+    version = args.version  # 'mk1' or 'mk2'
+
+    try:
+        # Clear the temp directory before generating new configs
+        clear_temp_directory(temp_config_path, version)
+        generate_final_config(version, config_file)
+        # Generate reseq_controllers.yaml to avoid fatal errors
+        generate_controllers_config(version, config_file, use_sim_time)
+        sys.exit(0)
+    except Exception as e:
+        print(f'Error generating configuration files: {e}')
+        traceback.print_exception(e)
+        sys.exit(1)
