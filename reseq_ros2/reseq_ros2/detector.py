@@ -12,14 +12,13 @@ from geometry_msgs.msg import PointStamped
 from tf2_ros import Buffer, TransformListener
 import tf2_geometry_msgs
 
-from reseq_ros2.reseq_cv.orientation import OrientationDetection
-from reseq_ros2.reseq_cv.motion import MotionDetection
-from reseq_ros2.reseq_cv.qr_reader import process_qr_codes
+from computer_vision.orientation_detection import concentric_c
+from computer_vision.motion_detection import motion_detection
+from computer_vision.qr_detection import qr_reader
 from reseq_interfaces.msg import Detection
 from std_srvs.srv import SetBool
 
-share_folder = get_package_share_directory('reseq_ros2')
-models_path = f'{share_folder}/ml-ckpt'
+models_path = '../../computer-vision/models'
 
 """
 ROS node for detection and processing images using YOLO and custom models.
@@ -68,8 +67,8 @@ class Detector(Node):
         self.model2 = YOLO(model_path2)
 
         # Initialize the orientation and motion detection classes
-        self.od = OrientationDetection()
-        self.md = MotionDetection()
+        self.od = concentric_c()
+        self.md = motion_detection()
 
         # Take parameters from /camera/camera/aligned_depth_to_color/camera_info
         self.f_x = 910.3245
@@ -105,7 +104,7 @@ class Detector(Node):
         img = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
 
         od_frame, _, _ = self.od.process_image(color_image)
-        qr_frame = process_qr_codes(od_frame)
+        qr_frame = qr_reader.process_qr_codes(od_frame)
         # at_frame = process_apriltags(qr_frame)
         md_frame = self.md.process_image(qr_frame)
         color_image = cv2.resize(md_frame, (self.img_size[0], self.img_size[1]))
