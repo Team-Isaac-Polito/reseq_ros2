@@ -12,13 +12,13 @@ from launch_ros.actions import Node
 def generate_launch_description():
     package_name = 'reseq_sim'
 
-    # TODO: with jinja we should be able to create use as a xacro file a compiled version that includes gazebo and other stuff
-    # so, instead of picking the xacro file from the reseq_arm_mk2 we should compile xacro files and place them at compile
-    # time in the share/urdf folder of this package `reseq_sim`
+    # Get the share directory for this package
+    reseq_sim_share_dir = get_package_share_directory(package_name)
+
+    # --- Fix for sim_mode ---
+    # We must pass 'sim_mode'='true' to xacro
     xacro_file = get_package_share_directory('reseq_arm_mk2') + '/urdf/reseq_arm_mk2.xacro'
-    robot_description = xacro.process_file(
-        xacro_file,
-    ).toxml()
+    robot_description = xacro.process_file(xacro_file, mappings={'sim_mode': 'true'}).toxml()
 
     rsp = Node(
         package='robot_state_publisher',
@@ -31,9 +31,7 @@ def generate_launch_description():
         ],
     )
 
-    default_world = os.path.join(
-        get_package_share_directory(package_name), 'worlds', 'empty.world'
-    )
+    default_world = os.path.join(reseq_sim_share_dir, 'worlds', 'empty.world')
 
     print(f'Default world path: {default_world}')
 
@@ -59,10 +57,14 @@ def generate_launch_description():
         output='screen',
     )
 
+    # --- FIX 1 (Simple) ---
+    # The original file used a relative path 'package_name'
+    # We must use get_package_share_directory to provide the full path
+    # to the gz_bridge.yaml file.
     bridge_params = os.path.join(
-        package_name,
+        reseq_sim_share_dir,  # <-- This was the bug fix
         'config',
-        'gz_bridge.yaml',  # TODO: move gazebo_bridge node in this package
+        'gz_bridge.yaml',
     )
 
     ros_gz_bridge = Node(
@@ -75,15 +77,16 @@ def generate_launch_description():
         ],
     )
 
+    joint_state_broadcaster_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=[
+            'joint_state_broadcaster',
+            '--controller-manager',
+            '/controller_manager',
+        ],
+    )
+
     return LaunchDescription(
-        [
-            # ExecuteProcess(
-            #     cmd=['ign', 'gazebo', '-v', '4', 'libgazebo_ros_init.so', 'empty.sdf'],
-            #     output='screen'),
-            world_arg,
-            rsp,
-            gazebo,
-            spawn_entity,
-            ros_gz_bridge,
-        ]
+        [world_arg, rsp, gazebo, spawn_entity, ros_gz_bridge, joint_state_broadcaster_spawner]
     )

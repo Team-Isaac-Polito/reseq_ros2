@@ -4,6 +4,24 @@ controller_manager:
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
-    
+
     ### Differential drive controllers ###
     ### Dynamically configured by the Launch file ###
+
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    joint_trajectory_controller:
+      ros__parameters:
+        joints:
+          - mod1__base_pitch_arm_joint
+          - mod1__base_roll_arm_joint
+          - mod1__elbow_pitch_arm_joint
+          - mod1__forearm_roll_arm_joint
+          - mod1__wrist_pitch_arm_joint
+          - mod1__wrist_roll_arm_joint
+        command_interfaces:
+          - position
+        state_interfaces:
+          - position
+          - velocity

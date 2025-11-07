@@ -36,22 +36,40 @@
         <xacro:loop module="1" n_modules="${NumModules}" />
 
         <!-- ARM CONTROLLER INTERFACES -->
-        <joint name="arm_pitch_1_joint">
+        <joint name="mod1__base_pitch_arm_joint">
             <command_interface name="position" />
             <state_interface name="position" />
             <state_interface name="velocity"/>
         </joint>
 
-        <joint name="arm_head_pitch_1_joint">
+        <joint name="mod1__base_roll_arm_joint">
             <command_interface name="position" />
             <state_interface name="position" />
             <state_interface name="velocity"/>
         </joint>
 
-        <joint name="arm_head_roll_1_joint">
+        <joint name="mod1__elbow_pitch_arm_joint">
             <command_interface name="position" />
             <state_interface name="position" />
-            <state_interface name="velocity" />
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="mod1__forearm_roll_arm_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="mod1__wrist_pitch_arm_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="mod1__wrist_roll_arm_joint">
+            <command_interface name="position" />
+            <state_interface name="position" />
+            <state_interface name="velocity"/>
         </joint>
 
 
@@ -60,7 +78,7 @@
     <xacro:if value="$(arg sim_mode)">
         <gazebo>
             <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
-                <parameters>$(find reseq_ros2)/config/temp/reseq_controllers.yaml</parameters>
+                <parameters>$(find reseq_ros2)/config/reseq_controllers.yaml</parameters>
             </plugin>
         </gazebo>
     </xacro:if>
