@@ -26,6 +26,6 @@ RUN rosdep update --rosdistro $ROS_DISTRO
 RUN mkdir /ros2_ws
 WORKDIR /ros2_ws
 RUN git clone --branch feat-ros2-control --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src
-RUN rosdep install -iy --from-path src --ignore-src --rosdistro humble --skip-keys="ros-humble-realsense2-camera"
+RUN rosdep install -iy --from-path src --ignore-src --rosdistro humble --skip-keys="ros-humble-realsense2-camera,ros-humble-hardware-interface"
 RUN apt install -y can-utils ros-humble-rviz2 python3-flake8 python3-flake8-blind-except python3-flake8-builtins python3-flake8-class-newline python3-flake8-comprehensions python3-flake8-deprecated python3-flake8-docstrings python3-flake8-import-order python3-flake8-quotes curl lsb-release gnupg
 RUN bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && colcon build"
