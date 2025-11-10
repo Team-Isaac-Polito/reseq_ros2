@@ -153,6 +153,7 @@ def generate_controllers_config(generic_config_file):
                     f'mod{i + 1}__right_front_wheel',
                     f'mod{i + 1}__right_back_wheel',
                 ],
+                'position_feedback': False,
                 'odom_frame_id': 'odom',
                 'base_frame_id': 'base_link',
                 'wheel_separation': wheel_separation,

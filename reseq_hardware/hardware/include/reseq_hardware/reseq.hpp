@@ -25,7 +25,7 @@ namespace rclcpp_lifecycle { class State; }
 namespace reseq_hardware
 {
 
-const uint8_t HANDSHAKE_MSG_ID = 0x21;
+const uint8_t HANDSHAKE_MSG_ID = 0x22;
 const int THROTTLE_WARN = 5000;
 
 /**

@@ -183,8 +183,8 @@ hardware_interface::return_type ReseqHardware::read(
   for (const auto & snap : recv_buffer_.get_all()) {
     // Stale messages are ignored, but we use them to detect communication issues
     if (now - snap.timestamp > std::chrono::milliseconds(500)) {
-      RCLCPP_WARN_THROTTLE(
-        rclcpp::get_logger("ReseqHardware"), *clock_, THROTTLE_WARN,
+      RCLCPP_WARN(
+        rclcpp::get_logger("ReseqHardware"),
         "Stale CAN message received: %02X%02X", snap.id.mod_id, snap.id.msg_id);
       continue;
     }
@@ -193,8 +193,8 @@ hardware_interface::return_type ReseqHardware::read(
     const auto & map_it = can_mappings_.find(snap.id);
 
     if (map_it == can_mappings_.end()) {
-      RCLCPP_WARN_THROTTLE(
-        rclcpp::get_logger("ReseqHardware"), *clock_, THROTTLE_WARN,
+      RCLCPP_WARN(
+        rclcpp::get_logger("ReseqHardware"),
         "Received unknown CAN message: %02X%02X", snap.id.mod_id, snap.id.msg_id);
       continue;
     }
@@ -248,8 +248,8 @@ hardware_interface::return_type ReseqHardware::write(
 
   // Detect if the control loop is running slower than expected
   if (now - last_write_time_ > command_cycle_ * 1.2) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      rclcpp::get_logger("ReseqHardware"), *clock_, THROTTLE_WARN,
+    RCLCPP_WARN_SKIPFIRST(
+      rclcpp::get_logger("ReseqHardware"),
       "Control loop slowdown detected");
   }
 
