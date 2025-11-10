@@ -12,8 +12,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/*
 
 # bootstrap rosdep
-RUN rosdep init && \
-  rosdep update --rosdistro $ROS_DISTRO
+RUN rosdep update --rosdistro $ROS_DISTRO
 
 # setup colcon mixin and metadata
 RUN colcon mixin add default \
