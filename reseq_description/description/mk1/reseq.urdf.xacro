@@ -9,7 +9,7 @@
   <xacro:include filename="$(find reseq_description)/description/macros/inertial_macros.xacro" />
   <xacro:include filename="$(find reseq_description)/description/macros/utils.xacro" />
 
-  <xacro:include filename="$(find reseq_description)/description/reseq_body.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/macros/reseq_body.xacro" />
 
   <xacro:include filename="$(find reseq_description)/description/arm_mk1/reseq_arm_mk1.xacro" />
 
