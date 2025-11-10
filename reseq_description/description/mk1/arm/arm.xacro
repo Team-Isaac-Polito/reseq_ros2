@@ -20,7 +20,7 @@
   <xacro:property name="RealsenseOriginSystem" value="0.0162"/>
 
   <!-- XACRO INCLUDES -->
-  <xacro:include filename="../sensors/rgbd_camera.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/sensors/rgbd_camera.xacro" />
 
   <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->
   <material name="ArmColor">

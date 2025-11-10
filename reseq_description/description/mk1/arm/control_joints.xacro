@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <!-- ARM CONTROLLER INTERFACES -->
+    <joint name="arm_pitch_1_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="arm_head_pitch_1_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="arm_head_roll_1_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+    </joint>
+</robot>

@@ -74,6 +74,7 @@ def launch_setup(context, *args, **kwargs):
     robot_description = xacro.process_file(
         xacro_file,
         mappings={
+            'version': version,
             'config_path': f'{config_path}/{version}/{config_filename}',
             'sim_mode': sim_mode,
         },

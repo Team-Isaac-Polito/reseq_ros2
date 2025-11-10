@@ -5,7 +5,7 @@
   <xacro:include filename="$(find reseq_description)/description/macros/joint.xacro" />
   <xacro:include filename="$(find reseq_description)/description/macros/chassis.xacro" />
   <xacro:include filename="$(find reseq_description)/description/macros/wheel.xacro" />
-  <xacro:include filename="$(find reseq_description)/description/macros/control_macros.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/control/control_macros.xacro" />
   <xacro:include filename="$(find reseq_description)/description/sensors/lidar.xacro" />
   
   <link name="base_link" />

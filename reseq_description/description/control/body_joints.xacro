@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    
+    <!-- Create n_modules modules by recursively calling the loop macro -->
+    <xacro:macro name="loop" params="module n_modules">
+        <xacro:if value="${module &lt;= n_modules}">
+
+            <!-- Wheels -->
+            <xacro:control_wheel_factory id="${module}" pos="front" side="left" />
+            <xacro:control_wheel_factory id="${module}" pos="front" side="right" />
+            <xacro:control_wheel_factory id="${module}" pos="back" side="left" />
+            <xacro:control_wheel_factory id="${module}" pos="back" side="right" />
+
+            <!-- 3DOF Joint -->
+            <xacro:if value="${module != 1}">
+                <xacro:control_joint_factory id="${module}" />
+            </xacro:if>
+
+            <xacro:loop module="${module + 1}" n_modules="${n_modules}" />
+
+        </xacro:if>
+    </xacro:macro>
+
+    <xacro:loop module="1" n_modules="${NumModules}" />
+            
+</robot>

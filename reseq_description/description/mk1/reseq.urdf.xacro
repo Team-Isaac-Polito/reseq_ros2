@@ -7,12 +7,13 @@
   <xacro:include filename="$(find reseq_description)/description/macros/reseq_parameters.xacro" />
   
   <xacro:include filename="$(find reseq_description)/description/macros/inertial_macros.xacro" />
+
   <xacro:include filename="$(find reseq_description)/description/macros/utils.xacro" />
 
   <xacro:include filename="$(find reseq_description)/description/macros/reseq_body.xacro" />
 
-  <xacro:include filename="$(find reseq_description)/description/mk1/arm.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/mk1/arm/arm.xacro" />
 
-  <xacro:include filename="$(find reseq_ros2)/description/ros2_control.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/control/ros2_control.xacro" />
 
 </robot>

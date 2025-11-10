@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <ros2_control name="ReseqHardwareSystem" type="system">
+        <hardware>
+            <xacro:if value="$(arg sim_mode)" >
+                <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+            </xacro:if>
+            <xacro:unless value="$(arg sim_mode)">
+                <plugin>reseq_hardware/ReseqHardware</plugin>
+            </xacro:unless>
+
+            <param name="num_modules">${NumModules}</param>
+            <!-- TODO: vcan, and gazebo alternatives -->
+        </hardware>
+
+        <xacro:include filename="$(find reseq_description)/description/control/body_joints.xacro"/>
+        <xacro:include filename="$(find reseq_description)/description/$(arg version)/arm/control_joints.xacro"/>
+
+    </ros2_control>
+
+    <xacro:if value="$(arg sim_mode)">
+        <gazebo>
+            <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
+                <parameters>$(find reseq_ros2)/config/temp/reseq_controllers.yaml</parameters>
+            </plugin>
+        </gazebo>
+    </xacro:if>
+</robot>
