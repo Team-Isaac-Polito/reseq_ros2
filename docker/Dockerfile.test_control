@@ -1,0 +1,31 @@
+FROM ros:humble-ros-base
+RUN apt-get update
+
+# install bootstrap tools
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    python3-colcon-common-extensions \
+    python3-colcon-mixin \
+    python3-rosdep \
+    python3-vcstool \
+    && rm -rf /var/lib/apt/lists/*
+
+# bootstrap rosdep
+RUN rosdep init && \
+  rosdep update --rosdistro $ROS_DISTRO
+
+# setup colcon mixin and metadata
+RUN colcon mixin add default \
+      https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
+    colcon mixin update && \
+    colcon metadata add default \
+      https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
+    colcon metadata update
+
+RUN mkdir ros2_ws
+RUN cd ros2_ws
+RUN git clone --branch feat-ros2-control --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src
+RUN rosdep install -iy --from-path src --rosdistro humble
+RUN apt install -y can-utils ros-humble-rviz2 python3-flake8 python3-flake8-blind-except python3-flake8-builtins python3-flake8-class-newline python3-flake8-comprehensions python3-flake8-deprecated python3-flake8-docstrings python3-flake8-import-order python3-flake8-quotes curl lsb-release gnupg
+RUN colcon build
