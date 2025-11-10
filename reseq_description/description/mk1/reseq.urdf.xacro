@@ -11,7 +11,7 @@
 
   <xacro:include filename="$(find reseq_description)/description/macros/reseq_body.xacro" />
 
-  <xacro:include filename="$(find reseq_description)/description/arm_mk1/reseq_arm_mk1.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/mk1/arm.xacro" />
 
   <xacro:include filename="$(find reseq_ros2)/description/ros2_control.xacro" />
 
