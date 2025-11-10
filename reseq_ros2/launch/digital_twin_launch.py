@@ -70,7 +70,7 @@ def launch_setup(context, *args, **kwargs):
         )
         launch_config.append(module_controller)
 
-    xacro_file = description_share_folder + '/description/reseq_mk1.urdf.xacro'
+    xacro_file = description_share_folder + f'/description/{version}/reseq.urdf.xacro'
     robot_description = xacro.process_file(
         xacro_file,
         mappings={
