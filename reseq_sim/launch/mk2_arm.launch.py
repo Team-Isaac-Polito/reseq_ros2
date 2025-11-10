@@ -15,10 +15,23 @@ def generate_launch_description():
     # Get the share directory for this package
     reseq_sim_share_dir = get_package_share_directory(package_name)
 
-    # --- Fix for sim_mode ---
     # We must pass 'sim_mode'='true' to xacro
     xacro_file = get_package_share_directory('reseq_arm_mk2') + '/urdf/reseq_arm_mk2.xacro'
-    robot_description = xacro.process_file(xacro_file, mappings={'sim_mode': 'true'}).toxml()
+
+    # Path to controllers config for the Gazebo plugin
+    controllers_config_file = os.path.join(
+        get_package_share_directory('reseq_ros2'),
+        'config',
+        'reseq_controllers.yaml',
+    )
+
+    robot_description = xacro.process_file(
+        xacro_file,
+        mappings={
+            'sim_mode': 'true',
+            'controllers_config_file': controllers_config_file,
+        },
+    ).toxml()
 
     rsp = Node(
         package='robot_state_publisher',
@@ -57,12 +70,8 @@ def generate_launch_description():
         output='screen',
     )
 
-    # --- FIX 1 (Simple) ---
-    # The original file used a relative path 'package_name'
-    # We must use get_package_share_directory to provide the full path
-    # to the gz_bridge.yaml file.
     bridge_params = os.path.join(
-        reseq_sim_share_dir,  # <-- This was the bug fix
+        reseq_sim_share_dir,
         'config',
         'gz_bridge.yaml',
     )
@@ -87,6 +96,24 @@ def generate_launch_description():
         ],
     )
 
+    arm_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=[
+            'arm_controller',
+            '--controller-manager',
+            '/controller_manager',
+        ],
+    )
+
     return LaunchDescription(
-        [world_arg, rsp, gazebo, spawn_entity, ros_gz_bridge, joint_state_broadcaster_spawner]
+        [
+            world_arg,
+            rsp,
+            gazebo,
+            spawn_entity,
+            ros_gz_bridge,
+            joint_state_broadcaster_spawner,
+            arm_controller_spawner,
+        ]
     )

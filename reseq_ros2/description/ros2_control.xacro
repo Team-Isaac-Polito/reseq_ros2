@@ -78,7 +78,7 @@
     <xacro:if value="$(arg sim_mode)">
         <gazebo>
             <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
-                <parameters>$(find reseq_ros2)/config/reseq_controllers.yaml</parameters>
+                <parameters>$(arg controllers_config_file)</parameters>
             </plugin>
         </gazebo>
     </xacro:if>
