@@ -13,9 +13,6 @@ description_pkg_dir = get_package_share_directory('reseq_description')
 config_path = os.path.join(description_pkg_dir, 'config')
 temp_config_path = os.path.join(config_path, 'temp')
 
-reseq_ros2_temp_config_path = os.path.join(
-    get_package_share_directory('reseq_ros2'), 'config', 'temp'
-)  # TO BE ELIMINATED WHEN CONFIGS ARE CORRECTLY REFACTORED
 
 # Ensure the temp directory exists
 os.makedirs(temp_config_path, exist_ok=True)
@@ -27,9 +24,9 @@ def clear_temp_directory(temp_path, version: str):
         shutil.rmtree(os.path.join(temp_path, version))
     os.makedirs(os.path.join(temp_path, version), exist_ok=True)
 
-    if os.path.exists(reseq_ros2_temp_config_path):
-        shutil.rmtree(reseq_ros2_temp_config_path)
-    os.makedirs(reseq_ros2_temp_config_path, exist_ok=True)
+    if os.path.exists(temp_config_path):
+        shutil.rmtree(temp_config_path)
+    os.makedirs(temp_config_path, exist_ok=True)
 
 
 # Function to include and merge additional YAML files specified in the 'include' section
@@ -143,7 +140,7 @@ def generate_controllers_config(version: str, generic_config_file, use_sim_time:
     with open(os.path.join(config_path, version, agevar_file), 'r') as file:
         agevar_config = yaml.safe_load(file)
 
-    controllers_config_path = get_package_share_directory('reseq_ros2')
+    controllers_config_path = get_package_share_directory('reseq_description')
     with open(os.path.join(controllers_config_path, 'config/reseq_controllers.yaml'), 'r') as file:
         controllers_config = yaml.safe_load(file)
 
@@ -179,7 +176,7 @@ def generate_controllers_config(version: str, generic_config_file, use_sim_time:
             }
         }
 
-    with open(os.path.join(reseq_ros2_temp_config_path, 'reseq_controllers.yaml'), 'w') as outfile:
+    with open(os.path.join(temp_config_path, 'reseq_controllers.yaml'), 'w') as outfile:
         yaml.dump(controllers_config, outfile, default_flow_style=False)
 
 
