@@ -33,6 +33,8 @@ setup(
             'rcemu = reseq_ros2.rcemu:main',
             'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
+            'moveit_controller = reseq_ros2.moveit_controller:main',
+            'coordinate_controller = reseq_ros2.coordinate_controller:main',
         ],
     },
 )

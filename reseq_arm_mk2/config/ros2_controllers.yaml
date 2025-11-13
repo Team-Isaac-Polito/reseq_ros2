@@ -1,14 +1,16 @@
+# This config file is used by ros2_control
 controller_manager:
   ros__parameters:
-    update_rate: 10 # Hz
+    update_rate: 30  # Hz
+
+    mk2_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    arm_controller:
-      type: joint_trajectory_controller/JointTrajectoryController
-
-arm_controller:
+mk2_arm_controller:
   ros__parameters:
     joints:
       - mod1__base_pitch_arm_joint
@@ -22,9 +24,4 @@ arm_controller:
     state_interfaces:
       - position
       - velocity
-    action_monitor_rate: 10.0
-    allow_nonzero_velocity_at_trajectory_start: false
-    continue_last_state: false
-    default_tolerances:
-      goals: 0.1
-      goal_state: 0.1
+    allow_nonzero_velocity_at_trajectory_end: true

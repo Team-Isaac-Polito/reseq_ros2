@@ -79,6 +79,7 @@
         <gazebo>
             <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
                 <parameters>$(arg controllers_config_file)</parameters>
+                <use_sim_time>$(arg sim_mode)</use_sim_time>
             </plugin>
         </gazebo>
     </xacro:if>
