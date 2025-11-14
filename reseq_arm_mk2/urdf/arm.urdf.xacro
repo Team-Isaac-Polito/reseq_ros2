@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot
+    name="reseq_arm_mk2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    
+    <link name="world" />
+
+    <joint name="world_to_base_joint" type="fixed">
+        <parent link="world"/> 
+        <child link="arm_base_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+    
+    <xacro:include filename="$(find reseq_arm_mk2)/urdf/reseq_arm_mk2.xacro" />
+    
+</robot>

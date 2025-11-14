@@ -17,7 +17,7 @@ def generate_launch_description():
     reseq_sim_share_dir = get_package_share_directory(package_name)
 
     # We must pass 'sim_mode='true' to xacro
-    xacro_file = get_package_share_directory('reseq_arm_mk2') + '/urdf/reseq_arm_mk2.xacro'
+    xacro_file = get_package_share_directory('reseq_arm_mk2') + '/urdf/arm.urdf.xacro'
 
     # Path to controllers config for the Gazebo plugin
     controllers_config_file = os.path.join(
