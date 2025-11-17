@@ -11,25 +11,17 @@ from ament_index_python.packages import get_package_share_directory
 # Set the path to the config directory relative to the scripts directory
 description_pkg_dir = get_package_share_directory('reseq_description')
 config_path = os.path.join(description_pkg_dir, 'config')
-temp_config_path = os.path.join(config_path, 'temp')
-
-reseq_ros2_temp_config_path = os.path.join(
-    get_package_share_directory('reseq_ros2'), 'config', 'temp'
-)  # TO BE ELIMINATED WHEN CONFIGS ARE CORRECTLY REFACTORED
+temp_path = os.path.join(config_path, 'temp')
 
 # Ensure the temp directory exists
-os.makedirs(temp_config_path, exist_ok=True)
+os.makedirs(temp_path, exist_ok=True)
 
 
 # Function to clear the temp directory
-def clear_temp_directory(temp_path, version: str):
+def clear_temp_directory(version: str):
     if os.path.exists(os.path.join(temp_path, version)):
         shutil.rmtree(os.path.join(temp_path, version))
     os.makedirs(os.path.join(temp_path, version), exist_ok=True)
-
-    if os.path.exists(reseq_ros2_temp_config_path):
-        shutil.rmtree(reseq_ros2_temp_config_path)
-    os.makedirs(reseq_ros2_temp_config_path, exist_ok=True)
 
 
 # Function to include and merge additional YAML files specified in the 'include' section
@@ -45,7 +37,7 @@ def create_configs(main_config, version: str, include_files):
 # Function to copy the RealSense config file to the temp directory
 def copy_realsense_config(realsense_config):
     src = os.path.join(config_path, realsense_config)
-    dst = os.path.join(temp_config_path, realsense_config)
+    dst = os.path.join(temp_path, realsense_config)
     if os.path.exists(src):
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(src, 'r') as f_src, open(dst, 'w') as f_dst:
@@ -77,7 +69,7 @@ def find_video_devices(num_cam):
 # Function to copy the i-th usb camera config file to the temp directory
 def copy_usb_camera_config(usb_camera_config, devices, i):
     src = os.path.join(config_path, usb_camera_config)
-    dst = os.path.join(temp_config_path, f'usb_camera_config_{i}')
+    dst = os.path.join(temp_path, f'usb_camera_config_{i}')
     if os.path.exists(src):
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(src, 'r') as f_src, open(dst, 'w') as f_dst:
@@ -129,22 +121,21 @@ def generate_final_config(version: str, include_file):
 
         # Save the final merged configuration to a temporary YAML file
         temp_filename = f'{os.path.splitext(include_file)[0]}.yaml'
-        with open(os.path.join(temp_config_path, version, temp_filename), 'w') as outfile:
+        with open(os.path.join(temp_path, version, temp_filename), 'w') as outfile:
             yaml.dump(main_config, outfile, default_flow_style=False)
 
 
 # Function to generate reseq_controllers.yaml based on the number of modules and parameters
 # from the generic file
 def generate_controllers_config(version: str, generic_config_file, use_sim_time: bool):
-    with open(os.path.join(temp_config_path, version, generic_config_file), 'r') as file:
+    with open(os.path.join(temp_path, version, generic_config_file), 'r') as file:
         generic_config = yaml.safe_load(file)
 
     agevar_file = generic_config['include']['agevar_consts']
     with open(os.path.join(config_path, version, agevar_file), 'r') as file:
         agevar_config = yaml.safe_load(file)
 
-    controllers_config_path = get_package_share_directory('reseq_ros2')
-    with open(os.path.join(controllers_config_path, 'config/reseq_controllers.yaml'), 'r') as file:
+    with open(os.path.join(config_path, 'reseq_controllers.yaml'), 'r') as file:
         controllers_config = yaml.safe_load(file)
 
     num_modules = generic_config['num_modules']
@@ -179,7 +170,7 @@ def generate_controllers_config(version: str, generic_config_file, use_sim_time:
             }
         }
 
-    with open(os.path.join(reseq_ros2_temp_config_path, 'reseq_controllers.yaml'), 'w') as outfile:
+    with open(os.path.join(temp_path, 'reseq_controllers.yaml'), 'w') as outfile:
         yaml.dump(controllers_config, outfile, default_flow_style=False)
 
 
@@ -218,7 +209,7 @@ if __name__ == '__main__':
 
     try:
         # Clear the temp directory before generating new configs
-        clear_temp_directory(temp_config_path, version)
+        clear_temp_directory(version)
         generate_final_config(version, config_file)
         # Generate reseq_controllers.yaml to avoid fatal errors
         generate_controllers_config(version, config_file, use_sim_time)
