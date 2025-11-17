@@ -25,7 +25,7 @@ endif()
 
 ament_package()
 
-foreach(dir config description)
+foreach(dir config description scripts)
   install(DIRECTORY ${dir}/
     DESTINATION share/${PROJECT_NAME}/${dir})
 endforeach(dir)

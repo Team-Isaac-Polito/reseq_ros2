@@ -18,7 +18,7 @@ from launch.substitutions import LaunchConfiguration
 
 from reseq_ros2.utils.launch_utils import default_filename
 
-share_folder = get_package_share_directory('reseq_ros2')
+share_folder = get_package_share_directory('reseq_description')
 
 
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a
