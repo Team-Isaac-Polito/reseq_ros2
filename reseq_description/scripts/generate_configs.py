@@ -127,48 +127,65 @@ def generate_final_config(version: str, include_file):
 
 # Function to generate reseq_controllers.yaml based on the number of modules and parameters
 # from the generic file
-def generate_controllers_config(version: str, generic_config_file, use_sim_time: bool):
-    with open(os.path.join(temp_path, version, generic_config_file), 'r') as file:
-        generic_config = yaml.safe_load(file)
-
-    agevar_file = generic_config['include']['agevar_consts']
-    with open(os.path.join(config_path, version, agevar_file), 'r') as file:
-        agevar_config = yaml.safe_load(file)
-
+def generate_controllers_config(
+    version: str,
+    generic_config_file,
+    use_sim_time: bool,
+    no_body_controllers: bool,
+    no_arm_controllers: bool,
+):
+    # take from reseq_controllers.yaml the template file for the controller manager
     with open(os.path.join(config_path, 'reseq_controllers.yaml'), 'r') as file:
         controllers_config = yaml.safe_load(file)
 
-    num_modules = generic_config['num_modules']
-    wheel_separation = agevar_config['agevar_consts']['d']
-    wheel_radius = agevar_config['agevar_consts']['r_eq']
+    ###########################
+    ##### ARM CONTROLLERS #####
+    ###########################
+    if not no_arm_controllers:
+        pass
 
-    controllers_config['controller_manager']['ros__parameters']['use_sim_time'] = use_sim_time
+    ##########################
+    #### BODY CONTROLLERS ####
+    ##########################
+    if not no_body_controllers:
+        with open(os.path.join(temp_path, version, generic_config_file), 'r') as file:
+            generic_config = yaml.safe_load(file)
 
-    for i in range(num_modules):
-        controller_name = f'diff_controller{i + 1}'
-        controllers_config['controller_manager']['ros__parameters'][controller_name] = {
-            'type': 'diff_drive_controller/DiffDriveController'
-        }
-        controllers_config[controller_name] = {
-            'ros__parameters': {
-                'left_wheel_names': [
-                    f'mod{i + 1}__left_front_wheel',
-                    f'mod{i + 1}__left_back_wheel',
-                ],
-                'right_wheel_names': [
-                    f'mod{i + 1}__right_front_wheel',
-                    f'mod{i + 1}__right_back_wheel',
-                ],
-                'odom_frame_id': 'odom',
-                'base_frame_id': 'base_link',
-                'wheel_separation': wheel_separation,
-                'wheel_radius': wheel_radius,
-                'wheels_per_side': 2,
-                'use_stamped_vel': True,
-                'enable_odom_tf': True if i == 0 else False,
-                'enable_odom': True if i == 0 else False,
+        agevar_file = generic_config['include']['agevar_consts']
+        with open(os.path.join(config_path, version, agevar_file), 'r') as file:
+            agevar_config = yaml.safe_load(file)
+
+        num_modules = generic_config['num_modules']
+        wheel_separation = agevar_config['agevar_consts']['d']
+        wheel_radius = agevar_config['agevar_consts']['r_eq']
+
+        controllers_config['controller_manager']['ros__parameters']['use_sim_time'] = use_sim_time
+
+        for i in range(num_modules):
+            controller_name = f'diff_controller{i + 1}'
+            controllers_config['controller_manager']['ros__parameters'][controller_name] = {
+                'type': 'diff_drive_controller/DiffDriveController'
             }
-        }
+            controllers_config[controller_name] = {
+                'ros__parameters': {
+                    'left_wheel_names': [
+                        f'mod{i + 1}__left_front_wheel',
+                        f'mod{i + 1}__left_back_wheel',
+                    ],
+                    'right_wheel_names': [
+                        f'mod{i + 1}__right_front_wheel',
+                        f'mod{i + 1}__right_back_wheel',
+                    ],
+                    'odom_frame_id': 'odom',
+                    'base_frame_id': 'base_link',
+                    'wheel_separation': wheel_separation,
+                    'wheel_radius': wheel_radius,
+                    'wheels_per_side': 2,
+                    'use_stamped_vel': True,
+                    'enable_odom_tf': True if i == 0 else False,
+                    'enable_odom': True if i == 0 else False,
+                }
+            }
 
     with open(os.path.join(temp_path, 'reseq_controllers.yaml'), 'w') as outfile:
         yaml.dump(controllers_config, outfile, default_flow_style=False)
@@ -201,18 +218,32 @@ if __name__ == '__main__':
         required=True,
         choices=['mk1', 'mk2'],
     )
+    parser.add_argument(
+        '--no_body_controllers',
+        action='store_true',
+        help='Flag for omitting the controllers of the body (diff drive controllers)',
+    )
+    parser.add_argument(
+        '--no_arm_controllers',
+        action='store_true',
+        help='Flag for omitting the controllers of the arm',
+    )
 
     args = parser.parse_args()
     config_file = args.config_file
     use_sim_time = args.use_sim_time
     version = args.version  # 'mk1' or 'mk2'
+    no_body_controllers = args.no_body_controllers
+    no_arm_controllers = args.no_arm_controllers
 
     try:
         # Clear the temp directory before generating new configs
         clear_temp_directory(version)
         generate_final_config(version, config_file)
         # Generate reseq_controllers.yaml to avoid fatal errors
-        generate_controllers_config(version, config_file, use_sim_time)
+        generate_controllers_config(
+            version, config_file, use_sim_time, no_body_controllers, no_arm_controllers
+        )
         sys.exit(0)
     except Exception as e:
         print(f'Error generating configuration files: {e}')

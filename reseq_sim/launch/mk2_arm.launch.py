@@ -3,14 +3,37 @@ import os
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
+from reseq_ros2.utils.launch_utils import default_filename
+
 
 def generate_launch_description():
     package_name = 'reseq_sim'
+    description_share = get_package_share_directory('reseq_description')
+
+    generate_configs = ExecuteProcess(
+        cmd=[
+            'python3',
+            os.path.join(description_share, 'scripts/generate_configs.py'),
+            'reseq_mk2_can.yaml',
+            '--use_sim_time',
+            '--no_body_controllers',
+            '--version',
+            'mk2',
+        ],
+        name='generate_configs',
+        output='screen',
+    )
 
     # TODO: with jinja we should be able to create use as a xacro file a compiled version that includes gazebo and other stuff
     # so, instead of picking the xacro file from the reseq_arm_mk2 we should compile xacro files and place them at compile
@@ -60,7 +83,7 @@ def generate_launch_description():
     )
 
     bridge_params = os.path.join(
-        package_name,
+        get_package_share_directory(package_name=package_name),
         'config',
         'gz_bridge.yaml',  # TODO: move gazebo_bridge node in this package
     )
@@ -75,15 +98,23 @@ def generate_launch_description():
         ],
     )
 
-    return LaunchDescription(
-        [
-            # ExecuteProcess(
-            #     cmd=['ign', 'gazebo', '-v', '4', 'libgazebo_ros_init.so', 'empty.sdf'],
-            #     output='screen'),
-            world_arg,
-            rsp,
-            gazebo,
-            spawn_entity,
-            ros_gz_bridge,
-        ]
+    # these nodes must all start after tehe configuration generation
+    # hence the name `second_step`
+    second_step = [
+        world_arg,
+        rsp,
+        gazebo,
+        spawn_entity,
+        ros_gz_bridge,
+    ]
+
+    launch_description = LaunchDescription([generate_configs])
+    launch_description.add_action(
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=generate_configs,
+                on_exit=second_step,
+            )
+        )
     )
+    return launch_description

@@ -96,20 +96,27 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_config_setup(context, *args, **kwargs):
     config_file = LaunchConfiguration('config_file').perform(context)
-    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     version = LaunchConfiguration('version').perform(context)
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
+    no_body_controllers = LaunchConfiguration('no_body_controllers').perform(context)
+    no_arm_controllers = LaunchConfiguration('no_arm_controllers').perform(context)
 
-    use_sim_time_arg = '--use_sim_time' if use_sim_time == 'true' else ''
+    cmd = [
+        'python3',
+        os.path.join(share_folder, 'scripts/generate_configs.py'),
+        config_file,
+        '--version',
+        version,
+    ]
+    if use_sim_time == 'true':
+        cmd.append('--use_sim_time')
+    if no_body_controllers == 'true':
+        cmd.append('--no_body_controllers')
+    if no_arm_controllers == 'true':
+        cmd.append('--no_arm_controllers')
 
     generate_configs = ExecuteProcess(
-        cmd=[
-            'python3',
-            os.path.join(share_folder, 'scripts/generate_configs.py'),
-            config_file,
-            use_sim_time_arg,
-            '--version',
-            {version},
-        ],
+        cmd=cmd,
         name='generate_configs',
         output='screen',
     )
@@ -152,6 +159,8 @@ def generate_launch_description():
             # this argument is passed as 'true' by sim_launch.py file
             DeclareLaunchArgument('use_sim_time', default_value='false'),
             DeclareLaunchArgument('sim_mode', default_value='false'),
+            DeclareLaunchArgument('no_body_controllers', default_value='false'),
+            DeclareLaunchArgument('no_arm_controllers', default_value='false'),
             OpaqueFunction(function=generate_config_setup),
         ]
     )
