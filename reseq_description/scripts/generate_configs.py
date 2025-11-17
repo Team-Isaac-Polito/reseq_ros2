@@ -141,8 +141,37 @@ def generate_controllers_config(
     ###########################
     ##### ARM CONTROLLERS #####
     ###########################
-    if not no_arm_controllers:
-        pass
+    if not no_arm_controllers and version == 'mk2':
+        cm = 'controller_manager'
+        rp = 'ros__parameters'
+        contr_name = 'arm_controller'
+        joints = [
+            'mod1__base_pitch_arm_joint',
+            'mod1__base_roll_arm_joint',
+            'mod1__elbow_pitch_arm_joint',
+            'mod1__forearm_roll_arm_joint',
+            'mod1__wrist_pitch_arm_joint',
+            'mod1__wrist_roll_arm_joint',
+        ]
+        controllers_config[cm][rp][contr_name] = {
+            'type': 'joint_trajectory_controller/JointTrajectoryController'
+        }
+        controllers_config[contr_name] = {
+            rp: {
+                'joints': joints,
+                'command_interfaces': [
+                    'position'
+                ],  # TODO: maybe it should be controlled in velocity
+                'state_interfaces': ['position', 'velocity'],
+                'action_monitor_rate': 10.0,
+                'allow_nonzero_velocity_at_trajectory_start': False,
+                'continue_last_state': False,
+                'default_tolerances': {
+                    'goals': 0.1,
+                    'goal_state': 0.1,
+                },
+            }
+        }
 
     ##########################
     #### BODY CONTROLLERS ####

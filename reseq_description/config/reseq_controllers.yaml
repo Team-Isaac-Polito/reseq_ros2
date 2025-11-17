@@ -4,6 +4,6 @@ controller_manager:
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
-    
+    ### Optional arm controller
     ### Differential drive controllers ###
     ### Dynamically configured by the Launch file ###
