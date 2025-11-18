@@ -3,38 +3,28 @@ import traceback
 import rclpy
 from control_msgs.msg import JointJog
 from geometry_msgs.msg import TwistStamped, Vector3
+from moveit_msgs.srv import ServoCommandType
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32, Float32MultiArray, Int32
 from std_srvs.srv import SetBool
-from trajectory_msgs.msg import JointTrajectory
-
-"""
-ROS node that handles communication between Moveit Servo and the data coming from the remote
-controller through Scaler node to control mk2 arm
-
-It receives a Twist message from Scaler which contains linear and angular
-velocities of the end effector
-of mk2 arm. It prepares the TwistStamped message for Moveit Servo.
-"""
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 
 class MoveitController(Node):
     def __init__(self):
         super().__init__('moveit_controller')
-        # Declaring parameters and getting values
         self.arm_module_address = (
             self.declare_parameter('arm_module_address', 0).get_parameter_value().integer_value
         )
 
-        # Service that manages linear/angular velocities
         self.linear_vel_enabled = True
         self.create_service(SetBool, '/moveit_controller/switch_vel', self.switch_vel_type)
         self.create_service(SetBool, '/moveit_controller/close_beak', self.handle_beak)
         self.create_service(SetBool, '/moveit_controller/home_pose', self.send_home_pose)
 
         self.planning_frame_id = (
-            self.declare_parameter('planning_frame_id', 'arm_roll_wrist_link')
+            self.declare_parameter('planning_frame_id', 'arm_base_link')
             .get_parameter_value()
             .string_value
         )
@@ -46,9 +36,20 @@ class MoveitController(Node):
         self.speed_pub = self.create_publisher(TwistStamped, servo_twist_topic, 10)
         self.joints_pos_pub = self.create_publisher(JointJog, servo_jog_topic, 10)
 
+        self.servo_client = self.create_client(
+            ServoCommandType, '/moveit_servo_node/switch_command_type'
+        )
+
+        self.traj_pub = self.create_publisher(
+            JointTrajectory, '/arm_controller/joint_trajectory', 10
+        )
+
+        self.current_joints = {}
+        self.init_timer = self.create_timer(1.0, self.init_sequence)
+
         self.create_subscription(
             JointTrajectory,
-            '/mk2_arm_controller/joint_trajectory',
+            '/arm_controller/joint_trajectory',
             self.send_joint_trajectory,
             10,
         )
@@ -98,11 +99,59 @@ class MoveitController(Node):
         )
         self.get_logger().info('Node Moveit Controller started successfully')
 
+    def init_sequence(self):
+        """
+        Startup Routine:
+        1. Robot starts at 0.0 (Singularity). MoveIt Servo cannot solve IK here.
+        2. We must physically move the arm using the JointTrajectoryController.
+        3. We CANNOT use Float32 publishers (Controller ignores them).
+        4. We MUST specify v=0.0, a=0.0 in the trajectory, or the controller rejects it as unsafe.
+        5. We wait for joint_state feedback to confirm the elbow is bent > 0.5 rad.
+        6. Only THEN do we switch Servo to TWIST mode.
+        """
+        if self.traj_pub.get_subscription_count() == 0:
+            self.get_logger().info('Initializing: Waiting for arm_controller connection...')
+            return
+
+        elbow_pos = self.current_joints.get('mod1__elbow_pitch_arm_joint', 0.0)
+
+        if abs(elbow_pos) < 0.5:
+            self.get_logger().warn(
+                f'Initializing: Robot still in singularity (Elbow: {elbow_pos:.2f}). '
+                'Sending Setup Trajectory...'
+            )
+            msg = JointTrajectory()
+            msg.joint_names = [
+                'mod1__base_pitch_arm_joint',
+                'mod1__base_roll_arm_joint',
+                'mod1__elbow_pitch_arm_joint',
+                'mod1__forearm_roll_arm_joint',
+                'mod1__wrist_pitch_arm_joint',
+                'mod1__wrist_roll_arm_joint',
+            ]
+            point = JointTrajectoryPoint()
+            point.positions = [0.0, 0.0, 1.0, 0.0, 1.0, 0.0]
+            point.velocities = [0.0] * 6
+            point.accelerations = [0.0] * 6
+            point.time_from_start.sec = 2
+            msg.points.append(point)
+            self.traj_pub.publish(msg)
+        else:
+            if self.servo_client.service_is_ready():
+                req = ServoCommandType.Request()
+                req.command_type = ServoCommandType.Request.TWIST
+                self.servo_client.call_async(req)
+                self.get_logger().info(
+                    'Initializing: Robot is bent. Servo switched to TWIST mode.'
+                )
+                self.init_timer.cancel()
+
     def mirror_states(self, msg: JointState):
         fmsg = JointState()
         fmsg.header = msg.header
         is_to_pub = False
         for i, name in enumerate(msg.name):
+            self.current_joints[name] = msg.position[i]
             if name in self.state_to_mirror:
                 is_to_pub = True
                 fmsg.name.append(name)
@@ -115,16 +164,17 @@ class MoveitController(Node):
             self.mirror_pub.publish(fmsg)
 
     def handle_velocities(self, msg: Vector3):
-        servo_msg = TwistStamped()
-        servo_msg.header.stamp = self.get_clock().now().to_msg()
-        servo_msg.header.frame_id = self.planning_frame_id
+        if self.init_timer.is_canceled():
+            servo_msg = TwistStamped()
+            servo_msg.header.stamp = self.get_clock().now().to_msg()
+            servo_msg.header.frame_id = self.planning_frame_id
 
-        if self.linear_vel_enabled:
-            servo_msg.twist.linear = msg
-        else:
-            servo_msg.twist.angular = msg
+            if self.linear_vel_enabled:
+                servo_msg.twist.linear = msg
+            else:
+                servo_msg.twist.angular = msg
 
-        self.speed_pub.publish(servo_msg)
+            self.speed_pub.publish(servo_msg)
 
     def switch_vel_type(
         self, request: SetBool.Request, response: SetBool.Response
@@ -152,6 +202,10 @@ class MoveitController(Node):
     def send_home_pose(
         self, request: SetBool.Request, response: SetBool.Response
     ) -> SetBool.Response:
+        req = ServoCommandType.Request()
+        req.command_type = ServoCommandType.Request.JOINT_JOG
+        self.servo_client.call_async(req)
+
         servo_msg = JointJog()
         servo_msg.header.stamp = self.get_clock().now().to_msg()
         servo_msg.header.frame_id = self.planning_frame_id
@@ -167,31 +221,15 @@ class MoveitController(Node):
         servo_msg.velocities = [0.05] * 6
         servo_msg.duration = 0.01
         self.joints_pos_pub.publish(servo_msg)
+
+        req_back = ServoCommandType.Request()
+        req_back.command_type = ServoCommandType.Request.TWIST
+        self.servo_client.call_async(req_back)
+
         response.success = True
         response.message = 'Moving arm to HOME position'
         self.get_logger().info(response.message)
         return response
-
-    def send_coordinate_target(self, x: float, y: float, z: float) -> bool:
-        """
-        Move the arm to a target coordinate using inverse kinematics.
-        This is a helper method that you can call from other nodes.
-
-        Args:
-            x, y, z: Target position in meters (relative to base_link)
-
-        Returns:
-            bool: True if planning succeeded, False otherwise
-
-        Usage:
-            controller.send_coordinate_target(0.3, 0.2, 0.3)
-
-        Note: This method requires a separate automation node to call the IK service
-        and convert coordinates to joint trajectories. See MOVEIT_COORDINATE_TESTING.md
-        """
-        self.get_logger().info(f'Coordinate target requested: X={x:.3f}, Y={y:.3f}, Z={z:.3f}')
-        self.get_logger().warn('Use automation layer or MoveIt CLI to plan trajectories')
-        return False
 
     def send_joint_trajectory(self, msg: JointTrajectory):
         update_diff = True
