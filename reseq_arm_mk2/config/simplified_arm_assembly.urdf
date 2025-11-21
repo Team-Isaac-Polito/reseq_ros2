@@ -1,9 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot
-  name="reseq_arm_mk2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  name="simplified_arm_assembly">
+
+
+    <link name="base_link"/>
+
+    <joint name="base_to_module" type="fixed">
+      <parent link="base_link"/>
+      <child link="mod1__base_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+
   <link
-    name="arm_base_link">
+    name="mod1__base_link">
     <inertial>
       <origin
         xyz="0 -0.0031516 0"
@@ -24,7 +37,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_base_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/module_joint.STL" />
       </geometry>
       <material
         name="">
@@ -38,24 +51,24 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_base_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/module_joint.STL" />
       </geometry>
     </collision>
   </link>
   <link
-    name="arm_diff_pitch_link">
+    name="mod1__pitch_1_link">
     <inertial>
       <origin
-        xyz="-1.3878E-17 0.00059334 1.7347E-18"
+        xyz="1.3878E-17 0.00059334 -1.7347E-18"
         rpy="0 0 0" />
       <mass
         value="0.28931" />
       <inertia
         ixx="0.0002425"
-        ixy="-1.6941E-20"
-        ixz="-1.5531E-20"
+        ixy="3.7269E-20"
+        ixz="-2.3847E-20"
         iyy="0.00023577"
-        iyz="8.3058E-21"
+        iyz="-4.6317E-21"
         izz="0.00025759" />
     </inertial>
     <visual>
@@ -64,7 +77,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_diff_pitch_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/pitch_1.STL" />
       </geometry>
       <material
         name="">
@@ -78,7 +91,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_diff_pitch_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/pitch_1.STL" />
       </geometry>
     </collision>
   </link>
@@ -87,24 +100,24 @@
     type="revolute">
     <origin
       xyz="0 0 0"
-      rpy="1.5708 -1.309 0" />
+      rpy="1.5708 1.309 3.1416" />
     <parent
-      link="arm_base_link" />
+      link="mod1__base_link" />
     <child
-      link="arm_diff_pitch_link" />
+      link="mod1__pitch_1_link" />
     <axis
       xyz="0 0 -1" />
     <limit
-      lower="0"
+      lower="-3.14"
       upper="1.309"
       effort="6"
       velocity="2" />
   </joint>
   <link
-    name="arm_diff_roll_link">
+    name="mod1__roll_2_link">
     <inertial>
       <origin
-        xyz="1.1115E-08 7.62E-08 -0.14664"
+        xyz="1.1115E-08 7.62E-08 0.014827"
         rpy="0 0 0" />
       <mass
         value="0.11865" />
@@ -122,7 +135,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_diff_roll_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/roll_2.STL" />
       </geometry>
       <material
         name="">
@@ -136,7 +149,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_diff_roll_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/roll_2.STL" />
       </geometry>
     </collision>
   </link>
@@ -144,22 +157,22 @@
     name="mod1__base_roll_arm_joint"
     type="revolute">
     <origin
-      xyz="0 0 0"
+      xyz="0 0.16147 0"
       rpy="1.5708 1.5708 0" />
     <parent
-      link="arm_diff_pitch_link" />
+      link="mod1__pitch_1_link" />
     <child
-      link="arm_diff_roll_link" />
+      link="mod1__roll_2_link" />
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
+      lower="-6.28"
+      upper="6.28"
       effort="6"
       velocity="2" />
   </joint>
   <link
-    name="arm_pitch_forearm_link">
+    name="mod1__pitch_3_link">
     <inertial>
       <origin
         xyz="0.060867 0.046121 -5.2042E-18"
@@ -169,9 +182,9 @@
       <inertia
         ixx="4.6765E-05"
         ixy="-9.086E-05"
-        ixz="1.3681E-20"
+        ixz="1.3572E-20"
         iyy="0.00027451"
-        iyz="3.2975E-21"
+        iyz="3.2775E-21"
         izz="0.00031255" />
     </inertial>
     <visual>
@@ -180,7 +193,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_pitch_forearm_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/pitch_3.STL" />
       </geometry>
       <material
         name="">
@@ -194,7 +207,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_pitch_forearm_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/pitch_3.STL" />
       </geometry>
     </collision>
   </link>
@@ -202,12 +215,12 @@
     name="mod1__elbow_pitch_arm_joint"
     type="revolute">
     <origin
-      xyz="0 0 -0.28857"
-      rpy="3.1416 -1.5708 3.1416" />
+      xyz="0 0 -0.1271"
+      rpy="3.1416 -1.5708 0" />
     <parent
-      link="arm_diff_roll_link" />
+      link="mod1__roll_2_link" />
     <child
-      link="arm_pitch_forearm_link" />
+      link="mod1__pitch_3_link" />
     <axis
       xyz="0 0 1" />
     <limit
@@ -217,17 +230,17 @@
       velocity="2" />
   </joint>
   <link
-    name="arm_roll_forearm_link">
+    name="mod1__roll_4_link">
     <inertial>
       <origin
-        xyz="2.0817E-17 -0.0018789 0.03054"
+        xyz="1.9082E-17 -0.0018789 0.03054"
         rpy="0 0 0" />
       <mass
         value="0.096867" />
       <inertia
         ixx="5.2065E-05"
-        ixy="1.6912E-22"
-        ixz="-6.5731E-21"
+        ixy="-2.0065E-21"
+        ixz="-6.0327E-21"
         iyy="4.9885E-05"
         iyz="2.3291E-07"
         izz="2.3052E-05" />
@@ -238,7 +251,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_roll_forearm_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/roll_4.STL" />
       </geometry>
       <material
         name="">
@@ -252,7 +265,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_roll_forearm_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/roll_4.STL" />
       </geometry>
     </collision>
   </link>
@@ -261,33 +274,33 @@
     type="revolute">
     <origin
       xyz="0.15351 0.074002 0"
-      rpy="0.2618 -1.5708 3.1416" />
+      rpy="3.4034 -1.5708 0" />
     <parent
-      link="arm_pitch_forearm_link" />
+      link="mod1__pitch_3_link" />
     <child
-      link="arm_roll_forearm_link" />
+      link="mod1__roll_4_link" />
     <axis
       xyz="0 0 1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
+      lower="-6.28"
+      upper="6.28"
       effort="3"
       velocity="1" />
   </joint>
   <link
-    name="arm_pitch_wrist_link">
+    name="mod1__pitch_5_link">
     <inertial>
       <origin
-        xyz="0.045311 1.3878E-17 -3.296E-17"
+        xyz="0.045311 -1.3878E-17 -3.1225E-17"
         rpy="0 0 0" />
       <mass
         value="0.056876" />
       <inertia
         ixx="1.5222E-05"
-        ixy="2.5626E-21"
-        ixz="3.1474E-21"
+        ixy="3.2086E-21"
+        ixz="2.628E-21"
         iyy="2.2881E-05"
-        iyz="-1.4326E-21"
+        iyz="-6.6366E-22"
         izz="1.6114E-05" />
     </inertial>
     <visual>
@@ -296,7 +309,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_pitch_wrist_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/pitch_5.STL" />
       </geometry>
       <material
         name="">
@@ -310,7 +323,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_pitch_wrist_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/pitch_5.STL" />
       </geometry>
     </collision>
   </link>
@@ -319,34 +332,34 @@
     type="revolute">
     <origin
       xyz="0 0 0.05447"
-      rpy="3.1416 -1.5708 3.1416" />
+      rpy="3.1416 -1.5708 0" />
     <parent
-      link="arm_roll_forearm_link" />
+      link="mod1__roll_4_link" />
     <child
-      link="arm_pitch_wrist_link" />
+      link="mod1__pitch_5_link" />
     <axis
       xyz="0 0 -1" />
     <limit
-      lower="-0.46"
+      lower="-1.57"
       upper="1.57"
       effort="3"
       velocity="1" />
   </joint>
   <link
-    name="arm_roll_wrist_link">
+    name="mod1__roll_6_link">
     <inertial>
       <origin
-        xyz="2.6021E-17 0.0094155 0.12425"
+        xyz="7.9797E-17 0.0089729 0.056902"
         rpy="0 0 0" />
       <mass
-        value="0.55801" />
+        value="0.54009" />
       <inertia
-        ixx="0.00046764"
-        ixy="1.372E-19"
-        ixz="1.5587E-19"
-        iyy="0.000956"
+        ixx="0.00046175"
+        ixy="1.37E-19"
+        ixz="1.5743E-19"
+        iyy="0.0009503"
         iyz="7.6437E-06"
-        izz="0.00082011" />
+        izz="0.00081963" />
     </inertial>
     <visual>
       <origin
@@ -354,7 +367,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_roll_wrist_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/roll_6.STL" />
       </geometry>
       <material
         name="">
@@ -368,7 +381,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_roll_wrist_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/roll_6.STL" />
       </geometry>
     </collision>
   </link>
@@ -376,17 +389,17 @@
     name="mod1__wrist_roll_arm_joint"
     type="revolute">
     <origin
-      xyz="0 0 0"
+      xyz="0.065961 0 0"
       rpy="0 1.5708 0" />
     <parent
-      link="arm_pitch_wrist_link" />
+      link="mod1__pitch_5_link" />
     <child
-      link="arm_roll_wrist_link" />
+      link="mod1__roll_6_link" />
     <axis
       xyz="0 0 -1" />
     <limit
-      lower="-3.14"
-      upper="3.14"
+      lower="-6.28"
+      upper="6.28"
       effort="3"
       velocity="1" />
   </joint>

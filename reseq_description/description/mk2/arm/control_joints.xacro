@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot>
+    <joint name="mod1__base_pitch_arm_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+    </joint>
+    <joint name="mod1__base_roll_arm_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+    </joint>
+    <joint name="mod1__elbow_pitch_arm_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+    </joint>
+    <joint name="mod1__forearm_roll_arm_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+    </joint>
+    <joint name="mod1__wrist_pitch_arm_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+    </joint>
+    <joint name="mod1__wrist_roll_arm_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+    </joint>
+</robot>

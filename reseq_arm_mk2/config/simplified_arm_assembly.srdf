@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="reseq_arm_mk2">
+    <group name="mk2_arm">
+        <link name="arm_base_link"/>
+        <link name="arm_diff_pitch_link"/>
+        <link name="arm_diff_roll_link"/>
+        <link name="arm_pitch_forearm_link"/>
+        <link name="arm_roll_forearm_link"/>
+        <link name="arm_pitch_wrist_link"/>
+        <link name="arm_roll_wrist_link"/>
+        <joint name="mod1__base_pitch_arm_joint"/>
+        <joint name="mod1__base_roll_arm_joint"/>
+        <joint name="mod1__elbow_pitch_arm_joint"/>
+        <joint name="mod1__forearm_roll_arm_joint"/>
+        <joint name="mod1__wrist_pitch_arm_joint"/>
+        <joint name="mod1__wrist_roll_arm_joint"/>
+    </group>
+    <disable_collisions link1="arm_base_link" link2="arm_diff_pitch_link" reason="Adjacent"/>
+    <disable_collisions link1="arm_base_link" link2="arm_pitch_forearm_link" reason="Never"/>
+    <disable_collisions link1="arm_base_link" link2="arm_diff_roll_link" reason="Never"/>
+    <disable_collisions link1="arm_base_link" link2="arm_roll_forearm_link" reason="Never"/>
+    <disable_collisions link1="arm_diff_pitch_link" link2="arm_pitch_forearm_link" reason="Never"/>
+    <disable_collisions link1="arm_diff_pitch_link" link2="arm_diff_roll_link" reason="Adjacent"/>
+    <disable_collisions link1="arm_diff_pitch_link" link2="arm_roll_forearm_link" reason="Never"/>
+    <disable_collisions link1="arm_pitch_forearm_link" link2="arm_pitch_wrist_link" reason="Never"/>
+    <disable_collisions link1="arm_pitch_forearm_link" link2="arm_diff_roll_link" reason="Adjacent"/>
+    <disable_collisions link1="arm_pitch_forearm_link" link2="arm_roll_forearm_link" reason="Adjacent"/>
+    <disable_collisions link1="arm_pitch_forearm_link" link2="arm_roll_wrist_link" reason="Never"/>
+    <disable_collisions link1="arm_pitch_wrist_link" link2="arm_diff_roll_link" reason="Never"/>
+    <disable_collisions link1="arm_pitch_wrist_link" link2="arm_roll_forearm_link" reason="Adjacent"/>
+    <disable_collisions link1="arm_pitch_wrist_link" link2="arm_roll_wrist_link" reason="Adjacent"/>
+  
+    <disable_collisions link1="arm_diff_roll_link" link2="arm_roll_forearm_link" reason="Never"/>
+    <disable_collisions link1="arm_roll_forearm_link" link2="arm_roll_wrist_link" reason="Never"/>
+</robot>

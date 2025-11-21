@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot
+    name="reseq_arm_mk2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    
+    <link name="world" />
+
+    <joint name="world_to_base_joint" type="fixed">
+        <parent link="world"/> 
+        <child link="arm_base_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+    
+    <xacro:arg name="sim_mode" default="false" />
+    <xacro:arg name="version" default="mk2" />
+    <xacro:arg name="controllers_config_file" default="$(find reseq_description)/config/reseq_controllers.yaml" />
+    
+    <xacro:property name="NumModules" value="0" />
+    <xacro:include filename="$(find reseq_description)/description/control/ros2_control.xacro" />
+    
+    <xacro:include filename="$(find reseq_arm_mk2)/urdf/reseq_arm_mk2.xacro" />
+    
+</robot>
