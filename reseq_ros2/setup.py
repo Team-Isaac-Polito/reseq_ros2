@@ -10,8 +10,6 @@ setup(
     packages=[
         package_name,
         f'{package_name}.utils',
-        f'{package_name}.reseq_cv',
-        f'{package_name}.detection_manager',
     ],
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
@@ -40,9 +38,7 @@ setup(
             'joint_publisher = reseq_ros2.joint_publisher:main',
             'feedback_replicator = reseq_ros2.feedback_replicator:main',
             'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
-            'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
-            'reseq_ros2.detection_manager = reseq_ros2.detection_manager.detection_manager_node:main',
             'thermal_node = reseq_ros2.thermal_node:main',
         ],
     },
