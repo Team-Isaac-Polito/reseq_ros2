@@ -22,8 +22,14 @@ In VSCode (or your editor of choice) open `ros2_ws`
 
 In the directory `ros2_ws` with the apt cache updated run:
 
+On Humble:
 ```bash
 rosdep install -iy --from-path src --rosdistro humble
+```
+On Jazzy (fix buggy version of rplidar):
+```bash
+vcs import src < src/rplidar.repos
+rosdep install -iy --from-path src --rosdistro jazzy
 ```
 
 ## Development dependencies
