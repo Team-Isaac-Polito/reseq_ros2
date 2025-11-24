@@ -2,10 +2,8 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -31,56 +29,15 @@ def generate_launch_description():
         }.items(),
     )
 
-    default_world = os.path.join(
-        get_package_share_directory(package_name), 'worlds', 'empty.world'
-    )
-
-    print(f'Default world path: {default_world}')
-
-    world = LaunchConfiguration('world')
-
-    world_arg = DeclareLaunchArgument(
-        'world', default_value=default_world, description='world_to_load'
-    )
-
-    # Include the gazebo launch file provided by the ros_gz_sim package
-    gazebo = IncludeLaunchDescription(
+    gazebo_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')]
-        ),
-        launch_arguments={'gz_args': ['-r -v4 ', world], 'on_exit_shutdown': 'true'}.items(),
-    )
-
-    # Include the executable can spawn the robot model in the simulation
-    spawn_entity = Node(
-        package='ros_gz_sim',
-        executable='create',
-        arguments=['-name', 'reseq', '-topic', '/robot_description'],
-        output='screen',
-    )
-
-    bridge_params = os.path.join(
-        get_package_share_directory(package_name), 'config', 'gz_bridge.yaml'
-    )
-    ros_gz_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        arguments=[
-            '--ros-args',
-            '-p',
-            f'config_file:={bridge_params}',
-        ],
+            [os.path.join(get_package_share_directory(package_name=package_name), 'launch', 'gazebo_launch.py')]
+        )
     )
 
     return LaunchDescription(
         [
-            # ExecuteProcess(
-            #     cmd=['ign', 'gazebo', '-v', '4', 'libgazebo_ros_init.so', 'empty.sdf'],
-            #     output='screen'),
-            world_arg,
             rsp,
-            gazebo,
-            spawn_entity,
-            ros_gz_bridge,
+            gazebo_launch,
         ]
     )
