@@ -3,15 +3,12 @@ import os
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, ExecuteProcess,
-                            IncludeLaunchDescription, RegisterEventHandler)
+from launch.actions import (ExecuteProcess, IncludeLaunchDescription,
+                            RegisterEventHandler)
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from moveit_configs_utils import MoveItConfigsBuilder
-
-from reseq_ros2.utils.launch_utils import default_filename
 
 
 def generate_launch_description():
@@ -32,8 +29,6 @@ def generate_launch_description():
         output='screen',
     )
 
-    # Get the share directory for this package
-    reseq_sim_share_dir = get_package_share_directory(package_name)
 
     # We must pass 'sim_mode='true' to xacro
     xacro_file = get_package_share_directory('reseq_arm_mk2') + '/urdf/arm.urdf.xacro'

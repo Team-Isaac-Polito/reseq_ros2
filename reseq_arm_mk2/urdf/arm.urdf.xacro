@@ -19,5 +19,8 @@
     <xacro:include filename="$(find reseq_description)/description/control/ros2_control.xacro" />
     
     <xacro:include filename="$(find reseq_arm_mk2)/urdf/reseq_arm_mk2.xacro" />
+    <xacro:if value="$(arg sim_mode)">
+        <xacro:include filename="$(find reseq_description)/description/sensors/gazebo/cameras_holder.xacro" />
+    </xacro:if>
     
 </robot>
