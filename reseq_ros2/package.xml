@@ -14,6 +14,7 @@
   <exec_depend>ros2launch</exec_depend>
 
   <exec_depend>reseq_interfaces</exec_depend>
+  <exec_depend>computer_vision</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
 
