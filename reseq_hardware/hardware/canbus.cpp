@@ -8,7 +8,6 @@
 #include <unistd.h>        // for close, read, write
 #include <cstring>         // for memcpy, strncpy, size_t
 #include <utility>         // for move
-#include <rclcpp/logging.hpp>                    // for RCLCPP_ERROR, RCLCPP...
 
 namespace reseq_hardware
 {
@@ -57,7 +56,7 @@ bool CanBus::send(const CanID & id, const void * data, size_t size)
   uint32_t arb_id = (id.msg_id << 16) | (id.mod_id << 8);
 
   struct can_frame frame = {};
-  frame.can_id = arb_id;
+  frame.can_id = arb_id | CAN_EFF_FLAG;
   frame.can_dlc = static_cast<__u8>(size);
   std::memcpy(frame.data, data, size);
 
@@ -82,9 +81,7 @@ bool CanBus::wait_for_message(const CanID & id, std::chrono::milliseconds timeou
       // Extract mod_id and msg_id from received CAN ID
       uint8_t r_mod_id = frame.can_id & 0xFF;
       uint8_t r_msg_id = (frame.can_id >> 16) & 0xFF;
-      RCLCPP_WARN(
-        rclcpp::get_logger(
-          "ReseqHardware"), "fame.CAN_ID: %X Module r_mod_id:%x, msg_id %x arrived", frame.can_id, r_mod_id, r_msg_id);
+      
       if (r_mod_id == id.mod_id && r_msg_id == id.msg_id) {
         return true;
       }
