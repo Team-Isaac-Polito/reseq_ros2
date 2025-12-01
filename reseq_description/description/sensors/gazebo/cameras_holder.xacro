@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot>
+
+    <!-- THIS FILE DEFINES THE END EFFECTOR CAMERA HOLDER -->
+    <joint name="ef_cameras_holder_joint" type="fixed">
+        <origin xyz="0 -0.03 0.15" rpy="1.57 -1.57 0"/>
+        <parent link="arm_roll_wrist_link"/>
+        <child link="ef_cameras_holder_link"/>
+    </joint>
+
+    <link name="ef_cameras_holder_link">
+        <visual name="cube">
+            <origin xyz="0 0 0"/>
+            <geometry>
+                <box size="0.01 0.01 0.01"/>
+            </geometry>
+            <material name="green">
+                <color rgba="0 1 0 1.0"/>
+            </material>
+        </visual>
+    </link>
+
+    <gazebo reference="ef_cameras_holder_link">
+        <!--http://sdformat.org/spec?ver=1.12&elem=sensor-->
+        <material>Gazebo/Red</material>
+
+        <sensor name="rgbd_camera" type="rgbd_camera">
+            <pose> 0 0 0 0 0 0 0 </pose>
+            <visualize>true</visualize>
+            <update_rate>10</update_rate>
+            <always_on>true</always_on>
+            <topic>rgbd_camera</topic>
+            <camera>
+                <horizontal_fov>1.0469999999999999</horizontal_fov> <!--default value corresponds to 60 degrees horizontal field of view-->
+                <image>
+                    <width>1280</width>
+                    <height>720</height>
+                    <!-- format is okay the default value since the realsense is rgb8-->
+                </image>
+                <clip>
+                    <near>0.3</near>
+                    <far>3</far>
+                </clip>
+                <depth_camera>
+                    <clip>
+                        <near>0.3</near>
+                        <far>3</far>
+                    </clip>
+                </depth_camera>
+            </camera>
+            <gz_frame_id>ef_cameras_holder_link</gz_frame_id>
+            <!-- <plugin name="depth_camera" filename="">
+                <frame_name>depth_camera_frame</frame_name>
+            </plugin> -->
+        </sensor>
+    </gazebo>
+</robot>
