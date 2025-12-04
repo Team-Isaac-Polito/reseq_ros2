@@ -4,12 +4,15 @@
 #include <rclcpp/clock.hpp>                      // for Clock::SharedPtr
 #include <rclcpp/logger.hpp>                     // for get_logger
 #include <rclcpp/logging.hpp>                    // for RCLCPP_ERROR, RCLCPP...
+#include <rclcpp/node.hpp>                       // for Node
+#include <rclcpp/serialization.hpp>              // for Serialization
 #include <type_traits>                           // for add_const<>::type
 #include <utility>                               // for pair
 #include "hardware_interface/handle.hpp"         // for CommandInterface
 #include "hardware_interface/hardware_info.hpp"  // for HardwareInfo, Compon...
 #include "pluginlib/class_list_macros.hpp"       // for PLUGINLIB_EXPORT_CLASS
 #include "reseq_hardware/config_parser.hpp"      // for parse_can_config_file
+#include "std_msgs/msg/float32.hpp"              // for Float32 message
 namespace rclcpp { class Time; }
 namespace rclcpp_lifecycle { class State; }
 
@@ -71,6 +74,11 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
 
     joint_info_[joint.name] = JointInfo{i, cmd_if, state_ifs};
   }
+
+  // Create ROS2 node and clock
+  node_ = rclcpp::Node::make_shared("reseq_hw");
+  clock_ = node_->get_clock();
+  f32ser_ = rclcpp::Serialization<std_msgs::msg::Float32>();
 
   // Parse configuration file for CAN mappings
   parse_config_file(config_file_);
@@ -183,8 +191,8 @@ hardware_interface::return_type ReseqHardware::read(
   for (const auto & snap : recv_buffer_.get_all()) {
     // Stale messages are ignored, but we use them to detect communication issues
     if (now - snap.timestamp > std::chrono::milliseconds(500)) {
-      RCLCPP_WARN(
-        rclcpp::get_logger("ReseqHardware"),
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger("ReseqHardware"), *clock_, THROTTLE_WARN,
         "Stale CAN message received: %02X%02X", snap.id.mod_id, snap.id.msg_id);
       continue;
     }
@@ -193,8 +201,8 @@ hardware_interface::return_type ReseqHardware::read(
     const auto & map_it = can_mappings_.find(snap.id);
 
     if (map_it == can_mappings_.end()) {
-      RCLCPP_WARN(
-        rclcpp::get_logger("ReseqHardware"),
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger("ReseqHardware"), *clock_, THROTTLE_WARN,
         "Received unknown CAN message: %02X%02X", snap.id.mod_id, snap.id.msg_id);
       continue;
     }
@@ -203,28 +211,17 @@ hardware_interface::return_type ReseqHardware::read(
 
     // Decode each field in the mapping
     for (const auto & field : mapping.fields) {
-      if (field.mapping_type != MappingType::JOINT_STATE) {
-        continue;  // TODO: handle TOPICS (TELEMETRY)
-
+      switch (field.mapping_type) {
+        case MappingType::JOINT_STATE:
+          handle_joint_state_message(field, snap.data);
+          break;
+        case MappingType::TOPIC_TELEMETRY:
+          handle_telemetry_message(field, snap.data);
+          break;
+        case MappingType::JOINT_COMMAND:
+          // Commands are not handled in read()
+          break;
       }
-      const auto & jinfo = joint_info_.at(field.name);
-
-      double * buffer_ptr = get_state_buffer_ptr(field.mode, jinfo.index);
-
-      if (!buffer_ptr) {
-        continue;
-      }
-
-      double value = 0.0;
-      if (field.data_type == "float32") {
-        value = read_value<float>(snap.data, field.offset);
-      } else {
-        RCLCPP_WARN(
-          rclcpp::get_logger(
-            "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
-        continue;
-      }
-      *buffer_ptr = value * field.scale + field.bias;
     }
   }
 
@@ -248,8 +245,8 @@ hardware_interface::return_type ReseqHardware::write(
 
   // Detect if the control loop is running slower than expected
   if (now - last_write_time_ > command_cycle_ * 1.2) {
-    RCLCPP_WARN_SKIPFIRST(
-      rclcpp::get_logger("ReseqHardware"),
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      rclcpp::get_logger("ReseqHardware"), *clock_, THROTTLE_WARN,
       "Control loop slowdown detected");
   }
 
@@ -337,8 +334,80 @@ double * ReseqHardware::get_state_buffer_ptr(const std::string & state_mode, siz
 
 void ReseqHardware::parse_config_file(const std::string & filename)
 {
-  can_mappings_ = parse_can_config_file(filename, num_modules_, mk_version_);
+  auto topic_mappings = std::vector<std::pair<std::string, std::string>>{};
+  can_mappings_ = parse_can_config_file(filename, num_modules_, mk_version_, topic_mappings);
+
+  // Create publishers for telemetry topics
+  for (auto & [topic_name, topic_type] : topic_mappings) {
+
+    if (topic_type == "float32") {
+      topic_type = "std_msgs/msg/Float32";
+    } else {
+      RCLCPP_WARN(
+        rclcpp::get_logger(
+          "ReseqHardware"), "Unsupported topic data type: %s", topic_type.c_str());
+      continue;
+    }
+
+    auto publisher = node_->create_generic_publisher(
+      topic_name,
+      topic_type,
+      rclcpp::QoS(10));
+    publishers_[topic_name] = publisher;
+  }
 }
 
+void ReseqHardware::handle_joint_state_message(const PayloadFieldMapping & field, const uint8_t * data) {
+  const auto & jinfo = joint_info_.find(field.name);
+    if (jinfo == joint_info_.end()) {
+      RCLCPP_WARN(
+        rclcpp::get_logger(
+          "ReseqHardware"), "Received data for unknown joint field: %s", field.name.c_str());
+      return;
+    }
+
+    double * buffer_ptr = get_state_buffer_ptr(field.mode, jinfo->second.index);
+
+    if (!buffer_ptr) {
+      return;
+    }
+
+    double value = 0.0;
+    if (field.data_type == "float32") {
+      value = read_value<float>(data, field.offset);
+    } else {
+      RCLCPP_WARN(
+        rclcpp::get_logger(
+          "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
+      return;
+    }
+    *buffer_ptr = value * field.scale + field.bias;
+}
+
+void ReseqHardware::handle_telemetry_message(const PayloadFieldMapping & field, const uint8_t * data) {
+  
+  const auto & pub_it = publishers_.find(field.name);
+  if (pub_it == publishers_.end()) {
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "ReseqHardware"), "No publisher for telemetry topic: %s", field.name.c_str());
+    return;
+  }
+
+  if (field.data_type == "float32") {
+    float value = read_value<float>(data, field.offset);
+    std_msgs::msg::Float32 msg;
+    rclcpp::SerializedMessage serialized_msg;
+    
+    msg.data = value;
+    f32ser_.serialize_message(&msg, &serialized_msg);
+    pub_it->second->publish(serialized_msg);
+  } else {
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "ReseqHardware"), "Unsupported telemetry data type: %s", field.data_type.c_str());
+    return;
+  }
+}
 }   // namespace reseq_hardware
 PLUGINLIB_EXPORT_CLASS(reseq_hardware::ReseqHardware, hardware_interface::SystemInterface)

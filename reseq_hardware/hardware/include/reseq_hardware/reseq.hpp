@@ -14,8 +14,11 @@
 #include "hardware_interface/types/hardware_interface_return_values.hpp" // for return_type
 #include "rclcpp/clock.hpp"               // for Clock
 #include "rclcpp/macros.hpp"              // for RCLCPP_SHARED_PTR_DEFINITIONS
+#include "rclcpp/node.hpp"                // for Node
+#include <rclcpp/serialization.hpp>       // for Serialization
 #include "reseq_hardware/canbus.hpp"      // for CanBus, CanID
 #include "reseq_hardware/msg_buffer.hpp"  // for MsgBuffer
+#include "std_msgs/msg/float32.hpp"      // for Float32
 namespace hardware_interface { class CommandInterface; }
 namespace hardware_interface { class StateInterface; }
 namespace hardware_interface { struct HardwareInfo; }
@@ -148,6 +151,20 @@ private:
   void parse_config_file(const std::string & filename);
 
   /**
+   * @brief Handles a joint state message by updating the corresponding buffer.
+   * @param field The payload field mapping.
+   * @param data Pointer to the CAN message data.
+   */
+  void handle_joint_state_message(const PayloadFieldMapping & field, const uint8_t * data);
+
+    /**
+   * @brief Handles a telemetry (topic) message by updating the corresponding buffer.
+   * @param field The payload field mapping.
+   * @param data Pointer to the CAN message data.
+   */
+  void handle_telemetry_message(const PayloadFieldMapping & field, const uint8_t * data);
+
+  /**
    * @brief Reads a value of type T from the CAN data buffer.
    * @param data Pointer to the data buffer.
    * @param offset Offset in the buffer to read from.
@@ -175,8 +192,10 @@ private:
     T v = static_cast<T>(value);
     std::memcpy(data + offset, &v, sizeof(T));
   }
+  
 
-  rclcpp::Clock::SharedPtr clock_;  ///< ROS2 clock.
+  std::shared_ptr<rclcpp::Node> node_;  ///< ROS2 node.
+  rclcpp::Clock::SharedPtr clock_;      ///< ROS2 clock.
 
   int num_modules_ = 0;                 ///< Number of modules.
   int mk_version_ = 2;                  ///< Robot version.
@@ -188,6 +207,9 @@ private:
   std::map<CanID, CanMessageMapping> can_mappings_;        ///< CAN message mappings.
   JointBuffers joint_buffers_;                             ///< Buffers for joint data.
   MessageBuffer recv_buffer_;                              ///< Buffer for received messages.
+
+  std::map<std::string, rclcpp::GenericPublisher::SharedPtr> publishers_;
+  rclcpp::Serialization<std_msgs::msg::Float32> f32ser_;
 
   std::chrono::steady_clock::time_point last_write_time_{std::chrono::steady_clock::now()};
   std::chrono::milliseconds command_cycle_{80};    ///< Command cycle duration.

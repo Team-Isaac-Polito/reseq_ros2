@@ -43,7 +43,8 @@ MappingType parse_type(const std::string & type_str)
 
 std::map<CanID, CanMessageMapping> parse_can_config_file(
   const std::string & filename,
-  int num_modules, int mk_version)
+  int num_modules, int mk_version, 
+  std::vector<std::pair<std::string, std::string>> & topic_mappings)
 {
   std::map<CanID, CanMessageMapping> can_mappings;
   YAML::Node config = YAML::LoadFile(filename);
@@ -70,17 +71,23 @@ std::map<CanID, CanMessageMapping> parse_can_config_file(
         PayloadFieldMapping field_mapping;
         auto name = field["name"].as<std::string>();
         auto type = field["type"].as<std::string>("state");
+        auto data_type = field["data_type"].as<std::string>("float32");
 
         // For non-telemetry, prepend module info to the field name (modX__name),
         // this is the module INDEX, not the CAN mod_id
+        // For telemetry, also store the topic mapping, 
+        // topics are in the format /reseq/modX/name 
         if (type != "telemetry") {
           name = "mod" + std::to_string(i) + "__" + name;
+        } else {
+          name = "/reseq/mod" + std::to_string(i) + "/" + name;
+          topic_mappings.emplace_back(name, data_type);
         }
 
         field_mapping.name = name;
         field_mapping.mapping_type = parse_type(type);
         field_mapping.mode = field["mode"].as<std::string>("position");
-        field_mapping.data_type = field["data_type"].as<std::string>("float32");
+        field_mapping.data_type = data_type;
         field_mapping.offset = field["offset"].as<uint8_t>(0);
         field_mapping.scale = field["scale"].as<double>(1.0);
         field_mapping.bias = field["bias"].as<double>(0.0);
