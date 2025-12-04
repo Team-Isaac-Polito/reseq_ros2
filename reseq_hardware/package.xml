@@ -12,6 +12,8 @@
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>std_msgs</depend>
   <depend>yaml-cpp</depend>
 
   <exec_depend>controller_manager</exec_depend>
