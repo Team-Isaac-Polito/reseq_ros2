@@ -10,9 +10,11 @@ for the RESE.Q MK2 Manipulator</p>
   <maintainer email="TODO@email.com" />
   <license>BSD</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>reach_ros</build_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>reach_ros</exec_depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>

@@ -28,7 +28,7 @@ class CoordinateController(Node):
         super().__init__('coordinate_controller')
 
         # Parameters
-        self.declare_parameter('reachability_db_path', '')
+        self.declare_parameter('reachability_db_path', 'src/reseq_arm_mk2/config/reach.db.xml')
         self.declare_parameter('reachability_threshold', 0.02)  # Meters
 
         self.ik_service = self.create_client(GetPositionIK, '/compute_ik')

@@ -35,10 +35,12 @@ def generate_launch_description():
 
     # Path to controllers config for the Gazebo plugin
     controllers_config_file = os.path.join(
-        get_package_share_directory('reseq_ros2'),
+        get_package_share_directory('reseq_description'),
         'config',
+        'temp',
         'reseq_controllers.yaml',
     )
+    print(f"Using controllers config file: {controllers_config_file}")
 
     robot_description = xacro.process_file(
         xacro_file,
@@ -149,11 +151,23 @@ def generate_launch_description():
         output='screen',
     )
 
+    joint_group_velocity_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=[
+            'joint_group_velocity_controller',
+            '--controller-manager',
+            '/controller_manager',
+            '--inactive',
+        ],
+    )
+
     # these nodes must all start after tehe configuration generation
     # hence the name `second_step`
     second_step = [
         rsp,
         arm_controller_spawner,
+        joint_group_velocity_controller_spawner,
         gazebo_launch,
         joint_state_broadcaster_spawner,
         move_group_node,

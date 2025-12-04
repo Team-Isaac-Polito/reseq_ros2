@@ -173,6 +173,26 @@ def generate_controllers_config(
             }
         }
 
+        # Add the new velocity controller
+        vel_contr_name = 'joint_group_velocity_controller'
+        controllers_config[cm][rp][vel_contr_name] = {
+            'type': 'velocity_controllers/JointGroupVelocityController'
+        }
+        controllers_config[vel_contr_name] = {
+            rp: {
+                'joints': [
+                    'mod1__base_pitch_arm_joint',
+                    'mod1__base_roll_arm_joint',
+                    'mod1__elbow_pitch_arm_joint',
+                    'mod1__forearm_roll_arm_joint',
+                    'mod1__wrist_pitch_arm_joint',
+                    'mod1__wrist_roll_arm_joint',
+                ],
+                'command_interfaces': ['velocity'],
+                'state_interfaces': ['position', 'velocity'],
+            }
+        }
+
     ##########################
     #### BODY CONTROLLERS ####
     ##########################
@@ -223,7 +243,7 @@ def generate_controllers_config(
 if __name__ == '__main__':
     # Using argparse to tidily manage args from command line
     parser = argparse.ArgumentParser(
-        usage='Usage: python generate_configs.py <config_file>',
+        usage='Usage: python generate_configs.py <config_file>', 
         description='Use this python file to generate configurations in the /config/temp folder.',
     )
     parser.add_argument(
@@ -236,8 +256,7 @@ if __name__ == '__main__':
         action='store_true',
         required=False,
         default=False,
-        help='Set this to true if you want all nodes described\
-            in the configuration files to use the Simulation Time',
+        help='Set this to true if you want all nodes described\n            in the configuration files to use the Simulation Time',
     )
     parser.add_argument(
         '--version',

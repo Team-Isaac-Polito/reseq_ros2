@@ -11,9 +11,9 @@ from launch_ros.actions import Node
 def generate_launch_description():
     package_name = 'reseq_sim'
 
-    ########################
-    ### LAUNCH ARGUMENTS ###
-    ########################
+    ####################
+    # LAUNCH ARGUMENTS #
+    ####################
 
     world_arg = DeclareLaunchArgument(
         'world', default_value='empty.world', description='World to load in the gazebo simulation'

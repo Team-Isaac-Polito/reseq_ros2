@@ -1,0 +1,28 @@
+ik_solver:
+  name: MoveItIKSolver
+  distance_threshold: 0.01
+  planning_group: mk2_arm
+  touch_links: ["arm_roll_wrist_link"]
+
+optimization:
+  radius: 0.2
+  max_steps: 0 # CHANGED from 10 to 0 (Disables optimization loop)
+  step_improvement_threshold: 0.01
+
+evaluator:
+  name: MultiplicativeEvaluator
+  plugins:
+    - name: ManipulabilityMoveIt
+      planning_group: mk2_arm
+
+display:
+  name: ROSDisplay
+  kinematic_base_frame: arm_base_link
+  marker_scale: 0.05
+
+target_pose_generator:
+  name: PointCloudTargetPoseGenerator
+  pcd_file: package://reseq_arm_mk2/config/study_points.pcd
+
+logger:
+  name: BoostProgressConsoleLogger

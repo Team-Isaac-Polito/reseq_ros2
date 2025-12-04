@@ -1,8 +1,8 @@
 mk2_arm:
   kinematics_solver: pick_ik/PickIkPlugin
-  kinematics_solver_timeout: 0.2
-  kinematics_solver_attempts: 3
-  mode: local
+  kinematics_solver_timeout: 0.05 # Changed from 0.2
+  kinematics_solver_attempts: 3 # Changed from 10
+  mode: global
   #stop_optimization_on_valid_solution: true
   #position_scale: 1.0
   rotation_scale: 0.5
