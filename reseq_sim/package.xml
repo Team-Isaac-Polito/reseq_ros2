@@ -14,6 +14,9 @@
 
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>ros_gz</exec_depend>
+  <exec_depend>reseq_arm_mk2</exec_depend>
+  <exec_depend>reseq_ros2</exec_depend>
+  <exec_depend>reseq_description</exec_depend>
   
   <export>
     <build_type>ament_cmake</build_type>

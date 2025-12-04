@@ -139,8 +139,8 @@ def generate_launch_description():
     )
 
     moveit_controller_node = Node(
-        package='reseq_ros2',
-        executable='moveit_controller',
+        package='reseq_arm_mk2',
+        executable='moveit_controller.py',
         name='moveit_controller',
         parameters=[
             {
