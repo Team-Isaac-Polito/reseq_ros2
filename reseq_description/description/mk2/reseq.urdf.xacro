@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="reseq">
+
+  <xacro:arg name="use_ros2_control" default="true"/>
+  <xacro:arg name="sim_mode" default="false"/>
+
+  <xacro:include filename="$(find reseq_description)/description/macros/reseq_parameters.xacro" />
+  
+  <xacro:include filename="$(find reseq_description)/description/macros/inertial_macros.xacro" />
+
+  <xacro:include filename="$(find reseq_description)/description/macros/utils.xacro" />
+
+  <xacro:include filename="$(find reseq_description)/description/macros/reseq_body.xacro" />
+
+  <xacro:include filename="$(find reseq_arm_mk2)/urdf/reseq_arm_mk2.xacro" />
+
+  <xacro:include filename="$(find reseq_description)/description/control/ros2_control.xacro" />
+
+</robot>
