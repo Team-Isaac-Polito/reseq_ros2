@@ -1,7 +1,7 @@
 # Build the docker in ~/ros2_ws directory:
 # docker build -t reseq-orin -f src/docker/Dockerfile.orin src
 # Run the docker:
-# docker run -it --rm --privileged --runtime nvidia --gpus all --network host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/isaac/.Xauthority:/root/.Xauthority:ro --entrypoint /bin/bash reseq-orin
+# docker run -it --rm --privileged --volume /lib/modules:/lib/modules:ro --volume /usr/src:/usr/src:ro --runtime nvidia --gpus all --network host -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/isaac/.Xauthority:/root/.Xauthority:ro --entrypoint /bin/bash reseq-orin
 
 # --- See https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_common/blob/release-3.1/docker/Dockerfile.aarch64 for the source of the code
 # (ends in line 270)
@@ -393,8 +393,8 @@ RUN pip install pyzbar ultralytics --no-cache-dir \
     \
     && echo "Ultralytics and dependencies successfully installed using JetPack 6.0 compatible wheels."
 
-RUN apt update && apt install -y --no-install-recommends \
-    ros-humble-apriltag-ros \
+RUN apt update --allow-releaseinfo-change && apt install -y --no-install-recommends \
+    iproute2 ros-humble-apriltag-ros \
     && pip install opencv-contrib-python numpy==1.23.5
 
 # Final stage: build reseq_ros2
@@ -405,7 +405,9 @@ WORKDIR /ros2_ws
 
 RUN apt update && \
     git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src && \
+    cd src && git submodule update --recursive --remote && cd .. && \
     source /ros_entrypoint.sh && \ 
     rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys="librealsense2 realsense2_camera" -y -t exec -t build && \
     colcon build && \
-    sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh
+    sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh && \
+    sed -i "\$i source /ros_entrypoint.sh \n" /root/.bashrc
