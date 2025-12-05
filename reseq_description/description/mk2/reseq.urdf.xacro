@@ -14,6 +14,12 @@
 
   <xacro:include filename="$(find reseq_arm_mk2)/urdf/reseq_arm_mk2.xacro" />
 
+  <joint name="body_to_arm_joint" type="fixed">
+    <parent link="chassis1_link"/>
+    <child link="arm_base_link"/>
+    <origin xyz="${WheelBase/2} 0 0" />
+  </joint>
+
   <xacro:include filename="$(find reseq_description)/description/control/ros2_control.xacro" />
 
 </robot>
