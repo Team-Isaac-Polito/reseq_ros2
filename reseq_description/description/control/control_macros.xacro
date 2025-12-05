@@ -11,8 +11,10 @@
     <xacro:macro name="control_wheel_factory" params="id pos side">
 
         <joint name="mod${id}__${side}_${pos}_wheel">
-            <command_interface name="position" />
-            <state_interface name="position" />
+            <xacro:if value="$(arg sim_mode)" >
+                <command_interface name="position" />
+                <state_interface name="position" />
+            </xacro:if>
             <command_interface name="velocity" />
             <state_interface name="velocity" />
         </joint>
