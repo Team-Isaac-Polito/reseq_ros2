@@ -161,8 +161,8 @@ def generate_controllers_config(
                 'joints': joints,
                 'command_interfaces': [
                     'position'
-                ],  # TODO: maybe it should be controlled in velocity
-                'state_interfaces': ['position', 'velocity'],
+                ],
+                'state_interfaces': ['position'],
                 'action_monitor_rate': 10.0,
                 'allow_nonzero_velocity_at_trajectory_start': False,
                 'continue_last_state': False,
@@ -188,8 +188,8 @@ def generate_controllers_config(
                     'mod1__wrist_pitch_arm_joint',
                     'mod1__wrist_roll_arm_joint',
                 ],
-                'command_interfaces': ['velocity'],
-                'state_interfaces': ['position', 'velocity'],
+                'command_interfaces': ['position'],
+                'state_interfaces': ['position'],
             }
         }
 
@@ -225,6 +225,7 @@ def generate_controllers_config(
                         f'mod{i + 1}__right_front_wheel',
                         f'mod{i + 1}__right_back_wheel',
                     ],
+                    'position_feedback': False,
                     'odom_frame_id': 'odom',
                     'base_frame_id': 'base_link',
                     'wheel_separation': wheel_separation,
