@@ -142,7 +142,7 @@ def generate_config_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
-            DeclareLaunchArgument('version', default_value='mk1', choices=['mk1', 'mk2']),
+            DeclareLaunchArgument('version', default_value='mk2', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('sensors', default_value='true', description='Enable sensors'),
             DeclareLaunchArgument(
