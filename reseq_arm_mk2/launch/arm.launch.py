@@ -64,7 +64,7 @@ def launch_setup(context, *args, **kwargs):
     # Define the servo node, passing ALL required configs
     servo_node = Node(
         package='moveit_servo',
-        executable='servo_node',
+        executable='servo_node_main',
         name='moveit_servo_node',
         parameters=[
             moveit_config.to_dict(),  # All MoveIt config
