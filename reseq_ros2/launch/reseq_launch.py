@@ -2,15 +2,9 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    EmitEvent,
-    ExecuteProcess,
-    IncludeLaunchDescription,
-    LogInfo,
-    OpaqueFunction,
-    RegisterEventHandler,
-)
+from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
+                            IncludeLaunchDescription, LogInfo, OpaqueFunction,
+                            RegisterEventHandler)
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -38,6 +32,9 @@ def launch_setup(context, *args, **kwargs):
     # use simulation time: should only be used with gazebo that's why default value is 'false'
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
+
+    arm_arg = LaunchConfiguration('arm').perform(context=context)
+    arm = True if arm_arg == 'true' else False
 
     # Core launch file
     core_launch_file = os.path.join(
@@ -83,10 +80,24 @@ def launch_setup(context, *args, **kwargs):
                 launch_arguments={
                     'version': version,
                     'config_file': config_filename,
+                    'arm': arm_arg,
                     'log_level': log_level,
                     'external_log_level': external_log_level,
                     'use_sim_time': use_sim_time,
                     'sim_mode': sim_mode,
+                }.items(),
+            )
+        )
+
+    if arm:
+        arm_launch_file = os.path.join(
+            get_package_share_directory('reseq_arm_mk2'), 'launch', 'arm.launch.py'
+        )
+        launch_config.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(arm_launch_file),
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
                 }.items(),
             )
         )
@@ -144,6 +155,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('version', default_value='mk2', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
+            DeclareLaunchArgument('arm', default_value='true', choices=['true', 'false'], description="Set to false if you don't want to use the arm"),
             DeclareLaunchArgument('sensors', default_value='true', description='Enable sensors'),
             DeclareLaunchArgument(
                 'd_twin', default_value='true', description='Enable digital twin'
