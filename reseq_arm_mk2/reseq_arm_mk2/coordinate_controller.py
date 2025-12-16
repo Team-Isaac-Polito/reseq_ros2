@@ -13,9 +13,8 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 # Try importing reach and scipy for the map functionality
 try:
-    from scipy.spatial import KDTree
-
     import reach
+    from scipy.spatial import KDTree
 
     HAS_REACH_SUPPORT = True
 except ImportError as e:
@@ -203,8 +202,8 @@ def main(args=None):
     executor.add_node(controller)
     try:
         executor.spin()
-    except KeyboardInterrupt:
-        pass
+    except KeyboardInterrupt as err:
+        raise err
     finally:
         controller.destroy_node()
         rclpy.shutdown()

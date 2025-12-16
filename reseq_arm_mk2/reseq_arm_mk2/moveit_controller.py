@@ -165,17 +165,17 @@ class MoveitController(Node):
             self.mirror_pub.publish(fmsg)
 
     def handle_velocities(self, msg: Vector3):
-        # if self.init_timer.is_canceled():
-        servo_msg = TwistStamped()
-        servo_msg.header.stamp = self.get_clock().now().to_msg()
-        servo_msg.header.frame_id = self.planning_frame_id
+        if self.init_timer.is_canceled():
+            servo_msg = TwistStamped()  
+            servo_msg.header.stamp = self.get_clock().now().to_msg()
+            servo_msg.header.frame_id = self.planning_frame_id
 
-        if self.linear_vel_enabled:
-            servo_msg.twist.linear = msg
-        else:
-            servo_msg.twist.angular = msg
+            if self.linear_vel_enabled:
+                servo_msg.twist.linear = msg
+            else:
+                servo_msg.twist.angular = msg
 
-        self.speed_pub.publish(servo_msg)
+            self.speed_pub.publish(servo_msg)
 
     def switch_vel_type(
         self, request: SetBool.Request, response: SetBool.Response
