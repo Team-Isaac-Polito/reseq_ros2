@@ -3,8 +3,7 @@ import os
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (ExecuteProcess, IncludeLaunchDescription,
-                            RegisterEventHandler)
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -29,7 +28,6 @@ def generate_launch_description():
         output='screen',
     )
 
-
     # We must pass 'sim_mode='true' to xacro
     xacro_file = get_package_share_directory('reseq_arm_mk2') + '/urdf/arm.urdf.xacro'
 
@@ -40,7 +38,7 @@ def generate_launch_description():
         'temp',
         'reseq_controllers.yaml',
     )
-    print(f"Using controllers config file: {controllers_config_file}")
+    print(f'Using controllers config file: {controllers_config_file}')
 
     robot_description = xacro.process_file(
         xacro_file,
@@ -64,7 +62,13 @@ def generate_launch_description():
 
     gazebo_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [os.path.join(get_package_share_directory(package_name=package_name), 'launch', 'gazebo_launch.py')]
+            [
+                os.path.join(
+                    get_package_share_directory(package_name=package_name),
+                    'launch',
+                    'gazebo_launch.py',
+                )
+            ]
         )
     )
 
@@ -91,7 +95,7 @@ def generate_launch_description():
     # Load all MoveIt configuration files
     moveit_config = (
         MoveItConfigsBuilder(
-            robot_name='simplified_arm_assembly',  # This name comes from your SRDF
+            robot_name='reseq_arm_mk2',
             package_name='reseq_arm_mk2',
         )
         .robot_description(
@@ -102,9 +106,9 @@ def generate_launch_description():
                 'controllers_config_file': controllers_config_file,
             },
         )
-        .robot_description_semantic(file_path='config/simplified_arm_assembly.srdf')
+        .robot_description_semantic(file_path='config/reseq_arm_mk2.srdf')
         .robot_description_kinematics(file_path='config/kinematics.yaml')
-        .joint_limits(file_path='config/joint_limits.yaml')
+        # .joint_limits(file_path='config/joint_limits.yaml')
         .to_moveit_configs()
     )
 
