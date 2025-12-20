@@ -7,6 +7,7 @@ import traceback
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
+from jinja2 import Environment, FileSystemLoader
 
 # Set the path to the config directory relative to the scripts directory
 description_pkg_dir = get_package_share_directory('reseq_description')
@@ -126,7 +127,7 @@ def generate_final_config(version: str, include_file):
 
 
 # Function to generate reseq_controllers.yaml based on the number of modules and parameters
-# from the generic file
+# from the generic file using Jinja2 templates
 def generate_controllers_config(
     version: str,
     generic_config_file,
@@ -134,68 +135,17 @@ def generate_controllers_config(
     no_body_controllers: bool,
     no_arm_controllers: bool,
 ):
-    # take from reseq_controllers.yaml the template file for the controller manager
-    with open(os.path.join(config_path, 'reseq_controllers.yaml'), 'r') as file:
-        controllers_config = yaml.safe_load(file)
+    # Prepare template context
+    context = {
+        'use_sim_time': use_sim_time,
+        'body_controllers': not no_body_controllers,
+        'arm_controller': not no_arm_controllers and version == 'mk2',
+        'num_modules': 0,
+        'wheel_separation': 0.0,
+        'wheel_radius': 0.0,
+    }
 
-    ###########################
-    ##### ARM CONTROLLERS #####
-    ###########################
-    if not no_arm_controllers and version == 'mk2':
-        cm = 'controller_manager'
-        rp = 'ros__parameters'
-        contr_name = 'arm_controller'
-        joints = [
-            'mod1__base_pitch_arm_joint',
-            'mod1__base_roll_arm_joint',
-            'mod1__elbow_pitch_arm_joint',
-            'mod1__forearm_roll_arm_joint',
-            'mod1__wrist_pitch_arm_joint',
-            'mod1__wrist_roll_arm_joint',
-        ]
-        controllers_config[cm][rp][contr_name] = {
-            'type': 'joint_trajectory_controller/JointTrajectoryController'
-        }
-        controllers_config[contr_name] = {
-            rp: {
-                'joints': joints,
-                'command_interfaces': [
-                    'position'
-                ],
-                'state_interfaces': ['position'],
-                'action_monitor_rate': 10.0,
-                'allow_nonzero_velocity_at_trajectory_start': False,
-                'continue_last_state': False,
-                'default_tolerances': {
-                    'goals': 0.1,
-                    'goal_state': 0.1,
-                },
-            }
-        }
-
-        # Add the new velocity controller
-        vel_contr_name = 'joint_group_velocity_controller'
-        controllers_config[cm][rp][vel_contr_name] = {
-            'type': 'velocity_controllers/JointGroupVelocityController'
-        }
-        controllers_config[vel_contr_name] = {
-            rp: {
-                'joints': [
-                    'mod1__base_pitch_arm_joint',
-                    'mod1__base_roll_arm_joint',
-                    'mod1__elbow_pitch_arm_joint',
-                    'mod1__forearm_roll_arm_joint',
-                    'mod1__wrist_pitch_arm_joint',
-                    'mod1__wrist_roll_arm_joint',
-                ],
-                'command_interfaces': ['position'],
-                'state_interfaces': ['position'],
-            }
-        }
-
-    ##########################
-    #### BODY CONTROLLERS ####
-    ##########################
+    # Load configuration data if body controllers are needed
     if not no_body_controllers:
         with open(os.path.join(temp_path, version, generic_config_file), 'r') as file:
             generic_config = yaml.safe_load(file)
@@ -204,47 +154,29 @@ def generate_controllers_config(
         with open(os.path.join(config_path, version, agevar_file), 'r') as file:
             agevar_config = yaml.safe_load(file)
 
-        num_modules = generic_config['num_modules']
-        wheel_separation = agevar_config['agevar_consts']['d']
-        wheel_radius = agevar_config['agevar_consts']['r_eq']
+        context['num_modules'] = generic_config['num_modules']
+        context['wheel_separation'] = agevar_config['agevar_consts']['d']
+        context['wheel_radius'] = agevar_config['agevar_consts']['r_eq']
 
-        controllers_config['controller_manager']['ros__parameters']['use_sim_time'] = use_sim_time
+    # Setup Jinja2 environment
+    template_dir = os.path.join(config_path, 'templates')
+    jinja_env = Environment(
+        loader=FileSystemLoader(template_dir), trim_blocks=True, lstrip_blocks=True
+    )
 
-        for i in range(num_modules):
-            controller_name = f'diff_controller{i + 1}'
-            controllers_config['controller_manager']['ros__parameters'][controller_name] = {
-                'type': 'diff_drive_controller/DiffDriveController'
-            }
-            controllers_config[controller_name] = {
-                'ros__parameters': {
-                    'left_wheel_names': [
-                        f'mod{i + 1}__left_front_wheel',
-                        f'mod{i + 1}__left_back_wheel',
-                    ],
-                    'right_wheel_names': [
-                        f'mod{i + 1}__right_front_wheel',
-                        f'mod{i + 1}__right_back_wheel',
-                    ],
-                    'position_feedback': False,
-                    'odom_frame_id': 'odom',
-                    'base_frame_id': 'base_link',
-                    'wheel_separation': wheel_separation,
-                    'wheel_radius': wheel_radius,
-                    'wheels_per_side': 2,
-                    'use_stamped_vel': True,
-                    'enable_odom_tf': True if i == 0 else False,
-                    'enable_odom': True if i == 0 else False,
-                }
-            }
+    # Render template
+    template = jinja_env.get_template('reseq_controllers.yaml.j2')
+    output = template.render(context)
 
+    # Write output file
     with open(os.path.join(temp_path, 'reseq_controllers.yaml'), 'w') as outfile:
-        yaml.dump(controllers_config, outfile, default_flow_style=False)
+        outfile.write(output)
 
 
 if __name__ == '__main__':
     # Using argparse to tidily manage args from command line
     parser = argparse.ArgumentParser(
-        usage='Usage: python generate_configs.py <config_file>', 
+        usage='Usage: python generate_configs.py <config_file>',
         description='Use this python file to generate configurations in the /config/temp folder.',
     )
     parser.add_argument(

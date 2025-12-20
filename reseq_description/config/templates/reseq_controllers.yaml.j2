@@ -1,0 +1,64 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+    use_sim_time: {{ use_sim_time | lower }}
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+{% if body_controllers %}
+{% for i in range(num_modules) %}
+    diff_controller{{ i + 1 }}:
+      type: diff_drive_controller/DiffDriveController
+{% endfor %}
+{% endif %}
+
+{% if arm_controller %}
+    mk2_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+{% endif %}
+
+{% if body_controllers %}
+{% for i in range(num_modules) %}
+diff_controller{{ i + 1 }}:
+  ros__parameters:
+    left_wheel_names:
+      - mod{{ i + 1 }}__left_front_wheel
+      - mod{{ i + 1 }}__left_back_wheel
+    right_wheel_names:
+      - mod{{ i + 1 }}__right_front_wheel
+      - mod{{ i + 1 }}__right_back_wheel
+    position_feedback: false
+    odom_frame_id: odom
+    base_frame_id: base_link
+    wheel_separation: {{ wheel_separation }}
+    wheel_radius: {{ wheel_radius }}
+    wheels_per_side: 2
+    use_stamped_vel: true
+    enable_odom_tf: {{ 'true' if i == 0 else 'false' }}
+    enable_odom: {{ 'true' if i == 0 else 'false' }}
+
+{% endfor %}
+{% endif %}
+
+{% if arm_controller %}
+mk2_arm_controller:
+  ros__parameters:
+    joints:
+      - mod1__base_pitch_arm_joint
+      - mod1__base_roll_arm_joint
+      - mod1__elbow_pitch_arm_joint
+      - mod1__forearm_roll_arm_joint
+      - mod1__wrist_pitch_arm_joint
+      - mod1__wrist_roll_arm_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+    action_monitor_rate: 10.0
+    allow_nonzero_velocity_at_trajectory_start: false
+    continue_last_state: false
+    default_tolerances:
+      goals: 0.1
+      goal_state: 0.1
+{% endif %}
