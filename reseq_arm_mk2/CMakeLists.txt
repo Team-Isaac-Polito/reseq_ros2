@@ -11,7 +11,7 @@ foreach(dir config launch meshes urdf viz)
 endforeach(dir)
 
 install(PROGRAMS
-  "reseq_arm_mk2/coordinate_controller.py"
+  # "reseq_arm_mk2/coordinate_controller.py"
   "reseq_arm_mk2/moveit_controller.py"
   DESTINATION lib/${PROJECT_NAME}
 )
