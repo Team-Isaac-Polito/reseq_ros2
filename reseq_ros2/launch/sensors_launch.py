@@ -1,3 +1,5 @@
+import os
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
@@ -61,6 +63,8 @@ def launch_setup(context, *args, **kwargs):
                 num_usb_cam = sensor[name]
                 for i in range(0, num_usb_cam):
                     usb_cam_config = f'usb_camera_config_{i}'
+                    if os.path.exists(f'{config_path}/{usb_cam_config}') is False:
+                        break
                     launch_config.append(
                         Node(
                             package='usb_cam',
