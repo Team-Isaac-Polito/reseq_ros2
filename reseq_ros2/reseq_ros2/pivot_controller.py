@@ -17,7 +17,7 @@ class PivotController(Node):
         # Publishers for sending motor commands to individual modules
         self.head_publisher = self.create_publisher(TwistStamped, 'diff_controller1/cmd_vel', 10)
         self.tail_publisher = self.create_publisher(
-            TwistStamped, f'diff_controller{max(addresses)}/cmd_vel', 10
+            TwistStamped, f'diff_controller{max(addresses) % 16}/cmd_vel', 10
         )
 
         self.create_subscription(Twist, '/cmd_vel', self.remote_callback, 10)
