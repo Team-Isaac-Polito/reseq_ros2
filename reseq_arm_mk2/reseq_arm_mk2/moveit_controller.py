@@ -182,11 +182,14 @@ def main(args=None):
     try:
         moveit_controller = MoveitController()
         rclpy.spin(moveit_controller)
+    except KeyboardInterrupt:
+        rclpy.logging.get_logger('moveit_controller').warn(
+            'Moveit controller node interrupted by user'
+        )
     except Exception as err:
         rclpy.logging.get_logger('moveit_controller').fatal(
             f'Error in the Moveit controller node: {str(err)}\n{traceback.format_exc()}'
         )
-        raise err
     else:
         moveit_controller.destroy_node()
         rclpy.shutdown()

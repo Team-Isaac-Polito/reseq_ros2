@@ -79,11 +79,14 @@ def main(args=None):
     try:
         pivot_controller = PivotController()
         rclpy.spin(pivot_controller)
+    except KeyboardInterrupt:
+        rclpy.logging.get_logger('pivot_controller').warn(
+            'Pivot Controller node interrupted by user'
+        )
     except Exception as err:
         rclpy.logging.get_logger('pivot_controller').fatal(
             f'Error in the Pivot Controller node: {str(err)}\n{traceback.format_exc()}'
         )
-        raise err
     else:
         pivot_controller.destroy_node()
         rclpy.shutdown()

@@ -35,7 +35,6 @@ class Agevar(Node):
         # subscribe to remote (parsed by teleop_twist_joy)
         self.create_subscription(Twist, '/cmd_vel', self.remote_callback, 10)
 
-
         self.latest_feedback = None
         self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1)
 
@@ -124,11 +123,12 @@ def main(args=None):
     try:
         agevar = Agevar()
         rclpy.spin(agevar)
+    except KeyboardInterrupt:
+        rclpy.logging.get_logger('agevar').warn('Agevar node interrupted by user')
     except Exception as err:
         rclpy.logging.get_logger('agevar').fatal(
             f'Error in the Agevar node: {str(err)}\n{traceback.format_exc()}'
         )
-        raise err
     else:
         agevar.destroy_node()
         rclpy.shutdown()
