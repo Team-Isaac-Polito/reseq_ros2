@@ -1,72 +1,43 @@
 moveit_servo_node:
   ros__parameters:
     moveit_servo:
-      ###############################################
-      # Modify all parameters related to servoing here
-      ###############################################
+      # From: https://github.com/moveit/moveit2/blob/main/moveit_ros/moveit_servo/config/servo_parameters.yaml
 
-      # Optionally override Servo's internal velocity scaling when near singularity or collision (0.0 = use internal velocity scaling)
-      # override_velocity_scaling_factor = 0.0 # valid range [0.0:1.0]
-
-      use_gazebo: true
+      ## --- General Settings ---
+      use_gazebo: false                           # TODO: Set conditionally to true if running in Gazebo
       is_primary_planning_scene_monitor: false
+      publish_period: 0.04                        # 25Hz (double the HW command cycle (12.5Hz))
 
-      ## Properties of outgoing commands
-      publish_period: 0.033 # 1/Nominal publish rate [seconds]
-      low_latency_mode: false
+      ## --- Command Settings ---
+      command_in_type: "unitless"
+      command_out_type: trajectory_msgs/JointTrajectory
+      command_out_topic: /mk2_arm_controller/joint_trajectory
 
-      command_in_type: "speed_units" # "unitless"> in the range [-1:1], as if from joystick. "speed_units"> cmds are in m/s and rad/s
-      scale:
-        # Scale parameters are only used if command_in_type=="unitless"
-        linear: 2.0 # Max linear velocity. Unit is [m/s]. Only used for Cartesian commands.
-        rotational: 2.0 # Max angular velocity. Unit is [rad/s]. Only used for Cartesian commands.
-        # Max joint angular/linear velocity. Only used for joint commands on joint_command_in_topic.
-        joint: 0.5
-
-      # Specify which input stream to use (required!)
-      input_type: "cartesian_twist" # Can be "cartesian_twist" or "joint_jog"
-
-      # What type of topic does your robot driver expect?
-      # Currently supported are std_msgs/Float64MultiArray or trajectory_msgs/JointTrajectory
-      command_out_type: std_msgs/Float64MultiArray
-
-      # What to publish? Can save some bandwidth as most robots only require positions or velocities
       publish_joint_positions: false
       publish_joint_velocities: true
       publish_joint_accelerations: false
 
-      ## Plugins for smoothing outgoing commands
+      ## --- Smoothing Settings ---
       use_smoothing: true
-      # smoothing_filter_plugin_name: "online_signal_smoothing::AccelerationLimitedPlugin"
       smoothing_filter_plugin_name: "online_signal_smoothing::ButterworthFilterPlugin"
 
-      ## MoveIt properties
-      move_group_name: mk2_arm # Often 'manipulator' or 'arm'
-      planning_frame: "arm_base_link"
+      ## --- Robot-Frames and Groups ---
+      move_group_name: mk2_arm
+      planning_frame: arm_base_link
+      ee_frame_name: arm_roll_wrist_link
+      robot_link_command_frame: arm_base_link
 
-      ee_frame_name: "arm_roll_wrist_link"
-      robot_link_command_frame: "arm_base_link"
+      ## --- Singularity Avoidance Settings ---
+      lower_singularity_threshold: 17.0
+      hard_stop_singularity_threshold: 30.0 
+      leaving_singularity_threshold_multiplier: 2.0
 
-      ## Configure handling of singularities and joint limits
-      lower_singularity_threshold: 100000000000000000.0 # Start decelerating when the condition number hits this (close to singularity)
-      hard_stop_singularity_threshold: 100000000000000000000.0 # Stop when the condition number hits this
-      leaving_singularity_threshold_multiplier: 3.0 # Multiply the hard stop limit by this when leaving singularity (see https://github.com/moveit/moveit2/pull/620)
-      # Added as a buffer to joint variable position bounds [in that joint variable's respective units].
-      # Can be of size 1, which applies the margin to all joints, or the same size as the number of degrees of freedom of the active joint group.
-      # If moving quickly, make these values larger.
-      joint_limit_margins: [0.1]
+      ## --- Topic names ---
+      cartesian_command_in_topic: /moveit_servo_node/delta_twist_cmds   # Twist commands
+      joint_topic: /arm_joint_states                                    # Replicated joint states (fix ERROR in MoveIt with non-arm joints)
 
-      num_outgoing_halt_msgs_to_publish: 4
-
-      ## Topic names
-      cartesian_command_in_topic: /moveit_servo_node/delta_twist_cmds # Topic for incoming Cartesian twist commands
-      joint_command_in_topic: /moveit_servo_node/delta_joint_cmds # Topic for incoming joint angle commands
-      joint_topic: /joint_states # Get joint states from this topic
-      status_topic: /moveit_servo_node/status # Publish status to this topic
-      command_out_topic: /joint_group_velocity_controller/commands # Publish outgoing commands here
-
-      ## Collision checking for the entire robot body
-      check_collisions: false # Check collisions?
-      collision_check_rate: 10.0 # [Hz] Collision-checking can easily bog down a CPU if done too often.
-      self_collision_proximity_threshold: 0.01 # Start decelerating when a self-collision is this far [m]
-      scene_collision_proximity_threshold: 0.01 # Start decelerating when a scene collision is this far [m]
+      ## --- Collision Settings ---
+      check_collisions: false
+      collision_check_rate: 10.0
+      self_collision_proximity_threshold: 0.01
+      scene_collision_proximity_threshold: 0.01

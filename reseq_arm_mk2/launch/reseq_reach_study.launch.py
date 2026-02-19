@@ -13,10 +13,9 @@ def generate_launch_description():
     # Paths to reseq_arm_mk2 files
     robot_description_file = PathJoinSubstitution([reseq_arm_mk2_share, 'urdf', 'arm.urdf.xacro'])
     robot_description_semantic_file = PathJoinSubstitution(
-        [reseq_arm_mk2_share, 'config', 'simplified_arm_assembly.srdf']
+        [reseq_arm_mk2_share, 'config', 'reseq_arm_mk2.srdf']
     )
     kinematics_file = PathJoinSubstitution([reseq_arm_mk2_share, 'config', 'kinematics.yaml'])
-    joint_limits_file = PathJoinSubstitution([reseq_arm_mk2_share, 'config', 'joint_limits.yaml'])
     reach_study_config_file = PathJoinSubstitution(
         [reseq_arm_mk2_share, 'config', 'reach_study.yaml']
     )
@@ -46,7 +45,7 @@ def generate_launch_description():
             'robot_description_file': robot_description_file,
             'robot_description_semantic_file': robot_description_semantic_file,
             'robot_description_kinematics_file': kinematics_file,
-            'robot_description_joint_limits_file': joint_limits_file,
+            # 'robot_description_joint_limits_file': joint_limits_file,
             'config_file': reach_study_config_file,
             'config_name': 'reseq_reach_study_pickik_run',
             'results_dir': './reach_results',

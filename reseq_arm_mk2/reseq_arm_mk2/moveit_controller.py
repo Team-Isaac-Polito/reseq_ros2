@@ -1,28 +1,49 @@
-#!/usr/bin/env python3
 import traceback
 
 import rclpy
-from control_msgs.msg import JointJog
 from geometry_msgs.msg import TwistStamped, Vector3
-from moveit_msgs.srv import ServoCommandType
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float32, Float32MultiArray, Int32
+from std_msgs.msg import Int32
 from std_srvs.srv import SetBool
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 
 class MoveitController(Node):
+    """ROS2 node for controlling the arm using MoveIt Servo.
+
+    This node acts as an interface between high-level velocity commands and
+    MoveIt Servo. It handles:
+    - Converting Vector3 velocity commands to TwistStamped messages
+    - Switching between linear and angular velocity control modes
+    - Mirroring specific joint states to fix MoveIt issue with non-arm joints
+    - Controlling the arm's beak (gripper) mechanism
+
+    Subscribed Topics:
+        /mk2_arm_vel (geometry_msgs/Vector3): Velocity commands for the arm
+        /joint_states (sensor_msgs/JointState): Current joint states of the robot
+
+    Published Topics:
+        /moveit_servo_node/delta_twist_cmds (geometry_msgs/TwistStamped):
+            Velocity commands for MoveIt Servo
+        /arm_joint_states (sensor_msgs/JointState): Filtered joint states
+        reseq/module33/mk2_arm/beak/setpoint (std_msgs/Int32): Beak control commands
+
+    Services:
+        /moveit_controller/switch_vel (std_srvs/SetBool):
+            Switch between linear and angular velocity modes
+        /moveit_controller/close_beak (std_srvs/SetBool):
+            Open or close the arm's beak
+
+    Parameters:
+        planning_frame_id (str): Frame ID for motion planning (default: 'arm_base_link')
+    """
+
     def __init__(self):
         super().__init__('moveit_controller')
-        self.arm_module_address = (
-            self.declare_parameter('arm_module_address', 0).get_parameter_value().integer_value
-        )
 
         self.linear_vel_enabled = True
         self.create_service(SetBool, '/moveit_controller/switch_vel', self.switch_vel_type)
         self.create_service(SetBool, '/moveit_controller/close_beak', self.handle_beak)
-        self.create_service(SetBool, '/moveit_controller/home_pose', self.send_home_pose)
 
         self.planning_frame_id = (
             self.declare_parameter('planning_frame_id', 'arm_base_link')
@@ -31,29 +52,11 @@ class MoveitController(Node):
         )
 
         self.create_subscription(Vector3, '/mk2_arm_vel', self.handle_velocities, 10)
-
-        servo_twist_topic = '/moveit_servo_node/delta_twist_cmds'
-        servo_jog_topic = '/moveit_servo_node/delta_joint_cmds'
-        self.speed_pub = self.create_publisher(TwistStamped, servo_twist_topic, 10)
-        self.joints_pos_pub = self.create_publisher(JointJog, servo_jog_topic, 10)
-
-        self.servo_client = self.create_client(
-            ServoCommandType, '/moveit_servo_node/switch_command_type'
-        )
-
-        self.traj_pub = self.create_publisher(
-            JointTrajectory, '/arm_controller/joint_trajectory', 10
+        self.speed_pub = self.create_publisher(
+            TwistStamped, '/moveit_servo_node/delta_twist_cmds', 10
         )
 
         self.current_joints = {}
-        self.init_timer = self.create_timer(1.0, self.init_sequence)
-
-        self.create_subscription(
-            JointTrajectory,
-            '/arm_controller/joint_trajectory',
-            self.send_joint_trajectory,
-            10,
-        )
 
         self.mirror_pub = self.create_publisher(JointState, '/arm_joint_states', 10)
         self.create_subscription(JointState, '/joint_states', self.mirror_states, 10)
@@ -66,88 +69,26 @@ class MoveitController(Node):
             'mod1__wrist_roll_arm_joint',
         ]
 
-        self.pubs = {}
-        addr = self.arm_module_address
-        self.pubs['mod1__base_pitch_arm_joint_and_roll_arm_joint'] = self.create_publisher(
-            Float32MultiArray,
-            f'reseq/module{addr}/mk2_arm/mod1__base_pitch_arm_joint_and_roll_arm_joint/setpoint',
-            10,
-        )
-        self.pubs['mod1__elbow_pitch_arm_joint'] = self.create_publisher(
-            Float32,
-            f'reseq/module{addr}/mk2_arm/mod1__elbow_pitch_arm_joint/setpoint',
-            10,
-        )
-        self.pubs['mod1__forearm_roll_arm_joint'] = self.create_publisher(
-            Float32,
-            f'reseq/module{addr}/mk2_arm/mod1__forearm_roll_arm_joint/setpoint',
-            10,
-        )
-        self.pubs['mod1__wrist_pitch_arm_joint'] = self.create_publisher(
-            Float32,
-            f'reseq/module{addr}/mk2_arm/mod1__wrist_pitch_arm_joint/setpoint',
-            10,
-        )
-        self.pubs['mod1__wrist_roll_arm_joint'] = self.create_publisher(
-            Float32,
-            f'reseq/module{addr}/mk2_arm/mod1__wrist_roll_arm_joint/setpoint',
-            10,
-        )
-        self.beak_pub = self.create_publisher(
+        self.beak_pub = self.create_publisher(  # TODO: Fix with HW interface
             Int32,
-            f'reseq/module{addr}/mk2_arm/beak/setpoint',
+            'reseq/module33/mk2_arm/beak/setpoint',
             10,
         )
         self.get_logger().info('Node Moveit Controller started successfully')
 
-    def init_sequence(self):
-        """
-        Startup Routine:
-        1. Robot starts at 0.0 (Singularity). MoveIt Servo cannot solve IK here.
-        2. We must physically move the arm using the JointTrajectoryController.
-        3. We CANNOT use Float32 publishers (Controller ignores them).
-        4. We MUST specify v=0.0, a=0.0 in the trajectory, or the controller rejects it as unsafe.
-        5. We wait for joint_state feedback to confirm the elbow is bent > 0.5 rad.
-        6. Only THEN do we switch Servo to TWIST mode.
-        """
-        if self.traj_pub.get_subscription_count() == 0:
-            self.get_logger().info('Initializing: Waiting for arm_controller connection...')
-            return
-
-        elbow_pos = self.current_joints.get('mod1__elbow_pitch_arm_joint', 0.0)
-
-        if abs(elbow_pos) < 0.5:
-            self.get_logger().warn(
-                f'Initializing: Robot still in singularity (Elbow: {elbow_pos:.2f}). '
-                'Sending Setup Trajectory...'
-            )
-            msg = JointTrajectory()
-            msg.joint_names = [
-                'mod1__base_pitch_arm_joint',
-                'mod1__base_roll_arm_joint',
-                'mod1__elbow_pitch_arm_joint',
-                'mod1__forearm_roll_arm_joint',
-                'mod1__wrist_pitch_arm_joint',
-                'mod1__wrist_roll_arm_joint',
-            ]
-            point = JointTrajectoryPoint()
-            point.positions = [0.0, 0.0, 1.0, 0.0, 1.0, 0.0]
-            point.velocities = [0.0] * 6
-            point.accelerations = [0.0] * 6
-            point.time_from_start.sec = 2
-            msg.points.append(point)
-            self.traj_pub.publish(msg)
-        else:
-            if self.servo_client.service_is_ready():
-                req = ServoCommandType.Request()
-                req.command_type = ServoCommandType.Request.TWIST
-                self.servo_client.call_async(req)
-                self.get_logger().info(
-                    'Initializing: Robot is bent. Servo switched to TWIST mode.'
-                )
-                self.init_timer.cancel()
-
     def mirror_states(self, msg: JointState):
+        """Mirror specific joint states to a filtered topic.
+
+        Filters the incoming joint states message to only include joints
+        specified in self.state_to_mirror and publishes them to a separate topic.
+        This fixes issues with MoveIt when non-arm joints are present.
+
+        Args:
+            msg (JointState): The incoming joint states message containing all joints.
+
+        Note:
+            Updates self.current_joints dictionary with all received joint positions.
+        """
         fmsg = JointState()
         fmsg.header = msg.header
         is_to_pub = False
@@ -165,21 +106,42 @@ class MoveitController(Node):
             self.mirror_pub.publish(fmsg)
 
     def handle_velocities(self, msg: Vector3):
-        if self.init_timer.is_canceled():
-            servo_msg = TwistStamped()  
-            servo_msg.header.stamp = self.get_clock().now().to_msg()
-            servo_msg.header.frame_id = self.planning_frame_id
+        """Convert incoming velocity commands to MoveIt Servo format.
 
-            if self.linear_vel_enabled:
-                servo_msg.twist.linear = msg
-            else:
-                servo_msg.twist.angular = msg
+        Processes Vector3 velocity commands and converts them into TwistStamped
+        messages for MoveIt Servo. The velocity is interpreted as either linear
+        or angular based on the current state of self.linear_vel_enabled.
 
-            self.speed_pub.publish(servo_msg)
+        Args:
+            msg (Vector3): Velocity command (x, y, z components).
+
+        Note:
+            The frame_id for the twist command is set from the planning_frame_id parameter.
+        """
+        servo_msg = TwistStamped()
+        servo_msg.header.stamp = self.get_clock().now().to_msg()
+        servo_msg.header.frame_id = self.planning_frame_id
+
+        if self.linear_vel_enabled:
+            servo_msg.twist.linear = msg
+        else:
+            servo_msg.twist.angular = msg
+
+        self.speed_pub.publish(servo_msg)
 
     def switch_vel_type(
         self, request: SetBool.Request, response: SetBool.Response
     ) -> SetBool.Response:
+        """Service callback to switch between linear and angular velocity modes.
+
+        Args:
+            request (SetBool.Request): Service request containing:
+                - data (bool): True for linear velocity, False for angular velocity
+            response (SetBool.Response): Service response to be filled
+
+        Returns:
+            SetBool.Response: Response indicating success and current velocity mode
+        """
         self.linear_vel_enabled = request.data
 
         response.success = True
@@ -194,65 +156,25 @@ class MoveitController(Node):
     def handle_beak(
         self, request: SetBool.Request, response: SetBool.Response
     ) -> SetBool.Response:
+        """Service callback to control the arm's beak (gripper) mechanism.
+
+        Args:
+            request (SetBool.Request): Service request containing:
+                - data (bool): True to close the beak, False to open it
+            response (SetBool.Response): Service response to be filled
+
+        Returns:
+            SetBool.Response: Response indicating success and the requested action
+
+        Note:
+            TODO: This currently uses a direct topic publish but should be
+            updated to use the hardware interface.
+        """
         self.beak_pub.publish(Int32(data=int(request.data)))
         response.success = True
         response.message = f'Sent request to {"CLOSE" if request.data else "OPEN"} the arm beak'
         self.get_logger().info(response.message)
         return response
-
-    def send_home_pose(
-        self, request: SetBool.Request, response: SetBool.Response
-    ) -> SetBool.Response:
-        req = ServoCommandType.Request()
-        req.command_type = ServoCommandType.Request.JOINT_JOG
-        self.servo_client.call_async(req)
-
-        servo_msg = JointJog()
-        servo_msg.header.stamp = self.get_clock().now().to_msg()
-        servo_msg.header.frame_id = self.planning_frame_id
-        servo_msg.joint_names = [
-            'mod1__base_pitch_arm_joint',
-            'mod1__base_roll_arm_joint',
-            'mod1__elbow_pitch_arm_joint',
-            'mod1__forearm_roll_arm_joint',
-            'mod1__wrist_pitch_arm_joint',
-            'mod1__wrist_roll_arm_joint',
-        ]
-        servo_msg.displacements = [0.0] * 6
-        servo_msg.velocities = [0.05] * 6
-        servo_msg.duration = 0.01
-        self.joints_pos_pub.publish(servo_msg)
-
-        req_back = ServoCommandType.Request()
-        req_back.command_type = ServoCommandType.Request.TWIST
-        self.servo_client.call_async(req_back)
-
-        response.success = True
-        response.message = 'Moving arm to HOME position'
-        self.get_logger().info(response.message)
-        return response
-
-    def send_joint_trajectory(self, msg: JointTrajectory):
-        update_diff = True
-        names = msg.joint_names
-        positions = msg.points[len(msg.points) - 1].positions
-
-        for i in range(0, len(names)):
-            if names[i] == 'mod1__base_pitch_arm_joint' or names[i] == 'mod1__base_roll_arm_joint':
-                if update_diff:
-                    i0 = self.find_index_by_name(names, 'mod1__base_pitch_arm_joint')
-                    i1 = self.find_index_by_name(names, 'mod1__base_roll_arm_joint')
-                    update_diff = False
-                    self.pubs['mod1__base_pitch_arm_joint_and_roll_arm_joint'].publish(
-                        Float32MultiArray(data=[positions[i0], positions[i1]])
-                    )
-            else:
-                self.pubs[names[i]].publish(Float32(data=positions[i]))
-
-    def find_index_by_name(self, joints, joint_name):
-        for i in range(0, len(joints)):
-            if joints[i] == joint_name:
-                return i
 
 
 def main(args=None):
@@ -260,11 +182,14 @@ def main(args=None):
     try:
         moveit_controller = MoveitController()
         rclpy.spin(moveit_controller)
+    except KeyboardInterrupt:
+        rclpy.logging.get_logger('moveit_controller').warn(
+            'Moveit controller node interrupted by user'
+        )
     except Exception as err:
         rclpy.logging.get_logger('moveit_controller').fatal(
             f'Error in the Moveit controller node: {str(err)}\n{traceback.format_exc()}'
         )
-        raise err
     else:
         moveit_controller.destroy_node()
         rclpy.shutdown()

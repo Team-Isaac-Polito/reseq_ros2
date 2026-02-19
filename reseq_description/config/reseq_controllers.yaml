@@ -1,9 +1,0 @@
-controller_manager:
-  ros__parameters:
-    update_rate: 100 # Hz
-
-    joint_state_broadcaster:
-      type: joint_state_broadcaster/JointStateBroadcaster
-    ### Optional arm controller
-    ### Differential drive controllers ###
-    ### Dynamically configured by the Launch file ###

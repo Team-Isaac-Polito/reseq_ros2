@@ -1,7 +1,0 @@
-<launch>
-  <arg name="model" default="" />
-  
-  <node pkg="rviz2" exec="rviz2" 
-        args="-d $(find-pkg-share reseq_arm_mk2)/viz/arm.rviz" />
-  
-</launch>

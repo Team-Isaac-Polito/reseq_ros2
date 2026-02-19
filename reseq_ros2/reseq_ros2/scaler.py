@@ -156,11 +156,12 @@ def main(args=None):
     try:
         scaler = Scaler()
         rclpy.spin(scaler)
+    except KeyboardInterrupt:
+        rclpy.logging.get_logger('scaler').warn('Scaler node interrupted by user')
     except Exception as err:
         rclpy.logging.get_logger('scaler').fatal(
             f'Error in the Scaler node: {str(err)}\n{traceback.format_exc()}'
         )
-        raise err
     else:
         scaler.destroy_node()
         rclpy.shutdown()
