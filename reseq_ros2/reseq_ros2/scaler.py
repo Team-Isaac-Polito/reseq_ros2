@@ -4,7 +4,7 @@ import traceback
 from enum import Enum, IntEnum
 
 import rclpy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Vector3
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_srvs.srv import SetBool
@@ -90,6 +90,8 @@ class Scaler(Node):
 
         self.create_subscription(Remote, '/remote', self.remote_callback, self.qos)
 
+        self.moveit_pub = self.create_publisher(Vector3, '/mk2_arm_vel', 10)
+
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
         self.get_logger().info('Scaler node started')
@@ -118,6 +120,15 @@ class Scaler(Node):
         cmd_vel.linear.x = data.right.y  # Linear velocity (-1:1)
         # inverse of Radius of curvature (AGEVAR) or angular velocity (PIVOT) (-1:1)
         cmd_vel.angular.z = -data.right.x
+
+        # TODO probably to merge with another version of scaler.py
+
+        self.moveit_pub.publish(Vector3(
+            x = data.left.x,
+            y = data.left.y,
+            z = data.left.z,
+        ))
+
 
         if self.control_mode == Scaler.control_mode_enum.AGEVAR:
             cmd_vel = self.agevarScaler(cmd_vel)

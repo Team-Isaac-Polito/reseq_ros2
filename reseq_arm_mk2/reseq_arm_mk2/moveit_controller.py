@@ -166,7 +166,7 @@ class MoveitController(Node):
 
     def handle_velocities(self, msg: Vector3):
         if self.init_timer.is_canceled():
-            servo_msg = TwistStamped()
+            servo_msg = TwistStamped()  
             servo_msg.header.stamp = self.get_clock().now().to_msg()
             servo_msg.header.frame_id = self.planning_frame_id
 

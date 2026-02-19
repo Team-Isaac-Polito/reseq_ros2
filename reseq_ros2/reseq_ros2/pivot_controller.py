@@ -2,6 +2,7 @@ import traceback
 
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped
+from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
 from std_srvs.srv import SetBool
 
@@ -10,14 +11,19 @@ class PivotController(Node):
     def __init__(self):
         super().__init__('pivot_controller')
 
+        # Declare addresses parameter with description for more context
+        address_descriptor = ParameterDescriptor(description="List of HEX integers 0xYX.\nY digit represents the mk version ({1, 2}).\nX digit represents the module number ({1, 2, 3, ...})")
         addresses = (
-            self.declare_parameter('modules', [0]).get_parameter_value().integer_array_value
+            self.declare_parameter('modules', [0], address_descriptor).get_parameter_value().integer_array_value
         )
+        modules = list(map(lambda a: a%16, addresses))
+        self.get_logger().debug(f"addresses (decimal): {addresses}")
+        self.get_logger().debug(f"modules: {modules}")
 
         # Publishers for sending motor commands to individual modules
         self.head_publisher = self.create_publisher(TwistStamped, 'diff_controller1/cmd_vel', 10)
         self.tail_publisher = self.create_publisher(
-            TwistStamped, f'diff_controller{max(addresses) % 16}/cmd_vel', 10
+            TwistStamped, f'diff_controller{max(modules)}/cmd_vel', 10
         )
 
         self.create_subscription(Twist, '/cmd_vel', self.remote_callback, 10)
