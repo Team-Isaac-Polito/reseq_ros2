@@ -1,7 +1,7 @@
 # MoveIt uses this configuration for controller management
 
 trajectory_execution:
-  allowed_execution_duration_scaling: 2
+  allowed_execution_duration_scaling: 2.0
   allowed_goal_duration_margin: 0.5
   allowed_start_tolerance: 0.05
   execution_duration_monitoring: true
