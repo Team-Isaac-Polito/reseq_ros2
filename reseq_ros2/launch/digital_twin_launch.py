@@ -5,8 +5,7 @@ from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-from reseq_ros2.utils.launch_utils import (config_path, default_filename,
-                                           parse_config)
+from reseq_ros2.utils.launch_utils import config_path, default_filename, parse_config
 
 share_folder = get_package_share_directory('reseq_ros2')
 description_share_folder = get_package_share_directory('reseq_description')
@@ -25,7 +24,7 @@ def launch_setup(context, *args, **kwargs):
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
 
     arm_arg = LaunchConfiguration('arm').perform(context=context)
-    arm = True if arm_arg == 'true' else False # bool version of arm_arg
+    arm = True if arm_arg == 'true' else False  # bool version of arm_arg
 
     # Parse the config file
     config = parse_config(f'{config_path}/{version}/{config_filename}')
@@ -76,12 +75,12 @@ def launch_setup(context, *args, **kwargs):
         launch_config.append(module_controller)
 
     if arm:
-        # spawn arm_controller
-        arm_controller = Node(
+        # spawn mk2_arm_controller
+        mk2_arm_controller = Node(
             package='controller_manager',
             executable='spawner',
             arguments=[
-                'arm_controller',
+                'mk2_arm_controller',
                 '--controller-manager',
                 '/controller_manager',
             ],
@@ -98,7 +97,7 @@ def launch_setup(context, *args, **kwargs):
             ],
         )
 
-        launch_config.append(arm_controller)
+        launch_config.append(mk2_arm_controller)
         launch_config.append(joint_group_velocity_controller)
 
     xacro_file = description_share_folder + f'/description/{version}/reseq.urdf.xacro'
@@ -129,7 +128,12 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('version', default_value='mk1', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
-            DeclareLaunchArgument('arm', default_value='true', choices=['true', 'false'], description="Set to false if you don't want to use the arm"),
+            DeclareLaunchArgument(
+                'arm',
+                default_value='true',
+                choices=['true', 'false'],
+                description="Set to false if you don't want to use the arm",
+            ),
             DeclareLaunchArgument('log_level', default_value='info'),
             DeclareLaunchArgument('external_log_level', default_value='warn'),
             DeclareLaunchArgument(

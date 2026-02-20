@@ -72,11 +72,11 @@ def generate_launch_description():
         )
     )
 
-    arm_controller_spawner = Node(
+    mk2_arm_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
         arguments=[
-            'arm_controller',
+            'mk2_arm_controller',
             '--controller-manager',
             '/controller_manager',
         ],
@@ -170,7 +170,7 @@ def generate_launch_description():
     # hence the name `second_step`
     second_step = [
         rsp,
-        arm_controller_spawner,
+        mk2_arm_controller_spawner,
         joint_group_velocity_controller_spawner,
         gazebo_launch,
         joint_state_broadcaster_spawner,
