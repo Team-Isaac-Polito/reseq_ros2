@@ -16,6 +16,12 @@ git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src
 
 This will copy the contents of this repository inside the `ros2_ws/src` folder.
 
+If it fails to clone the submodules, run the following command inside `ros2_ws`:
+
+```bash
+git submodule update --recursive --remote
+```
+
 In VSCode (or your editor of choice) open `ros2_ws`
 
 ## Install dependencies with ROSDEP
