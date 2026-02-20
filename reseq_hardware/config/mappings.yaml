@@ -19,6 +19,16 @@
   ]
 }
 - {
+  msg_id: 0x27, # Track velocity state
+  length: 8,
+  fields: [
+    { name: "left_front_wheel" },
+    { name: "right_front_wheel", offset: 4 },
+    { name: "left_back_wheel" },
+    { name: "right_back_wheel", offset: 4 },
+  ]
+}
+- {
   msg_id: 0x32, # Yaw joint feedback
   modules: "skip_first",
   length: 4,
