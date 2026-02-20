@@ -13,7 +13,7 @@ moveit_servo_node:
       command_out_type: trajectory_msgs/JointTrajectory
       command_out_topic: /mk2_arm_controller/joint_trajectory
 
-      publish_joint_positions: false
+      publish_joint_positions: true
       publish_joint_velocities: true
       publish_joint_accelerations: false
 
