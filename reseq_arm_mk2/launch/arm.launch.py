@@ -61,10 +61,12 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(move_group_node)
 
+    moveit_servo_exec = "servo_node_main" if os.environ.get('ROS_DISTRO') == 'humble' else "servo_node"
+
     # Define the servo node, passing ALL required configs
     servo_node = Node(
         package='moveit_servo',
-        executable='servo_node_main',
+        executable=moveit_servo_exec,
         name='moveit_servo_node',
         parameters=[
             moveit_config.to_dict(),  # All MoveIt config
