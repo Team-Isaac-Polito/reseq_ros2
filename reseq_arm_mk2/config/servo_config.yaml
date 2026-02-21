@@ -37,7 +37,7 @@ moveit_servo_node:
       joint_topic: /arm_joint_states                                    # Replicated joint states (fix ERROR in MoveIt with non-arm joints)
 
       ## --- Collision Settings ---
-      check_collisions: false
+      check_collisions: true
       collision_check_rate: 10.0
       self_collision_proximity_threshold: 0.01
       scene_collision_proximity_threshold: 0.01
