@@ -41,3 +41,9 @@ moveit_servo_node:
       collision_check_rate: 10.0
       self_collision_proximity_threshold: 0.01
       scene_collision_proximity_threshold: 0.01
+
+      ## --- Scaling Settings ---
+      scale:
+        linear: 0.15
+        rotational: 0.3
+        joint: 0.3
