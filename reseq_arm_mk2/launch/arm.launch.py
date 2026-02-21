@@ -9,13 +9,16 @@ from moveit_configs_utils import MoveItConfigsBuilder
 
 
 def launch_setup(context, *args, **kwargs):
-    
-    launch_config = []
-    
-    # TAKE ARGUMENTS FROM CONTEXT AND APPLY TRANSFORMATIONS IF NEEDED
-    use_sim_time_arg = LaunchConfiguration('use_sim_time').perform(context=context) # 'true' or 'false'
-    use_sim_time = True if use_sim_time_arg == 'true' else False # boolean version of use_sim_time_arg
 
+    launch_config = []
+
+    # TAKE ARGUMENTS FROM CONTEXT AND APPLY TRANSFORMATIONS IF NEEDED
+    use_sim_time_arg = LaunchConfiguration('use_sim_time').perform(
+        context=context
+    )  # 'true' or 'false'
+    use_sim_time = (
+        True if use_sim_time_arg == 'true' else False
+    )  # boolean version of use_sim_time_arg
 
     controllers_config_file = os.path.join(
         get_package_share_directory('reseq_description'),
@@ -61,7 +64,9 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(move_group_node)
 
-    moveit_servo_exec = "servo_node_main" if os.environ.get('ROS_DISTRO') == 'humble' else "servo_node"
+    moveit_servo_exec = (
+        'servo_node_main' if os.environ.get('ROS_DISTRO') == 'humble' else 'servo_node'
+    )
 
     # Define the servo node, passing ALL required configs
     servo_node = Node(
@@ -74,7 +79,7 @@ def launch_setup(context, *args, **kwargs):
             {'use_sim_time': use_sim_time},  # Don't forget this for Gazebo
         ],
         output='screen',
-        arguments=['--ros-args', '--log-level', 'info'],
+        arguments=['--ros-args', '--log-level', 'debug'],
     )
     launch_config.append(servo_node)
 
@@ -96,7 +101,11 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
-    return LaunchDescription([
-        DeclareLaunchArgument('use_sim_time', default_value='false', choices=['true', 'false']),
-        OpaqueFunction(function=launch_setup)
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                'use_sim_time', default_value='false', choices=['true', 'false']
+            ),
+            OpaqueFunction(function=launch_setup),
+        ]
+    )
