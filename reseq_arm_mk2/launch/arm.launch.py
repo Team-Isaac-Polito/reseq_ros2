@@ -61,6 +61,7 @@ def launch_setup(context, *args, **kwargs):
             moveit_config.to_dict(),
             {'use_sim_time': use_sim_time},
         ],
+        remappings=[('/joint_states', '/arm_joint_states')],
     )
     launch_config.append(move_group_node)
 
