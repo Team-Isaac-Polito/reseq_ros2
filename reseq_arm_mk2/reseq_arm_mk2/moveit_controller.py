@@ -100,7 +100,7 @@ class MoveitController(Node):
                 fmsg.name.append(name)
                 fmsg.position.append(msg.position[i])
                 if msg.velocity != []:
-                    fmsg.velocity.append(0.0)
+                    fmsg.velocity.append(msg.velocity[i])
                 if msg.effort != []:
                     fmsg.effort.append(0.0)
         if is_to_pub:

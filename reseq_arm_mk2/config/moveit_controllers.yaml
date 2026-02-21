@@ -1,20 +1,13 @@
 # MoveIt uses this configuration for controller management
 
-trajectory_execution:
-  allowed_execution_duration_scaling: 2.0
-  allowed_goal_duration_margin: 0.5
-  allowed_start_tolerance: 0.05
-  execution_duration_monitoring: true
 moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
 
 moveit_simple_controller_manager:
   controller_names:
     - mk2_arm_controller
 
-mk2_arm_controller:
+  mk2_arm_controller:
     type: FollowJointTrajectory
-    action_ns: follow_joint_trajectory
-    default: true
     joints:
       - mod1__base_pitch_arm_joint
       - mod1__base_roll_arm_joint

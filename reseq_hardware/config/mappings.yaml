@@ -123,3 +123,44 @@
     { name: "wrist_roll_arm_joint", },
   ]
 }
+- {
+  msg_id: 0x80, # Arm base velocity states (P + R)
+  modules: "only_first",
+  length: 8,
+  fields: [
+    { name: "base_pitch_arm_joint",  mode: "velocity", },
+    { name: "base_roll_arm_joint", mode: "velocity", offset: 4 },
+  ]
+}
+- {
+  msg_id: 0x81, # Arm elbow velocity state (P)
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "elbow_pitch_arm_joint", mode: "velocity", },
+  ]
+}
+- {
+  msg_id: 0x82, # Arm forearm velocity state (R)
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "forearm_roll_arm_joint", mode: "velocity", },
+  ]
+}
+- {
+  msg_id: 0x83, # Arm wrist pitch velocity state
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "wrist_pitch_arm_joint", mode: "velocity", },
+  ]
+}
+- {
+  msg_id: 0x84, # Arm wrist roll velocity state
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "wrist_roll_arm_joint", mode: "velocity", },
+  ]
+}
