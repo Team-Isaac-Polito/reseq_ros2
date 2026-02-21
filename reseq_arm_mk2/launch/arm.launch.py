@@ -80,7 +80,7 @@ def launch_setup(context, *args, **kwargs):
             {'use_sim_time': use_sim_time},  # Don't forget this for Gazebo
         ],
         output='screen',
-        arguments=['--ros-args', '--log-level', 'debug'],
+        arguments=['--ros-args', '--log-level', 'info'],
     )
     launch_config.append(servo_node)
 

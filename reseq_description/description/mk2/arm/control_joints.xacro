@@ -4,49 +4,49 @@
     <joint name="mod1__base_pitch_arm_joint">
         <command_interface name="position" />
         <state_interface name="position" />
+        <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)" >
             <command_interface name="velocity" />
-            <state_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__base_roll_arm_joint">
         <command_interface name="position" />
         <state_interface name="position" />
+        <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)" >
             <command_interface name="velocity" />
-            <state_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__elbow_pitch_arm_joint">
         <command_interface name="position" />
         <state_interface name="position" />
-        <xacro:if value="$(arg sim_mode)" >
+        <state_interface name="velocity" />
+         <xacro:if value="$(arg sim_mode)" >
             <command_interface name="velocity" />
-            <state_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__forearm_roll_arm_joint">
         <command_interface name="position" />
         <state_interface name="position" />
-        <xacro:if value="$(arg sim_mode)" >
+        <state_interface name="velocity" />
+         <xacro:if value="$(arg sim_mode)" >
             <command_interface name="velocity" />
-            <state_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__wrist_pitch_arm_joint">
         <command_interface name="position" />
         <state_interface name="position" />
+        <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)" >
             <command_interface name="velocity" />
-            <state_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__wrist_roll_arm_joint">
         <command_interface name="position" />
         <state_interface name="position" />
+        <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)" >
             <command_interface name="velocity" />
-            <state_interface name="velocity" />
         </xacro:if>
     </joint>
 </robot>
