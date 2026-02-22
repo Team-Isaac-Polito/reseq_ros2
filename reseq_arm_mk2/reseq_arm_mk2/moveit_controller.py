@@ -42,7 +42,7 @@ class MoveitController(Node):
     def __init__(self):
         super().__init__('moveit_controller')
 
-        self.linear_vel_enabled = False
+        self.linear_vel_enabled = True
         self.create_service(SetBool, '/moveit_controller/switch_vel', self.switch_vel_type)
         self.create_service(SetBool, '/moveit_controller/close_beak', self.handle_beak)
 
