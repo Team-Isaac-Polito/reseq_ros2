@@ -183,8 +183,10 @@ hardware_interface::return_type ReseqHardware::read(
   for (const auto & snap : recv_buffer_.get_all()) {
     // Stale messages are ignored, but we use them to detect communication issues
     if (now - snap.timestamp > std::chrono::milliseconds(500)) {
-      RCLCPP_WARN(
+      RCLCPP_WARN_THROTTLE(
         rclcpp::get_logger("ReseqHardware"),
+        *clock_,
+        THROTTLE_WARN,
         "Stale CAN message received: %02X%02X", snap.id.mod_id, snap.id.msg_id);
       continue;
     }
@@ -193,8 +195,10 @@ hardware_interface::return_type ReseqHardware::read(
     const auto & map_it = can_mappings_.find(snap.id);
 
     if (map_it == can_mappings_.end()) {
-      RCLCPP_WARN(
+      RCLCPP_WARN_THROTTLE(
         rclcpp::get_logger("ReseqHardware"),
+        *clock_,
+        THROTTLE_WARN,
         "Received unknown CAN message: %02X%02X", snap.id.mod_id, snap.id.msg_id);
       continue;
     }
@@ -219,7 +223,7 @@ hardware_interface::return_type ReseqHardware::read(
       if (field.data_type == "float32") {
         value = read_value<float>(snap.data, field.offset);
       } else {
-        RCLCPP_WARN(
+        RCLCPP_ERROR(
           rclcpp::get_logger(
             "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
         continue;
@@ -274,7 +278,7 @@ hardware_interface::return_type ReseqHardware::write(
       if (field.data_type == "float32") {
         write_value<float>(data, field.offset, value);
       } else {
-        RCLCPP_WARN(
+        RCLCPP_ERROR(
           rclcpp::get_logger(
             "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
         continue;
@@ -330,7 +334,7 @@ double * ReseqHardware::get_state_buffer_ptr(const std::string & state_mode, siz
   } else if (state_mode == "effort") {
     return &joint_buffers_.effort[index];
   } else {
-    RCLCPP_WARN(rclcpp::get_logger("ReseqHardware"), "Unknown state mode: %s", state_mode.c_str());
+    RCLCPP_ERROR(rclcpp::get_logger("ReseqHardware"), "Unknown state mode: %s", state_mode.c_str());
   }
   return nullptr;
 }

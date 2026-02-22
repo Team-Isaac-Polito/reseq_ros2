@@ -176,7 +176,7 @@ private:
     std::memcpy(data + offset, &v, sizeof(T));
   }
 
-  rclcpp::Clock::SharedPtr clock_;  ///< ROS2 clock.
+  rclcpp::Clock::SharedPtr clock_ = std::make_shared<rclcpp::Clock>(RCL_STEADY_TIME);  ///< ROS2 clock.
 
   int num_modules_ = 0;                 ///< Number of modules.
   int mk_version_ = 2;                  ///< Robot version.
