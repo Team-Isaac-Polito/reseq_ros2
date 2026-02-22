@@ -58,28 +58,30 @@ code --install-extension ms-python.isort
 code --install-extension charliermarsh.ruff
 ```
 
-In `ros_ws`, modify the file `.vscode/settings.json` by adding the following configuration:
+Then, from `ros2_ws`, configure the workspace linter settings:
 
-```json
-{
-    // OTHER SETTINGS ...
-    // BEGIN: LINTERS
-    "flake8.args": [
-        "--config",
-        "src/reseq_ros2/test/flake8.cfg"
-    ],
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit",
-            "python.sortImports": "explicit"
-        }
+```bash
+python3 -c "
+import json, os
+path = '.vscode/settings.json'
+os.makedirs('.vscode', exist_ok=True)
+settings = json.load(open(path)) if os.path.exists(path) else {}
+settings.update({
+    'flake8.args': ['--config', 'src/reseq_ros2/test/flake8.cfg'],
+    '[python]': {
+        'editor.defaultFormatter': 'charliermarsh.ruff',
+        'editor.formatOnSave': True,
+        'editor.codeActionsOnSave': {
+            'source.organizeImports': 'explicit',
+            'python.sortImports': 'explicit',
+        },
     },
-    "ruff.configuration": "${workspaceFolder}/src/ruff.toml",
-    "ruff.organizeImports": false,
-    // END: LINTERS
-}
+    'ruff.configuration': '\${workspaceFolder}/src/ruff.toml',
+    'ruff.organizeImports': False,
+})
+json.dump(settings, open(path, 'w'), indent=4)
+print('Settings updated:', path)
+"
 ```
 
 The files should format correctly on save
