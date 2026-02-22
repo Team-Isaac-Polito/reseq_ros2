@@ -10,31 +10,31 @@ default_acceleration_scaling_factor: 0.1
 joint_limits:
   mod1__base_pitch_arm_joint:
     has_velocity_limits: true
-    max_velocity: 2
+    max_velocity: 2.0
     has_acceleration_limits: false
-    max_acceleration: 0
+    max_acceleration: 0.0
   mod1__base_roll_arm_joint:
     has_velocity_limits: true
-    max_velocity: 2
+    max_velocity: 2.0
     has_acceleration_limits: false
-    max_acceleration: 0
+    max_acceleration: 0.0
   mod1__elbow_pitch_arm_joint:
     has_velocity_limits: true
-    max_velocity: 2
+    max_velocity: 2.0
     has_acceleration_limits: false
-    max_acceleration: 0
+    max_acceleration: 0.0
   mod1__forearm_roll_arm_joint:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 1.0
     has_acceleration_limits: false
-    max_acceleration: 0
+    max_acceleration: 0.0
   mod1__wrist_pitch_arm_joint:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 1.0
     has_acceleration_limits: false
-    max_acceleration: 0
+    max_acceleration: 0.0
   mod1__wrist_roll_arm_joint:
     has_velocity_limits: true
-    max_velocity: 1
+    max_velocity: 1.0 
     has_acceleration_limits: false
-    max_acceleration: 0
+    max_acceleration: 1.0
