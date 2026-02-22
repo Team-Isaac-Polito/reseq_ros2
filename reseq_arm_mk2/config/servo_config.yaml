@@ -29,8 +29,8 @@ moveit_servo_node:
       robot_link_command_frame: arm_roll_wrist_link
 
       ## --- Singularity Avoidance Settings ---
-      lower_singularity_threshold: 17.0
-      hard_stop_singularity_threshold: 30.0 
+      lower_singularity_threshold: 10000000000000.0
+      hard_stop_singularity_threshold: 100000000000000.0
       leaving_singularity_threshold_multiplier: 2.0
 
       ## --- Topic names ---
