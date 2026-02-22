@@ -30,7 +30,7 @@ def launch_setup(context, *args, **kwargs):
     # Load all MoveIt configuration files
     moveit_config = (
         MoveItConfigsBuilder(
-            robot_name='simplified_arm_assembly',  # This name comes from your SRDF
+            robot_name='reseq_arm_mk2',  
             package_name='reseq_arm_mk2',
         )
         .robot_description(
@@ -41,9 +41,8 @@ def launch_setup(context, *args, **kwargs):
                 'controllers_config_file': controllers_config_file,
             },
         )
-        .robot_description_semantic(file_path='config/simplified_arm_assembly.srdf')
+        .robot_description_semantic(file_path='config/reseq_arm_mk2.srdf')
         .robot_description_kinematics(file_path='config/kinematics.yaml')
-        .joint_limits(file_path='config/joint_limits.yaml')
         .to_moveit_configs()
     )
 
