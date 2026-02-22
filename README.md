@@ -16,10 +16,12 @@ git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src
 
 This will copy the contents of this repository inside the `ros2_ws/src` folder.
 
-If it fails to clone the submodules, run the following command inside `ros2_ws`:
+To ensure the submodules (`reseq_interfaces`, `computer_vision`) are on the latest version, run the following command inside `ros2_ws`:
 
 ```bash
-git submodule update --recursive --remote
+cd src
+git submodule update --remote --merge
+cd ..
 ```
 
 In VSCode (or your editor of choice) open `ros2_ws`
