@@ -50,5 +50,4 @@ moveit_servo_node:
         joint: 0.3
 
       ## --- Additional Settings ---
-      joint_limit_margin: 0.1
       num_outgoing_halt_msgs_to_publish: 4
