@@ -1,0 +1,11 @@
+[Unit]
+Description=Enable CAN Interface
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/enable_can.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
