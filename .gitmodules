@@ -1,3 +1,9 @@
 [submodule "reseq_interfaces"]
 	path = reseq_interfaces
 	url = https://github.com/Team-Isaac-Polito/reseq_interfaces.git
+	branch = main
+
+[submodule "computer_vision"]
+	path = computer_vision
+	url = https://github.com/Team-Isaac-Polito/computer_vision.git
+	branch = main
