@@ -1,4 +1,5 @@
 __pycache__/
 .vscode
-.github/
+.github/*
+!.github/workflows/
 rplidar_ros
