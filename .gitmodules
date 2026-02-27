@@ -5,5 +5,5 @@
 
 [submodule "computer_vision"]
 	path = computer_vision
-	url = https://github.com/Team-Isaac-Polito/computer-vision
+	url = https://github.com/Team-Isaac-Polito/computer_vision.git
 	branch = main

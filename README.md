@@ -1,6 +1,6 @@
 [![ROS2 CI/CD](https://github.com/Team-Isaac-Polito/reseq_ros2/actions/workflows/ros-ci.yaml/badge.svg)](https://github.com/Team-Isaac-Polito/reseq_ros2/actions/workflows/ros-ci.yaml)
 
-# Reseq_ros2
+# reseq_ros2
 
 ROS2 code to control the ReseQ robot.
 
@@ -19,9 +19,7 @@ This will copy the contents of this repository inside the `ros2_ws/src` folder.
 To ensure the submodules (`reseq_interfaces`, `computer_vision`) are on the latest version, run the following command inside `ros2_ws`:
 
 ```bash
-cd src
-git submodule update --remote --merge
-cd ..
+cd src && git submodule update --recursive --remote && cd ..
 ```
 
 In VSCode (or your editor of choice) open `ros2_ws`
