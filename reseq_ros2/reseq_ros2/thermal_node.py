@@ -12,6 +12,8 @@ import board
 import busio
 import adafruit_mlx90640
 
+from std_srvs.srv import SetBool
+
 class ThermalCameraNode(Node):
     def __init__(self):
         super().__init__('thermal_camera_node')
@@ -33,7 +35,29 @@ class ThermalCameraNode(Node):
         # Buffer for sensor data
         self.frame = [0.0] * 768  # 32x24
 
+        self.is_active = True
+        self.srv = self.create_service(SetBool, 'activate_thermal', self.handle_toggle_camera)
+        self.get_logger().info("Nodo Termico pronto. Servizio /activate_thermal attivo.")
+
+    def handle_toggle_camera(self, request, response):
+        self.is_active = request.data
+
+        if self.is_active:
+            self.get_logger().info("Videocamera termica attivata")
+            response.message = "Camera attivata con successo"
+        else:
+            self.get_logger().info("Videocamera termica disattivata")
+            response.message = "Camera disattivata con successo"
+        
+        response.success = True
+        return response
+
+
     def publish_thermal_image(self):
+        if not self.is_active:
+            self.get_logger().warning("thermal camera is not active, so no image is published.")
+            return
+        
         try:
             self.mlx.getFrame(self.frame)
         except ValueError:
