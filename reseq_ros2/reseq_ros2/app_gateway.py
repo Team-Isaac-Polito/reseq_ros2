@@ -8,8 +8,7 @@ class AppGateway(Node):
 
         self.service_mapping = {
             'thermal': 'activate_thermal',
-            #'motors': 'hardware/enable_motors',
-            #'lights': 'hardware/toggle_lights'
+            'lidar': 'rplidar_mode/toggle_scan'
         }
         self.hw_clients = {}
         for ui_name, hw_service in self.service_mapping.items():
@@ -19,7 +18,7 @@ class AppGateway(Node):
             self.hw_clients[ui_name] = self.create_client(SetBool, hw_service)
             self.get_logger().info(f"Mappato: {ui_service_name} -> {hw_service}")
 
-        self.get_logger().info("Gateway App inizializzato correttamente.")
+        self.get_logger().info("Gateway App initialized correctly.")
 
     def universal_callback(self, request, response, module_id):
         """Callback universale che smista le chiamate verso l'hardware del team"""
