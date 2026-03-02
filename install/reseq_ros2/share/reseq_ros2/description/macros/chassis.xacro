@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- 
+    Defines the current chassis
+
+    @param id: the id of the chassis (starting from 1)
+  -->
+  <xacro:macro name="chassis" params="id">
+
+    <link name="chassis${id}_link">
+      <xacro:replicate_collision>
+        <visual>
+          <origin xyz="-${EquivalentWheelDiameter/12+(toll+JointDiameter/2)/2} 0 0" />
+          <geometry>
+            <!-- leaving 1/3 of the EquivalentWheelDiameter from front and toll from Joint and
+            Tracks (for clearance) -->
+            <box
+              size="${WheelBase-JointDiameter/2-toll+EquivalentWheelDiameter*2/3-EquivalentWheelDiameter/2} ${ModuleWidth-2*TrackWidth-2*toll} ${EquivalentWheelDiameter-2*ChassisTopAndBottomClearance}" />
+          </geometry>
+          <material name="ChassisColor" />
+        </visual>
+      </xacro:replicate_collision>
+
+      <xacro:inertial_box mass="${ChassisMass}"
+        x="${WheelBase-JointDiameter/2-toll+EquivalentWheelDiameter*2/3-EquivalentWheelDiameter/2}"
+        y="${ModuleWidth-2*TrackWidth-2*toll}"
+        z="${EquivalentWheelDiameter-2*ChassisTopAndBottomClearance}">
+        <origin xyz="${EquivalentWheelDiameter/12+(toll+JointDiameter/2)/2} 0 0" rpy="0 0 0" />
+      </xacro:inertial_box>
+    </link>
+
+    <!-- Wheels -->
+    <xacro:wheel_factory id="${id}" pos="front" side="left" />
+    <xacro:wheel_factory id="${id}" pos="front" side="right" />
+    <xacro:wheel_factory id="${id}" pos="back" side="left" />
+    <xacro:wheel_factory id="${id}" pos="back" side="right" />
+
+  </xacro:macro>
+
+</robot>
+

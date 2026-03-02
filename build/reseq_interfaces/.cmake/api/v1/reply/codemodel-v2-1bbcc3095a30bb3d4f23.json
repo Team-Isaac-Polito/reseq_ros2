@@ -1,0 +1,242 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-08a746014fd442a02c20.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.20"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18
+					]
+				},
+				{
+					"build" : "reseq_interfaces__py",
+					"jsonFile" : "directory-reseq_interfaces__py-f307e403b1bf3551e55b.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.20"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "/home/salvatore/ros2_ws/src/build/reseq_interfaces/reseq_interfaces__py",
+					"targetIndexes" : 
+					[
+						4
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "reseq_interfaces",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_build_reseq_interfaces_egg::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_build_reseq_interfaces_egg-d4fefa45b95709f3da8b.json",
+					"name" : "ament_cmake_python_build_reseq_interfaces_egg",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_copy_reseq_interfaces::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_copy_reseq_interfaces-7d0f2b5c2fcd9d4f6991.json",
+					"name" : "ament_cmake_python_copy_reseq_interfaces",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces-cbb8eccf0e0b2b94b863.json",
+					"name" : "reseq_interfaces",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__cpp-21be0396a7f643c95112.json",
+					"name" : "reseq_interfaces__cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "reseq_interfaces__py::@7861d8faaa9ebcd1003b",
+					"jsonFile" : "target-reseq_interfaces__py-037086a4f292d9a89b97.json",
+					"name" : "reseq_interfaces__py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_generator_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_generator_c-b0c9965569ce2036033d.json",
+					"name" : "reseq_interfaces__rosidl_generator_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_generator_py::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_generator_py-a63a54c6909c643666c9.json",
+					"name" : "reseq_interfaces__rosidl_generator_py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_generator_type_description::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_generator_type_description-573c7af0ef695112951a.json",
+					"name" : "reseq_interfaces__rosidl_generator_type_description",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_typesupport_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_typesupport_c-816ce2523343f850bc7e.json",
+					"name" : "reseq_interfaces__rosidl_typesupport_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_typesupport_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_typesupport_cpp-71906fb0a08d017871c3.json",
+					"name" : "reseq_interfaces__rosidl_typesupport_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_typesupport_fastrtps_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_typesupport_fastrtps_c-06c86e247ae587e74758.json",
+					"name" : "reseq_interfaces__rosidl_typesupport_fastrtps_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_typesupport_fastrtps_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_typesupport_fastrtps_cpp-a0655fb013fd33d1e630.json",
+					"name" : "reseq_interfaces__rosidl_typesupport_fastrtps_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_typesupport_introspection_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_typesupport_introspection_c-b3354425b962a276bc88.json",
+					"name" : "reseq_interfaces__rosidl_typesupport_introspection_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces__rosidl_typesupport_introspection_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces__rosidl_typesupport_introspection_cpp-2ce4cdddc4f3abc4bd89.json",
+					"name" : "reseq_interfaces__rosidl_typesupport_introspection_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces_s__rosidl_typesupport_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces_s__rosidl_typesupport_c-356970f9e4ce7f913325.json",
+					"name" : "reseq_interfaces_s__rosidl_typesupport_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces_s__rosidl_typesupport_fastrtps_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces_s__rosidl_typesupport_fastrtps_c-d1c5f6c567d8698ea647.json",
+					"name" : "reseq_interfaces_s__rosidl_typesupport_fastrtps_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces_s__rosidl_typesupport_introspection_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces_s__rosidl_typesupport_introspection_c-be60f5a0985c199aaf42.json",
+					"name" : "reseq_interfaces_s__rosidl_typesupport_introspection_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "reseq_interfaces_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-reseq_interfaces_uninstall-3d4975517f9f7c86b778.json",
+					"name" : "reseq_interfaces_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-1bcfe319c9ea066d8734.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/salvatore/ros2_ws/src/build/reseq_interfaces",
+		"source" : "/home/salvatore/ros2_ws/src/reseq_interfaces"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

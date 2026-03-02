@@ -1,0 +1,24 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from reseq_interfaces/srv/GetStatus.srv
+// generated code does not contain a copyright notice
+
+
+module reseq_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Request" "\n"
+      "(empty)")
+    struct GetStatus_Request {
+      uint8 structure_needs_at_least_one_member;
+    };
+    struct GetStatus_Response {
+      uint8 current_mode;
+
+      boolean initialized;
+
+      string csv_path;
+
+      string last_error;
+    };
+  };
+};

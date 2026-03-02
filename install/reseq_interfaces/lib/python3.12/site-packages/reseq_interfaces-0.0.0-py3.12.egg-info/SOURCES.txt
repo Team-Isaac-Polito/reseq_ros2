@@ -1,0 +1,16 @@
+setup.py
+reseq_interfaces/__init__.py
+reseq_interfaces.egg-info/PKG-INFO
+reseq_interfaces.egg-info/SOURCES.txt
+reseq_interfaces.egg-info/dependency_links.txt
+reseq_interfaces.egg-info/top_level.txt
+reseq_interfaces/msg/__init__.py
+reseq_interfaces/msg/_detection.py
+reseq_interfaces/msg/_end_effector.py
+reseq_interfaces/msg/_motors.py
+reseq_interfaces/msg/_remote.py
+reseq_interfaces/srv/__init__.py
+reseq_interfaces/srv/_batch_detections2_d.py
+reseq_interfaces/srv/_compute_coordinate.py
+reseq_interfaces/srv/_get_status.py
+reseq_interfaces/srv/_set_mode.py

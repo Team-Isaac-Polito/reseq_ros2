@@ -1,0 +1,41 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from reseq_interfaces/msg/Detection.msg
+// generated code does not contain a copyright notice
+
+#include "std_msgs/msg/Header.idl"
+
+module reseq_interfaces {
+  module msg {
+    struct Detection {
+      @verbatim (language="comment", text=
+        "stamp + frame_id (camera frame)")
+      std_msgs::msg::Header header;
+
+      int32 detection;
+
+      string type;
+
+      string name;
+
+      string robot;
+
+      string mode;
+
+      float confidence;
+
+      int32 xmin;
+
+      int32 ymin;
+
+      uint32 width;
+
+      uint32 height;
+
+      @verbatim (language="comment", text=
+        "meters (depth at bounding-box center)")
+      float depth_center;
+
+      string camera_frame;
+    };
+  };
+};

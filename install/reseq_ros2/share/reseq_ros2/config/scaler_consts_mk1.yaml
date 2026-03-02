@@ -1,0 +1,19 @@
+scaler_consts:
+  r_linear_vel:              # [m/s] Range of the linear velocity (agevar mode)
+    - -0.27017
+    - 0.27017
+  r_inverse_radius:          # [1/m] Range of the inverse radius of curvature (agevar mode)
+    - -1.5385
+    - 1.5385
+  r_angular_vel:             # [rad/s] Range of the angular velocity (pivot mode)
+    - -2.8387
+    - 2.8387
+  r_pitch_vel:               # [LSB/s] Range of pitch velocity
+    - -183
+    - 183
+  r_head_pitch_vel:          # [LSB/s] Range of indepepndent head pitch velocity
+    - -400
+    - 400
+  r_head_roll_vel:            # [LSB/s] Range of head roll velocity
+    - -455
+    - 455

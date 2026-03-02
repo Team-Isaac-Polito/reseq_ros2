@@ -1,0 +1,80 @@
+[0.583s] Invoking command in '/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build --no-deps symlink_data
+[0.811s] running develop
+[0.941s] running egg_info
+[0.941s] creating reseq_ros2.egg-info
+[0.953s] writing reseq_ros2.egg-info/PKG-INFO
+[0.953s] writing dependency_links to reseq_ros2.egg-info/dependency_links.txt
+[0.953s] writing entry points to reseq_ros2.egg-info/entry_points.txt
+[0.954s] writing requirements to reseq_ros2.egg-info/requires.txt
+[0.954s] writing top-level names to reseq_ros2.egg-info/top_level.txt
+[0.954s] writing manifest file 'reseq_ros2.egg-info/SOURCES.txt'
+[0.978s] reading manifest file 'reseq_ros2.egg-info/SOURCES.txt'
+[0.979s] writing manifest file 'reseq_ros2.egg-info/SOURCES.txt'
+[0.992s] running build_ext
+[0.992s] Creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq-ros2.egg-link (link to .)
+[0.993s] Installing agevar script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.993s] Installing app_gateway script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.993s] Installing communication script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.993s] Installing emulator_remote_controller script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.993s] Installing enea script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.993s] Installing feedback_replicator script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.993s] Installing joint_publisher script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.993s] Installing pivot_controller script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.994s] Installing remote_test script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.994s] Installing scaler script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.994s] Installing thermal_node script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.994s] 
+[0.994s] Installed /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2
+[0.994s] running symlink_data
+[0.994s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+[0.994s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/sensors_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/apriltag_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/digital_twin_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/reseq_core_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/reseq_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/webcam_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+[0.995s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/enea_consts.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/agevar_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/scaler_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/agevar_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/realsense_rgb_motion.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_controllers.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/joint_pub_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.995s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/digital_twin_params_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.996s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_mk2_vcan.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.996s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/apriltag.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.996s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_mk1_can.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.996s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/usb_camera.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.996s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_mk1_vcan.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.996s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/joint_pub_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.996s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/scaler_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.996s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/digital_twin_params_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_mk2_can.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+[0.997s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/scripts/test_can.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/scripts/publish_fake_detection.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/scripts/generate_configs.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/scripts/call_compute_coordinate.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+[0.997s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/ros2_control.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/reseq_arm_mk1.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/reseq_body.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/reseq_parameters.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/reseq_arm_parameters.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.997s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/robot.urdf.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/lidar.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/inertial_macros.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+[0.998s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/utils.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/wheel.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/chassis.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/control_wheel.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/joint.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.998s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt
+[0.998s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index
+[0.998s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index
+[0.998s] creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index/packages
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/resource/reseq_ros2 -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index/packages
+[0.998s] symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/package.xml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2
+[1.029s] Invoked command in '/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build --no-deps symlink_data

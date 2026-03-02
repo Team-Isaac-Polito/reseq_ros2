@@ -1,0 +1,36 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "reseq_interfaces/srv/SetMode_Request",
+      "fields": [
+        {
+          "name": "mode",
+          "type": {
+            "type_id": 3,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "csv_path",
+          "type": {
+            "type_id": 17,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "reseq_interfaces/srv/SetMode_Request",
+      "hash_string": "RIHS01_0ddea0b563259d90e02d382e0363423f7984f23168fdcc06dbc267c25a8c6986"
+    }
+  ]
+}

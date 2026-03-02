@@ -1,0 +1,7 @@
+# Request
+# (empty)
+---
+uint8 current_mode
+bool initialized
+string csv_path
+string last_error

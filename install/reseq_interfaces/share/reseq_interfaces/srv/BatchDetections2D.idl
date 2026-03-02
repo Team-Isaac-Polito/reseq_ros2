@@ -1,0 +1,30 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from reseq_interfaces/srv/BatchDetections2D.srv
+// generated code does not contain a copyright notice
+
+#include "vision_msgs/msg/Detection2DArray.idl"
+
+module reseq_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Request")
+    struct BatchDetections2D_Request {
+      string robot;
+
+      @verbatim (language="comment", text=
+        "'A' or 'T'")
+      string mode;
+
+      vision_msgs::msg::Detection2DArray detections;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct BatchDetections2D_Response {
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "filepath or error")
+      string message;
+    };
+  };
+};

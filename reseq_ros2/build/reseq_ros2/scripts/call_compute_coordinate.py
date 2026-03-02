@@ -1,0 +1,1 @@
+/home/salvatore/ros2_ws/src/reseq_ros2/scripts/call_compute_coordinate.py

@@ -1,0 +1,30 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from reseq_interfaces/srv/ComputeCoordinate.srv
+// generated code does not contain a copyright notice
+
+#include "geometry_msgs/msg/PointStamped.idl"
+#include "reseq_interfaces/msg/Detection.idl"
+#include "sensor_msgs/msg/CameraInfo.idl"
+
+module reseq_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Request")
+    struct ComputeCoordinate_Request {
+      reseq_interfaces::msg::Detection detection;
+
+      sensor_msgs::msg::CameraInfo camera_info;
+
+      string target_frame;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct ComputeCoordinate_Response {
+      boolean success;
+
+      geometry_msgs::msg::PointStamped point;
+
+      string message;
+    };
+  };
+};

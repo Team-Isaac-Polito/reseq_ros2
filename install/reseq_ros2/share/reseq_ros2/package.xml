@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>reseq_ros2</name>
+  <version>0.0.0</version>
+  <description>ROS2 code for ReseQ robot</description>
+  <maintainer email="team.isaac@polito.it">Team ISAAC</maintainer>
+  <license>GNU GPL v3.0</license>
+  <author email="marcofincato777@gmail.com">Marco Fincato</author>
+  <author email="milenayahya@gmail.com">Milena Yahya</author>
+  <author email="guglielmo.bergatto@gmail.com">Guglielmo Bergatto</author>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+
+  <exec_depend>reseq_interfaces</exec_depend>
+  <exec_depend>computer_vision</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <exec_depend>realsense2_camera</exec_depend>
+  <exec_depend>apriltag_ros</exec_depend>
+  <exec_depend>apriltag_msgs</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-sklearn</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
+
+  <exec_depend>rplidar_ros</exec_depend>
+
+  <exec_depend>usb_cam</exec_depend>
+  <exec_depend>v4l-utils</exec_depend>
+
+  <exec_depend>python3-can</exec_depend>
+
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+
+  <test_depend>python3-termcolor</test_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_xmllint</test_depend>
+  <test_depend>python3-pytest</test_depend>
+  <test_depend>launch_testing</test_depend>
+  <test_depend>python3-psutil</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

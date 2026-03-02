@@ -1,0 +1,13 @@
+{
+  "package_name": "reseq_interfaces",
+  "non_idl_tuples": [
+    "/home/salvatore/ros2_ws/src/reseq_interfaces:msg/Motors.msg",
+    "/home/salvatore/ros2_ws/src/reseq_interfaces:msg/Remote.msg",
+    "/home/salvatore/ros2_ws/src/reseq_interfaces:msg/EndEffector.msg",
+    "/home/salvatore/ros2_ws/src/reseq_interfaces:msg/Detection.msg",
+    "/home/salvatore/ros2_ws/src/reseq_interfaces:srv/BatchDetections2D.srv",
+    "/home/salvatore/ros2_ws/src/reseq_interfaces:srv/SetMode.srv",
+    "/home/salvatore/ros2_ws/src/reseq_interfaces:srv/GetStatus.srv",
+    "/home/salvatore/ros2_ws/src/reseq_interfaces:srv/ComputeCoordinate.srv"
+  ]
+}

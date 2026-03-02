@@ -1,0 +1,32 @@
+[0.419s] Invoking command in '/home/salvatore/ros2_ws/src/reseq_ros2': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages: /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/reseq_ros2 build --build-base /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build install --record /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/install.log --single-version-externally-managed install_data
+[0.547s] running egg_info
+[0.553s] writing build/reseq_ros2/reseq_ros2.egg-info/PKG-INFO
+[0.554s] writing dependency_links to build/reseq_ros2/reseq_ros2.egg-info/dependency_links.txt
+[0.554s] writing entry points to build/reseq_ros2/reseq_ros2.egg-info/entry_points.txt
+[0.554s] writing requirements to build/reseq_ros2/reseq_ros2.egg-info/requires.txt
+[0.555s] writing top-level names to build/reseq_ros2/reseq_ros2.egg-info/top_level.txt
+[0.569s] reading manifest file 'build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'
+[0.572s] writing manifest file 'build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'
+[0.572s] running build
+[0.572s] running build_py
+[0.574s] running install
+[0.579s] running install_lib
+[0.587s] running install_data
+[0.589s] running install_egg_info
+[0.596s] removing '/home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2-0.0.0-py3.12.egg-info' (and everything under it)
+[0.596s] Copying build/reseq_ros2/reseq_ros2.egg-info to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2-0.0.0-py3.12.egg-info
+[0.597s] running install_scripts
+[0.655s] Installing agevar script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.655s] Installing communication script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.655s] Installing detector script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.656s] Installing emulator_remote_controller script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.656s] Installing enea script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.656s] Installing feedback_replicator script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.656s] Installing joint_publisher script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.657s] Installing pivot_controller script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.657s] Installing remote_test script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.657s] Installing reseq_ros2.detection_manager script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.657s] Installing scaler script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.657s] Installing thermal_node script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+[0.658s] writing list of installed files to '/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/install.log'
+[0.679s] Invoked command in '/home/salvatore/ros2_ws/src/reseq_ros2' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages: /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/reseq_ros2 build --build-base /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build install --record /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/install.log --single-version-externally-managed install_data

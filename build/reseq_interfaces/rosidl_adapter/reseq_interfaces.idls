@@ -1,0 +1,8 @@
+/home/salvatore/ros2_ws/src/build/reseq_interfaces/rosidl_adapter/reseq_interfaces:msg/Motors.idl
+/home/salvatore/ros2_ws/src/build/reseq_interfaces/rosidl_adapter/reseq_interfaces:msg/Remote.idl
+/home/salvatore/ros2_ws/src/build/reseq_interfaces/rosidl_adapter/reseq_interfaces:msg/EndEffector.idl
+/home/salvatore/ros2_ws/src/build/reseq_interfaces/rosidl_adapter/reseq_interfaces:msg/Detection.idl
+/home/salvatore/ros2_ws/src/build/reseq_interfaces/rosidl_adapter/reseq_interfaces:srv/BatchDetections2D.idl
+/home/salvatore/ros2_ws/src/build/reseq_interfaces/rosidl_adapter/reseq_interfaces:srv/SetMode.idl
+/home/salvatore/ros2_ws/src/build/reseq_interfaces/rosidl_adapter/reseq_interfaces:srv/GetStatus.idl
+/home/salvatore/ros2_ws/src/build/reseq_interfaces/rosidl_adapter/reseq_interfaces:srv/ComputeCoordinate.idl

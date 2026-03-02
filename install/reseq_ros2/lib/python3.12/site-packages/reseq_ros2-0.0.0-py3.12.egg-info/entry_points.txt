@@ -1,0 +1,11 @@
+[console_scripts]
+agevar = reseq_ros2.agevar:main
+communication = reseq_ros2.communication:main
+emulator_remote_controller = reseq_ros2.emulator_remote_controller:main
+enea = reseq_ros2.enea:main
+feedback_replicator = reseq_ros2.feedback_replicator:main
+joint_publisher = reseq_ros2.joint_publisher:main
+pivot_controller = reseq_ros2.pivot_controller:main
+remote_test = reseq_ros2.remote_test:main
+scaler = reseq_ros2.scaler:main
+thermal_node = reseq_ros2.thermal_node:main

@@ -1,0 +1,16 @@
+msg/Detection.idl
+msg/Detection.msg
+msg/EndEffector.idl
+msg/EndEffector.msg
+msg/Motors.idl
+msg/Motors.msg
+msg/Remote.idl
+msg/Remote.msg
+srv/BatchDetections2D.idl
+srv/BatchDetections2D.srv
+srv/ComputeCoordinate.idl
+srv/ComputeCoordinate.srv
+srv/GetStatus.idl
+srv/GetStatus.srv
+srv/SetMode.idl
+srv/SetMode.srv

@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "reseq_interfaces__py",
+		"source" : "/home/salvatore/ros2_ws/src/build/reseq_interfaces/reseq_interfaces__py"
+	}
+}

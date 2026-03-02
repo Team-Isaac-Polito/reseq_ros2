@@ -1,0 +1,26 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "reseq_interfaces/srv/GetStatus_Request",
+      "fields": [
+        {
+          "name": "structure_needs_at_least_one_member",
+          "type": {
+            "type_id": 3,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "reseq_interfaces/srv/GetStatus_Request",
+      "hash_string": "RIHS01_e162c94a4f4d2a2dbc685e828e3f666a955016298a3343e5bd405898c8485ce7"
+    }
+  ]
+}

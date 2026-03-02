@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/detection__type_support.c.o"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/detection__type_support.c.o.d"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/end_effector__type_support.c.o"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/end_effector__type_support.c.o.d"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/motors__type_support.c.o"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/motors__type_support.c.o.d"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/remote__type_support.c.o"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/remote__type_support.c.o.d"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c.o"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c.o.d"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/compute_coordinate__type_support.c.o"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/compute_coordinate__type_support.c.o.d"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/get_status__type_support.c.o"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/get_status__type_support.c.o.d"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/set_mode__type_support.c.o"
+  "CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/set_mode__type_support.c.o.d"
+  "libreseq_interfaces__rosidl_typesupport_introspection_c.pdb"
+  "libreseq_interfaces__rosidl_typesupport_introspection_c.so"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/detection__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/detection__type_support.c"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/end_effector__type_support.c"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/motors__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/motors__type_support.c"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/remote__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/remote__type_support.c"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/compute_coordinate__type_support.c"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/get_status__type_support.c"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/set_mode__type_support.c"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C)
+  include(CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

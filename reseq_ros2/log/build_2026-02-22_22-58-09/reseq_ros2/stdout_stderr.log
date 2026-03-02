@@ -1,0 +1,78 @@
+running develop
+running egg_info
+creating reseq_ros2.egg-info
+writing reseq_ros2.egg-info/PKG-INFO
+writing dependency_links to reseq_ros2.egg-info/dependency_links.txt
+writing entry points to reseq_ros2.egg-info/entry_points.txt
+writing requirements to reseq_ros2.egg-info/requires.txt
+writing top-level names to reseq_ros2.egg-info/top_level.txt
+writing manifest file 'reseq_ros2.egg-info/SOURCES.txt'
+reading manifest file 'reseq_ros2.egg-info/SOURCES.txt'
+writing manifest file 'reseq_ros2.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq-ros2.egg-link (link to .)
+Installing agevar script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing app_gateway script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing communication script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing emulator_remote_controller script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing enea script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing feedback_replicator script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing joint_publisher script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing pivot_controller script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing remote_test script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing scaler script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+Installing thermal_node script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2
+
+Installed /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2
+running symlink_data
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/sensors_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/apriltag_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/digital_twin_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/reseq_core_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/reseq_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/launch/webcam_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/enea_consts.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/agevar_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/scaler_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/agevar_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/realsense_rgb_motion.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_controllers.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/joint_pub_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/digital_twin_params_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_mk2_vcan.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/apriltag.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_mk1_can.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/usb_camera.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_mk1_vcan.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/joint_pub_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/scaler_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/digital_twin_params_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/config/reseq_mk2_can.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/scripts/test_can.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/scripts/publish_fake_detection.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/scripts/generate_configs.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/scripts/call_compute_coordinate.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/ros2_control.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/reseq_arm_mk1.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/reseq_body.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/reseq_parameters.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/reseq_arm_parameters.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/robot.urdf.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/lidar.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/inertial_macros.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/utils.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/wheel.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/chassis.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/control_wheel.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/description/macros/joint.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index
+creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index/packages
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/resource/reseq_ros2 -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index/packages
+symbolically linking /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/package.xml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2

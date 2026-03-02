@@ -1,0 +1,4 @@
+source;share/reseq_interfaces/local_setup.bash
+source;share/reseq_interfaces/local_setup.dsv
+source;share/reseq_interfaces/local_setup.sh
+source;share/reseq_interfaces/local_setup.zsh

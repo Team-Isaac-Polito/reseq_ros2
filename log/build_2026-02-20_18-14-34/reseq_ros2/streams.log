@@ -1,0 +1,30 @@
+[0.599s] Invoking command in '/home/salvatore/ros2_ws/src/reseq_ros2': AMENT_PREFIX_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces:${CMAKE_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com LD_LIBRARY_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/salvatore/ros2_ws/src/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/reseq_ros2 build --build-base /home/salvatore/ros2_ws/src/build/reseq_ros2/build install --record /home/salvatore/ros2_ws/src/build/reseq_ros2/install.log --single-version-externally-managed install_data
+[0.794s] running egg_info
+[0.807s] writing ../build/reseq_ros2/reseq_ros2.egg-info/PKG-INFO
+[0.808s] writing dependency_links to ../build/reseq_ros2/reseq_ros2.egg-info/dependency_links.txt
+[0.808s] writing entry points to ../build/reseq_ros2/reseq_ros2.egg-info/entry_points.txt
+[0.808s] writing requirements to ../build/reseq_ros2/reseq_ros2.egg-info/requires.txt
+[0.808s] writing top-level names to ../build/reseq_ros2/reseq_ros2.egg-info/top_level.txt
+[0.833s] reading manifest file '../build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'
+[0.834s] writing manifest file '../build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'
+[0.834s] running build
+[0.834s] running build_py
+[0.835s] running install
+[0.840s] running install_lib
+[0.853s] running install_data
+[0.854s] running install_egg_info
+[0.868s] removing '/home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2-0.0.0-py3.12.egg-info' (and everything under it)
+[0.868s] Copying ../build/reseq_ros2/reseq_ros2.egg-info to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2-0.0.0-py3.12.egg-info
+[0.868s] running install_scripts
+[0.962s] Installing agevar script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.962s] Installing communication script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.963s] Installing emulator_remote_controller script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.963s] Installing enea script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.963s] Installing feedback_replicator script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.963s] Installing joint_publisher script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.963s] Installing pivot_controller script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.963s] Installing remote_test script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.963s] Installing scaler script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.963s] Installing thermal_node script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.964s] writing list of installed files to '/home/salvatore/ros2_ws/src/build/reseq_ros2/install.log'
+[0.991s] Invoked command in '/home/salvatore/ros2_ws/src/reseq_ros2' returned '0': AMENT_PREFIX_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces:${CMAKE_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com LD_LIBRARY_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/salvatore/ros2_ws/src/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/reseq_ros2 build --build-base /home/salvatore/ros2_ws/src/build/reseq_ros2/build install --record /home/salvatore/ros2_ws/src/build/reseq_ros2/install.log --single-version-externally-managed install_data

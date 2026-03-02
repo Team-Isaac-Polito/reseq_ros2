@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+  <!-- 
+    Replicates the visual block inside the collision block to avoid code 
+    duplication until the use of 3D meshes for the visuals
+
+    @param **block: the <visual/> block to replicate
+   -->
+  <xacro:macro name="replicate_collision" params="**block">
+    <visual>
+      <xacro:insert_block name="block" />
+    </visual>
+    <collision>
+      <xacro:insert_block name="block" />
+    </collision>
+  </xacro:macro>
+
+</robot>

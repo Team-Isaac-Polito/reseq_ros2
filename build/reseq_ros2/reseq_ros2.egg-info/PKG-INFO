@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: reseq-ros2
+Version: 0.0.0
+Summary: ROS2 code for ReseQ robot
+Maintainer: Team ISAAC
+Maintainer-email: team.isaac@polito.it
+License: GNU GPL v3.0

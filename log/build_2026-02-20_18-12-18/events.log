@@ -1,0 +1,769 @@
+[0.000000] (-) TimerEvent: {}
+[0.000167] (reseq_interfaces) JobQueued: {'identifier': 'reseq_interfaces', 'dependencies': OrderedDict()}
+[0.000245] (reseq_ros2) JobQueued: {'identifier': 'reseq_ros2', 'dependencies': OrderedDict({'reseq_interfaces': '/home/salvatore/ros2_ws/src/install/reseq_interfaces'})}
+[0.000267] (reseq_interfaces) JobStarted: {'identifier': 'reseq_interfaces'}
+[0.005624] (reseq_interfaces) JobProgress: {'identifier': 'reseq_interfaces', 'progress': 'cmake'}
+[0.006127] (reseq_interfaces) Command: {'cmd': ['/usr/bin/cmake', '/home/salvatore/ros2_ws/src/reseq_interfaces', '-DCMAKE_INSTALL_PREFIX=/home/salvatore/ros2_ws/src/install/reseq_interfaces'], 'cwd': '/home/salvatore/ros2_ws/src/build/reseq_interfaces', 'env': OrderedDict({'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'salvatore', 'GZ_CONFIG_PATH': '/opt/ros/jazzy/opt/sdformat_vendor/share/gz', 'XDG_SESSION_TYPE': 'wayland', 'CLUTTER_DISABLE_MIPMAPPED_TEXT': '1', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/salvatore/ros2_ws/install/reseq_interfaces/lib:/opt/ros/jazzy/opt/sdformat_vendor/lib:/opt/ros/jazzy/opt/rviz_ogre_vendor/lib:/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/opt/gz_math_vendor/lib:/opt/ros/jazzy/opt/gz_utils_vendor/lib:/opt/ros/jazzy/opt/gz_tools_vendor/lib:/opt/ros/jazzy/opt/gz_cmake_vendor/lib:/opt/ros/jazzy/lib', 'HOME': '/home/salvatore', 'OLDPWD': '/home/salvatore/ros2_ws', 'DESKTOP_SESSION': 'ubuntu', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'SYSTEMD_EXEC_PID': '1844', 'GSM_SKIP_SSH_AGENT_WORKAROUND': 'true', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'DEBUGINFOD_URLS': 'https://debuginfod.ubuntu.com', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'COLCON_PREFIX_PATH': '/home/salvatore/ros2_ws/install', 'ROS_DISTRO': 'jazzy', 'LOGNAME': 'salvatore', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'MEMORY_PRESSURE_WATCH': '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@wayland.service/memory.pressure', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'salvatore', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'PATH': '/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/bin:/home/salvatore/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/salvatore-QEMU-Virtual-Machine:@/tmp/.ICE-unix/1806,unix/salvatore-QEMU-Virtual-Machine:/tmp/.ICE-unix/1806', 'XDG_MENU_PREFIX': 'gnome-', 'GNOME_TERMINAL_SCREEN': '/org/gnome/Terminal/screen/4e471731_0f1e_4e7e_947a_54e0a1a302d6', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.66CUK3', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'GNOME_TERMINAL_SERVICE': ':1.124', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'AMENT_PREFIX_PATH': '/home/salvatore/ros2_ws/install/reseq_ros2:/home/salvatore/ros2_ws/install/rplidar_ros:/home/salvatore/ros2_ws/install/reseq_interfaces:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/salvatore/ros2_ws/src/build/reseq_interfaces', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/salvatore/ros2_ws/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/install/reseq_interfaces/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1', 'MEMORY_PRESSURE_WRITE': 'c29tZSAyMDAwMDAgMjAwMDAwMAA=', 'VTE_VERSION': '7600', 'CMAKE_PREFIX_PATH': '/home/salvatore/ros2_ws/install/rplidar_ros:/home/salvatore/ros2_ws/install/reseq_interfaces:/opt/ros/jazzy/opt/sdformat_vendor:/opt/ros/jazzy/opt/gz_math_vendor:/opt/ros/jazzy/opt/gz_utils_vendor:/opt/ros/jazzy/opt/gz_tools_vendor:/opt/ros/jazzy/opt/gz_cmake_vendor:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy'}), 'shell': False}
+[0.098871] (-) TimerEvent: {}
+[0.148567] (reseq_interfaces) StdoutLine: {'line': b'-- The C compiler identification is GNU 13.3.0\n'}
+[0.198999] (-) TimerEvent: {}
+[0.272185] (reseq_interfaces) StdoutLine: {'line': b'-- The CXX compiler identification is GNU 13.3.0\n'}
+[0.290025] (reseq_interfaces) StdoutLine: {'line': b'-- Detecting C compiler ABI info\n'}
+[0.299285] (-) TimerEvent: {}
+[0.368069] (reseq_interfaces) StdoutLine: {'line': b'-- Detecting C compiler ABI info - done\n'}
+[0.376943] (reseq_interfaces) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc - skipped\n'}
+[0.377142] (reseq_interfaces) StdoutLine: {'line': b'-- Detecting C compile features\n'}
+[0.378090] (reseq_interfaces) StdoutLine: {'line': b'-- Detecting C compile features - done\n'}
+[0.388562] (reseq_interfaces) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info\n'}
+[0.399389] (-) TimerEvent: {}
+[0.472176] (reseq_interfaces) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info - done\n'}
+[0.480964] (reseq_interfaces) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++ - skipped\n'}
+[0.481240] (reseq_interfaces) StdoutLine: {'line': b'-- Detecting CXX compile features\n'}
+[0.481656] (reseq_interfaces) StdoutLine: {'line': b'-- Detecting CXX compile features - done\n'}
+[0.487815] (reseq_interfaces) StdoutLine: {'line': b'-- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)\n'}
+[0.499478] (-) TimerEvent: {}
+[0.599726] (-) TimerEvent: {}
+[0.621404] (reseq_interfaces) StdoutLine: {'line': b'-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter \n'}
+[0.699879] (-) TimerEvent: {}
+[0.736605] (reseq_interfaces) StdoutLine: {'line': b'-- Found rosidl_default_generators: 1.6.0 (/opt/ros/jazzy/share/rosidl_default_generators/cmake)\n'}
+[0.743680] (reseq_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[0.799975] (-) TimerEvent: {}
+[0.800909] (reseq_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[0.851148] (reseq_interfaces) StdoutLine: {'line': b'-- Found rosidl_adapter: 4.6.6 (/opt/ros/jazzy/share/rosidl_adapter/cmake)\n'}
+[0.855631] (reseq_interfaces) StdoutLine: {'line': b'-- Found std_msgs: 5.3.6 (/opt/ros/jazzy/share/std_msgs/cmake)\n'}
+[0.890978] (reseq_interfaces) StdoutLine: {'line': b'-- Found sensor_msgs: 5.3.6 (/opt/ros/jazzy/share/sensor_msgs/cmake)\n'}
+[0.900098] (-) TimerEvent: {}
+[0.952218] (reseq_interfaces) StdoutLine: {'line': b'-- Found vision_msgs: 4.1.1 (/opt/ros/jazzy/share/vision_msgs/cmake)\n'}
+[1.000231] (-) TimerEvent: {}
+[1.100478] (-) TimerEvent: {}
+[1.200722] (-) TimerEvent: {}
+[1.301141] (-) TimerEvent: {}
+[1.401376] (-) TimerEvent: {}
+[1.501726] (-) TimerEvent: {}
+[1.592256] (reseq_interfaces) StdoutLine: {'line': b'-- Found ament_cmake_ros: 0.12.0 (/opt/ros/jazzy/share/ament_cmake_ros/cmake)\n'}
+[1.601820] (-) TimerEvent: {}
+[1.702054] (-) TimerEvent: {}
+[1.802306] (-) TimerEvent: {}
+[1.902630] (-) TimerEvent: {}
+[2.002982] (-) TimerEvent: {}
+[2.094207] (reseq_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[2.103111] (-) TimerEvent: {}
+[2.203307] (-) TimerEvent: {}
+[2.303587] (-) TimerEvent: {}
+[2.403911] (-) TimerEvent: {}
+[2.504164] (-) TimerEvent: {}
+[2.606041] (-) TimerEvent: {}
+[2.707799] (-) TimerEvent: {}
+[2.749285] (reseq_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[2.753352] (reseq_interfaces) StdoutLine: {'line': b'-- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)\n'}
+[2.808613] (-) TimerEvent: {}
+[2.867099] (reseq_interfaces) StdoutLine: {'line': b'-- Found PythonExtra: /usr/bin/python3  \n'}
+[2.908877] (-) TimerEvent: {}
+[3.009131] (-) TimerEvent: {}
+[3.109344] (-) TimerEvent: {}
+[3.209731] (-) TimerEvent: {}
+[3.259072] (reseq_interfaces) StdoutLine: {'line': b'-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter Development NumPy Development.Module Development.Embed \n'}
+[3.309879] (-) TimerEvent: {}
+[3.335797] (reseq_interfaces) StdoutLine: {'line': b'-- Found ament_lint_auto: 0.17.3 (/opt/ros/jazzy/share/ament_lint_auto/cmake)\n'}
+[3.372244] (reseq_interfaces) StdoutLine: {'line': b"-- Added test 'cppcheck' to perform static code analysis on C / C++ code\n"}
+[3.372627] (reseq_interfaces) StdoutLine: {'line': b'-- Configured cppcheck include dirs: \n'}
+[3.372705] (reseq_interfaces) StdoutLine: {'line': b'-- Configured cppcheck exclude dirs and/or files: \n'}
+[3.373664] (reseq_interfaces) StdoutLine: {'line': b"-- Added test 'flake8' to check Python code syntax and style conventions\n"}
+[3.373868] (reseq_interfaces) StdoutLine: {'line': b"-- Configured 'flake8' exclude dirs and/or files: \n"}
+[3.375085] (reseq_interfaces) StdoutLine: {'line': b"-- Added test 'lint_cmake' to check CMake code style\n"}
+[3.375887] (reseq_interfaces) StdoutLine: {'line': b"-- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257\n"}
+[3.378966] (reseq_interfaces) StdoutLine: {'line': b"-- Added test 'uncrustify' to check C / C++ code style\n"}
+[3.379038] (reseq_interfaces) StdoutLine: {'line': b'-- Configured uncrustify additional arguments: \n'}
+[3.382438] (reseq_interfaces) StdoutLine: {'line': b"-- Added test 'xmllint' to check XML markup files\n"}
+[3.383391] (reseq_interfaces) StdoutLine: {'line': b'-- Configuring done (3.4s)\n'}
+[3.409988] (-) TimerEvent: {}
+[3.439157] (reseq_interfaces) StdoutLine: {'line': b'-- Generating done (0.0s)\n'}
+[3.451104] (reseq_interfaces) StdoutLine: {'line': b'-- Build files have been written to: /home/salvatore/ros2_ws/src/build/reseq_interfaces\n'}
+[3.460218] (reseq_interfaces) CommandEnded: {'returncode': 0}
+[3.460504] (reseq_interfaces) JobProgress: {'identifier': 'reseq_interfaces', 'progress': 'build'}
+[3.460528] (reseq_interfaces) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/salvatore/ros2_ws/src/build/reseq_interfaces', '--', '-j4', '-l4'], 'cwd': '/home/salvatore/ros2_ws/src/build/reseq_interfaces', 'env': OrderedDict({'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'salvatore', 'GZ_CONFIG_PATH': '/opt/ros/jazzy/opt/sdformat_vendor/share/gz', 'XDG_SESSION_TYPE': 'wayland', 'CLUTTER_DISABLE_MIPMAPPED_TEXT': '1', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/salvatore/ros2_ws/install/reseq_interfaces/lib:/opt/ros/jazzy/opt/sdformat_vendor/lib:/opt/ros/jazzy/opt/rviz_ogre_vendor/lib:/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/opt/gz_math_vendor/lib:/opt/ros/jazzy/opt/gz_utils_vendor/lib:/opt/ros/jazzy/opt/gz_tools_vendor/lib:/opt/ros/jazzy/opt/gz_cmake_vendor/lib:/opt/ros/jazzy/lib', 'HOME': '/home/salvatore', 'OLDPWD': '/home/salvatore/ros2_ws', 'DESKTOP_SESSION': 'ubuntu', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'SYSTEMD_EXEC_PID': '1844', 'GSM_SKIP_SSH_AGENT_WORKAROUND': 'true', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'DEBUGINFOD_URLS': 'https://debuginfod.ubuntu.com', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'COLCON_PREFIX_PATH': '/home/salvatore/ros2_ws/install', 'ROS_DISTRO': 'jazzy', 'LOGNAME': 'salvatore', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'MEMORY_PRESSURE_WATCH': '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@wayland.service/memory.pressure', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'salvatore', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'PATH': '/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/bin:/home/salvatore/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/salvatore-QEMU-Virtual-Machine:@/tmp/.ICE-unix/1806,unix/salvatore-QEMU-Virtual-Machine:/tmp/.ICE-unix/1806', 'XDG_MENU_PREFIX': 'gnome-', 'GNOME_TERMINAL_SCREEN': '/org/gnome/Terminal/screen/4e471731_0f1e_4e7e_947a_54e0a1a302d6', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.66CUK3', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'GNOME_TERMINAL_SERVICE': ':1.124', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'AMENT_PREFIX_PATH': '/home/salvatore/ros2_ws/install/reseq_ros2:/home/salvatore/ros2_ws/install/rplidar_ros:/home/salvatore/ros2_ws/install/reseq_interfaces:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/salvatore/ros2_ws/src/build/reseq_interfaces', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/salvatore/ros2_ws/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/install/reseq_interfaces/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1', 'MEMORY_PRESSURE_WRITE': 'c29tZSAyMDAwMDAgMjAwMDAwMAA=', 'VTE_VERSION': '7600', 'CMAKE_PREFIX_PATH': '/home/salvatore/ros2_ws/install/rplidar_ros:/home/salvatore/ros2_ws/install/reseq_interfaces:/opt/ros/jazzy/opt/sdformat_vendor:/opt/ros/jazzy/opt/gz_math_vendor:/opt/ros/jazzy/opt/gz_utils_vendor:/opt/ros/jazzy/opt/gz_tools_vendor:/opt/ros/jazzy/opt/gz_cmake_vendor:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy'}), 'shell': False}
+[3.498685] (reseq_interfaces) StdoutLine: {'line': b'[  1%] \x1b[34m\x1b[1mGenerating type hashes for ROS interfaces\x1b[0m\n'}
+[3.504581] (reseq_interfaces) StdoutLine: {'line': b'[  1%] Built target ament_cmake_python_copy_reseq_interfaces\n'}
+[3.510083] (-) TimerEvent: {}
+[3.610314] (-) TimerEvent: {}
+[3.667550] (reseq_interfaces) StdoutLine: {'line': b'running egg_info\n'}
+[3.668198] (reseq_interfaces) StdoutLine: {'line': b'creating reseq_interfaces.egg-info\n'}
+[3.680679] (reseq_interfaces) StdoutLine: {'line': b'writing reseq_interfaces.egg-info/PKG-INFO\n'}
+[3.680932] (reseq_interfaces) StdoutLine: {'line': b'writing dependency_links to reseq_interfaces.egg-info/dependency_links.txt\n'}
+[3.681072] (reseq_interfaces) StdoutLine: {'line': b'writing top-level names to reseq_interfaces.egg-info/top_level.txt\n'}
+[3.681194] (reseq_interfaces) StdoutLine: {'line': b"writing manifest file 'reseq_interfaces.egg-info/SOURCES.txt'\n"}
+[3.710402] (-) TimerEvent: {}
+[3.718416] (reseq_interfaces) StdoutLine: {'line': b"reading manifest file 'reseq_interfaces.egg-info/SOURCES.txt'\n"}
+[3.719458] (reseq_interfaces) StdoutLine: {'line': b"writing manifest file 'reseq_interfaces.egg-info/SOURCES.txt'\n"}
+[3.745293] (reseq_interfaces) StdoutLine: {'line': b'[  1%] Built target ament_cmake_python_build_reseq_interfaces_egg\n'}
+[3.812052] (-) TimerEvent: {}
+[3.828522] (reseq_interfaces) StdoutLine: {'line': b'[  1%] Built target reseq_interfaces__rosidl_generator_type_description\n'}
+[3.836259] (reseq_interfaces) StdoutLine: {'line': b'[  2%] \x1b[34m\x1b[1mGenerating C code for ROS interfaces\x1b[0m\n'}
+[3.845017] (reseq_interfaces) StdoutLine: {'line': b'[  2%] \x1b[34m\x1b[1mGenerating C++ code for ROS interfaces\x1b[0m\n'}
+[3.912803] (-) TimerEvent: {}
+[4.013023] (-) TimerEvent: {}
+[4.113254] (-) TimerEvent: {}
+[4.213643] (-) TimerEvent: {}
+[4.313925] (-) TimerEvent: {}
+[4.414182] (-) TimerEvent: {}
+[4.514843] (-) TimerEvent: {}
+[4.544344] (reseq_interfaces) StdoutLine: {'line': b'[  2%] Built target reseq_interfaces__cpp\n'}
+[4.614949] (-) TimerEvent: {}
+[4.696632] (reseq_interfaces) StdoutLine: {'line': b'[  3%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/motors__functions.c.o\x1b[0m\n'}
+[4.696923] (reseq_interfaces) StdoutLine: {'line': b'[  4%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/motors__description.c.o\x1b[0m\n'}
+[4.697629] (reseq_interfaces) StdoutLine: {'line': b'[  5%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/motors__type_support.c.o\x1b[0m\n'}
+[4.700139] (reseq_interfaces) StdoutLine: {'line': b'[  6%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/remote__description.c.o\x1b[0m\n'}
+[4.715111] (-) TimerEvent: {}
+[4.753428] (reseq_interfaces) StdoutLine: {'line': b'[  7%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/remote__functions.c.o\x1b[0m\n'}
+[4.759667] (reseq_interfaces) StdoutLine: {'line': b'[  8%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/remote__type_support.c.o\x1b[0m\n'}
+[4.769302] (reseq_interfaces) StdoutLine: {'line': b'[  9%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/end_effector__description.c.o\x1b[0m\n'}
+[4.785577] (reseq_interfaces) StdoutLine: {'line': b'[ 10%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/end_effector__functions.c.o\x1b[0m\n'}
+[4.787128] (reseq_interfaces) StdoutLine: {'line': b'[ 11%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/end_effector__type_support.c.o\x1b[0m\n'}
+[4.796333] (reseq_interfaces) StdoutLine: {'line': b'[ 12%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/detection__description.c.o\x1b[0m\n'}
+[4.807564] (reseq_interfaces) StdoutLine: {'line': b'[ 13%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/detection__functions.c.o\x1b[0m\n'}
+[4.815196] (-) TimerEvent: {}
+[4.836416] (reseq_interfaces) StdoutLine: {'line': b'[ 14%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/detection__type_support.c.o\x1b[0m\n'}
+[4.837631] (reseq_interfaces) StdoutLine: {'line': b'[ 15%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/batch_detections2_d__description.c.o\x1b[0m\n'}
+[4.840233] (reseq_interfaces) StdoutLine: {'line': b'[ 16%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/batch_detections2_d__functions.c.o\x1b[0m\n'}
+[4.859662] (reseq_interfaces) StdoutLine: {'line': b'[ 17%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c.o\x1b[0m\n'}
+[4.872564] (reseq_interfaces) StdoutLine: {'line': b'[ 18%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/set_mode__description.c.o\x1b[0m\n'}
+[4.908079] (reseq_interfaces) StdoutLine: {'line': b'[ 19%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/set_mode__functions.c.o\x1b[0m\n'}
+[4.915286] (-) TimerEvent: {}
+[4.917705] (reseq_interfaces) StdoutLine: {'line': b'[ 20%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/set_mode__type_support.c.o\x1b[0m\n'}
+[4.934627] (reseq_interfaces) StdoutLine: {'line': b'[ 21%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/get_status__description.c.o\x1b[0m\n'}
+[4.946559] (reseq_interfaces) StdoutLine: {'line': b'[ 22%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/get_status__functions.c.o\x1b[0m\n'}
+[4.968297] (reseq_interfaces) StdoutLine: {'line': b'[ 23%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/get_status__type_support.c.o\x1b[0m\n'}
+[4.993615] (reseq_interfaces) StdoutLine: {'line': b'[ 24%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/compute_coordinate__description.c.o\x1b[0m\n'}
+[4.994040] (reseq_interfaces) StdoutLine: {'line': b'[ 25%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/compute_coordinate__functions.c.o\x1b[0m\n'}
+[5.012585] (reseq_interfaces) StdoutLine: {'line': b'[ 25%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/compute_coordinate__type_support.c.o\x1b[0m\n'}
+[5.015453] (-) TimerEvent: {}
+[5.079103] (reseq_interfaces) StdoutLine: {'line': b'[ 26%] \x1b[32m\x1b[1mLinking C shared library libreseq_interfaces__rosidl_generator_c.so\x1b[0m\n'}
+[5.115929] (-) TimerEvent: {}
+[5.120011] (reseq_interfaces) StdoutLine: {'line': b'[ 26%] Built target reseq_interfaces__rosidl_generator_c\n'}
+[5.130921] (reseq_interfaces) StdoutLine: {'line': b'[ 27%] \x1b[34m\x1b[1mGenerating C type support for eProsima Fast-RTPS\x1b[0m\n'}
+[5.131043] (reseq_interfaces) StdoutLine: {'line': b'[ 28%] \x1b[34m\x1b[1mGenerating C type support dispatch for ROS interfaces\x1b[0m\n'}
+[5.134479] (reseq_interfaces) StdoutLine: {'line': b'[ 28%] \x1b[34m\x1b[1mGenerating C introspection for ROS interfaces\x1b[0m\n'}
+[5.136376] (reseq_interfaces) StdoutLine: {'line': b'[ 29%] \x1b[34m\x1b[1mGenerating C++ type support dispatch for ROS interfaces\x1b[0m\n'}
+[5.216019] (-) TimerEvent: {}
+[5.316230] (-) TimerEvent: {}
+[5.416444] (-) TimerEvent: {}
+[5.516648] (-) TimerEvent: {}
+[5.619416] (-) TimerEvent: {}
+[5.719866] (reseq_interfaces) StdoutLine: {'line': b'[ 30%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/msg/motors__type_support.cpp.o\x1b[0m\n'}
+[5.719984] (-) TimerEvent: {}
+[5.800801] (reseq_interfaces) StdoutLine: {'line': b'[ 31%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/msg/remote__type_support.cpp.o\x1b[0m\n'}
+[5.820098] (-) TimerEvent: {}
+[5.840140] (reseq_interfaces) StdoutLine: {'line': b'[ 32%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/msg/end_effector__type_support.cpp.o\x1b[0m\n'}
+[5.881345] (reseq_interfaces) StdoutLine: {'line': b'[ 33%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/msg/detection__type_support.cpp.o\x1b[0m\n'}
+[5.881973] (reseq_interfaces) StdoutLine: {'line': b'[ 34%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/msg/motors__type_support.cpp.o\x1b[0m\n'}
+[5.920196] (-) TimerEvent: {}
+[5.933290] (reseq_interfaces) StdoutLine: {'line': b'[ 35%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/srv/batch_detections2_d__type_support.cpp.o\x1b[0m\n'}
+[5.937003] (reseq_interfaces) StdoutLine: {'line': b'[ 36%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/motors__type_support.c.o\x1b[0m\n'}
+[5.970197] (reseq_interfaces) StdoutLine: {'line': b'[ 37%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/remote__type_support.c.o\x1b[0m\n'}
+[5.982534] (reseq_interfaces) StdoutLine: {'line': b'[ 38%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/srv/set_mode__type_support.cpp.o\x1b[0m\n'}
+[6.016916] (reseq_interfaces) StdoutLine: {'line': b'[ 39%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/msg/detail/motors__type_support_c.cpp.o\x1b[0m\n'}
+[6.020284] (-) TimerEvent: {}
+[6.021203] (reseq_interfaces) StdoutLine: {'line': b'[ 40%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/end_effector__type_support.c.o\x1b[0m\n'}
+[6.028530] (reseq_interfaces) StdoutLine: {'line': b'[ 41%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/srv/get_status__type_support.cpp.o\x1b[0m\n'}
+[6.056730] (reseq_interfaces) StdoutLine: {'line': b'[ 42%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/detection__type_support.c.o\x1b[0m\n'}
+[6.080198] (reseq_interfaces) StdoutLine: {'line': b'[ 43%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/srv/compute_coordinate__type_support.cpp.o\x1b[0m\n'}
+[6.096609] (reseq_interfaces) StdoutLine: {'line': b'[ 44%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c.o\x1b[0m\n'}
+[6.119622] (reseq_interfaces) StdoutLine: {'line': b'[ 45%] \x1b[32m\x1b[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_c.so\x1b[0m\n'}
+[6.120721] (-) TimerEvent: {}
+[6.166378] (reseq_interfaces) StdoutLine: {'line': b'[ 46%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/set_mode__type_support.c.o\x1b[0m\n'}
+[6.179022] (reseq_interfaces) StdoutLine: {'line': b'[ 46%] Built target reseq_interfaces__rosidl_typesupport_c\n'}
+[6.187042] (reseq_interfaces) StdoutLine: {'line': b'[ 47%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/get_status__type_support.c.o\x1b[0m\n'}
+[6.206575] (reseq_interfaces) StdoutLine: {'line': b'[ 48%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/msg/detail/remote__type_support_c.cpp.o\x1b[0m\n'}
+[6.226951] (-) TimerEvent: {}
+[6.244467] (reseq_interfaces) StdoutLine: {'line': b'[ 49%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/compute_coordinate__type_support.c.o\x1b[0m\n'}
+[6.280841] (reseq_interfaces) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/msg/remote__type_support.cpp.o\x1b[0m\n'}
+[6.322627] (reseq_interfaces) StdoutLine: {'line': b'[ 51%] \x1b[32m\x1b[1mLinking C shared library libreseq_interfaces__rosidl_typesupport_introspection_c.so\x1b[0m\n'}
+[6.327030] (-) TimerEvent: {}
+[6.399629] (reseq_interfaces) StdoutLine: {'line': b'[ 51%] Built target reseq_interfaces__rosidl_typesupport_introspection_c\n'}
+[6.411254] (reseq_interfaces) StdoutLine: {'line': b'[ 52%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/msg/end_effector__type_support.cpp.o\x1b[0m\n'}
+[6.427128] (-) TimerEvent: {}
+[6.498776] (reseq_interfaces) StdoutLine: {'line': b'[ 53%] \x1b[34m\x1b[1mGenerating C++ type support for eProsima Fast-RTPS\x1b[0m\n'}
+[6.527216] (-) TimerEvent: {}
+[6.567483] (reseq_interfaces) StdoutLine: {'line': b'[ 54%] \x1b[34m\x1b[1mGenerating C++ introspection for ROS interfaces\x1b[0m\n'}
+[6.627310] (-) TimerEvent: {}
+[6.705905] (reseq_interfaces) StdoutLine: {'line': b'[ 55%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/msg/detail/end_effector__type_support_c.cpp.o\x1b[0m\n'}
+[6.714382] (reseq_interfaces) StdoutLine: {'line': b'[ 55%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/msg/detection__type_support.cpp.o\x1b[0m\n'}
+[6.728170] (-) TimerEvent: {}
+[6.828351] (-) TimerEvent: {}
+[6.932157] (-) TimerEvent: {}
+[6.951046] (reseq_interfaces) StdoutLine: {'line': b'[ 56%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/srv/batch_detections2_d__type_support.cpp.o\x1b[0m\n'}
+[7.032260] (-) TimerEvent: {}
+[7.132475] (-) TimerEvent: {}
+[7.198224] (reseq_interfaces) StdoutLine: {'line': b'[ 57%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/msg/detail/detection__type_support_c.cpp.o\x1b[0m\n'}
+[7.232569] (-) TimerEvent: {}
+[7.291357] (reseq_interfaces) StdoutLine: {'line': b'[ 58%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/msg/detail/motors__type_support.cpp.o\x1b[0m\n'}
+[7.332662] (-) TimerEvent: {}
+[7.386422] (reseq_interfaces) StdoutLine: {'line': b'[ 59%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/srv/set_mode__type_support.cpp.o\x1b[0m\n'}
+[7.440899] (-) TimerEvent: {}
+[7.541121] (-) TimerEvent: {}
+[7.614509] (reseq_interfaces) StdoutLine: {'line': b'[ 60%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/msg/detail/remote__type_support.cpp.o\x1b[0m\n'}
+[7.615348] (reseq_interfaces) StdoutLine: {'line': b'[ 61%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support_c.cpp.o\x1b[0m\n'}
+[7.619603] (reseq_interfaces) StdoutLine: {'line': b'[ 62%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/msg/detail/dds_fastrtps/motors__type_support.cpp.o\x1b[0m\n'}
+[7.641214] (-) TimerEvent: {}
+[7.741318] (reseq_interfaces) StdoutLine: {'line': b'[ 63%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/srv/get_status__type_support.cpp.o\x1b[0m\n'}
+[7.741460] (-) TimerEvent: {}
+[7.841625] (-) TimerEvent: {}
+[7.942579] (-) TimerEvent: {}
+[8.004943] (reseq_interfaces) StdoutLine: {'line': b'[ 64%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/msg/detail/dds_fastrtps/remote__type_support.cpp.o\x1b[0m\n'}
+[8.030895] (reseq_interfaces) StdoutLine: {'line': b'[ 65%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/msg/detail/end_effector__type_support.cpp.o\x1b[0m\n'}
+[8.043630] (-) TimerEvent: {}
+[8.081260] (reseq_interfaces) StdoutLine: {'line': b'[ 66%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/srv/compute_coordinate__type_support.cpp.o\x1b[0m\n'}
+[8.143732] (-) TimerEvent: {}
+[8.150117] (reseq_interfaces) StdoutLine: {'line': b'[ 67%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/srv/detail/set_mode__type_support_c.cpp.o\x1b[0m\n'}
+[8.244101] (-) TimerEvent: {}
+[8.344332] (-) TimerEvent: {}
+[8.345500] (reseq_interfaces) StdoutLine: {'line': b'[ 68%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/msg/detail/detection__type_support.cpp.o\x1b[0m\n'}
+[8.399236] (reseq_interfaces) StdoutLine: {'line': b'[ 69%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/msg/detail/dds_fastrtps/end_effector__type_support.cpp.o\x1b[0m\n'}
+[8.444441] (-) TimerEvent: {}
+[8.544675] (-) TimerEvent: {}
+[8.584428] (reseq_interfaces) StdoutLine: {'line': b'[ 70%] \x1b[32m\x1b[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_cpp.so\x1b[0m\n'}
+[8.626591] (reseq_interfaces) StdoutLine: {'line': b'[ 71%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/srv/detail/batch_detections2_d__type_support.cpp.o\x1b[0m\n'}
+[8.644874] (-) TimerEvent: {}
+[8.646971] (reseq_interfaces) StdoutLine: {'line': b'[ 72%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/srv/detail/get_status__type_support_c.cpp.o\x1b[0m\n'}
+[8.659397] (reseq_interfaces) StdoutLine: {'line': b'[ 72%] Built target reseq_interfaces__rosidl_typesupport_cpp\n'}
+[8.666239] (reseq_interfaces) StdoutLine: {'line': b'[ 73%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/srv/detail/compute_coordinate__type_support_c.cpp.o\x1b[0m\n'}
+[8.744970] (-) TimerEvent: {}
+[8.845870] (-) TimerEvent: {}
+[8.852890] (reseq_interfaces) StdoutLine: {'line': b'[ 74%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/msg/detail/dds_fastrtps/detection__type_support.cpp.o\x1b[0m\n'}
+[8.945967] (-) TimerEvent: {}
+[9.048033] (-) TimerEvent: {}
+[9.126293] (reseq_interfaces) StdoutLine: {'line': b'[ 75%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/srv/detail/set_mode__type_support.cpp.o\x1b[0m\n'}
+[9.149478] (-) TimerEvent: {}
+[9.158255] (reseq_interfaces) StdoutLine: {'line': b'[ 76%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/srv/detail/dds_fastrtps/batch_detections2_d__type_support.cpp.o\x1b[0m\n'}
+[9.214220] (reseq_interfaces) StdoutLine: {'line': b'[ 77%] \x1b[32m\x1b[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_fastrtps_c.so\x1b[0m\n'}
+[9.249587] (-) TimerEvent: {}
+[9.301599] (reseq_interfaces) StdoutLine: {'line': b'[ 77%] Built target reseq_interfaces__rosidl_typesupport_fastrtps_c\n'}
+[9.307222] (reseq_interfaces) StdoutLine: {'line': b'[ 78%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/srv/detail/dds_fastrtps/set_mode__type_support.cpp.o\x1b[0m\n'}
+[9.350900] (-) TimerEvent: {}
+[9.379873] (reseq_interfaces) StdoutLine: {'line': b'[ 79%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/srv/detail/dds_fastrtps/get_status__type_support.cpp.o\x1b[0m\n'}
+[9.450999] (-) TimerEvent: {}
+[9.525357] (reseq_interfaces) StdoutLine: {'line': b'[ 80%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/srv/detail/get_status__type_support.cpp.o\x1b[0m\n'}
+[9.551151] (-) TimerEvent: {}
+[9.651370] (-) TimerEvent: {}
+[9.751611] (-) TimerEvent: {}
+[9.851842] (-) TimerEvent: {}
+[9.894082] (reseq_interfaces) StdoutLine: {'line': b'[ 81%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/srv/detail/compute_coordinate__type_support.cpp.o\x1b[0m\n'}
+[9.918467] (reseq_interfaces) StdoutLine: {'line': b'[ 82%] \x1b[32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/srv/detail/dds_fastrtps/compute_coordinate__type_support.cpp.o\x1b[0m\n'}
+[9.951949] (-) TimerEvent: {}
+[10.056568] (-) TimerEvent: {}
+[10.165509] (-) TimerEvent: {}
+[10.265730] (-) TimerEvent: {}
+[10.322309] (reseq_interfaces) StdoutLine: {'line': b'[ 83%] \x1b[32m\x1b[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_introspection_cpp.so\x1b[0m\n'}
+[10.365805] (-) TimerEvent: {}
+[10.401067] (reseq_interfaces) StdoutLine: {'line': b'[ 83%] Built target reseq_interfaces__rosidl_typesupport_introspection_cpp\n'}
+[10.431523] (reseq_interfaces) StdoutLine: {'line': b'[ 84%] \x1b[32m\x1b[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_fastrtps_cpp.so\x1b[0m\n'}
+[10.465912] (-) TimerEvent: {}
+[10.514401] (reseq_interfaces) StdoutLine: {'line': b'[ 84%] Built target reseq_interfaces__rosidl_typesupport_fastrtps_cpp\n'}
+[10.529482] (reseq_interfaces) StdoutLine: {'line': b'[ 84%] Built target reseq_interfaces\n'}
+[10.544360] (reseq_interfaces) StdoutLine: {'line': b'[ 85%] \x1b[34m\x1b[1mGenerating Python code for ROS interfaces\x1b[0m\n'}
+[10.566046] (-) TimerEvent: {}
+[10.666303] (-) TimerEvent: {}
+[10.766647] (-) TimerEvent: {}
+[10.866999] (-) TimerEvent: {}
+[10.967203] (-) TimerEvent: {}
+[11.067440] (-) TimerEvent: {}
+[11.167656] (-) TimerEvent: {}
+[11.267981] (-) TimerEvent: {}
+[11.368227] (-) TimerEvent: {}
+[11.468697] (-) TimerEvent: {}
+[11.569494] (-) TimerEvent: {}
+[11.618999] (reseq_interfaces) StdoutLine: {'line': b'[ 85%] Built target reseq_interfaces__py\n'}
+[11.634298] (reseq_interfaces) StdoutLine: {'line': b'[ 86%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/msg/_motors_s.c.o\x1b[0m\n'}
+[11.634544] (reseq_interfaces) StdoutLine: {'line': b'[ 87%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/msg/_end_effector_s.c.o\x1b[0m\n'}
+[11.639644] (reseq_interfaces) StdoutLine: {'line': b'[ 88%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/msg/_remote_s.c.o\x1b[0m\n'}
+[11.639770] (reseq_interfaces) StdoutLine: {'line': b'[ 89%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/msg/_detection_s.c.o\x1b[0m\n'}
+[11.670871] (-) TimerEvent: {}
+[11.771232] (-) TimerEvent: {}
+[11.800732] (reseq_interfaces) StdoutLine: {'line': b'[ 90%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/srv/_batch_detections2_d_s.c.o\x1b[0m\n'}
+[11.812145] (reseq_interfaces) StdoutLine: {'line': b'[ 91%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/srv/_set_mode_s.c.o\x1b[0m\n'}
+[11.821550] (reseq_interfaces) StdoutLine: {'line': b'[ 92%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/srv/_get_status_s.c.o\x1b[0m\n'}
+[11.831147] (reseq_interfaces) StdoutLine: {'line': b'[ 93%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/srv/_compute_coordinate_s.c.o\x1b[0m\n'}
+[11.871331] (-) TimerEvent: {}
+[11.974958] (-) TimerEvent: {}
+[11.994951] (reseq_interfaces) StdoutLine: {'line': b'[ 94%] \x1b[32m\x1b[1mLinking C shared library libreseq_interfaces__rosidl_generator_py.so\x1b[0m\n'}
+[12.038392] (reseq_interfaces) StdoutLine: {'line': b'[ 94%] Built target reseq_interfaces__rosidl_generator_py\n'}
+[12.052837] (reseq_interfaces) StdoutLine: {'line': b'[ 95%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces_s__rosidl_typesupport_c.dir/rosidl_generator_py/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_c.c.o\x1b[0m\n'}
+[12.052968] (reseq_interfaces) StdoutLine: {'line': b'[ 96%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.dir/rosidl_generator_py/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o\x1b[0m\n'}
+[12.053646] (reseq_interfaces) StdoutLine: {'line': b'[ 97%] \x1b[32mBuilding C object CMakeFiles/reseq_interfaces_s__rosidl_typesupport_introspection_c.dir/rosidl_generator_py/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o\x1b[0m\n'}
+[12.075485] (-) TimerEvent: {}
+[12.175806] (-) TimerEvent: {}
+[12.183551] (reseq_interfaces) StdoutLine: {'line': b'[ 98%] \x1b[32m\x1b[1mLinking C shared module rosidl_generator_py/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.so\x1b[0m\n'}
+[12.189800] (reseq_interfaces) StdoutLine: {'line': b'[ 99%] \x1b[32m\x1b[1mLinking C shared module rosidl_generator_py/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_c.so\x1b[0m\n'}
+[12.198940] (reseq_interfaces) StdoutLine: {'line': b'[100%] \x1b[32m\x1b[1mLinking C shared module rosidl_generator_py/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_introspection_c.so\x1b[0m\n'}
+[12.213591] (reseq_interfaces) StdoutLine: {'line': b'[100%] Built target reseq_interfaces_s__rosidl_typesupport_fastrtps_c\n'}
+[12.214415] (reseq_interfaces) StdoutLine: {'line': b'[100%] Built target reseq_interfaces_s__rosidl_typesupport_c\n'}
+[12.229042] (reseq_interfaces) StdoutLine: {'line': b'[100%] Built target reseq_interfaces_s__rosidl_typesupport_introspection_c\n'}
+[12.239531] (reseq_interfaces) CommandEnded: {'returncode': 0}
+[12.240183] (reseq_interfaces) JobProgress: {'identifier': 'reseq_interfaces', 'progress': 'install'}
+[12.246702] (reseq_interfaces) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/salvatore/ros2_ws/src/build/reseq_interfaces'], 'cwd': '/home/salvatore/ros2_ws/src/build/reseq_interfaces', 'env': OrderedDict({'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'salvatore', 'GZ_CONFIG_PATH': '/opt/ros/jazzy/opt/sdformat_vendor/share/gz', 'XDG_SESSION_TYPE': 'wayland', 'CLUTTER_DISABLE_MIPMAPPED_TEXT': '1', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/salvatore/ros2_ws/install/reseq_interfaces/lib:/opt/ros/jazzy/opt/sdformat_vendor/lib:/opt/ros/jazzy/opt/rviz_ogre_vendor/lib:/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/opt/gz_math_vendor/lib:/opt/ros/jazzy/opt/gz_utils_vendor/lib:/opt/ros/jazzy/opt/gz_tools_vendor/lib:/opt/ros/jazzy/opt/gz_cmake_vendor/lib:/opt/ros/jazzy/lib', 'HOME': '/home/salvatore', 'OLDPWD': '/home/salvatore/ros2_ws', 'DESKTOP_SESSION': 'ubuntu', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'SYSTEMD_EXEC_PID': '1844', 'GSM_SKIP_SSH_AGENT_WORKAROUND': 'true', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'DEBUGINFOD_URLS': 'https://debuginfod.ubuntu.com', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'COLCON_PREFIX_PATH': '/home/salvatore/ros2_ws/install', 'ROS_DISTRO': 'jazzy', 'LOGNAME': 'salvatore', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'MEMORY_PRESSURE_WATCH': '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@wayland.service/memory.pressure', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'salvatore', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'PATH': '/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/bin:/home/salvatore/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/salvatore-QEMU-Virtual-Machine:@/tmp/.ICE-unix/1806,unix/salvatore-QEMU-Virtual-Machine:/tmp/.ICE-unix/1806', 'XDG_MENU_PREFIX': 'gnome-', 'GNOME_TERMINAL_SCREEN': '/org/gnome/Terminal/screen/4e471731_0f1e_4e7e_947a_54e0a1a302d6', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.66CUK3', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'GNOME_TERMINAL_SERVICE': ':1.124', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'AMENT_PREFIX_PATH': '/home/salvatore/ros2_ws/install/reseq_ros2:/home/salvatore/ros2_ws/install/rplidar_ros:/home/salvatore/ros2_ws/install/reseq_interfaces:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/salvatore/ros2_ws/src/build/reseq_interfaces', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/salvatore/ros2_ws/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/install/reseq_interfaces/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1', 'MEMORY_PRESSURE_WRITE': 'c29tZSAyMDAwMDAgMjAwMDAwMAA=', 'VTE_VERSION': '7600', 'CMAKE_PREFIX_PATH': '/home/salvatore/ros2_ws/install/rplidar_ros:/home/salvatore/ros2_ws/install/reseq_interfaces:/opt/ros/jazzy/opt/sdformat_vendor:/opt/ros/jazzy/opt/gz_math_vendor:/opt/ros/jazzy/opt/gz_utils_vendor:/opt/ros/jazzy/opt/gz_tools_vendor:/opt/ros/jazzy/opt/gz_cmake_vendor:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy'}), 'shell': False}
+[12.252481] (reseq_interfaces) StdoutLine: {'line': b'-- Install configuration: ""\n'}
+[12.252711] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/ament_index/resource_index/rosidl_interfaces/reseq_interfaces\n'}
+[12.253271] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Motors.json\n'}
+[12.253327] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Remote.json\n'}
+[12.253487] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/EndEffector.json\n'}
+[12.253536] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Detection.json\n'}
+[12.253570] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/BatchDetections2D.json\n'}
+[12.253612] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/SetMode.json\n'}
+[12.253663] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/GetStatus.json\n'}
+[12.253865] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/ComputeCoordinate.json\n'}
+[12.254053] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces\n'}
+[12.254173] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv\n'}
+[12.254216] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail\n'}
+[12.254270] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.c\n'}
+[12.254320] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__functions.h\n'}
+[12.254544] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__description.c\n'}
+[12.254627] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__functions.c\n'}
+[12.254666] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__functions.h\n'}
+[12.254717] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c\n'}
+[12.254803] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.c\n'}
+[12.254836] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__description.c\n'}
+[12.254868] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__struct.h\n'}
+[12.255007] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.c\n'}
+[12.255205] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.h\n'}
+[12.255258] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.h\n'}
+[12.255308] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__functions.h\n'}
+[12.255357] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.h\n'}
+[12.255394] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__struct.h\n'}
+[12.255449] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__description.c\n'}
+[12.255633] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__description.c\n'}
+[12.255818] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__functions.c\n'}
+[12.255924] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__functions.h\n'}
+[12.255981] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__functions.c\n'}
+[12.256042] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__struct.h\n'}
+[12.256104] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.h\n'}
+[12.256161] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__struct.h\n'}
+[12.256218] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__functions.c\n'}
+[12.256436] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/batch_detections2_d.h\n'}
+[12.256493] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/get_status.h\n'}
+[12.256542] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/compute_coordinate.h\n'}
+[12.256612] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/set_mode.h\n'}
+[12.256650] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg\n'}
+[12.256686] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail\n'}
+[12.256720] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__struct.h\n'}
+[12.256803] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.h\n'}
+[12.256835] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__functions.c\n'}
+[12.256867] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.c\n'}
+[12.256898] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__description.c\n'}
+[12.256934] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.h\n'}
+[12.256969] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__description.c\n'}
+[12.257394] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__description.c\n'}
+[12.257575] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.h\n'}
+[12.258831] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.c\n'}
+[12.258906] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.h\n'}
+[12.258948] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.c\n'}
+[12.258982] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__functions.c\n'}
+[12.259017] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__functions.h\n'}
+[12.259056] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__functions.c\n'}
+[12.259088] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.c\n'}
+[12.259132] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__struct.h\n'}
+[12.259169] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__functions.c\n'}
+[12.259207] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__functions.h\n'}
+[12.259246] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__description.c\n'}
+[12.259282] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__functions.h\n'}
+[12.259318] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__struct.h\n'}
+[12.259354] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__functions.h\n'}
+[12.259389] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__struct.h\n'}
+[12.259424] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detection.h\n'}
+[12.259458] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_generator_c__visibility_control.h\n'}
+[12.259577] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/end_effector.h\n'}
+[12.259613] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/remote.h\n'}
+[12.259647] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/motors.h\n'}
+[12.259679] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/library_path.sh\n'}
+[12.259712] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/library_path.dsv\n'}
+[12.259830] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_generator_c.so\n'}
+[12.259870] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_generator_c.so" to ""\n'}
+[12.259910] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces\n'}
+[12.259946] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv\n'}
+[12.260021] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail\n'}
+[12.260086] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_fastrtps_c.h\n'}
+[12.260122] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_fastrtps_c.h\n'}
+[12.260157] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_fastrtps_c.h\n'}
+[12.260280] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_fastrtps_c.h\n'}
+[12.260356] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg\n'}
+[12.260408] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail\n'}
+[12.260444] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__rosidl_typesupport_fastrtps_c.h\n'}
+[12.260786] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_fastrtps_c.h\n'}
+[12.260847] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__rosidl_typesupport_fastrtps_c.h\n'}
+[12.260945] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__rosidl_typesupport_fastrtps_c.h\n'}
+[12.261235] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h\n'}
+[12.261284] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_fastrtps_c.so\n'}
+[12.261346] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_fastrtps_c.so" to ""\n'}
+[12.261422] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces\n'}
+[12.261463] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv\n'}
+[12.261507] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail\n'}
+[12.261676] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.c\n'}
+[12.261719] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_introspection_c.h\n'}
+[12.261888] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c\n'}
+[12.262083] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.c\n'}
+[12.262131] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.c\n'}
+[12.262304] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_introspection_c.h\n'}
+[12.262481] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_introspection_c.h\n'}
+[12.262534] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_introspection_c.h\n'}
+[12.262632] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg\n'}
+[12.262706] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail\n'}
+[12.262839] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.c\n'}
+[12.262899] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_introspection_c.h\n'}
+[12.263112] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.c\n'}
+[12.263215] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__rosidl_typesupport_introspection_c.h\n'}
+[12.263278] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.c\n'}
+[12.263318] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.c\n'}
+[12.263461] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__rosidl_typesupport_introspection_c.h\n'}
+[12.263538] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__rosidl_typesupport_introspection_c.h\n'}
+[12.263589] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h\n'}
+[12.263638] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_introspection_c.so\n'}
+[12.263681] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_introspection_c.so" to ""\n'}
+[12.263827] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_c.so\n'}
+[12.263902] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_c.so" to ""\n'}
+[12.264062] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces\n'}
+[12.264172] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv\n'}
+[12.264228] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail\n'}
+[12.264287] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__traits.hpp\n'}
+[12.264345] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.hpp\n'}
+[12.264525] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__builder.hpp\n'}
+[12.264716] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__struct.hpp\n'}
+[12.264958] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.hpp\n'}
+[12.265026] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__builder.hpp\n'}
+[12.265134] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__struct.hpp\n'}
+[12.265292] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__builder.hpp\n'}
+[12.265338] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__traits.hpp\n'}
+[12.265372] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.hpp\n'}
+[12.265405] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__builder.hpp\n'}
+[12.265449] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.hpp\n'}
+[12.265649] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__struct.hpp\n'}
+[12.265692] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__traits.hpp\n'}
+[12.265841] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__traits.hpp\n'}
+[12.265909] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__struct.hpp\n'}
+[12.265948] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/compute_coordinate.hpp\n'}
+[12.266004] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/batch_detections2_d.hpp\n'}
+[12.266061] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/get_status.hpp\n'}
+[12.266129] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/set_mode.hpp\n'}
+[12.266168] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg\n'}
+[12.266203] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp\n'}
+[12.266250] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail\n'}
+[12.266297] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.hpp\n'}
+[12.266336] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__builder.hpp\n'}
+[12.266470] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.hpp\n'}
+[12.266596] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__struct.hpp\n'}
+[12.266636] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__traits.hpp\n'}
+[12.266669] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__struct.hpp\n'}
+[12.266709] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__builder.hpp\n'}
+[12.266777] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__traits.hpp\n'}
+[12.266810] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__struct.hpp\n'}
+[12.266842] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__traits.hpp\n'}
+[12.266874] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__traits.hpp\n'}
+[12.266905] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.hpp\n'}
+[12.266937] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__builder.hpp\n'}
+[12.266972] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__struct.hpp\n'}
+[12.267062] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__builder.hpp\n'}
+[12.267119] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.hpp\n'}
+[12.267167] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detection.hpp\n'}
+[12.267201] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/end_effector.hpp\n'}
+[12.267235] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/remote.hpp\n'}
+[12.267268] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/motors.hpp\n'}
+[12.267421] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces\n'}
+[12.267481] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv\n'}
+[12.267532] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail\n'}
+[12.267590] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[12.267660] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/dds_fastrtps\n'}
+[12.267723] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[12.267884] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[12.267984] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[12.268036] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg\n'}
+[12.268120] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h\n'}
+[12.268250] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail\n'}
+[12.268291] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[12.268326] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/dds_fastrtps\n'}
+[12.268361] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[12.268686] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[12.268723] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[12.268827] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_fastrtps_cpp.so\n'}
+[12.268862] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_fastrtps_cpp.so" to ""\n'}
+[12.268896] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces\n'}
+[12.268928] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv\n'}
+[12.268965] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail\n'}
+[12.268998] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_introspection_cpp.hpp\n'}
+[12.269030] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_introspection_cpp.hpp\n'}
+[12.269062] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.cpp\n'}
+[12.269094] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_introspection_cpp.hpp\n'}
+[12.269128] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.cpp\n'}
+[12.269167] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.cpp\n'}
+[12.269203] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.cpp\n'}
+[12.269288] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_introspection_cpp.hpp\n'}
+[12.269321] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg\n'}
+[12.269354] (reseq_interfaces) StdoutLine: {'line': b'-- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail\n'}
+[12.269386] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__rosidl_typesupport_introspection_cpp.hpp\n'}
+[12.269418] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.cpp\n'}
+[12.269451] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.cpp\n'}
+[12.269483] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__rosidl_typesupport_introspection_cpp.hpp\n'}
+[12.269515] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_introspection_cpp.hpp\n'}
+[12.269547] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__rosidl_typesupport_introspection_cpp.hpp\n'}
+[12.269584] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.cpp\n'}
+[12.269621] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.cpp\n'}
+[12.269666] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_introspection_cpp.so\n'}
+[12.269728] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_introspection_cpp.so" to ""\n'}
+[12.269890] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_cpp.so\n'}
+[12.270113] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_cpp.so" to ""\n'}
+[12.270333] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/pythonpath.sh\n'}
+[12.270425] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/pythonpath.dsv\n'}
+[12.270464] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info\n'}
+[12.270504] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info/dependency_links.txt\n'}
+[12.270575] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info/SOURCES.txt\n'}
+[12.270613] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info/PKG-INFO\n'}
+[12.270650] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info/top_level.txt\n'}
+[12.270696] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces\n'}
+[12.270832] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.so\n'}
+[12.271176] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_c.c\n'}
+[12.271228] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv\n'}
+[12.271274] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_set_mode.py\n'}
+[12.271372] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_compute_coordinate_s.c\n'}
+[12.271420] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_get_status_s.c\n'}
+[12.271466] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_batch_detections2_d.py\n'}
+[12.271541] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_get_status.py\n'}
+[12.271671] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_set_mode_s.c\n'}
+[12.271773] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_batch_detections2_d_s.c\n'}
+[12.271815] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/__init__.py\n'}
+[12.271858] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_compute_coordinate.py\n'}
+[12.271907] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_introspection_c.so\n'}
+[12.271952] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/__init__.py\n'}
+[12.271989] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_c.so\n'}
+[12.272030] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c\n'}
+[12.272100] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_introspection_c.c\n'}
+[12.272144] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg\n'}
+[12.272195] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_remote_s.c\n'}
+[12.272242] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_motors.py\n'}
+[12.272479] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_end_effector.py\n'}
+[12.272546] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_detection_s.c\n'}
+[12.272584] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_detection.py\n'}
+[12.272618] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_end_effector_s.c\n'}
+[12.272672] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_remote.py\n'}
+[12.272705] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/__init__.py\n'}
+[12.272818] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_motors_s.c\n'}
+[12.275902] (-) TimerEvent: {}
+[12.323403] (reseq_interfaces) StdoutLine: {'line': b"Listing '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces'...\n"}
+[12.323521] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/__init__.py'...\n"}
+[12.323562] (reseq_interfaces) StdoutLine: {'line': b"Listing '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg'...\n"}
+[12.323598] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/__init__.py'...\n"}
+[12.323632] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_detection.py'...\n"}
+[12.323665] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_end_effector.py'...\n"}
+[12.323704] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_motors.py'...\n"}
+[12.323866] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_remote.py'...\n"}
+[12.323968] (reseq_interfaces) StdoutLine: {'line': b"Listing '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv'...\n"}
+[12.324008] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/__init__.py'...\n"}
+[12.324049] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_batch_detections2_d.py'...\n"}
+[12.324083] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_compute_coordinate.py'...\n"}
+[12.324116] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_get_status.py'...\n"}
+[12.324149] (reseq_interfaces) StdoutLine: {'line': b"Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_set_mode.py'...\n"}
+[12.329316] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.so\n'}
+[12.329631] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.so" to ""\n'}
+[12.329961] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_introspection_c.so\n'}
+[12.330096] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_introspection_c.so" to ""\n'}
+[12.330305] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_c.so\n'}
+[12.330514] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_c.so" to ""\n'}
+[12.330697] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_generator_py.so\n'}
+[12.331087] (reseq_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_generator_py.so" to ""\n'}
+[12.331155] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Motors.idl\n'}
+[12.331304] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Remote.idl\n'}
+[12.331367] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/EndEffector.idl\n'}
+[12.331523] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Detection.idl\n'}
+[12.331584] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/BatchDetections2D.idl\n'}
+[12.331634] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/SetMode.idl\n'}
+[12.331892] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/GetStatus.idl\n'}
+[12.331942] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/ComputeCoordinate.idl\n'}
+[12.331990] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Motors.msg\n'}
+[12.332116] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Remote.msg\n'}
+[12.332172] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/EndEffector.msg\n'}
+[12.332252] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Detection.msg\n'}
+[12.332346] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/BatchDetections2D.srv\n'}
+[12.332388] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/SetMode.srv\n'}
+[12.332463] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/GetStatus.srv\n'}
+[12.332543] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/ComputeCoordinate.srv\n'}
+[12.332734] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/ament_index/resource_index/package_run_dependencies/reseq_interfaces\n'}
+[12.332960] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/ament_index/resource_index/parent_prefix_path/reseq_interfaces\n'}
+[12.333000] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/ament_prefix_path.sh\n'}
+[12.333035] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/ament_prefix_path.dsv\n'}
+[12.333077] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/path.sh\n'}
+[12.333130] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/path.dsv\n'}
+[12.333292] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/local_setup.bash\n'}
+[12.333340] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/local_setup.sh\n'}
+[12.333380] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/local_setup.zsh\n'}
+[12.333582] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/local_setup.dsv\n'}
+[12.335054] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/package.dsv\n'}
+[12.335134] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/ament_index/resource_index/packages/reseq_interfaces\n'}
+[12.335179] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_cExport.cmake\n'}
+[12.335221] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_cExport-noconfig.cmake\n'}
+[12.335303] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_typesupport_fastrtps_cExport.cmake\n'}
+[12.335421] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake\n'}
+[12.335476] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_introspection_cExport.cmake\n'}
+[12.335555] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake\n'}
+[12.335630] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_cExport.cmake\n'}
+[12.335876] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_cExport-noconfig.cmake\n'}
+[12.336010] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_cppExport.cmake\n'}
+[12.336065] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake\n'}
+[12.336100] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake\n'}
+[12.336150] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_introspection_cppExport.cmake\n'}
+[12.336183] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake\n'}
+[12.336221] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_cppExport.cmake\n'}
+[12.336295] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_cppExport-noconfig.cmake\n'}
+[12.336352] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_pyExport.cmake\n'}
+[12.336529] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_pyExport-noconfig.cmake\n'}
+[12.336570] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/rosidl_cmake-extras.cmake\n'}
+[12.336610] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake\n'}
+[12.336652] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake\n'}
+[12.336696] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/ament_cmake_export_libraries-extras.cmake\n'}
+[12.336956] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/ament_cmake_export_targets-extras.cmake\n'}
+[12.337010] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake\n'}
+[12.337051] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake\n'}
+[12.337089] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfacesConfig.cmake\n'}
+[12.337121] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfacesConfig-version.cmake\n'}
+[12.337154] (reseq_interfaces) StdoutLine: {'line': b'-- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/package.xml\n'}
+[12.343017] (reseq_interfaces) CommandEnded: {'returncode': 0}
+[12.361198] (reseq_interfaces) JobEnded: {'identifier': 'reseq_interfaces', 'rc': 0}
+[12.361492] (reseq_ros2) JobStarted: {'identifier': 'reseq_ros2'}
+[12.375993] (-) TimerEvent: {}
+[12.476166] (-) TimerEvent: {}
+[12.576432] (-) TimerEvent: {}
+[12.676644] (-) TimerEvent: {}
+[12.777024] (-) TimerEvent: {}
+[12.877275] (-) TimerEvent: {}
+[12.968981] (reseq_ros2) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', '../build/reseq_ros2', 'build', '--build-base', '/home/salvatore/ros2_ws/src/build/reseq_ros2/build', 'install', '--record', '/home/salvatore/ros2_ws/src/build/reseq_ros2/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/salvatore/ros2_ws/src/reseq_ros2', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'salvatore', 'GZ_CONFIG_PATH': '/opt/ros/jazzy/opt/sdformat_vendor/share/gz', 'XDG_SESSION_TYPE': 'wayland', 'CLUTTER_DISABLE_MIPMAPPED_TEXT': '1', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib:/home/salvatore/ros2_ws/install/reseq_interfaces/lib:/opt/ros/jazzy/opt/sdformat_vendor/lib:/opt/ros/jazzy/opt/rviz_ogre_vendor/lib:/opt/ros/jazzy/lib/aarch64-linux-gnu:/opt/ros/jazzy/opt/gz_math_vendor/lib:/opt/ros/jazzy/opt/gz_utils_vendor/lib:/opt/ros/jazzy/opt/gz_tools_vendor/lib:/opt/ros/jazzy/opt/gz_cmake_vendor/lib:/opt/ros/jazzy/lib', 'HOME': '/home/salvatore', 'OLDPWD': '/home/salvatore/ros2_ws', 'DESKTOP_SESSION': 'ubuntu', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'SYSTEMD_EXEC_PID': '1844', 'GSM_SKIP_SSH_AGENT_WORKAROUND': 'true', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'DEBUGINFOD_URLS': 'https://debuginfod.ubuntu.com', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'COLCON_PREFIX_PATH': '/home/salvatore/ros2_ws/install', 'ROS_DISTRO': 'jazzy', 'LOGNAME': 'salvatore', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'MEMORY_PRESSURE_WATCH': '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@wayland.service/memory.pressure', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'salvatore', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'PATH': '/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/bin:/home/salvatore/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/salvatore-QEMU-Virtual-Machine:@/tmp/.ICE-unix/1806,unix/salvatore-QEMU-Virtual-Machine:/tmp/.ICE-unix/1806', 'XDG_MENU_PREFIX': 'gnome-', 'GNOME_TERMINAL_SCREEN': '/org/gnome/Terminal/screen/4e471731_0f1e_4e7e_947a_54e0a1a302d6', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.66CUK3', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'GNOME_TERMINAL_SERVICE': ':1.124', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'AMENT_PREFIX_PATH': '/home/salvatore/ros2_ws/src/install/reseq_interfaces:/home/salvatore/ros2_ws/install/reseq_ros2:/home/salvatore/ros2_ws/install/rplidar_ros:/home/salvatore/ros2_ws/install/reseq_interfaces:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/salvatore/ros2_ws/src/build/reseq_ros2', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/salvatore/ros2_ws/src/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages:/home/salvatore/ros2_ws/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/install/reseq_interfaces/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages', 'COLCON': '1', 'MEMORY_PRESSURE_WRITE': 'c29tZSAyMDAwMDAgMjAwMDAwMAA=', 'VTE_VERSION': '7600', 'CMAKE_PREFIX_PATH': '/home/salvatore/ros2_ws/src/install/reseq_interfaces:/home/salvatore/ros2_ws/install/rplidar_ros:/home/salvatore/ros2_ws/install/reseq_interfaces:/opt/ros/jazzy/opt/sdformat_vendor:/opt/ros/jazzy/opt/gz_math_vendor:/opt/ros/jazzy/opt/gz_utils_vendor:/opt/ros/jazzy/opt/gz_tools_vendor:/opt/ros/jazzy/opt/gz_cmake_vendor'}, 'shell': False}
+[12.977410] (-) TimerEvent: {}
+[13.078861] (-) TimerEvent: {}
+[13.154837] (reseq_ros2) StdoutLine: {'line': b'running egg_info\n'}
+[13.155027] (reseq_ros2) StdoutLine: {'line': b'creating ../build/reseq_ros2/reseq_ros2.egg-info\n'}
+[13.167316] (reseq_ros2) StdoutLine: {'line': b'writing ../build/reseq_ros2/reseq_ros2.egg-info/PKG-INFO\n'}
+[13.167596] (reseq_ros2) StdoutLine: {'line': b'writing dependency_links to ../build/reseq_ros2/reseq_ros2.egg-info/dependency_links.txt\n'}
+[13.167993] (reseq_ros2) StdoutLine: {'line': b'writing entry points to ../build/reseq_ros2/reseq_ros2.egg-info/entry_points.txt\n'}
+[13.168067] (reseq_ros2) StdoutLine: {'line': b'writing requirements to ../build/reseq_ros2/reseq_ros2.egg-info/requires.txt\n'}
+[13.168109] (reseq_ros2) StdoutLine: {'line': b'writing top-level names to ../build/reseq_ros2/reseq_ros2.egg-info/top_level.txt\n'}
+[13.168145] (reseq_ros2) StdoutLine: {'line': b"writing manifest file '../build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'\n"}
+[13.178949] (-) TimerEvent: {}
+[13.194372] (reseq_ros2) StdoutLine: {'line': b"reading manifest file '../build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'\n"}
+[13.195369] (reseq_ros2) StdoutLine: {'line': b"writing manifest file '../build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'\n"}
+[13.195490] (reseq_ros2) StdoutLine: {'line': b'running build\n'}
+[13.195724] (reseq_ros2) StdoutLine: {'line': b'running build_py\n'}
+[13.195887] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/build/reseq_ros2/build\n'}
+[13.195947] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib\n'}
+[13.195982] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.196015] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/joint_publisher.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.196883] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/thermal_node.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.197331] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/communication.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.197831] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/remote_test.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.198123] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/emulator_remote_controller.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.198708] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/pivot_controller.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.199175] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/scaler.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.199379] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/__init__.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.199525] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/constants.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.199619] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/feedback_replicator.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.200263] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/agevar.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.200356] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/enea.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[13.200898] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils\n'}
+[13.200951] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/utils/launch_utils.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils\n'}
+[13.201078] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/utils/__init__.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils\n'}
+[13.201229] (reseq_ros2) StdoutLine: {'line': b'running install\n'}
+[13.206872] (reseq_ros2) StdoutLine: {'line': b'running install_lib\n'}
+[13.219720] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.219954] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/joint_publisher.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.220025] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/thermal_node.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.220171] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/communication.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.220375] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils\n'}
+[13.220422] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils/launch_utils.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils\n'}
+[13.220479] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils/__init__.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils\n'}
+[13.220518] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/remote_test.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.220721] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/emulator_remote_controller.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.220908] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/pivot_controller.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.221069] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/scaler.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.221138] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/__init__.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.221190] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/constants.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.221250] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/feedback_replicator.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.221289] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/agevar.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.221500] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/enea.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[13.221563] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/joint_publisher.py to joint_publisher.cpython-312.pyc\n'}
+[13.223336] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/thermal_node.py to thermal_node.cpython-312.pyc\n'}
+[13.223905] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/communication.py to communication.cpython-312.pyc\n'}
+[13.225249] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils/launch_utils.py to launch_utils.cpython-312.pyc\n'}
+[13.225670] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils/__init__.py to __init__.cpython-312.pyc\n'}
+[13.226028] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/remote_test.py to remote_test.cpython-312.pyc\n'}
+[13.226467] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/emulator_remote_controller.py to emulator_remote_controller.cpython-312.pyc\n'}
+[13.227712] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/pivot_controller.py to pivot_controller.cpython-312.pyc\n'}
+[13.228575] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/scaler.py to scaler.cpython-312.pyc\n'}
+[13.229656] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/__init__.py to __init__.cpython-312.pyc\n'}
+[13.229873] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/constants.py to constants.cpython-312.pyc\n'}
+[13.230493] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/feedback_replicator.py to feedback_replicator.cpython-312.pyc\n'}
+[13.231083] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/agevar.py to agevar.cpython-312.pyc\n'}
+[13.232179] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/enea.py to enea.cpython-312.pyc\n'}
+[13.233057] (reseq_ros2) StdoutLine: {'line': b'running install_data\n'}
+[13.233120] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[13.233328] (reseq_ros2) StdoutLine: {'line': b'copying launch/sensors_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[13.233679] (reseq_ros2) StdoutLine: {'line': b'copying launch/apriltag_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[13.233986] (reseq_ros2) StdoutLine: {'line': b'copying launch/digital_twin_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[13.234412] (reseq_ros2) StdoutLine: {'line': b'copying launch/reseq_core_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[13.234876] (reseq_ros2) StdoutLine: {'line': b'copying launch/reseq_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[13.235342] (reseq_ros2) StdoutLine: {'line': b'copying launch/webcam_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[13.235643] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.235691] (reseq_ros2) StdoutLine: {'line': b'copying config/enea_consts.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.236105] (reseq_ros2) StdoutLine: {'line': b'copying config/agevar_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.236510] (reseq_ros2) StdoutLine: {'line': b'copying config/scaler_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.236963] (reseq_ros2) StdoutLine: {'line': b'copying config/agevar_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.237201] (reseq_ros2) StdoutLine: {'line': b'copying config/realsense_rgb_motion.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.237458] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_controllers.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.237593] (reseq_ros2) StdoutLine: {'line': b'copying config/joint_pub_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.237918] (reseq_ros2) StdoutLine: {'line': b'copying config/digital_twin_params_mk1.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.238062] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_mk2_vcan.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.238551] (reseq_ros2) StdoutLine: {'line': b'copying config/apriltag.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.238856] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_mk1_can.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.239181] (reseq_ros2) StdoutLine: {'line': b'copying config/usb_camera.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.239371] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_mk1_vcan.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.239694] (reseq_ros2) StdoutLine: {'line': b'copying config/joint_pub_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.239818] (reseq_ros2) StdoutLine: {'line': b'copying config/scaler_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.240163] (reseq_ros2) StdoutLine: {'line': b'copying config/digital_twin_params_mk2.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.241518] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_mk2_can.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config\n'}
+[13.241585] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[13.241621] (reseq_ros2) StdoutLine: {'line': b'copying scripts/test_can.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[13.241943] (reseq_ros2) StdoutLine: {'line': b'copying scripts/publish_fake_detection.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[13.241999] (reseq_ros2) StdoutLine: {'line': b'copying scripts/generate_configs.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[13.242049] (reseq_ros2) StdoutLine: {'line': b'copying scripts/call_compute_coordinate.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[13.242306] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.242362] (reseq_ros2) StdoutLine: {'line': b'copying description/ros2_control.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.242564] (reseq_ros2) StdoutLine: {'line': b'copying description/reseq_arm_mk1.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.242853] (reseq_ros2) StdoutLine: {'line': b'copying description/reseq_body.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.243112] (reseq_ros2) StdoutLine: {'line': b'copying description/reseq_parameters.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.243360] (reseq_ros2) StdoutLine: {'line': b'copying description/reseq_arm_parameters.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.243572] (reseq_ros2) StdoutLine: {'line': b'copying description/robot.urdf.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.243859] (reseq_ros2) StdoutLine: {'line': b'copying description/lidar.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.244120] (reseq_ros2) StdoutLine: {'line': b'copying description/inertial_macros.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description\n'}
+[13.244271] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[13.244432] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/utils.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[13.244725] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/wheel.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[13.245093] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/chassis.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[13.245480] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/control_wheel.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[13.245766] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/joint.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[13.245978] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/ml-ckpt\n'}
+[13.246217] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/ament_index\n'}
+[13.246265] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/ament_index/resource_index\n'}
+[13.246317] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/ament_index/resource_index/packages\n'}
+[13.246351] (reseq_ros2) StdoutLine: {'line': b'copying resource/reseq_ros2 -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/ament_index/resource_index/packages\n'}
+[13.246515] (reseq_ros2) StdoutLine: {'line': b'copying package.xml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2\n'}
+[13.246565] (reseq_ros2) StdoutLine: {'line': b'running install_egg_info\n'}
+[13.259847] (reseq_ros2) StdoutLine: {'line': b'Copying ../build/reseq_ros2/reseq_ros2.egg-info to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2-0.0.0-py3.12.egg-info\n'}
+[13.260511] (reseq_ros2) StdoutLine: {'line': b'running install_scripts\n'}
+[13.279040] (-) TimerEvent: {}
+[13.352435] (reseq_ros2) StdoutLine: {'line': b'Installing agevar script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.352630] (reseq_ros2) StdoutLine: {'line': b'Installing communication script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.352709] (reseq_ros2) StdoutLine: {'line': b'Installing emulator_remote_controller script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.352900] (reseq_ros2) StdoutLine: {'line': b'Installing enea script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.352989] (reseq_ros2) StdoutLine: {'line': b'Installing feedback_replicator script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.353058] (reseq_ros2) StdoutLine: {'line': b'Installing joint_publisher script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.353143] (reseq_ros2) StdoutLine: {'line': b'Installing pivot_controller script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.353225] (reseq_ros2) StdoutLine: {'line': b'Installing remote_test script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.353260] (reseq_ros2) StdoutLine: {'line': b'Installing scaler script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.353292] (reseq_ros2) StdoutLine: {'line': b'Installing thermal_node script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2\n'}
+[13.353625] (reseq_ros2) StdoutLine: {'line': b"writing list of installed files to '/home/salvatore/ros2_ws/src/build/reseq_ros2/install.log'\n"}
+[13.379166] (-) TimerEvent: {}
+[13.381420] (reseq_ros2) CommandEnded: {'returncode': 0}
+[13.386844] (reseq_ros2) JobEnded: {'identifier': 'reseq_ros2', 'rc': 0}
+[13.387066] (-) EventReactorShutdown: {}

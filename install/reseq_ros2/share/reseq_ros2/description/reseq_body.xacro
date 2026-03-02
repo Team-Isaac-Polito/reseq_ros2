@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <link name="base_link" />
+
+  <joint name="chassis1_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="chassis1_link"/>
+    <!-- leaving 1/3 of the EquivalentWheelDiameter from front (origin is in the center of eq wheel, at the bottom of the chassis) -->
+    <origin xyz="0 0 ${(EquivalentWheelDiameter-2*ChassisTopAndBottomClearance)/2+ChassisTopAndBottomClearance}"/>
+  </joint>
+
+  <!-- Create n_modules modules by recursively calling the loop macro -->
+  <xacro:macro name="loop" params="module n_modules">
+    <xacro:if value="${module &lt; n_modules}">
+      <!-- Create module and following joint -->
+      <xacro:chassis id="${module}"/>
+      <xacro:chassis_joint_factory id="${module + 1}"/>
+      <xacro:loop module="${module + 1}" n_modules="${n_modules}"/>
+    </xacro:if>
+    <xacro:if value="${module == n_modules}">
+      <!-- Create last module -->
+      <xacro:chassis id="${module}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <xacro:loop module="1" n_modules="${NumModules}"/>
+
+</robot>

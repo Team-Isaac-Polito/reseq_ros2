@@ -1,0 +1,495 @@
+[0.006s] Invoking command in '/home/salvatore/ros2_ws/src/build/reseq_interfaces': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/salvatore/ros2_ws/src/reseq_interfaces -DCMAKE_INSTALL_PREFIX=/home/salvatore/ros2_ws/src/install/reseq_interfaces
+[0.148s] -- The C compiler identification is GNU 13.3.0
+[0.272s] -- The CXX compiler identification is GNU 13.3.0
+[0.290s] -- Detecting C compiler ABI info
+[0.368s] -- Detecting C compiler ABI info - done
+[0.377s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.377s] -- Detecting C compile features
+[0.378s] -- Detecting C compile features - done
+[0.388s] -- Detecting CXX compiler ABI info
+[0.472s] -- Detecting CXX compiler ABI info - done
+[0.481s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.481s] -- Detecting CXX compile features
+[0.481s] -- Detecting CXX compile features - done
+[0.488s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.621s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[0.736s] -- Found rosidl_default_generators: 1.6.0 (/opt/ros/jazzy/share/rosidl_default_generators/cmake)
+[0.744s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.801s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.851s] -- Found rosidl_adapter: 4.6.6 (/opt/ros/jazzy/share/rosidl_adapter/cmake)
+[0.855s] -- Found std_msgs: 5.3.6 (/opt/ros/jazzy/share/std_msgs/cmake)
+[0.891s] -- Found sensor_msgs: 5.3.6 (/opt/ros/jazzy/share/sensor_msgs/cmake)
+[0.952s] -- Found vision_msgs: 4.1.1 (/opt/ros/jazzy/share/vision_msgs/cmake)
+[1.592s] -- Found ament_cmake_ros: 0.12.0 (/opt/ros/jazzy/share/ament_cmake_ros/cmake)
+[2.094s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[2.749s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[2.753s] -- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)
+[2.867s] -- Found PythonExtra: /usr/bin/python3  
+[3.259s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter Development NumPy Development.Module Development.Embed 
+[3.336s] -- Found ament_lint_auto: 0.17.3 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+[3.372s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[3.372s] -- Configured cppcheck include dirs: 
+[3.373s] -- Configured cppcheck exclude dirs and/or files: 
+[3.373s] -- Added test 'flake8' to check Python code syntax and style conventions
+[3.374s] -- Configured 'flake8' exclude dirs and/or files: 
+[3.375s] -- Added test 'lint_cmake' to check CMake code style
+[3.376s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[3.379s] -- Added test 'uncrustify' to check C / C++ code style
+[3.379s] -- Configured uncrustify additional arguments: 
+[3.382s] -- Added test 'xmllint' to check XML markup files
+[3.383s] -- Configuring done (3.4s)
+[3.439s] -- Generating done (0.0s)
+[3.451s] -- Build files have been written to: /home/salvatore/ros2_ws/src/build/reseq_interfaces
+[3.460s] Invoked command in '/home/salvatore/ros2_ws/src/build/reseq_interfaces' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/salvatore/ros2_ws/src/reseq_interfaces -DCMAKE_INSTALL_PREFIX=/home/salvatore/ros2_ws/src/install/reseq_interfaces
+[3.460s] Invoking command in '/home/salvatore/ros2_ws/src/build/reseq_interfaces': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/salvatore/ros2_ws/src/build/reseq_interfaces -- -j4 -l4
+[3.499s] [  1%] [34m[1mGenerating type hashes for ROS interfaces[0m
+[3.507s] [  1%] Built target ament_cmake_python_copy_reseq_interfaces
+[3.667s] running egg_info
+[3.668s] creating reseq_interfaces.egg-info
+[3.681s] writing reseq_interfaces.egg-info/PKG-INFO
+[3.681s] writing dependency_links to reseq_interfaces.egg-info/dependency_links.txt
+[3.681s] writing top-level names to reseq_interfaces.egg-info/top_level.txt
+[3.681s] writing manifest file 'reseq_interfaces.egg-info/SOURCES.txt'
+[3.718s] reading manifest file 'reseq_interfaces.egg-info/SOURCES.txt'
+[3.719s] writing manifest file 'reseq_interfaces.egg-info/SOURCES.txt'
+[3.745s] [  1%] Built target ament_cmake_python_build_reseq_interfaces_egg
+[3.828s] [  1%] Built target reseq_interfaces__rosidl_generator_type_description
+[3.836s] [  2%] [34m[1mGenerating C code for ROS interfaces[0m
+[3.845s] [  2%] [34m[1mGenerating C++ code for ROS interfaces[0m
+[4.544s] [  2%] Built target reseq_interfaces__cpp
+[4.697s] [  3%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/motors__functions.c.o[0m
+[4.697s] [  4%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/motors__description.c.o[0m
+[4.697s] [  5%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/motors__type_support.c.o[0m
+[4.700s] [  6%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/remote__description.c.o[0m
+[4.753s] [  7%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/remote__functions.c.o[0m
+[4.760s] [  8%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/remote__type_support.c.o[0m
+[4.769s] [  9%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/end_effector__description.c.o[0m
+[4.785s] [ 10%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/end_effector__functions.c.o[0m
+[4.787s] [ 11%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/end_effector__type_support.c.o[0m
+[4.796s] [ 12%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/detection__description.c.o[0m
+[4.807s] [ 13%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/detection__functions.c.o[0m
+[4.836s] [ 14%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/msg/detail/detection__type_support.c.o[0m
+[4.837s] [ 15%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/batch_detections2_d__description.c.o[0m
+[4.840s] [ 16%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/batch_detections2_d__functions.c.o[0m
+[4.860s] [ 17%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c.o[0m
+[4.872s] [ 18%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/set_mode__description.c.o[0m
+[4.908s] [ 19%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/set_mode__functions.c.o[0m
+[4.918s] [ 20%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/set_mode__type_support.c.o[0m
+[4.934s] [ 21%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/get_status__description.c.o[0m
+[4.946s] [ 22%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/get_status__functions.c.o[0m
+[4.968s] [ 23%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/get_status__type_support.c.o[0m
+[4.993s] [ 24%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/compute_coordinate__description.c.o[0m
+[4.994s] [ 25%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/compute_coordinate__functions.c.o[0m
+[5.012s] [ 25%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_c.dir/rosidl_generator_c/reseq_interfaces/srv/detail/compute_coordinate__type_support.c.o[0m
+[5.079s] [ 26%] [32m[1mLinking C shared library libreseq_interfaces__rosidl_generator_c.so[0m
+[5.120s] [ 26%] Built target reseq_interfaces__rosidl_generator_c
+[5.131s] [ 27%] [34m[1mGenerating C type support for eProsima Fast-RTPS[0m
+[5.131s] [ 28%] [34m[1mGenerating C type support dispatch for ROS interfaces[0m
+[5.134s] [ 28%] [34m[1mGenerating C introspection for ROS interfaces[0m
+[5.136s] [ 29%] [34m[1mGenerating C++ type support dispatch for ROS interfaces[0m
+[5.720s] [ 30%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/msg/motors__type_support.cpp.o[0m
+[5.801s] [ 31%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/msg/remote__type_support.cpp.o[0m
+[5.840s] [ 32%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/msg/end_effector__type_support.cpp.o[0m
+[5.881s] [ 33%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/msg/detection__type_support.cpp.o[0m
+[5.882s] [ 34%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/msg/motors__type_support.cpp.o[0m
+[5.933s] [ 35%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/srv/batch_detections2_d__type_support.cpp.o[0m
+[5.937s] [ 36%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/motors__type_support.c.o[0m
+[5.970s] [ 37%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/remote__type_support.c.o[0m
+[5.982s] [ 38%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/srv/set_mode__type_support.cpp.o[0m
+[6.017s] [ 39%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/msg/detail/motors__type_support_c.cpp.o[0m
+[6.021s] [ 40%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/end_effector__type_support.c.o[0m
+[6.028s] [ 41%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/srv/get_status__type_support.cpp.o[0m
+[6.057s] [ 42%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/msg/detail/detection__type_support.c.o[0m
+[6.080s] [ 43%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/reseq_interfaces/srv/compute_coordinate__type_support.cpp.o[0m
+[6.096s] [ 44%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c.o[0m
+[6.119s] [ 45%] [32m[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_c.so[0m
+[6.166s] [ 46%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/set_mode__type_support.c.o[0m
+[6.179s] [ 46%] Built target reseq_interfaces__rosidl_typesupport_c
+[6.187s] [ 47%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/get_status__type_support.c.o[0m
+[6.206s] [ 48%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/msg/detail/remote__type_support_c.cpp.o[0m
+[6.244s] [ 49%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/reseq_interfaces/srv/detail/compute_coordinate__type_support.c.o[0m
+[6.281s] [ 50%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/msg/remote__type_support.cpp.o[0m
+[6.322s] [ 51%] [32m[1mLinking C shared library libreseq_interfaces__rosidl_typesupport_introspection_c.so[0m
+[6.399s] [ 51%] Built target reseq_interfaces__rosidl_typesupport_introspection_c
+[6.411s] [ 52%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/msg/end_effector__type_support.cpp.o[0m
+[6.499s] [ 53%] [34m[1mGenerating C++ type support for eProsima Fast-RTPS[0m
+[6.567s] [ 54%] [34m[1mGenerating C++ introspection for ROS interfaces[0m
+[6.706s] [ 55%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/msg/detail/end_effector__type_support_c.cpp.o[0m
+[6.714s] [ 55%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/msg/detection__type_support.cpp.o[0m
+[6.951s] [ 56%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/srv/batch_detections2_d__type_support.cpp.o[0m
+[7.198s] [ 57%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/msg/detail/detection__type_support_c.cpp.o[0m
+[7.291s] [ 58%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/msg/detail/motors__type_support.cpp.o[0m
+[7.386s] [ 59%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/srv/set_mode__type_support.cpp.o[0m
+[7.614s] [ 60%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/msg/detail/remote__type_support.cpp.o[0m
+[7.615s] [ 61%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/srv/detail/batch_detections2_d__type_support_c.cpp.o[0m
+[7.619s] [ 62%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/msg/detail/dds_fastrtps/motors__type_support.cpp.o[0m
+[7.741s] [ 63%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/srv/get_status__type_support.cpp.o[0m
+[8.005s] [ 64%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/msg/detail/dds_fastrtps/remote__type_support.cpp.o[0m
+[8.031s] [ 65%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/msg/detail/end_effector__type_support.cpp.o[0m
+[8.081s] [ 66%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/reseq_interfaces/srv/compute_coordinate__type_support.cpp.o[0m
+[8.150s] [ 67%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/srv/detail/set_mode__type_support_c.cpp.o[0m
+[8.345s] [ 68%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/msg/detail/detection__type_support.cpp.o[0m
+[8.399s] [ 69%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/msg/detail/dds_fastrtps/end_effector__type_support.cpp.o[0m
+[8.584s] [ 70%] [32m[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_cpp.so[0m
+[8.626s] [ 71%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/srv/detail/batch_detections2_d__type_support.cpp.o[0m
+[8.647s] [ 72%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/srv/detail/get_status__type_support_c.cpp.o[0m
+[8.659s] [ 72%] Built target reseq_interfaces__rosidl_typesupport_cpp
+[8.666s] [ 73%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/reseq_interfaces/srv/detail/compute_coordinate__type_support_c.cpp.o[0m
+[8.853s] [ 74%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/msg/detail/dds_fastrtps/detection__type_support.cpp.o[0m
+[9.126s] [ 75%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/srv/detail/set_mode__type_support.cpp.o[0m
+[9.158s] [ 76%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/srv/detail/dds_fastrtps/batch_detections2_d__type_support.cpp.o[0m
+[9.214s] [ 77%] [32m[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_fastrtps_c.so[0m
+[9.301s] [ 77%] Built target reseq_interfaces__rosidl_typesupport_fastrtps_c
+[9.307s] [ 78%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/srv/detail/dds_fastrtps/set_mode__type_support.cpp.o[0m
+[9.380s] [ 79%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/srv/detail/dds_fastrtps/get_status__type_support.cpp.o[0m
+[9.525s] [ 80%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/srv/detail/get_status__type_support.cpp.o[0m
+[9.894s] [ 81%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/reseq_interfaces/srv/detail/compute_coordinate__type_support.cpp.o[0m
+[9.918s] [ 82%] [32mBuilding CXX object CMakeFiles/reseq_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/reseq_interfaces/srv/detail/dds_fastrtps/compute_coordinate__type_support.cpp.o[0m
+[10.322s] [ 83%] [32m[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_introspection_cpp.so[0m
+[10.401s] [ 83%] Built target reseq_interfaces__rosidl_typesupport_introspection_cpp
+[10.431s] [ 84%] [32m[1mLinking CXX shared library libreseq_interfaces__rosidl_typesupport_fastrtps_cpp.so[0m
+[10.514s] [ 84%] Built target reseq_interfaces__rosidl_typesupport_fastrtps_cpp
+[10.529s] [ 84%] Built target reseq_interfaces
+[10.544s] [ 85%] [34m[1mGenerating Python code for ROS interfaces[0m
+[11.619s] [ 85%] Built target reseq_interfaces__py
+[11.634s] [ 86%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/msg/_motors_s.c.o[0m
+[11.634s] [ 87%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/msg/_end_effector_s.c.o[0m
+[11.639s] [ 88%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/msg/_remote_s.c.o[0m
+[11.640s] [ 89%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/msg/_detection_s.c.o[0m
+[11.801s] [ 90%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/srv/_batch_detections2_d_s.c.o[0m
+[11.812s] [ 91%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/srv/_set_mode_s.c.o[0m
+[11.821s] [ 92%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/srv/_get_status_s.c.o[0m
+[11.831s] [ 93%] [32mBuilding C object CMakeFiles/reseq_interfaces__rosidl_generator_py.dir/rosidl_generator_py/reseq_interfaces/srv/_compute_coordinate_s.c.o[0m
+[11.995s] [ 94%] [32m[1mLinking C shared library libreseq_interfaces__rosidl_generator_py.so[0m
+[12.038s] [ 94%] Built target reseq_interfaces__rosidl_generator_py
+[12.053s] [ 95%] [32mBuilding C object CMakeFiles/reseq_interfaces_s__rosidl_typesupport_c.dir/rosidl_generator_py/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_c.c.o[0m
+[12.053s] [ 96%] [32mBuilding C object CMakeFiles/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.dir/rosidl_generator_py/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o[0m
+[12.053s] [ 97%] [32mBuilding C object CMakeFiles/reseq_interfaces_s__rosidl_typesupport_introspection_c.dir/rosidl_generator_py/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o[0m
+[12.183s] [ 98%] [32m[1mLinking C shared module rosidl_generator_py/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.so[0m
+[12.190s] [ 99%] [32m[1mLinking C shared module rosidl_generator_py/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_c.so[0m
+[12.199s] [100%] [32m[1mLinking C shared module rosidl_generator_py/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_introspection_c.so[0m
+[12.213s] [100%] Built target reseq_interfaces_s__rosidl_typesupport_fastrtps_c
+[12.214s] [100%] Built target reseq_interfaces_s__rosidl_typesupport_c
+[12.229s] [100%] Built target reseq_interfaces_s__rosidl_typesupport_introspection_c
+[12.239s] Invoked command in '/home/salvatore/ros2_ws/src/build/reseq_interfaces' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/salvatore/ros2_ws/src/build/reseq_interfaces -- -j4 -l4
+[12.247s] Invoking command in '/home/salvatore/ros2_ws/src/build/reseq_interfaces': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/salvatore/ros2_ws/src/build/reseq_interfaces
+[12.252s] -- Install configuration: ""
+[12.253s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/ament_index/resource_index/rosidl_interfaces/reseq_interfaces
+[12.253s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Motors.json
+[12.253s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Remote.json
+[12.253s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/EndEffector.json
+[12.253s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Detection.json
+[12.253s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/BatchDetections2D.json
+[12.253s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/SetMode.json
+[12.253s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/GetStatus.json
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/ComputeCoordinate.json
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.c
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__functions.h
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__description.c
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__functions.c
+[12.254s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__functions.h
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.c
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__description.c
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__struct.h
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.c
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.h
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.h
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__functions.h
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.h
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__struct.h
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__description.c
+[12.255s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__description.c
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__functions.c
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__functions.h
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__functions.c
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__struct.h
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.h
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__struct.h
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__functions.c
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/batch_detections2_d.h
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/get_status.h
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/compute_coordinate.h
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/set_mode.h
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg
+[12.256s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__struct.h
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.h
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__functions.c
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.c
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__description.c
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.h
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__description.c
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__description.c
+[12.257s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.c
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.c
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__functions.c
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__functions.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__functions.c
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.c
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__struct.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__functions.c
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__functions.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__description.c
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__functions.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__struct.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__functions.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__struct.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detection.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_generator_c__visibility_control.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/end_effector.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/remote.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/motors.h
+[12.259s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/library_path.sh
+[12.260s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/library_path.dsv
+[12.260s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_generator_c.so
+[12.260s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_generator_c.so" to ""
+[12.260s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces
+[12.260s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv
+[12.260s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail
+[12.260s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_fastrtps_c.h
+[12.260s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_fastrtps_c.h
+[12.260s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_fastrtps_c.h
+[12.260s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_fastrtps_c.h
+[12.260s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg
+[12.260s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail
+[12.260s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__rosidl_typesupport_fastrtps_c.h
+[12.261s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_fastrtps_c.h
+[12.261s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__rosidl_typesupport_fastrtps_c.h
+[12.261s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__rosidl_typesupport_fastrtps_c.h
+[12.261s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[12.261s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_fastrtps_c.so
+[12.261s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_fastrtps_c.so" to ""
+[12.261s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces
+[12.261s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv
+[12.261s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail
+[12.261s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.c
+[12.262s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_introspection_c.h
+[12.262s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.c
+[12.262s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.c
+[12.262s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.c
+[12.262s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_introspection_c.h
+[12.262s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_introspection_c.h
+[12.262s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_introspection_c.h
+[12.262s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg
+[12.263s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.c
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_introspection_c.h
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.c
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__rosidl_typesupport_introspection_c.h
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.c
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.c
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__rosidl_typesupport_introspection_c.h
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__rosidl_typesupport_introspection_c.h
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[12.263s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_introspection_c.so
+[12.263s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_introspection_c.so" to ""
+[12.264s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_c.so
+[12.264s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_c.so" to ""
+[12.264s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces
+[12.264s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv
+[12.264s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail
+[12.264s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__traits.hpp
+[12.264s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.hpp
+[12.264s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__builder.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__struct.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__builder.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__struct.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__builder.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__traits.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__builder.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.hpp
+[12.265s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__struct.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__traits.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__traits.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__struct.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/compute_coordinate.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/batch_detections2_d.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/get_status.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/set_mode.hpp
+[12.266s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp
+[12.266s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__builder.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__struct.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__traits.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__struct.hpp
+[12.266s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__builder.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__traits.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__struct.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__traits.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__traits.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__builder.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__struct.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__builder.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detection.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/end_effector.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/remote.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/motors.hpp
+[12.267s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces
+[12.267s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv
+[12.267s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_fastrtps_cpp.hpp
+[12.267s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/dds_fastrtps
+[12.268s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_fastrtps_cpp.hpp
+[12.268s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_fastrtps_cpp.hpp
+[12.268s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_fastrtps_cpp.hpp
+[12.268s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg
+[12.268s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[12.268s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail
+[12.268s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_fastrtps_cpp.hpp
+[12.268s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/dds_fastrtps
+[12.268s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__rosidl_typesupport_fastrtps_cpp.hpp
+[12.268s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__rosidl_typesupport_fastrtps_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__rosidl_typesupport_fastrtps_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_fastrtps_cpp.so
+[12.269s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_fastrtps_cpp.so" to ""
+[12.269s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces
+[12.269s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv
+[12.269s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__rosidl_typesupport_introspection_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__rosidl_typesupport_introspection_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/compute_coordinate__type_support.cpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__rosidl_typesupport_introspection_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/get_status__type_support.cpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__type_support.cpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/batch_detections2_d__type_support.cpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/srv/detail/set_mode__rosidl_typesupport_introspection_cpp.hpp
+[12.269s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg
+[12.269s] -- Up-to-date: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__rosidl_typesupport_introspection_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/remote__type_support.cpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__type_support.cpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/motors__rosidl_typesupport_introspection_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__rosidl_typesupport_introspection_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__rosidl_typesupport_introspection_cpp.hpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/detection__type_support.cpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/include/reseq_interfaces/reseq_interfaces/msg/detail/end_effector__type_support.cpp
+[12.269s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_introspection_cpp.so
+[12.270s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_introspection_cpp.so" to ""
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_cpp.so
+[12.270s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_typesupport_cpp.so" to ""
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/pythonpath.sh
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/pythonpath.dsv
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info/dependency_links.txt
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info/SOURCES.txt
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info/PKG-INFO
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces-0.0.0-py3.12.egg-info/top_level.txt
+[12.270s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.so
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_c.c
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_set_mode.py
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_compute_coordinate_s.c
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_get_status_s.c
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_batch_detections2_d.py
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_get_status.py
+[12.271s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_set_mode_s.c
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_batch_detections2_d_s.c
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/__init__.py
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_compute_coordinate.py
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_introspection_c.so
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/__init__.py
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_c.so
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/_reseq_interfaces_s.ep.rosidl_typesupport_introspection_c.c
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_remote_s.c
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_motors.py
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_end_effector.py
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_detection_s.c
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_detection.py
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_end_effector_s.c
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_remote.py
+[12.272s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/__init__.py
+[12.273s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_motors_s.c
+[12.323s] Listing '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces'...
+[12.323s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/__init__.py'...
+[12.323s] Listing '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg'...
+[12.323s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/__init__.py'...
+[12.323s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_detection.py'...
+[12.323s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_end_effector.py'...
+[12.323s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_motors.py'...
+[12.324s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/msg/_remote.py'...
+[12.324s] Listing '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv'...
+[12.324s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/__init__.py'...
+[12.324s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_batch_detections2_d.py'...
+[12.324s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_compute_coordinate.py'...
+[12.324s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_get_status.py'...
+[12.324s] Compiling '/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/srv/_set_mode.py'...
+[12.329s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.so
+[12.329s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_fastrtps_c.so" to ""
+[12.330s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_introspection_c.so
+[12.330s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_introspection_c.so" to ""
+[12.330s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_c.so
+[12.330s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages/reseq_interfaces/reseq_interfaces_s__rosidl_typesupport_c.so" to ""
+[12.330s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_generator_py.so
+[12.331s] -- Set non-toolchain portion of runtime path of "/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/libreseq_interfaces__rosidl_generator_py.so" to ""
+[12.331s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Motors.idl
+[12.331s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Remote.idl
+[12.331s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/EndEffector.idl
+[12.331s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Detection.idl
+[12.331s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/BatchDetections2D.idl
+[12.331s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/SetMode.idl
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/GetStatus.idl
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/ComputeCoordinate.idl
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Motors.msg
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Remote.msg
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/EndEffector.msg
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/msg/Detection.msg
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/BatchDetections2D.srv
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/SetMode.srv
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/GetStatus.srv
+[12.332s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/srv/ComputeCoordinate.srv
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/ament_index/resource_index/package_run_dependencies/reseq_interfaces
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/ament_index/resource_index/parent_prefix_path/reseq_interfaces
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/ament_prefix_path.sh
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/ament_prefix_path.dsv
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/path.sh
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/environment/path.dsv
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/local_setup.bash
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/local_setup.sh
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/local_setup.zsh
+[12.333s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/local_setup.dsv
+[12.335s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/package.dsv
+[12.335s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/ament_index/resource_index/packages/reseq_interfaces
+[12.335s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_cExport.cmake
+[12.335s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_cExport-noconfig.cmake
+[12.335s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_typesupport_fastrtps_cExport.cmake
+[12.335s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[12.335s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_introspection_cExport.cmake
+[12.335s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_cExport.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_cExport-noconfig.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_cppExport.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_introspection_cppExport.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_cppExport.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfaces__rosidl_typesupport_cppExport-noconfig.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_pyExport.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/export_reseq_interfaces__rosidl_generator_pyExport-noconfig.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/rosidl_cmake-extras.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake
+[12.336s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/ament_cmake_export_libraries-extras.cmake
+[12.337s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/ament_cmake_export_targets-extras.cmake
+[12.337s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[12.337s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[12.337s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfacesConfig.cmake
+[12.337s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/cmake/reseq_interfacesConfig-version.cmake
+[12.337s] -- Installing: /home/salvatore/ros2_ws/src/install/reseq_interfaces/share/reseq_interfaces/package.xml
+[12.343s] Invoked command in '/home/salvatore/ros2_ws/src/build/reseq_interfaces' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/salvatore/ros2_ws/install/reseq_ros2:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/salvatore/ros2_ws/src/build/reseq_interfaces

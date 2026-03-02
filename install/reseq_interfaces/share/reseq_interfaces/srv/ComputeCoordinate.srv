@@ -1,0 +1,9 @@
+# Request
+reseq_interfaces/Detection detection
+sensor_msgs/CameraInfo camera_info
+string target_frame
+---
+# Response
+bool success
+geometry_msgs/PointStamped point
+string message

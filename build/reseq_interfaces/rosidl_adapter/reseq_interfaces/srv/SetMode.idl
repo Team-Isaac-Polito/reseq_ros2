@@ -1,0 +1,27 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from reseq_interfaces/srv/SetMode.srv
+// generated code does not contain a copyright notice
+
+
+module reseq_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Request")
+    struct SetMode_Request {
+      @verbatim (language="comment", text=
+        "0=OFF,1=INITIALIZING,2=SENSOR_CRATE,3=MAPPING")
+      uint8 mode;
+
+      string csv_path;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct SetMode_Response {
+      boolean success;
+
+      uint8 previous_mode;
+
+      string message;
+    };
+  };
+};

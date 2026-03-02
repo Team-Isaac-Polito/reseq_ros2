@@ -1,0 +1,5 @@
+apriltag_node:
+  ros__parameters:
+    family: "Standard41h12"
+    size: 0.162
+    # pose_estimation_method: ""

@@ -1,0 +1,8 @@
+# Request
+string                          robot
+string                          mode               # 'A' or 'T'
+vision_msgs/Detection2DArray    detections
+---
+# Response
+bool                            success
+string                          message            # filepath or error

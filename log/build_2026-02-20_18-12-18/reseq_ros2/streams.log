@@ -1,0 +1,130 @@
+[0.608s] Invoking command in '/home/salvatore/ros2_ws/src/reseq_ros2': AMENT_PREFIX_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces:${CMAKE_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com LD_LIBRARY_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/salvatore/ros2_ws/src/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/reseq_ros2 build --build-base /home/salvatore/ros2_ws/src/build/reseq_ros2/build install --record /home/salvatore/ros2_ws/src/build/reseq_ros2/install.log --single-version-externally-managed install_data
+[0.793s] running egg_info
+[0.794s] creating ../build/reseq_ros2/reseq_ros2.egg-info
+[0.806s] writing ../build/reseq_ros2/reseq_ros2.egg-info/PKG-INFO
+[0.806s] writing dependency_links to ../build/reseq_ros2/reseq_ros2.egg-info/dependency_links.txt
+[0.807s] writing entry points to ../build/reseq_ros2/reseq_ros2.egg-info/entry_points.txt
+[0.807s] writing requirements to ../build/reseq_ros2/reseq_ros2.egg-info/requires.txt
+[0.807s] writing top-level names to ../build/reseq_ros2/reseq_ros2.egg-info/top_level.txt
+[0.807s] writing manifest file '../build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'
+[0.833s] reading manifest file '../build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'
+[0.834s] writing manifest file '../build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'
+[0.834s] running build
+[0.834s] running build_py
+[0.834s] creating /home/salvatore/ros2_ws/src/build/reseq_ros2/build
+[0.834s] creating /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib
+[0.834s] creating /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.835s] copying reseq_ros2/joint_publisher.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.835s] copying reseq_ros2/thermal_node.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.836s] copying reseq_ros2/communication.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.836s] copying reseq_ros2/remote_test.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.837s] copying reseq_ros2/emulator_remote_controller.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.837s] copying reseq_ros2/pivot_controller.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.838s] copying reseq_ros2/scaler.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.838s] copying reseq_ros2/__init__.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.838s] copying reseq_ros2/constants.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.838s] copying reseq_ros2/feedback_replicator.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.839s] copying reseq_ros2/agevar.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.839s] copying reseq_ros2/enea.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2
+[0.839s] creating /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils
+[0.839s] copying reseq_ros2/utils/launch_utils.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils
+[0.840s] copying reseq_ros2/utils/__init__.py -> /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils
+[0.840s] running install
+[0.845s] running install_lib
+[0.858s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.858s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/joint_publisher.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.859s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/thermal_node.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.859s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/communication.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.859s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils
+[0.859s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils/launch_utils.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils
+[0.859s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/utils/__init__.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils
+[0.859s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/remote_test.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.859s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/emulator_remote_controller.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.860s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/pivot_controller.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.860s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/scaler.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.860s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/__init__.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.860s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/constants.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.860s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/feedback_replicator.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.860s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/agevar.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.860s] copying /home/salvatore/ros2_ws/src/build/reseq_ros2/build/lib/reseq_ros2/enea.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2
+[0.860s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/joint_publisher.py to joint_publisher.cpython-312.pyc
+[0.862s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/thermal_node.py to thermal_node.cpython-312.pyc
+[0.862s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/communication.py to communication.cpython-312.pyc
+[0.864s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils/launch_utils.py to launch_utils.cpython-312.pyc
+[0.864s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils/__init__.py to __init__.cpython-312.pyc
+[0.865s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/remote_test.py to remote_test.cpython-312.pyc
+[0.865s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/emulator_remote_controller.py to emulator_remote_controller.cpython-312.pyc
+[0.866s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/pivot_controller.py to pivot_controller.cpython-312.pyc
+[0.867s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/scaler.py to scaler.cpython-312.pyc
+[0.868s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/__init__.py to __init__.cpython-312.pyc
+[0.868s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/constants.py to constants.cpython-312.pyc
+[0.869s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/feedback_replicator.py to feedback_replicator.cpython-312.pyc
+[0.870s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/agevar.py to agevar.cpython-312.pyc
+[0.871s] byte-compiling /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/enea.py to enea.cpython-312.pyc
+[0.872s] running install_data
+[0.872s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch
+[0.872s] copying launch/sensors_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch
+[0.872s] copying launch/apriltag_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch
+[0.873s] copying launch/digital_twin_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch
+[0.873s] copying launch/reseq_core_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch
+[0.873s] copying launch/reseq_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch
+[0.874s] copying launch/webcam_launch.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/launch
+[0.874s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.874s] copying config/enea_consts.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.875s] copying config/agevar_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.875s] copying config/scaler_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.876s] copying config/agevar_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.876s] copying config/realsense_rgb_motion.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.876s] copying config/reseq_controllers.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.876s] copying config/joint_pub_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.876s] copying config/digital_twin_params_mk1.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.877s] copying config/reseq_mk2_vcan.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.877s] copying config/apriltag.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.877s] copying config/reseq_mk1_can.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.878s] copying config/usb_camera.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.878s] copying config/reseq_mk1_vcan.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.878s] copying config/joint_pub_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.878s] copying config/scaler_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.879s] copying config/digital_twin_params_mk2.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.880s] copying config/reseq_mk2_can.yaml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/config
+[0.880s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts
+[0.880s] copying scripts/test_can.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts
+[0.880s] copying scripts/publish_fake_detection.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts
+[0.881s] copying scripts/generate_configs.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts
+[0.881s] copying scripts/call_compute_coordinate.py -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/scripts
+[0.881s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.881s] copying description/ros2_control.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.881s] copying description/reseq_arm_mk1.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.881s] copying description/reseq_body.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.882s] copying description/reseq_parameters.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.882s] copying description/reseq_arm_parameters.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.882s] copying description/robot.urdf.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.882s] copying description/lidar.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.883s] copying description/inertial_macros.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description
+[0.883s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.883s] copying description/macros/utils.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.883s] copying description/macros/wheel.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.884s] copying description/macros/chassis.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.884s] copying description/macros/control_wheel.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.884s] copying description/macros/joint.xacro -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/description/macros
+[0.885s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2/ml-ckpt
+[0.885s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/ament_index
+[0.885s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/ament_index/resource_index
+[0.885s] creating /home/salvatore/ros2_ws/src/install/reseq_ros2/share/ament_index/resource_index/packages
+[0.885s] copying resource/reseq_ros2 -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/ament_index/resource_index/packages
+[0.885s] copying package.xml -> /home/salvatore/ros2_ws/src/install/reseq_ros2/share/reseq_ros2
+[0.885s] running install_egg_info
+[0.898s] Copying ../build/reseq_ros2/reseq_ros2.egg-info to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2-0.0.0-py3.12.egg-info
+[0.899s] running install_scripts
+[0.991s] Installing agevar script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.991s] Installing communication script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.991s] Installing emulator_remote_controller script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.991s] Installing enea script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.992s] Installing feedback_replicator script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.992s] Installing joint_publisher script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.992s] Installing pivot_controller script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.992s] Installing remote_test script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.992s] Installing scaler script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.992s] Installing thermal_node script to /home/salvatore/ros2_ws/src/install/reseq_ros2/lib/reseq_ros2
+[0.992s] writing list of installed files to '/home/salvatore/ros2_ws/src/build/reseq_ros2/install.log'
+[1.020s] Invoked command in '/home/salvatore/ros2_ws/src/reseq_ros2' returned '0': AMENT_PREFIX_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces:${CMAKE_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com LD_LIBRARY_PATH=/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/salvatore/ros2_ws/src/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/install/reseq_ros2/lib/python3.12/site-packages:/home/salvatore/ros2_ws/src/install/reseq_interfaces/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/reseq_ros2 build --build-base /home/salvatore/ros2_ws/src/build/reseq_ros2/build install --record /home/salvatore/ros2_ws/src/build/reseq_ros2/install.log --single-version-externally-managed install_data

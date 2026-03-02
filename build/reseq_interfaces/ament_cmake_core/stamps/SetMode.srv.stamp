@@ -1,0 +1,8 @@
+# Request
+uint8 mode           # 0=OFF,1=INITIALIZING,2=SENSOR_CRATE,3=MAPPING
+string csv_path
+---
+# Response
+bool success
+uint8 previous_mode
+string message

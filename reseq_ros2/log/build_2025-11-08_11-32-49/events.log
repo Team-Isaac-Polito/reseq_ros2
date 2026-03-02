@@ -1,0 +1,184 @@
+[0.000000] (-) TimerEvent: {}
+[0.000256] (reseq_ros2) JobQueued: {'identifier': 'reseq_ros2', 'dependencies': OrderedDict()}
+[0.000816] (reseq_ros2) JobStarted: {'identifier': 'reseq_ros2'}
+[0.100048] (-) TimerEvent: {}
+[0.204482] (-) TimerEvent: {}
+[0.305232] (-) TimerEvent: {}
+[0.398396] (reseq_ros2) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', 'build/reseq_ros2', 'build', '--build-base', '/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build', 'install', '--record', '/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/salvatore/ros2_ws/src/reseq_ros2', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'salvatore', 'XDG_SESSION_TYPE': 'wayland', 'CLUTTER_DISABLE_MIPMAPPED_TEXT': '1', 'SHLVL': '1', 'HOME': '/home/salvatore', 'OLDPWD': '/home/salvatore/ros2_ws/src', 'DESKTOP_SESSION': 'ubuntu', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'SYSTEMD_EXEC_PID': '1822', 'GSM_SKIP_SSH_AGENT_WORKAROUND': 'true', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'DEBUGINFOD_URLS': 'https://debuginfod.ubuntu.com', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'LOGNAME': 'salvatore', '_': '/usr/bin/colcon', 'MEMORY_PRESSURE_WATCH': '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@wayland.service/memory.pressure', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'salvatore', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/salvatore-QEMU-Virtual-Machine:@/tmp/.ICE-unix/1789,unix/salvatore-QEMU-Virtual-Machine:/tmp/.ICE-unix/1789', 'XDG_MENU_PREFIX': 'gnome-', 'GNOME_TERMINAL_SCREEN': '/org/gnome/Terminal/screen/3d32f6b2_81d2_4223_a695_e92ca14e1c4a', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.VZ7NF3', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'GNOME_TERMINAL_SERVICE': ':1.130', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'SHELL': '/bin/bash', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'COLCON': '1', 'MEMORY_PRESSURE_WRITE': 'c29tZSAyMDAwMDAgMjAwMDAwMAA=', 'VTE_VERSION': '7600', 'PYTHONPATH': '/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages:'}, 'shell': False}
+[0.405394] (-) TimerEvent: {}
+[0.508503] (-) TimerEvent: {}
+[0.527203] (reseq_ros2) StdoutLine: {'line': b'running egg_info\n'}
+[0.527489] (reseq_ros2) StdoutLine: {'line': b'creating build/reseq_ros2/reseq_ros2.egg-info\n'}
+[0.533772] (reseq_ros2) StdoutLine: {'line': b'writing build/reseq_ros2/reseq_ros2.egg-info/PKG-INFO\n'}
+[0.533917] (reseq_ros2) StdoutLine: {'line': b'writing dependency_links to build/reseq_ros2/reseq_ros2.egg-info/dependency_links.txt\n'}
+[0.534086] (reseq_ros2) StdoutLine: {'line': b'writing entry points to build/reseq_ros2/reseq_ros2.egg-info/entry_points.txt\n'}
+[0.534280] (reseq_ros2) StdoutLine: {'line': b'writing requirements to build/reseq_ros2/reseq_ros2.egg-info/requires.txt\n'}
+[0.534483] (reseq_ros2) StdoutLine: {'line': b'writing top-level names to build/reseq_ros2/reseq_ros2.egg-info/top_level.txt\n'}
+[0.534634] (reseq_ros2) StdoutLine: {'line': b"writing manifest file 'build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'\n"}
+[0.547663] (reseq_ros2) StdoutLine: {'line': b"reading manifest file 'build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'\n"}
+[0.548330] (reseq_ros2) StdoutLine: {'line': b"writing manifest file 'build/reseq_ros2/reseq_ros2.egg-info/SOURCES.txt'\n"}
+[0.548601] (reseq_ros2) StdoutLine: {'line': b'running build\n'}
+[0.548658] (reseq_ros2) StdoutLine: {'line': b'running build_py\n'}
+[0.548731] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build\n'}
+[0.548772] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib\n'}
+[0.548805] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.548903] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/joint_publisher.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.549685] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/thermal_node.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.550228] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/communication.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.550502] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/remote_test.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.550730] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/detector.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.550938] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/emulator_remote_controller.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.551215] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/pivot_controller.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.551558] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/scaler.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.551741] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/__init__.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.551914] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/constants.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.552134] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/feedback_replicator.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.552390] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/agevar.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.552572] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/enea.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2\n'}
+[0.552719] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/utils\n'}
+[0.552875] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/utils/launch_utils.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/utils\n'}
+[0.553008] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/utils/__init__.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/utils\n'}
+[0.553102] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv\n'}
+[0.553241] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/reseq_cv/apriltag_detector.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv\n'}
+[0.553488] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/reseq_cv/motion.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv\n'}
+[0.553698] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/reseq_cv/orientation.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv\n'}
+[0.553874] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/reseq_cv/qr_reader.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv\n'}
+[0.554013] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/reseq_cv/__init__.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv\n'}
+[0.554193] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager\n'}
+[0.554355] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/detection_manager/csv_writer.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager\n'}
+[0.554537] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/detection_manager/detection_manager_node.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager\n'}
+[0.554706] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/detection_manager/compute_coordinate.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager\n'}
+[0.554829] (reseq_ros2) StdoutLine: {'line': b'copying reseq_ros2/detection_manager/__init__.py -> /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager\n'}
+[0.555073] (reseq_ros2) StdoutLine: {'line': b'running install\n'}
+[0.559670] (reseq_ros2) StdoutLine: {'line': b'running install_lib\n'}
+[0.565867] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.565967] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/joint_publisher.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.566027] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/thermal_node.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.566165] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/communication.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.566272] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils\n'}
+[0.566543] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/utils/launch_utils.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils\n'}
+[0.566647] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/utils/__init__.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils\n'}
+[0.566747] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/remote_test.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.566784] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv\n'}
+[0.566851] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv/apriltag_detector.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv\n'}
+[0.567030] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv/motion.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv\n'}
+[0.567225] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv/orientation.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv\n'}
+[0.567418] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv/qr_reader.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv\n'}
+[0.567512] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/reseq_cv/__init__.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv\n'}
+[0.567563] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detector.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.567605] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager\n'}
+[0.567710] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager/csv_writer.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager\n'}
+[0.567860] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager/detection_manager_node.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager\n'}
+[0.567921] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager/compute_coordinate.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager\n'}
+[0.567966] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/detection_manager/__init__.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager\n'}
+[0.568025] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/emulator_remote_controller.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.568067] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/pivot_controller.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.568116] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/scaler.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.568151] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/__init__.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.568197] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/constants.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.568236] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/feedback_replicator.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.568338] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/agevar.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.568501] (reseq_ros2) StdoutLine: {'line': b'copying /home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/build/lib/reseq_ros2/enea.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2\n'}
+[0.568557] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/joint_publisher.py to joint_publisher.cpython-312.pyc\n'}
+[0.570072] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/thermal_node.py to thermal_node.cpython-312.pyc\n'}
+[0.570564] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/communication.py to communication.cpython-312.pyc\n'}
+[0.571744] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils/launch_utils.py to launch_utils.cpython-312.pyc\n'}
+[0.572009] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/utils/__init__.py to __init__.cpython-312.pyc\n'}
+[0.572119] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/remote_test.py to remote_test.cpython-312.pyc\n'}
+[0.572547] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv/apriltag_detector.py to apriltag_detector.cpython-312.pyc\n'}
+[0.572925] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv/motion.py to motion.cpython-312.pyc\n'}
+[0.573388] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv/orientation.py to orientation.cpython-312.pyc\n'}
+[0.575145] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv/qr_reader.py to qr_reader.cpython-312.pyc\n'}
+[0.575425] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/reseq_cv/__init__.py to __init__.cpython-312.pyc\n'}
+[0.575551] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detector.py to detector.cpython-312.pyc\n'}
+[0.577232] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager/csv_writer.py to csv_writer.cpython-312.pyc\n'}
+[0.578012] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager/detection_manager_node.py to detection_manager_node.cpython-312.pyc\n'}
+[0.579715] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager/compute_coordinate.py to compute_coordinate.cpython-312.pyc\n'}
+[0.580388] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/detection_manager/__init__.py to __init__.cpython-312.pyc\n'}
+[0.580536] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/emulator_remote_controller.py to emulator_remote_controller.cpython-312.pyc\n'}
+[0.581487] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/pivot_controller.py to pivot_controller.cpython-312.pyc\n'}
+[0.582031] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/scaler.py to scaler.cpython-312.pyc\n'}
+[0.583034] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/__init__.py to __init__.cpython-312.pyc\n'}
+[0.583188] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/constants.py to constants.cpython-312.pyc\n'}
+[0.583749] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/feedback_replicator.py to feedback_replicator.cpython-312.pyc\n'}
+[0.584201] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/agevar.py to agevar.cpython-312.pyc\n'}
+[0.585081] (reseq_ros2) StdoutLine: {'line': b'byte-compiling /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2/enea.py to enea.cpython-312.pyc\n'}
+[0.585812] (reseq_ros2) StdoutLine: {'line': b'running install_data\n'}
+[0.585979] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[0.586027] (reseq_ros2) StdoutLine: {'line': b'copying launch/sensors_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[0.586273] (reseq_ros2) StdoutLine: {'line': b'copying launch/republish_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[0.586546] (reseq_ros2) StdoutLine: {'line': b'copying launch/apriltag_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[0.586784] (reseq_ros2) StdoutLine: {'line': b'copying launch/digital_twin_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[0.586945] (reseq_ros2) StdoutLine: {'line': b'copying launch/reseq_core_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[0.587555] (reseq_ros2) StdoutLine: {'line': b'copying launch/reseq_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[0.587766] (reseq_ros2) StdoutLine: {'line': b'copying launch/webcam_launch.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/launch\n'}
+[0.588093] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.588140] (reseq_ros2) StdoutLine: {'line': b'copying config/enea_consts.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.588489] (reseq_ros2) StdoutLine: {'line': b'copying config/agevar_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.588832] (reseq_ros2) StdoutLine: {'line': b'copying config/scaler_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.589132] (reseq_ros2) StdoutLine: {'line': b'copying config/agevar_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.589218] (reseq_ros2) StdoutLine: {'line': b'copying config/realsense_rgb_motion.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.589481] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_controllers.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.589617] (reseq_ros2) StdoutLine: {'line': b'copying config/joint_pub_consts_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.589797] (reseq_ros2) StdoutLine: {'line': b'copying config/digital_twin_params_mk1.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.589954] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_mk2_vcan.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.590126] (reseq_ros2) StdoutLine: {'line': b'copying config/apriltag.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.590271] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_mk1_can.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.590456] (reseq_ros2) StdoutLine: {'line': b'copying config/usb_camera.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.590631] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_mk1_vcan.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.590826] (reseq_ros2) StdoutLine: {'line': b'copying config/joint_pub_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.590976] (reseq_ros2) StdoutLine: {'line': b'copying config/scaler_consts_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.591155] (reseq_ros2) StdoutLine: {'line': b'copying config/digital_twin_params_mk2.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.591381] (reseq_ros2) StdoutLine: {'line': b'copying config/reseq_mk2_can.yaml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/config\n'}
+[0.591613] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[0.591673] (reseq_ros2) StdoutLine: {'line': b'copying scripts/test_can.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[0.591841] (reseq_ros2) StdoutLine: {'line': b'copying scripts/publish_fake_detection.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[0.592096] (reseq_ros2) StdoutLine: {'line': b'copying scripts/generate_configs.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[0.592311] (reseq_ros2) StdoutLine: {'line': b'copying scripts/call_compute_coordinate.py -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/scripts\n'}
+[0.592466] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.592620] (reseq_ros2) StdoutLine: {'line': b'copying description/ros2_control.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.592824] (reseq_ros2) StdoutLine: {'line': b'copying description/reseq_arm_mk1.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.593046] (reseq_ros2) StdoutLine: {'line': b'copying description/reseq_body.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.593247] (reseq_ros2) StdoutLine: {'line': b'copying description/reseq_parameters.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.593490] (reseq_ros2) StdoutLine: {'line': b'copying description/reseq_arm_parameters.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.593651] (reseq_ros2) StdoutLine: {'line': b'copying description/robot.urdf.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.593804] (reseq_ros2) StdoutLine: {'line': b'copying description/lidar.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.593972] (reseq_ros2) StdoutLine: {'line': b'copying description/inertial_macros.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description\n'}
+[0.594183] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[0.594232] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/utils.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[0.594440] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/wheel.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[0.594612] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/chassis.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[0.594759] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/control_wheel.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[0.594915] (reseq_ros2) StdoutLine: {'line': b'copying description/macros/joint.xacro -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/description/macros\n'}
+[0.595023] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt\n'}
+[0.595133] (reseq_ros2) StdoutLine: {'line': b'copying ml-ckpt/object_detection.pt -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt\n'}
+[0.602973] (reseq_ros2) StdoutLine: {'line': b'copying ml-ckpt/sr.prototxt -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt\n'}
+[0.603140] (reseq_ros2) StdoutLine: {'line': b'copying ml-ckpt/detect.caffemodel -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt\n'}
+[0.605092] (reseq_ros2) StdoutLine: {'line': b'copying ml-ckpt/sr.caffemodel -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt\n'}
+[0.605346] (reseq_ros2) StdoutLine: {'line': b'copying ml-ckpt/detect.prototxt -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt\n'}
+[0.605743] (reseq_ros2) StdoutLine: {'line': b'copying ml-ckpt/hazmat_detection.pt -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2/ml-ckpt\n'}
+[0.608608] (-) TimerEvent: {}
+[0.615954] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index\n'}
+[0.616122] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index\n'}
+[0.616222] (reseq_ros2) StdoutLine: {'line': b'creating /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index/packages\n'}
+[0.616268] (reseq_ros2) StdoutLine: {'line': b'copying resource/reseq_ros2 -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/ament_index/resource_index/packages\n'}
+[0.616380] (reseq_ros2) StdoutLine: {'line': b'copying package.xml -> /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/share/reseq_ros2\n'}
+[0.616424] (reseq_ros2) StdoutLine: {'line': b'running install_egg_info\n'}
+[0.624011] (reseq_ros2) StdoutLine: {'line': b'Copying build/reseq_ros2/reseq_ros2.egg-info to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/python3.12/site-packages/reseq_ros2-0.0.0-py3.12.egg-info\n'}
+[0.624449] (reseq_ros2) StdoutLine: {'line': b'running install_scripts\n'}
+[0.679124] (reseq_ros2) StdoutLine: {'line': b'Installing agevar script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.679402] (reseq_ros2) StdoutLine: {'line': b'Installing communication script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.679587] (reseq_ros2) StdoutLine: {'line': b'Installing detector script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.679655] (reseq_ros2) StdoutLine: {'line': b'Installing emulator_remote_controller script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.679707] (reseq_ros2) StdoutLine: {'line': b'Installing enea script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.679853] (reseq_ros2) StdoutLine: {'line': b'Installing feedback_replicator script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.679961] (reseq_ros2) StdoutLine: {'line': b'Installing joint_publisher script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.679997] (reseq_ros2) StdoutLine: {'line': b'Installing pivot_controller script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.680030] (reseq_ros2) StdoutLine: {'line': b'Installing remote_test script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.680062] (reseq_ros2) StdoutLine: {'line': b'Installing reseq_ros2.detection_manager script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.680093] (reseq_ros2) StdoutLine: {'line': b'Installing scaler script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.680127] (reseq_ros2) StdoutLine: {'line': b'Installing thermal_node script to /home/salvatore/ros2_ws/src/reseq_ros2/install/reseq_ros2/lib/reseq_ros2\n'}
+[0.680345] (reseq_ros2) StdoutLine: {'line': b"writing list of installed files to '/home/salvatore/ros2_ws/src/reseq_ros2/build/reseq_ros2/install.log'\n"}
+[0.700186] (reseq_ros2) CommandEnded: {'returncode': 0}
+[0.706568] (reseq_ros2) JobEnded: {'identifier': 'reseq_ros2', 'rc': 0}
+[0.707188] (-) EventReactorShutdown: {}
