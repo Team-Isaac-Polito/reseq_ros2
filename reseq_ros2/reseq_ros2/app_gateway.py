@@ -84,8 +84,8 @@ class AppGateway(Node):
             self.node_states[module_id] = True
             self.get_logger().info(f"Nodo {node_name} avviato (PID: {process.pid})")
             
-            # Give node time to initialize and register its service
-            time.sleep(1.5)
+            # Give node time to initialize and register its service (2 seconds for safety)
+            time.sleep(2.0)
             
             return True, f"{node_name} avviato con successo"
         except Exception as e:
@@ -188,8 +188,8 @@ class AppGateway(Node):
         
         try:
             future = client.call_async(hw_request)
-            # Aspetta la risposta (con timeout)
-            rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+            # Aspetta la risposta (con timeout di 10 secondi per permettere al nodo di startup)
+            rclpy.spin_until_future_complete(self, future, timeout_sec=10.0)
             
             if future.result() is not None:
                 hw_response = future.result()
