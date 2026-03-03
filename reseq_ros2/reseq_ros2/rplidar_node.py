@@ -10,9 +10,10 @@ from std_srvs.srv import SetBool
 class RplidarNode(Node):
     """Node that manages rplidar start/stop via SetBool service."""
     
-    # Comando per lanciare rplidar - modifica in base al tuo hardware
+    # Launch command for rplidar - customize based on your hardware
+    # Common options: rplidar_a2m8_launch.py, rplidar_s1_launch.py, etc.
     LAUNCH_CMD = ['ros2', 'launch', 'rplidar_ros', 'rplidar_a2m8_launch.py']
-    
+        
     def __init__(self):
         super().__init__("rplidar_mode")
         self.enable = False
