@@ -363,13 +363,20 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-humble-joint-state-broadcaster \
     ros-humble-slam-toolbox \
     ros-humble-geometry-msgs \
+    ros-humble-moveit-ros-move-group \
+    ros-humble-moveit-servo \
+    ros-humble-moveit-configs-utils \
+    ros-humble-moveit-planners-ompl \
+    ros-humble-moveit-kinematics \
+    ros-humble-pick-ik \
     # for visualizations and debugging
     ros-humble-rqt \
     ros-humble-rqt-common-plugins \
+    ros-humble-rqt-image-view \
     ros-humble-rviz2
 
-# Install Pyzbar and Ultralytics
-RUN pip install pyzbar ultralytics --no-cache-dir \
+# Install Ultralytics
+RUN pip install ultralytics --no-cache-dir \
     # Download PyTorch, TorchVision, and ONNX Runtime GPU wheels for JetPack 6.0 / CUDA 12.2
     && wget https://nvidia.box.com/shared/static/mp164asf3sceb570wvjsrezk1p4ftj8t.whl -O torch-2.3.0-cp310-cp310-linux_aarch64.whl \
     && wget https://nvidia.box.com/shared/static/u0ziu01c0kyji4zz3gxam79181nebylf.whl -O torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl \
@@ -394,7 +401,7 @@ RUN pip install pyzbar ultralytics --no-cache-dir \
     && echo "Ultralytics and dependencies successfully installed using JetPack 6.0 compatible wheels."
 
 RUN apt update --allow-releaseinfo-change && apt install -y --no-install-recommends \
-    iproute2 ros-humble-apriltag-ros \
+    iproute2 ros-humble-apriltag-ros usbutils \
     && pip install opencv-contrib-python numpy==1.23.5
 
 # Final stage: build reseq_ros2
