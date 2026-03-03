@@ -75,6 +75,43 @@ def launch_setup(context, *args, **kwargs):
             )
         )
 
+        # CV launch (detection pipeline) – mode defaults to 0 in full launch
+        cv_enabled = LaunchConfiguration('cv').perform(context)
+        if cv_enabled == 'true':
+            cv_mode = LaunchConfiguration('cv_mode').perform(context)
+            try:
+                cv_pkg_dir = get_package_share_directory('computer_vision')
+                cv_launch_file = os.path.join(cv_pkg_dir, 'launch', 'cv_launch.py')
+                launch_config.append(
+                    IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(cv_launch_file),
+                        launch_arguments={
+                            'mode': cv_mode,
+                            'skip_realsense': 'true',
+                        }.items(),
+                    )
+                )
+            except Exception as e:
+                print(f'Warning: computer_vision package not found: {e}')
+                pass
+
+        # SLAM launch (requires RPLIDAR from sensors)
+        slam_enabled = LaunchConfiguration('slam').perform(context)
+        if slam_enabled == 'true':
+            slam_mode = LaunchConfiguration('slam_mode').perform(context)
+            slam_launch_file = os.path.join(
+                get_package_share_directory('reseq_ros2'), 'launch', 'slam_launch.py'
+            )
+            launch_config.append(
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource(slam_launch_file),
+                    launch_arguments={
+                        'slam_mode': slam_mode,
+                        'use_sim_time': use_sim_time,
+                    }.items(),
+                )
+            )
+
     if digital_twin_enabled == 'true':
         # Digital twin launch file
         digital_twin_launch_file = os.path.join(
@@ -161,8 +198,23 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('version', default_value='mk2', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
-            DeclareLaunchArgument('arm', default_value='true', choices=['true', 'false'], description="Set to false if you don't want to use the arm"),
+            DeclareLaunchArgument(
+                'arm',
+                default_value='true',
+                choices=['true', 'false'],
+                description="Set to false if you don't want to use the arm",
+            ),
             DeclareLaunchArgument('sensors', default_value='true', description='Enable sensors'),
+            DeclareLaunchArgument(
+                'cv',
+                default_value='true',
+                description='Enable CV detection pipeline (requires sensors)',
+            ),
+            DeclareLaunchArgument(
+                'cv_mode',
+                default_value='0',
+                description='CV detection mode (0=idle, 1=sensor, 2=crate, 3=mapping)',
+            ),
             DeclareLaunchArgument(
                 'd_twin', default_value='true', description='Enable digital twin'
             ),
