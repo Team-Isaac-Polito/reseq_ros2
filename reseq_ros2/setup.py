@@ -7,7 +7,7 @@ package_name = 'reseq_ros2'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name, f'{package_name}.utils', f'{package_name}.reseq_cv'],
+    packages=[package_name, f'{package_name}.utils'],
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
         (f'share/{package_name}/worlds', glob('worlds/*.world')),

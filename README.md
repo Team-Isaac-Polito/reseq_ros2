@@ -1,6 +1,6 @@
 [![ROS2 CI/CD](https://github.com/Team-Isaac-Polito/reseq_ros2/actions/workflows/ros-ci.yaml/badge.svg)](https://github.com/Team-Isaac-Polito/reseq_ros2/actions/workflows/ros-ci.yaml)
 
-# Reseq_ros2
+# reseq_ros2
 
 ROS2 code to control the ReseQ robot.
 
@@ -19,9 +19,7 @@ This will copy the contents of this repository inside the `ros2_ws/src` folder.
 To ensure the submodules (`reseq_interfaces`, `computer_vision`) are on the latest version, run the following command inside `ros2_ws`:
 
 ```bash
-cd src
-git submodule update --init --remote
-cd ..
+cd src && git submodule update --recursive --remote && cd ..
 ```
 
 In VSCode (or your editor of choice) open `ros2_ws`
@@ -30,8 +28,14 @@ In VSCode (or your editor of choice) open `ros2_ws`
 
 In the directory `ros2_ws` with the apt cache updated run:
 
+On Humble:
 ```bash
 rosdep install -iy --from-path src --rosdistro humble
+```
+On Jazzy (fix buggy version of rplidar):
+```bash
+vcs import src < src/rplidar.repos
+rosdep install -iy --from-path src --rosdistro jazzy
 ```
 
 ## Development dependencies
@@ -52,23 +56,30 @@ code --install-extension ms-python.isort
 code --install-extension charliermarsh.ruff
 ```
 
-In `ros_ws`, modify the file `.vscode/settings.json` by adding the following configuration:
+Then, from `ros2_ws`, configure the workspace linter settings:
 
-```json
-    "flake8.args": ["--config", "src/reseq_ros2/test/flake8.cfg"],
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit",
-            "python.sortImports": "explicit"
-        }
+```bash
+python3 -c "
+import json, os
+path = '.vscode/settings.json'
+os.makedirs('.vscode', exist_ok=True)
+settings = json.load(open(path)) if os.path.exists(path) else {}
+settings.update({
+    'flake8.args': ['--config', 'src/reseq_ros2/test/flake8.cfg'],
+    '[python]': {
+        'editor.defaultFormatter': 'charliermarsh.ruff',
+        'editor.formatOnSave': True,
+        'editor.codeActionsOnSave': {
+            'source.organizeImports': 'explicit',
+            'python.sortImports': 'explicit',
+        },
     },
-    "ruff.format.args": [
-        "--config=src/ruff.toml",
-        "--line-length=99"
-    ],
-    "ruff.organizeImports": false
+    'ruff.configuration': '\${workspaceFolder}/src/ruff.toml',
+    'ruff.organizeImports': False,
+})
+json.dump(settings, open(path, 'w'), indent=4)
+print('Settings updated:', path)
+"
 ```
 
 The files should format correctly on save
