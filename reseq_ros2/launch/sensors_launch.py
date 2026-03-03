@@ -2,12 +2,58 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnShutdown
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterFile
 
 from reseq_ros2.utils.launch_utils import config_path, default_filename, parse_config
+
+
+def _stop_rplidar_on_shutdown(event, context):
+    """Stop the RPLIDAR motor when the launch system shuts down.
+
+    Sends STOP scan + SET_MOTOR_PWM=0 to halt the motor, preventing it from
+    spinning indefinitely after a container/launch shutdown.
+    """
+    import struct
+    import time
+
+    port = '/dev/ttyUSB0'
+    try:
+        import serial
+
+        s = serial.Serial()
+        s.port = port
+        s.baudrate = 115200
+        s.timeout = 1
+        s.dsrdtr = False
+        s.dtr = False
+        s.open()
+        # STOP scan command
+        s.write(bytes([0xA5, 0x25]))
+        time.sleep(0.1)
+        # SET_MOTOR_PWM = 0
+        pwm_data = struct.pack('<H', 0)
+        header = bytes([0xA5, 0xF0, len(pwm_data)])
+        full_cmd = header + pwm_data
+        checksum = 0
+        for b in full_cmd:
+            checksum ^= b
+        full_cmd += bytes([checksum])
+        s.write(full_cmd)
+        time.sleep(0.1)
+        s.dtr = False
+        s.close()
+        print('[sensors_launch] RPLIDAR motor stopped.')
+    except Exception as e:
+        print(f'[sensors_launch] Could not stop RPLIDAR motor: {e}')
 
 
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command
@@ -42,6 +88,12 @@ def launch_setup(context, *args, **kwargs):
                         }.items(),
                     ),
                 )
+                # Register shutdown handler to stop RPLIDAR motor on exit
+                launch_config.append(
+                    RegisterEventHandler(
+                        OnShutdown(on_shutdown=_stop_rplidar_on_shutdown),
+                    )
+                )
             if name == 'realsense':
                 launch_config.append(
                     Node(
@@ -52,7 +104,7 @@ def launch_setup(context, *args, **kwargs):
                         parameters=[
                             ParameterFile(f'{config_path}/{config["realsense_config"]}'),
                             {
-                                'use_sim_time': use_sim_time,
+                                'use_sim_time': use_sim_time == 'true',
                             },
                         ],
                         arguments=['--ros-args', '--log-level', external_log_level],
