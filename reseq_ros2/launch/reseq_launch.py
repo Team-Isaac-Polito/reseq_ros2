@@ -2,9 +2,15 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
-                            IncludeLaunchDescription, LogInfo, OpaqueFunction,
-                            RegisterEventHandler)
+from launch.actions import (
+    DeclareLaunchArgument,
+    EmitEvent,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    LogInfo,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -159,6 +165,17 @@ def generate_launch_description():
             DeclareLaunchArgument('sensors', default_value='true', description='Enable sensors'),
             DeclareLaunchArgument(
                 'd_twin', default_value='true', description='Enable digital twin'
+            ),
+            DeclareLaunchArgument(
+                'slam',
+                default_value='false',
+                description='Enable SLAM Toolbox (requires sensors with RPLIDAR)',
+            ),
+            DeclareLaunchArgument(
+                'slam_mode',
+                default_value='mapping',
+                choices=['mapping', 'localization'],
+                description='SLAM mode: mapping (new map) or localization (existing map)',
             ),
             DeclareLaunchArgument(
                 'log_level', default_value='info', description='Set log level for reseq nodes'

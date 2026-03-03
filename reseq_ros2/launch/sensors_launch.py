@@ -2,7 +2,13 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnShutdown
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterFile
@@ -10,8 +16,41 @@ from launch_ros.parameter_descriptions import ParameterFile
 from reseq_ros2.utils.launch_utils import config_path, default_filename, parse_config
 
 
-# launch_setup is used through an OpaqueFunction because it is the only way to manipulate a command
-# line argument directly in the launch file
+def _stop_rplidar_on_shutdown(event, context):
+    """Stop the RPLIDAR motor using ROS 2 services on shutdown.
+
+    Uses the /stop_motor service (std_srvs/Empty) to signal the lidar node
+    to halt the motor before the process exits.
+    """
+    import rclpy
+    from std_srvs.srv import Empty
+
+    # Initialize rclpy if not already done in this process
+    if not rclpy.ok():
+        rclpy.init()
+
+    # Create a temporary node to handle the service call
+    stop_node = rclpy.create_node('rplidar_shutdown_client')
+    client = stop_node.create_client(Empty, 'stop_motor')
+
+    # Wait briefly for the service to be available
+    # Note: On shutdown, there is a race condition where the Lidar node
+    # might exit before this service call completes.
+    if client.wait_for_service(timeout_sec=1.0):
+        req = Empty.Request()
+        future = client.call_async(req)
+        rclpy.spin_until_future_complete(stop_node, future, timeout_sec=1.0)
+        print('[sensors_launch] RPLIDAR /stop_motor service called successfully.')
+    else:
+        print(
+            '[sensors_launch] RPLIDAR /stop_motor service not available (node likely already shut down).'
+        )
+
+    stop_node.destroy_node()
+    # We don't call rclpy.shutdown() here to avoid interfering with the
+    # main launch process cleanup.
+
+
 def launch_setup(context, *args, **kwargs):
     version = LaunchConfiguration('version').perform(context)
     # Get config path from command line, otherwise use the default path
@@ -42,6 +81,12 @@ def launch_setup(context, *args, **kwargs):
                         }.items(),
                     ),
                 )
+                # Register shutdown handler to call the service
+                launch_config.append(
+                    RegisterEventHandler(
+                        OnShutdown(on_shutdown=_stop_rplidar_on_shutdown),
+                    )
+                )
             if name == 'realsense':
                 launch_config.append(
                     Node(
@@ -52,7 +97,7 @@ def launch_setup(context, *args, **kwargs):
                         parameters=[
                             ParameterFile(f'{config_path}/{config["realsense_config"]}'),
                             {
-                                'use_sim_time': use_sim_time,
+                                'use_sim_time': use_sim_time == 'true',
                             },
                         ],
                         arguments=['--ros-args', '--log-level', external_log_level],
