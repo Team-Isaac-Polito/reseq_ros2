@@ -32,10 +32,6 @@ class AppGateway(Node):
             'velocity': False
         }
         
-        # DO NOT auto-launch nodes - wait for app request
-        # self._launch_dependent_nodes()  # REMOVED
-        
-        # Create UI services for each module
         for ui_name, hw_service in self.service_mapping.items():
             # service names on the module card of flutter app
             ui_service_name = f'ui/{ui_name}'
