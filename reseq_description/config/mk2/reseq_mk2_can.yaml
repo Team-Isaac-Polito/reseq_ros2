@@ -6,12 +6,15 @@ include:
 version: "mk2"
 canbus:
   channel: "can0"
-num_modules: 2
+num_modules: 3
 modules:
   - address: 0x21
     hasJoint: true
     hasEndEffector: false
   - address: 0x22
+    hasJoint: true
+    hasEndEffector: false
+  - address: 0x23
     hasJoint: true
     hasEndEffector: false
 realsense_config: "realsense_rgb_motion.yaml"
