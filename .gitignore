@@ -2,3 +2,7 @@ __pycache__/
 .vscode
 .github/*
 !.github/workflows/
+
+build/
+install/
+log/
