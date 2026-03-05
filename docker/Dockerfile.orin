@@ -362,6 +362,7 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-humble-diff-drive-controller \
     ros-humble-joint-state-broadcaster \
     ros-humble-slam-toolbox \
+    ros-humble-ros2-control-test-assets \
     ros-humble-geometry-msgs \
     ros-humble-moveit-ros-move-group \
     ros-humble-moveit-servo \
@@ -401,7 +402,7 @@ RUN pip install ultralytics --no-cache-dir \
     && echo "Ultralytics and dependencies successfully installed using JetPack 6.0 compatible wheels."
 
 RUN apt update --allow-releaseinfo-change && apt install -y --no-install-recommends \
-    iproute2 ros-humble-apriltag-ros usbutils \
+    iproute2 ros-humble-apriltag-ros usbutils ranger nano \
     && pip install opencv-contrib-python numpy==1.23.5
 
 # Final stage: build reseq_ros2
