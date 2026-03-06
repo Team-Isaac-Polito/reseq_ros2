@@ -1,4 +1,5 @@
 #include "reseq_hardware/reseq.hpp"
+#include <cmath>                                 // for M_PI, std::remainder
 #include <stddef.h>                              // for size_t
 #include <ratio>                                 // for ratio
 #include <rclcpp/clock.hpp>                      // for Clock::SharedPtr
@@ -41,7 +42,12 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
   }
   if (info.hardware_parameters.find("mk_version") != info.hardware_parameters.end()) {
     mk_version_ = std::stoi(info.hardware_parameters.at("mk_version").substr(2, 1)); // e.g. "mk2" -> 2
-
+  }
+  if (info.hardware_parameters.find("command_cycle_ms") != info.hardware_parameters.end()) {
+    command_cycle_ = std::chrono::milliseconds(
+      std::stoi(info.hardware_parameters.at("command_cycle_ms")));
+    RCLCPP_INFO(rclcpp::get_logger("ReseqHardware"),
+      "Command cycle set to %ld ms", command_cycle_.count());
   }
   // Initialise the data structures
   size_t num_joints = info.joints.size();
@@ -51,6 +57,7 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
   joint_buffers_.velocity.resize(num_joints, 0.0);
   joint_buffers_.effort.resize(num_joints, 0.0);
   joint_buffers_.command.resize(num_joints, 0.0);
+  position_offsets_.resize(num_joints, 0.0);
 
   joint_info_.clear();
 
@@ -229,6 +236,18 @@ hardware_interface::return_type ReseqHardware::read(
         continue;
       }
       *buffer_ptr = value * field.scale + field.bias;
+
+      // Normalize position values to [-π, π] to handle firmware multi-turn
+      // accumulation. The Dynamixel encoders can report accumulated positions
+      // beyond a single revolution, which confuses MoveIt's IK solver and
+      // causes erratic motion / high-torque safety triggers.
+      // Store the multi-turn offset so write() can un-wrap commands.
+      if (field.mode == "position") {
+        double raw = *buffer_ptr;
+        double wrapped = std::remainder(raw, 2.0 * M_PI);
+        position_offsets_[jinfo.index] = raw - wrapped;
+        *buffer_ptr = wrapped;
+      }
     }
   }
 
@@ -252,8 +271,10 @@ hardware_interface::return_type ReseqHardware::write(
 
   // Detect if the control loop is running slower than expected
   if (now - last_write_time_ > command_cycle_ * 1.2) {
-    RCLCPP_WARN_SKIPFIRST(
+    RCLCPP_WARN_THROTTLE(
       rclcpp::get_logger("ReseqHardware"),
+      *clock_,
+      THROTTLE_WARN,
       "Control loop slowdown detected");
   }
 
@@ -273,6 +294,14 @@ hardware_interface::return_type ReseqHardware::write(
 
       const auto & jinfo = joint_info_.at(field.name);
       double value = joint_buffers_.command[jinfo.index];
+
+      // Un-wrap position commands: add back the multi-turn offset so the
+      // motor receives an absolute position in its accumulated frame,
+      // consistent with what read() reports in the wrapped frame.
+      if (field.mode == "position") {
+        value += position_offsets_[jinfo.index];
+      }
+
       value = (value - field.bias) / field.scale;
 
       if (field.data_type == "float32") {

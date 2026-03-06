@@ -55,6 +55,24 @@ class Scaler(Node):
             'inverted': True,
             'condition': lambda b: not b[Scaler.buttons_enum.BBLUE],
         },
+        {
+            'name': 'Switch Arm Linear/Angular',
+            'button': buttons_enum.BRED,
+            'service': '/moveit_controller/switch_vel',
+            'inverted': False,
+        },
+        {
+            'name': 'Open/Close Beak',
+            'button': buttons_enum.BGREEN,
+            'service': '/moveit_controller/close_beak',
+            'inverted': False,
+        },
+        {
+            'name': 'Home Arm',
+            'button': buttons_enum.BWHITE,
+            'service': '/moveit_controller/home',
+            'inverted': False,
+        },
     ]
 
     qos = QoSProfile(
@@ -68,6 +86,13 @@ class Scaler(Node):
         # initialize the button/switch handlers
         self.previous_buttons = [False, False, False, False, False, True, True, True, True, True]
         self.control_mode = Scaler.control_mode_enum.AGEVAR
+
+        # Toggle state for push buttons (indices >= 5).
+        # Initial value = NOT inverted, so the first press produces the expected action.
+        self._push_toggle: dict[str, bool] = {}
+        for h in self.handlers:
+            if h['button'] >= 5:
+                self._push_toggle[h['name']] = not h['inverted']
 
         self.r_linear_vel = (
             self.declare_parameter('r_linear_vel', [-0.1600, -0.1600])
@@ -101,17 +126,42 @@ class Scaler(Node):
             return
 
         for handler in self.handlers:
-            self.get_logger().debug(str(handler['button']))
-            if buttons[handler['button']] != self.previous_buttons[handler['button']]:
+            btn_idx = handler['button']
+            if buttons[btn_idx] != self.previous_buttons[btn_idx]:
+                is_push = btn_idx >= 5
+                is_press = not buttons[btn_idx]  # Push buttons are False when pressed
+
+                # Push buttons: only fire on press edge (True→False).
+                # Switches: fire on both edges (existing behavior).
+                if is_push and not is_press:
+                    continue
+
                 if 'condition' not in handler or handler['condition'](buttons):
-                    data = handler['inverted'] ^ buttons[handler['button']]
-                    handler['service'].call_async(SetBool.Request(data=data))
+                    if is_push and handler['name'] in self._push_toggle:
+                        # Toggle: flip state on each press
+                        self._push_toggle[handler['name']] = not self._push_toggle[handler['name']]
+                        data = self._push_toggle[handler['name']]
+                    else:
+                        # Original logic for switches
+                        data = handler['inverted'] ^ buttons[btn_idx]
+
+                    if handler['service'].service_is_ready():
+                        handler['service'].call_async(SetBool.Request(data=data))
+                        self.get_logger().info(
+                            f"[BUTTON] '{handler['name']}' "
+                            f'{handler["button"].name} pressed → data={data}'
+                        )
+                    else:
+                        self.get_logger().warn(
+                            f"[BUTTON] Service not ready for '{handler['name']}'"
+                        )
                     if 'hook' in handler and data:
                         handler['hook'](self)
-                    self.get_logger().debug(
-                        f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}, value={data}"  # noqa
+                else:
+                    self.get_logger().info(
+                        f"[BUTTON] '{handler['name']}' skipped (condition=False)"
                     )
-        self.previous_buttons = buttons
+        self.previous_buttons = list(buttons)
 
     def remote_callback(self, data: Remote):
         self.handle_buttons(data.buttons)
@@ -123,12 +173,13 @@ class Scaler(Node):
 
         # TODO probably to merge with another version of scaler.py
 
-        self.moveit_pub.publish(Vector3(
-            x = data.left.x,
-            y = data.left.y,
-            z = data.left.z,
-        ))
-
+        self.moveit_pub.publish(
+            Vector3(
+                x=data.left.x,
+                y=data.left.y,
+                z=data.left.z,
+            )
+        )
 
         if self.control_mode == Scaler.control_mode_enum.AGEVAR:
             cmd_vel = self.agevarScaler(cmd_vel)

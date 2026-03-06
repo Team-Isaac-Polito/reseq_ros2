@@ -37,22 +37,22 @@
   ]
 }
 - {
-  msg_id: 0x51, # Arm base commands (P + R)
+  msg_id: 0x51, # Arm base commands: offset 0 = theta (roll), offset 4 = phi (pitch)
   modules: "only_first",
   length: 8,
   is_command: true,
   fields: [
-    { name: "base_pitch_arm_joint", type: "command" },
-    { name: "base_roll_arm_joint",  type: "command", offset: 4 },
+    { name: "base_roll_arm_joint",  type: "command" },
+    { name: "base_pitch_arm_joint", type: "command", offset: 4 },
   ]
 }
 - {
-  msg_id: 0x52, # Arm base states (P + R)
+  msg_id: 0x52, # Arm base states: offset 0 = theta (roll), offset 4 = phi (pitch)
   modules: "only_first",
   length: 8,
   fields: [
-    { name: "base_pitch_arm_joint", },
-    { name: "base_roll_arm_joint",  offset: 4 },
+    { name: "base_roll_arm_joint", },
+    { name: "base_pitch_arm_joint",  offset: 4 },
   ]
 }
 - {
@@ -124,12 +124,12 @@
   ]
 }
 - {
-  msg_id: 0x80, # Arm base velocity states (P + R)
+  msg_id: 0x80, # Arm base velocity: offset 0 = theta (roll), offset 4 = phi (pitch)
   modules: "only_first",
   length: 8,
   fields: [
-    { name: "base_pitch_arm_joint",  mode: "velocity", },
-    { name: "base_roll_arm_joint", mode: "velocity", offset: 4 },
+    { name: "base_roll_arm_joint",  mode: "velocity", },
+    { name: "base_pitch_arm_joint", mode: "velocity", offset: 4 },
   ]
 }
 - {

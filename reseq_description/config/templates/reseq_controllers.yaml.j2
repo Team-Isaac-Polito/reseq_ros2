@@ -16,6 +16,9 @@ controller_manager:
 {% if arm_controller %}
     mk2_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+
+    joint_group_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
 {% endif %}
 
 {% if body_controllers %}
@@ -57,9 +60,23 @@ mk2_arm_controller:
       - position
       - velocity
     action_monitor_rate: 10.0
-    allow_nonzero_velocity_at_trajectory_start: false
-    continue_last_state: false
+    allow_nonzero_velocity_at_trajectory_start: true
+    open_loop_control: false
+    allow_integration_in_goal_trajectories: true
+    start_with_holding: true
     default_tolerances:
-      goals: 0.1
-      goal_state: 0.1
+      goal_time: 0.0
+      stopped_velocity_tolerance: 0.0
+
+joint_group_velocity_controller:
+  ros__parameters:
+    joints:
+      - mod1__base_pitch_arm_joint
+      - mod1__base_roll_arm_joint
+      - mod1__elbow_pitch_arm_joint
+      - mod1__forearm_roll_arm_joint
+      - mod1__wrist_pitch_arm_joint
+      - mod1__wrist_roll_arm_joint
+    command_interfaces:
+      - velocity
 {% endif %}

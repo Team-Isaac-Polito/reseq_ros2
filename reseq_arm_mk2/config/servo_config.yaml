@@ -6,8 +6,10 @@ moveit_servo_node:
       ## --- General Settings ---
       use_gazebo: false                           # TODO: Set conditionally to true if running in Gazebo
       is_primary_planning_scene_monitor: false
-      publish_period: 0.03                        # 33Hz (must be < 1/3 of max expected latency)
-      low_latency_mode: false
+      publish_period: 0.1                         # 10Hz — 100ms trajectory segments for smooth interpolation
+      incoming_command_timeout: 0.5               # seconds before Servo halts (remote sends at 12.5Hz/80ms)
+      num_outgoing_halt_msgs_to_publish: 4        # number of halt messages on timeout
+      low_latency_mode: false                     # timer-driven output (smoother than event-driven)
 
       ## --- Command Settings ---
       command_in_type: "unitless"
@@ -26,12 +28,19 @@ moveit_servo_node:
       move_group_name: mk2_arm
       planning_frame: arm_base_link
       ee_frame_name: arm_roll_wrist_link
-      robot_link_command_frame: arm_roll_wrist_link
+      robot_link_command_frame: arm_base_link
 
       ## --- Singularity Avoidance Settings ---
-      lower_singularity_threshold: 10000000000000.0
-      hard_stop_singularity_threshold: 100000000000000.0
-      leaving_singularity_threshold_multiplier: 2.0
+      # Effectively disabled per team docs — small arm singularity avoidance is too aggressive
+      lower_singularity_threshold: 1.0e17
+      hard_stop_singularity_threshold: 1.0e20
+      leaving_singularity_threshold_multiplier: 3.0
+
+      ## --- Joint Limit Margins ---
+      # Disabled (0.0) — Multi-turn position normalization in the hardware
+      # interface prevents out-of-range values. Dynamixel servos enforce
+      # their own hardware position limits.
+      joint_limit_margins: [0.0]
 
       ## --- Topic names ---
       cartesian_command_in_topic: /moveit_servo_node/delta_twist_cmds   # Twist commands
@@ -44,10 +53,10 @@ moveit_servo_node:
       scene_collision_proximity_threshold: 0.01
 
       ## --- Scaling Settings ---
+      # Scales must stay within achievable joint velocity limits (~1.0 rad/s
+      # for base joints). Over-scaling causes Servo to constantly clip → wastes
+      # joystick range and creates jerky velocity-limited motion.
       scale:
-        linear: 0.15
-        rotational: 0.3
-        joint: 0.3
-
-      ## --- Additional Settings ---
-      num_outgoing_halt_msgs_to_publish: 4
+        linear: 0.5                               # m/s max — achievable with 1 rad/s joint limits
+        rotational: 1.0                            # rad/s max for unitless input
+        joint: 0.5

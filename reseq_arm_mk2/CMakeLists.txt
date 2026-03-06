@@ -15,6 +15,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   # "reseq_arm_mk2/coordinate_controller.py"
   "reseq_arm_mk2/moveit_controller.py"
+  "reseq_arm_mk2/servo_test_scenario.py"
   DESTINATION lib/${PROJECT_NAME}
 )
 

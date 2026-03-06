@@ -4,7 +4,6 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch_param_builder import ParameterBuilder
 from launch_ros.actions import Node
 from moveit_configs_utils import MoveItConfigsBuilder
 
@@ -45,7 +44,6 @@ def launch_setup(context, *args, **kwargs):
         .robot_description_semantic(file_path='config/reseq_arm_mk2.srdf')
         .robot_description_kinematics(file_path='config/kinematics.yaml')
         .joint_limits(file_path='config/joint_limits.yaml')
-        .trajectory_execution('config/moveit_controllers.yaml')
         .pilz_cartesian_limits(file_path='config/pilz_cartesian_limits.yaml')
         .to_moveit_configs()
     )
@@ -79,8 +77,8 @@ def launch_setup(context, *args, **kwargs):
         name='moveit_servo_node',
         parameters=[
             moveit_config.to_dict(),  # All MoveIt config
-            {'use_sim_time': use_sim_time},  # Don't forget this for Gazebo
             servo_config_file,  # Servo config file (MUST BE LAST)
+            {'use_sim_time': use_sim_time},  # Don't forget this for Gazebo
         ],
         output='screen',
         arguments=['--ros-args', '--log-level', 'info'],

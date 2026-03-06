@@ -1,5 +1,10 @@
+# Pilz Industrial Motion Planner - Cartesian limits
+# Used for PTP, LIN, and CIRC motion commands
+# These limits constrain the end-effector Cartesian velocity and acceleration
 cartesian_limits:
-  max_trans_vel: 1.0
-  max_rot_vel: 1.57
-  max_trans_acc: 1.0
-  max_trans_dec: 1.0
+  max_trans_vel: 0.3          # m/s - maximum translational velocity
+  max_trans_acc: 0.5          # m/s^2 - maximum translational acceleration
+  max_trans_dec: 0.5          # m/s^2 - maximum translational deceleration
+  max_rot_vel: 1.0            # rad/s - maximum rotational velocity
+  max_rot_acc: 1.5            # rad/s^2 - maximum rotational acceleration
+  max_rot_dec: 1.5            # rad/s^2 - maximum rotational deceleration

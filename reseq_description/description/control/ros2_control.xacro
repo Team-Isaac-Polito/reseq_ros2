@@ -10,6 +10,7 @@
             </xacro:unless>
 
             <param name="num_modules">${NumModules}</param>
+            <param name="command_cycle_ms">30</param>
             <!-- TODO: vcan, and gazebo alternatives -->
         </hardware>
 

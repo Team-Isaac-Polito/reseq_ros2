@@ -187,6 +187,7 @@ private:
   std::unordered_map<std::string, JointInfo> joint_info_;  ///< Joint information map.
   std::map<CanID, CanMessageMapping> can_mappings_;        ///< CAN message mappings.
   JointBuffers joint_buffers_;                             ///< Buffers for joint data.
+  std::vector<double> position_offsets_;                    ///< Multi-turn offset per joint (raw - wrapped).
   MessageBuffer recv_buffer_;                              ///< Buffer for received messages.
 
   std::chrono::steady_clock::time_point last_write_time_{std::chrono::steady_clock::now()};
