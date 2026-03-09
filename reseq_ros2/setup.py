@@ -33,6 +33,8 @@ setup(
             'rcemu = reseq_ros2.rcemu:main',
             'detector = reseq_ros2.detector:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
+            'thermal_node = reseq_ros2.thermal_node:main',
+            'app_gateway = reseq_ros2.app_gateway:main',
         ],
     },
 )

@@ -357,6 +357,7 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-humble-xacro \
     ros-humble-image-transport-plugins \
     ros-humble-rplidar-ros \
+    ros-humble-rosbridge-server \
     ros-humble-usb-cam \
     ros-humble-controller-manager \
     ros-humble-diff-drive-controller \
@@ -403,7 +404,8 @@ RUN pip install ultralytics --no-cache-dir \
 
 RUN apt update --allow-releaseinfo-change && apt install -y --no-install-recommends \
     iproute2 ros-humble-apriltag-ros usbutils ranger nano \
-    && pip install opencv-contrib-python numpy==1.23.5
+    && pip install opencv-contrib-python numpy==1.23.5 \
+    && pip install Jetson.GPIO adafruit-circuitpython-mlx90640 adafruit-blinka
 
 # Final stage: build reseq_ros2
 FROM reseq-base AS reseq
