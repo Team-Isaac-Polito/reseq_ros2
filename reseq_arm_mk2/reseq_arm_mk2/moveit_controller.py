@@ -6,7 +6,7 @@ from geometry_msgs.msg import TwistStamped, Vector3
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Int32
-from std_srvs.srv import SetBool
+from std_srvs.srv import SetBool, Trigger
 
 
 class MoveitController(Node):
@@ -18,6 +18,7 @@ class MoveitController(Node):
     - Switching between linear and angular velocity control modes
     - Mirroring specific joint states to fix MoveIt issue with non-arm joints
     - Controlling the arm's beak (gripper) mechanism
+    - Starting the MoveIt Servo node via the start_servo service
 
     Subscribed Topics:
         /mk2_arm_vel (geometry_msgs/Vector3): Velocity commands for the arm
@@ -39,10 +40,14 @@ class MoveitController(Node):
         planning_frame_id (str): Frame ID for motion planning (default: 'arm_base_link')
     """
 
+    SERVO_START_TIMEOUT = 10.0  # seconds to wait for servo service
+    SERVO_START_RETRY_PERIOD = 2.0  # seconds between retries
+
     def __init__(self):
         super().__init__('moveit_controller')
 
         self.linear_vel_enabled = True
+        self.servo_started = False
         self.create_service(SetBool, '/moveit_controller/switch_vel', self.switch_vel_type)
         self.create_service(SetBool, '/moveit_controller/close_beak', self.handle_beak)
 
@@ -75,7 +80,48 @@ class MoveitController(Node):
             'reseq/module33/mk2_arm/beak/setpoint',
             10,
         )
+
+        # Create client for starting MoveIt Servo
+        self.start_servo_client = self.create_client(Trigger, '/moveit_servo_node/start_servo')
+
+        # Use a timer to attempt starting servo after the node is spinning
+        self.start_servo_timer = self.create_timer(
+            self.SERVO_START_RETRY_PERIOD, self._try_start_servo
+        )
+
         self.get_logger().info('Node Moveit Controller started successfully')
+
+    def _try_start_servo(self):
+        """Attempt to start MoveIt Servo by calling its start_servo service.
+
+        Retries periodically until the service is available and responds successfully.
+        Once started, the retry timer is cancelled.
+        """
+        if self.servo_started:
+            self.start_servo_timer.cancel()
+            return
+
+        if not self.start_servo_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().warn('Waiting for /moveit_servo_node/start_servo service...')
+            return
+
+        future = self.start_servo_client.call_async(Trigger.Request())
+        future.add_done_callback(self._start_servo_callback)
+
+    def _start_servo_callback(self, future):
+        """Handle the response from the start_servo service call."""
+        try:
+            result = future.result()
+            if result.success:
+                self.servo_started = True
+                self.start_servo_timer.cancel()
+                self.get_logger().info('MoveIt Servo started successfully')
+            else:
+                self.get_logger().warn(
+                    f'MoveIt Servo start_servo returned failure: {result.message}'
+                )
+        except Exception as e:
+            self.get_logger().error(f'start_servo service call failed: {e}')
 
     def mirror_states(self, msg: JointState):
         """Mirror specific joint states to a filtered topic.
@@ -118,7 +164,11 @@ class MoveitController(Node):
 
         Note:
             The frame_id for the twist command is set from the planning_frame_id parameter.
+            Commands are only forwarded after MoveIt Servo has been started.
         """
+        if not self.servo_started:
+            return
+
         servo_msg = TwistStamped()
         servo_msg.header.stamp = self.get_clock().now().to_msg()
         servo_msg.header.frame_id = self.planning_frame_id
