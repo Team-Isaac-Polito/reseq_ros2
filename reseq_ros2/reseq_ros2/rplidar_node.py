@@ -5,7 +5,8 @@ import time
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Empty, SetBool
-
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 
 class RplidarNode(Node):
     """Node that manages rplidar start/stop via SetBool service."""
@@ -16,15 +17,17 @@ class RplidarNode(Node):
         super().__init__('rplidar_mode')
         self.process = None
         self.enable = False
+        self.callback_group = ReentrantCallbackGroup()
 
         self.srv = self.create_service(
             SetBool,
             'rplidar_mode/toggle_scan',
-            self.handle_toggle
+            self.handle_toggle,
+            callback_group=self.callback_group
         )
 
-        self.start_motor_cli = self.create_client(Empty, 'start_motor')
-        self.stop_motor_cli = self.create_client(Empty, 'stop_motor')
+        self.start_motor_cli = self.create_client(Empty, 'start_motor', callback_group=self.callback_group)
+        self.stop_motor_cli = self.create_client(Empty, 'stop_motor', callback_group=self.callback_group)
         self.get_logger().info('Lidar wrapper initialized')
     
     def handle_toggle(self, request, response):
@@ -45,12 +48,12 @@ class RplidarNode(Node):
 
         try:
             self.get_logger().info("Starting RPLidar driver via subprocess...")
-            self.process = subprocess.Popen(
-                self.LAUNCH_CMD,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                preexec_fn=os.setsid
-            )
+            # self.process = subprocess.Popen(
+            #     self.LAUNCH_CMD,
+            #     stdout=subprocess.PIPE,
+            #     stderr=subprocess.PIPE,
+            #     preexec_fn=os.setsid
+            # )
 
             self.get_logger().info("Waiting for hardware services to activate...")
             time.sleep(3.0) 
@@ -90,8 +93,11 @@ def main(args=None):
     """Entry point for the node."""
     rclpy.init(args=args)
     node = RplidarNode()
+    executor = MultiThreadedExecutor()
+    executor.add_node(executor)
+
     try:
-        rclpy.spin(node)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
