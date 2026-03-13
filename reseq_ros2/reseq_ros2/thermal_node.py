@@ -31,7 +31,7 @@ class ThermalCameraNode(Node):
         
         # ROS service for toggling camera on/off
         self.srv = self.create_service(SetBool, 'activate_thermal', self.handle_toggle_camera)
-        self.get_logger().info("Nodo Termico pronto. Servizio /activate_thermal attivo.")
+        self.get_logger().info("Thermal node ready. Service /activate_thermal active.")
     
     def _initialize_hardware(self):
         """Initialize hardware with error handling"""
@@ -50,27 +50,27 @@ class ThermalCameraNode(Node):
             self.timer = self.create_timer(0.5, self.publish_thermal_image)
             
             self.hardware_initialized = True
-            self.get_logger().info("Hardware inizializzato correttamente")
+            self.get_logger().info("Hardware initialized correctly")
         except Exception as e:
-            self.get_logger().error(f"Errore nell'inizializzazione dell'hardware termico: {e}")
+            self.get_logger().error(f"Error initializing thermal hardware: {e}")
             self.hardware_initialized = False
     
     def handle_toggle_camera(self, request, response):
         """Handle camera on/off requests"""
         if not self.hardware_initialized:
             response.success = False
-            response.message = 'Hardware termico non disponibile'
+            response.message = 'Thermal hardware is not available'
             self.get_logger().error(response.message)
             return response
         
         self.is_active = request.data
 
         if self.is_active:
-            self.get_logger().info('Videocamera termica attivata')
-            response.message = "Camera attivata con successo"
+            self.get_logger().info('Thermal camera is activated')
+            response.message = "Camera is activated successfully"
         else:
-            self.get_logger().info('Videocamera termica disattivata')
-            response.message = 'Camera disattivata con successo'
+            self.get_logger().info('Thermal camera is deactivated')
+            response.message = 'Camera is deactivated successfully'
         
         response.success = True
         return response
@@ -81,7 +81,7 @@ class ThermalCameraNode(Node):
             return
         
         if not self.hardware_initialized or self.mlx is None:
-            self.get_logger().warning("Hardware non inizializzato, impossibile acquisire frame")
+            self.get_logger().warning("Hardware is not initialized, unable to acquire frame")
             return
         
         try:
@@ -90,7 +90,7 @@ class ThermalCameraNode(Node):
             self.get_logger().warning("Failed to read frame, skipping.")
             return
         except Exception as e:
-            self.get_logger().error(f"Errore nella lettura del sensore: {e}")
+            self.get_logger().error(f"Error reading sensor: {e}")
             return
 
         # Convert to NumPy array

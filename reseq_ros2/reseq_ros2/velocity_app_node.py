@@ -10,7 +10,7 @@ class VelocityAppNode(Node):
     def __init__(self):
         super().__init__('velocity app node')
         self.velocity = 0
-        self.get_logger().info("Velocirty app node started")
+        self.get_logger().info("Velocity app node started")
         
 
         
