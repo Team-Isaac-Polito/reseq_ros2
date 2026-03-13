@@ -59,18 +59,18 @@ class ThermalCameraNode(Node):
         """Handle camera on/off requests"""
         if not self.hardware_initialized:
             response.success = False
-            response.message = "Hardware termico non disponibile"
+            response.message = 'Hardware termico non disponibile'
             self.get_logger().error(response.message)
             return response
         
         self.is_active = request.data
 
         if self.is_active:
-            self.get_logger().info("Videocamera termica attivata")
+            self.get_logger().info('Videocamera termica attivata')
             response.message = "Camera attivata con successo"
         else:
-            self.get_logger().info("Videocamera termica disattivata")
-            response.message = "Camera disattivata con successo"
+            self.get_logger().info('Videocamera termica disattivata')
+            response.message = 'Camera disattivata con successo'
         
         response.success = True
         return response

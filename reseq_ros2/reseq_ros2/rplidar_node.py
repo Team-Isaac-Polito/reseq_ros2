@@ -4,28 +4,28 @@ import subprocess
 import time
 import rclpy
 from rclpy.node import Node
-from std_srvs.srv import SetBool
+from std_srvs.srv import Empty, SetBool
 
 
 class RplidarNode(Node):
     """Node that manages rplidar start/stop via SetBool service."""
     
-    # Launch command for rplidar - customize based on your hardware
-    # Common options: rplidar_a2m8_launch.py, rplidar_s1_launch.py, etc.
     LAUNCH_CMD = ['ros2', 'launch', 'rplidar_ros', 'rplidar_a2m8_launch.py']
-        
+
     def __init__(self):
-        super().__init__("rplidar_mode")
-        self.enable = False
+        super().__init__('rplidar_mode')
         self.process = None
-        
-        # Crea il servizio ROS2
+        self.enable = False
+
         self.srv = self.create_service(
-            SetBool, 
-            'rplidar_mode/toggle_scan', 
+            SetBool,
+            'rplidar_mode/toggle_scan',
             self.handle_toggle
         )
-        self.get_logger().info("Node RPLidar pronto. Servizio /rplidar_mode/toggle_scan attivo.")
+
+        self.start_motor_cli = self.create_client(Empty, 'start_motor')
+        self.stop_motor_cli = self.create_client(Empty, 'stop_motor')
+        self.get_logger().info('Wrapper Lpidar inizializzato')
     
     def handle_toggle(self, request, response):
         """Callback per il servizio ROS2."""
@@ -41,61 +41,49 @@ class RplidarNode(Node):
     def start_rplidar(self):
         """Avvia il processo rplidar."""
         if self.process is not None and self.process.poll() is None:
-            return True, "RPLidar già in esecuzione."
-        
+            return True, 'Rplidar is running'
+
         try:
-            self.get_logger().info(f"Avvio RPLidar: {' '.join(self.LAUNCH_CMD)}")
+            self.get_logger().info("Avvio del driver RPLidar via subprocess...")
             self.process = subprocess.Popen(
                 self.LAUNCH_CMD,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                preexec_fn=os.setsid,
+                preexec_fn=os.setsid
             )
-            
-            # Aspetta un attimo per verificare che il processo sia partito
-            time.sleep(0.5)
-            if self.process.poll() is not None:
-                stderr = self.process.stderr.read().decode('utf-8', errors='ignore')
-                return False, f"RPLidar non è partito: {stderr[:200]}"
-            
-            self.get_logger().info("RPLidar avviato con successo.")
-            return True, "RPLidar avviato."
-        
+
+            self.get_logger().info("Attesa attivazione servizi hardware...")
+            time.sleep(3.0) 
+
+            if self.start_motor_cli.wait_for_service(timeout_sec=5.0):
+                self.start_motor_cli.call_async(Empty.Request())
+                return True, "Driver avviato e rotazione motore attivata."
+            else:
+                return True, "Driver avviato, ma i servizi motore non rispondono (timeout)."
+
         except Exception as e:
-            self.get_logger().error(f"Errore nell'avvio di RPLidar: {e}")
-            return False, f"Errore: {str(e)}"
+            self.get_logger().error(f"Errore critico avvio: {str(e)}")
+            return False, f"Errore nell'avvio del processo: {str(e)}"
+
     
     def stop_rplidar(self):
-        """Ferma il processo rplidar."""
-        if self.process is None or self.process.poll() is not None:
-            return True, "RPLidar già fermato."
-        
+        """Ferma il motore e chiude il driver."""
+        if self.process is None:
+            return True, 'RPLidar non era attivo.'
+
         try:
-            self.get_logger().info("Arresto RPLidar...")
+            if self.stop_motor_cli.wait_for_service(timeout_sec=1.0):
+                self.stop_motor_cli.call_async(Empty.Request())
+                time.sleep(0.5)
+
+            self.get_logger().info('Arresto del driver hardware...')
             os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
-            
-            try:
-                self.process.wait(timeout=3.0)
-            except subprocess.TimeoutExpired:
-                self.get_logger().warning("RPLidar non si è fermato, invio SIGKILL...")
-                os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
-                self.process.wait(timeout=2.0)
-            
-            self.get_logger().info("RPLidar fermato.")
+            self.process.wait(timeout=2.0)
             self.process = None
-            return True, "RPLidar fermato."
-        
+            return True, "RPLidar spento correttamente."
+            
         except Exception as e:
-            self.get_logger().error(f"Errore nell'arresto di RPLidar: {e}")
-            return False, f"Errore: {str(e)}"
-    
-    def switchRplidar(self):
-        """Legacy method - toggle manuale."""
-        self.enable = not self.enable
-        if self.enable:
-            self.start_rplidar()
-        else:
-            self.stop_rplidar()
+            return False, f"Errore durante lo spegnimento: {str(e)}"
 
 
 def main(args=None):

@@ -150,7 +150,7 @@ class AppGateway(Node):
         action = request.status.lower()
         self.get_logger().info(f'Richiesta UI per modulo [{module_id}]: {action}')
         
-        if action == "enable":
+        if action == 'enable':
             success, msg = self._ensure_node_running(module_id)
             if not success:
                 response.success = False
@@ -182,7 +182,7 @@ class AppGateway(Node):
         self.get_logger().info('Query stato nodi ricevuta')
         
         status_lines = []
-        for module_id in ['thermal', 'lidar', 'velocity']:
+        for module_id in self.service_mapping.keys():
             if module_id in self.hw_processes and self.hw_processes[module_id] is not None:
                 process = self.hw_processes[module_id]
                 is_running = process.poll() is None
@@ -191,7 +191,8 @@ class AppGateway(Node):
             state = 'RUNNING' if self.node_states.get(module_id, False) else 'STOPPED'
             status_lines.append(f'{module_id}: {state}')
         
-        response.status = '\n'.join(status_lines)
+        response.message = '\n'.join(status_lines)
+        response.success = True
         return response
 
 
