@@ -1,210 +1,133 @@
-import os
-import signal
-import subprocess
-import time
-
 import rclpy
 from rclpy.node import Node
-from std_srvs.srv import SetBool
-
+from std_srvs.srv import SetBool, Empty
 from reseq_interfaces.srv import NodeStatus
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+
 
 
 class AppGateway(Node):
-    def __init__(self):
+    def __init__(self):
         super().__init__('app_gateway')
 
-        self.service_mapping = {
-            'thermal': 'activate_thermal',
-            'lidar': 'rplidar_mode/toggle_scan',
-            'velocity': 'vel',
-        }
+        # Gruppo di callback rientrante per gestire richieste parallele
+        self.callback_group = ReentrantCallbackGroup()
 
-        # Node launchers: mapping to how to launch each node
-        self.node_launchers = {
-            'thermal': ('thermal_node', ['ros2', 'run', 'reseq_ros2', 'thermal_node']),
-            'lidar': ('rplidar_mode', ['ros2', 'run', 'reseq_ros2', 'rplidar_mode']),
-            'velocity': ('velocity', ['ros2', 'run', 'reseq_ros2', 'velocity']),
-        }
+        self.service_mapping = {
+            'thermal': 'activate_thermal',
+            'velocity': 'vel'
+        }
 
-        self.hw_clients = {}
-        self.hw_processes = {}  # Track running processes
-        self.node_states = {
-            'thermal': False,  # started or not
-            'lidar': False,
-            'velocity': False,
-        }
+        self.node_states = {'thermal': False, 'lidar': False, 'velocity': False}
 
-        for ui_name, hw_service in self.service_mapping.items():
-            # service names on the module card of flutter app
-            ui_service_name = f'/ui/{ui_name}'
-            self.create_service(
-                NodeStatus,
-                ui_service_name,
-                lambda req, res, n=ui_name: self.universal_callback(req, res, n),
-            )
-            self.hw_clients[ui_name] = self.create_client(SetBool, hw_service)
-            self.get_logger().info(f'Mapped: {ui_service_name} -> {hw_service}')
+        # 1. Clients per Thermal e Velocity (SetBool)
+        self.hw_clients = {}
+        for ui_name, hw_service in self.service_mapping.items():
+            self.hw_clients[ui_name] = self.create_client(
+                SetBool, hw_service, callback_group=self.callback_group
+            )
 
-        # Service to query node status
-        self.create_service(NodeStatus, '/ui/node_status', self.handle_node_status)
-        self.get_logger().info('Service /ui/node_status available for node status queries')
-        self.get_logger().info('Gateway App initialized correctly (lazy-loading mode).')
+        # 2. Clients specifici per LiDAR motor (Empty) - Segue le tue regole
+        self.start_motor_cli = self.create_client(
+            Empty, '/start_motor', callback_group=self.callback_group
+        )
+        self.stop_motor_cli = self.create_client(
+            Empty, '/stop_motor', callback_group=self.callback_group
+        )
 
-    def _ensure_node_running(self, module_id):
-        """
-        Ensure a node is running. Launch it if not already running.
-        Returns: (success: bool, message: str)
-        """
-        if module_id not in self.node_launchers:
-            return False, f'Module {module_id} not configured'
+        # 3. Servizi per Flutter (uno per modulo)
+        for ui_name in self.node_states.keys():
+            self.create_service(
+                NodeStatus,
+                f'/ui/{ui_name}',
+                lambda req, res, n=ui_name: self.universal_callback(req, res, n),
+                callback_group=self.callback_group
+            )
 
-        node_name, launch_cmd = self.node_launchers[module_id]
+        # 4. Servizio Query generale
+        self.create_service(
+            NodeStatus, '/ui/node_status', self.handle_node_status,
+            callback_group=self.callback_group
+        )
 
-        # Check if process is still running
-        if module_id in self.hw_processes and self.hw_processes[module_id] is not None:
-            process = self.hw_processes[module_id]
-            if process.poll() is None:  # Process still alive
-                self.get_logger().info(f'Node {node_name} already running (PID: {process.pid})')
-                return True, f'{node_name} already active'
-            else:
-                # Process died, remove it
-                del self.hw_processes[module_id]
-                self.node_states[module_id] = False
+        self.get_logger().info('Gateway App Ready (Multi-Threaded Mode).')
 
-        # Launch the node
-        try:
-            self.get_logger().info(f'Starting node on-demand: {node_name}')
-            process = subprocess.Popen(
-                launch_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid
-            )
-            self.hw_processes[module_id] = process
-            self.node_states[module_id] = True
-            self.get_logger().info(f'Node {node_name} started (PID: {process.pid})')
+    def universal_callback(self, request, response, module_id):
+        action = request.status.lower()
+        self.get_logger().info(f'UI Request for {module_id}: {action}')
 
-            # Give node time to initialize and register its service (2 seconds for safety)
-            time.sleep(2.0)
+        if action == 'query':
+            state = 'RUNNING' if self.node_states.get(module_id) else 'STOPPED'
+            response.success = True
+            response.message = f'{module_id}: {state}'
+            return response
 
-            return True, f'{node_name} started successfully'
-        except Exception as e:
-            self.get_logger().error(f'Error starting {node_name}: {e}')
-            self.node_states[module_id] = False
-            return False, f'Error starting: {str(e)}'
+        # LOGICA LIDAR: Segue ros2 service call /start_motor o /stop_motor
+        if module_id == 'lidar':
+            client = self.start_motor_cli if action == 'enable' else self.stop_motor_cli
+            # Usiamo un timeout breve per non intasare l'executor
+            if client.wait_for_service(timeout_sec=0.5):
+                client.call_async(Empty.Request())
+                self.node_states['lidar'] = (action == 'enable')
+                response.success = True
+                response.message = f"LiDAR motor {action}d."
+            else:
+                response.success = False
+                response.message = "LiDAR Hardware not responding."
+            return response
 
-    def _stop_node(self, module_id):
-        """
-        Stop a running node.
-        Returns: (success: bool, message: str)
-        """
-        if module_id not in self.node_launchers:
-            return False, f'Module {module_id} not configured'
+        # ALTRI MODULI: Thermal e Velocity
+        else:
+            client = self.hw_clients.get(module_id)
+            if client and client.wait_for_service(timeout_sec=0.5):
+                hw_req = SetBool.Request(data=(action == 'enable'))
+                client.call_async(hw_req)
+                self.node_states[module_id] = hw_req.data
+                response.success = True
+                response.message = f"{module_id} set to {action}"
+            else:
+                response.success = False
+                response.message = f"Hardware {module_id} not available."
+            return response
 
-        node_name, _ = self.node_launchers[module_id]
+    def handle_node_status(self, request, response):
+        """Scansiona il grafo ROS per sincronizzare gli stati"""
+        try:
+            available_services = [s[0] for s in self.get_service_names_and_types()]
+            self.node_states['lidar'] = any('/start_motor' in s for s in available_services)
+            self.node_states['thermal'] = any('activate_thermal' in s for s in available_services)
 
-        if module_id not in self.hw_processes or self.hw_processes[module_id] is None:
-            self.node_states[module_id] = False
-            return True, f'{node_name} already stopped'
+            status_lines = [f"{m}: {'RUNNING' if s else 'STOPPED'}" for m, s in self.node_states.items()]
+            response.message = '\n'.join(status_lines)
+            response.success = True
+        except Exception as e:
+            response.success = False
+            response.message = str(e)
+        return response
 
-        process = self.hw_processes[module_id]
-        if process.poll() is not None:  # Already dead
-            self.node_states[module_id] = False
-            del self.hw_processes[module_id]
-            return True, f'{node_name} was already stopped'
-
-        try:
-            self.get_logger().info(f'Stopping node: {node_name} (PID: {process.pid})')
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-
-            try:
-                process.wait(timeout=3.0)
-                self.get_logger().info(f'Nodo {node_name} fermato con SIGTERM')
-            except subprocess.TimeoutExpired:
-                self.get_logger().warning(f'SIGTERM timeout for {node_name}, sending SIGKILL')
-                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-                process.wait(timeout=2.0)
-                self.get_logger().info(f'Node {node_name} stopped with SIGKILL')
-
-            self.node_states[module_id] = False
-            del self.hw_processes[module_id]
-            return True, f'{node_name} stopped successfully'
-
-        except Exception as e:
-            self.get_logger().error(f'Error stopping {node_name}: {e}')
-            self.node_states[module_id] = False
-            return False, f'Error stopping: {str(e)}'
-
-    def _cleanup_processes(self):
-        """Clean up all launched processes on shutdown"""
-        for module_id in list(self.hw_processes.keys()):
-            self._stop_node(module_id)
-
-    def universal_callback(self, request, response, module_id):
-        """
-        Universal callback that handles UI requests.
-        If the node is not active, it starts it on demand.
-        Then forwards the request to the hardware node.
-        """
-        action = request.status.lower()
-        self.get_logger().info(f'UI request for module [{module_id}]: {action}')
-
-        if action == 'enable':
-            success, msg = self._ensure_node_running(module_id)
-            if not success:
-                response.success = False
-                response.message = f'Error starting: {msg}'
-                return response
-
-            hw_request = SetBool.Request()
-            hw_request.data = True
-        else:
-            success, msg = self._stop_node(module_id)
-            response.success = success
-            response.message = msg
-            return response
-        client = self.hw_clients[module_id]
-        if not client.wait_for_service(timeout_sec=2.0):
-            response.success = False
-            response.message = 'Node started but hardware service not responding'
-            return response
-        client.call_async(hw_request)
-        response.success = True
-        response.message = f'{module_id} activated successfully'
-        return response
-
-    def handle_node_status(self, request, response):
-        """
-        Handler for the /ui/node_status service.
-        Returns the status of all managed nodes.
-        """
-        self.get_logger().info('Node status query received')
-
-        status_lines = []
-        for module_id in ['thermal', 'lidar', 'velocity']:
-            if module_id in self.hw_processes and self.hw_processes[module_id] is not None:
-                process = self.hw_processes[module_id]
-                is_running = process.poll() is None
-                self.node_states[module_id] = is_running
-
-            state = 'RUNNING' if self.node_states.get(module_id, False) else 'STOPPED'
-            status_lines.append(f'{module_id}: {state}')
-
-        response.message = '\n'.join(status_lines)
-        response.success = True
-        return response
 
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = AppGateway()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node._cleanup_processes()
-        node.destroy_node()
-        rclpy.shutdown()
+    rclpy.init(args=args)
+    node = AppGateway()
+
+    # IMPORTANTE: Usiamo il MultiThreadedExecutor invece di rclpy.spin(node)
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Stop motor LiDAR allo spegnimento del gateway
+        if node.stop_motor_cli.wait_for_service(timeout_sec=1.0):
+            node.stop_motor_cli.call_async(Empty.Request())
+        node.destroy_node()
+        rclpy.shutdown()
+
 
 
 if __name__ == '__main__':
-    main()
+    main()

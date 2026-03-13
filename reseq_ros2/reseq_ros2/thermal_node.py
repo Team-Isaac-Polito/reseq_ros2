@@ -51,7 +51,7 @@ class ThermalCameraNode(Node):
             self.timer = self.create_timer(0.5, self.publish_thermal_image)
 
             self.hardware_initialized = True
-            self.get_logger().info('Hardware initialized successfully')
+            self.get_logger().info('Hardware initialized correctly')
         except Exception as e:
             self.get_logger().error(f'Error initializing thermal hardware: {e}')
             self.hardware_initialized = False
@@ -82,7 +82,7 @@ class ThermalCameraNode(Node):
             return
 
         if not self.hardware_initialized or self.mlx is None:
-            self.get_logger().warning('Hardware not initialized, cannot acquire frame')
+            self.get_logger().warning('Hardware not initialized, unable to acquire frame')
             return
 
         try:
