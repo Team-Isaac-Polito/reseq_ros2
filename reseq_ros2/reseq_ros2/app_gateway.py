@@ -168,23 +168,25 @@ class AppGateway(Node):
                 return response
             hw_request.data = True
         elif action == 'disable':
-            success, msg = self._stop_node(module_id)
-            response.success = success
-            response.message = msg
             hw_request.data = False
-            return response
         else:
             response.success = False
             response.message = f'Action {action} not recognized'
             return response
+        
         client = self.hw_clients[module_id]
-        if not client.wait_for_service(timeout_sec=2.0):
+        if not client.wait_for_service(timeout_sec=10.0):
             response.success = False
             response.message = 'Node started but hardware service not responding'
             return response
         client.call_async(hw_request)
+        if action == 'disable':
+            time.sleep(1.0) 
+            self._stop_node(module_id)
+            response.message = f'{module_id} deactivated successfully' # Messaggio manuale
+        else:
+            response.message = f'{module_id} activated successfully'
         response.success = True
-        response.message = f'{module_id} activated successfully'
         return response
   
     def handle_node_status(self, request, response):
@@ -195,14 +197,12 @@ class AppGateway(Node):
         self.get_logger().info('Node status query received')
         
         status_lines = []
-        for module_id in self.service_mapping.keys():
-            if module_id in self.hw_processes and self.hw_processes[module_id] is not None:
-                process = self.hw_processes[module_id]
-                is_running = process.poll() is None
-                self.node_states[module_id] = is_running
-            
-            state = 'RUNNING' if self.node_states.get(module_id, False) else 'STOPPED'
-            status_lines.append(f'{module_id}: {state}')
+        available_services = [s[0] for s in self.get_service_names_and_types()]
+        for module_id, hw_service in self.service_mapping.items():
+            is_running = any(hw_service in s for s in available_services)
+            self.node_states[module_id] = is_running  
+            state_str = 'RUNNING' if is_running else 'STOPPED'
+            status_lines.append(f'{module_id}: {state_str}')
         
         response.message = '\n'.join(status_lines)
         response.success = True
