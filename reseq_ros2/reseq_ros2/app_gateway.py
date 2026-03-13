@@ -48,7 +48,7 @@ class AppGateway(Node):
         
         # Service to query node status
         self.create_service(NodeStatus, '/ui/node_status', self.handle_node_status)
-        self.get_logger().info('Service /ui/node_status is available for querying node status')
+        self.get_logger().info('Servizio /ui/node_status disponibile per query stato nodi')
         self.get_logger().info('Gateway App initialized correctly (lazy-loading mode).')
     
     def _ensure_node_running(self, module_id):
@@ -57,7 +57,7 @@ class AppGateway(Node):
         Returns: (success: bool, message: str)
         """
         if module_id not in self.node_launchers:
-            return False, f'Module {module_id} is not configured'
+            return False, f'Modulo {module_id} non configurato'
         
         node_name, launch_cmd = self.node_launchers[module_id]
         
@@ -65,8 +65,8 @@ class AppGateway(Node):
         if module_id in self.hw_processes and self.hw_processes[module_id] is not None:
             process = self.hw_processes[module_id]
             if process.poll() is None:  # Process still alive
-                self.get_logger().info(f'Node {node_name} is already running (PID: {process.pid})')
-                return True, f'{node_name} is already active'
+                self.get_logger().info(f'Nodo {node_name} già in esecuzione (PID: {process.pid})')
+                return True, f'{node_name} già attivo'
             else:
                 # Process died, remove it
                 del self.hw_processes[module_id]
@@ -74,7 +74,7 @@ class AppGateway(Node):
         
         # Launch the node
         try:
-            self.get_logger().info(f'Starting on-demand node: {node_name}')
+            self.get_logger().info(f'Avvio on-demand nodo: {node_name}')
             process = subprocess.Popen(
                 launch_cmd,
                 stdout=subprocess.PIPE,
@@ -83,16 +83,16 @@ class AppGateway(Node):
             )
             self.hw_processes[module_id] = process
             self.node_states[module_id] = True
-            self.get_logger().info(f'Node {node_name} is started (PID: {process.pid})')
+            self.get_logger().info(f'Nodo {node_name} avviato (PID: {process.pid})')
             
             # Give node time to initialize and register its service (2 seconds for safety)
             time.sleep(2.0)
             
-            return True, f'{node_name} is started successfully'
+            return True, f'{node_name} avviato con successo'
         except Exception as e:
-            self.get_logger().error(f"Error starting {node_name}: {e}")
+            self.get_logger().error(f"Errore nell'avvio di {node_name}: {e}")
             self.node_states[module_id] = False
-            return False, f"Error starting: {str(e)}"
+            return False, f"Errore nell'avvio: {str(e)}"
     
     def _stop_node(self, module_id):
         """
@@ -100,41 +100,41 @@ class AppGateway(Node):
         Returns: (success: bool, message: str)
         """
         if module_id not in self.node_launchers:
-            return False, f'Module {module_id} is not configured'
+            return False, f'Modulo {module_id} non configurato'
         
         node_name, _ = self.node_launchers[module_id]
         
         if module_id not in self.hw_processes or self.hw_processes[module_id] is None:
             self.node_states[module_id] = False
-            return True, f'{node_name} is already stopped'
+            return True, f'{node_name} già fermo'
         
         process = self.hw_processes[module_id]
         if process.poll() is not None:  # Already dead
             self.node_states[module_id] = False
             del self.hw_processes[module_id]
-            return True, f'{node_name} was already stopped'
+            return True, f'{node_name} era già fermo'
         
         try:
-            self.get_logger().info(f'Stopping node: {node_name} (PID: {process.pid})')
+            self.get_logger().info(f'Arresto nodo: {node_name} (PID: {process.pid})')
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             
             try:
                 process.wait(timeout=3.0)
-                self.get_logger().info(f'Node {node_name} is stopped with SIGTERM')
+                self.get_logger().info(f'Nodo {node_name} fermato con SIGTERM')
             except subprocess.TimeoutExpired:
-                self.get_logger().warning(f'SIGTERM timeout for {node_name}, sending SIGKILL')
+                self.get_logger().warning(f'Timeout SIGTERM per {node_name}, invio SIGKILL')
                 os.killpg(os.getpgid(process.pid), signal.SIGKILL)
                 process.wait(timeout=2.0)
-                self.get_logger().info(f'Node {node_name} is stopped with SIGKILL')
+                self.get_logger().info(f'Nodo {node_name} fermato con SIGKILL')
             
             self.node_states[module_id] = False
             del self.hw_processes[module_id]
-            return True, f'{node_name} is stopped successfully'
+            return True, f'{node_name} fermato con successo'
     
         except Exception as e:
-            self.get_logger().error(f"Error stopping {node_name}: {e}")
+            self.get_logger().error(f"Errore nell'arresto di {node_name}: {e}")
             self.node_states[module_id] = False
-            return False, f"Error stopping: {str(e)}"
+            return False, f"Errore nell'arresto: {str(e)}"
     
     def _cleanup_processes(self):
         """Clean up all launched processes on shutdown"""
@@ -143,43 +143,56 @@ class AppGateway(Node):
 
     def universal_callback(self, request, response, module_id):
         """
-        Universal callback that handles UI requests.
-        If the node is not active, starts it.
-        Then sends the request to the hardware node.
+        Callback universale che gestisce le richieste UI.
+        Se il nodo non è attivo, lo avvia.
+        Poi invia la richiesta al nodo hardware.
         """
         action = request.status.lower()
-        self.get_logger().info(f'UI request for module [{module_id}]: {action}')
+        self.get_logger().info(f'Richiesta UI per modulo [{module_id}]: {action}')
         
+        hw_request = SetBool.Request()
+
+        if action == 'query':
+            if self.node_states.get(module_id, False):
+                state = 'RUNNING'
+            else:
+                state = 'STOPPED'
+            response.success = True
+            response.message = f'{module_id}: {state}'
+            return response
         if action == 'enable':
             success, msg = self._ensure_node_running(module_id)
             if not success:
                 response.success = False
-                response.message = f'Error starting {msg}'
+                response.message = f'Errore avvio {msg}'
                 return response
-            
-            hw_request = SetBool.Request()
             hw_request.data = True
-        else:
+        elif action == 'disable':
             success, msg = self._stop_node(module_id)
             response.success = success
             response.message = msg
+            hw_request.data = False
+            return response
+        else:
+            response.success = False
+            response.message = f'Azione {action} non riconosciuta'
             return response
         client = self.hw_clients[module_id]
         if not client.wait_for_service(timeout_sec=2.0):
             response.success = False
-            response.message = 'Node started but hardware service not responding'
+            response.message = 'Nodo avviato ma servizio hardware non risponde'
             return response
         client.call_async(hw_request)
         response.success = True
-        response.message = f'{module_id} is activated successfully'
+        response.message = f'{module_id} attivato con successo'
         return response
   
     def handle_node_status(self, request, response):
         """
-        Handler for service /ui/node_status.
-        Returns the status of all nodes.
+        Handler per il servizio /ui/node_status.
+        Restituisce lo stato di tutti i nodi.
         """
-        self.get_logger().info('Query node status received')
+        self.get_logger().info('Query stato nodi ricevuta')
         
         status_lines = []
         for module_id in self.service_mapping.keys():
