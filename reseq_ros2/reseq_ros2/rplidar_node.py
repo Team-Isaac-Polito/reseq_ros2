@@ -16,19 +16,19 @@ class RplidarNode(Node):
 
         self.srv = self.create_service(
             SetBool,
-            'rplidar_mode/toggle_scan',
+            '/rplidar_mode/toggle_scan',
             self.handle_toggle,
             callback_group=self.callback_group
         )
 
         self.start_motor_cli = self.create_client(
             Empty, 
-            'start_motor', 
+            '/start_motor', 
             callback_group=self.callback_group
         )
         self.stop_motor_cli = self.create_client(
             Empty, 
-            'stop_motor', 
+            '/stop_motor', 
             callback_group=self.callback_group
         )
         
