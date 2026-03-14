@@ -1,0 +1,10 @@
+agevar:
+  ros__parameters:
+    a: 0.1850                 # [m] Distance between the center of every module and the previous yaw joint
+    b: 0.2345                 # [m] Distance between the center of every module and the following yaw joint
+
+scaler:
+  ros__parameters:
+    r_linear_vel: [-0.1600, 0.1600]       # [m/s] Range of the linear velocity (agevar mode)
+    r_inverse_radius: [-2.5478, 2.5478]   # [1/m] Range of the inverse radius of curvature (agevar mode)
+    r_angular_vel: [-2.4912, 2.4912]      # [rad/s] Range of the angular velocity (pivot mode)

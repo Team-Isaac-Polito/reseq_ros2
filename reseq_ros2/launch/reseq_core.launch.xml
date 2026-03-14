@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+    <!-- Arguments -->
+    <arg name="version" default="mk2" />
+    <arg name="use_sim_time" default="false" />
+    <arg name="num_modules" default="2" />
+    <arg name="log_level" default="info" />
+
+    <!-- Variables -->
+    <let name="cfg" value="$(find-pkg-share reseq_description)/config/$(var version)/reseq.yaml" />
+
+    <!-- RESE.Q Nodes -->
+    <node pkg="reseq_ros2" exec="agevar" name="agevar" output="screen"
+        ros_args="--log-level $(var log_level)" on_exit="shutdown">
+        <param name="version" value="$(var version)" />
+        <param name="num_modules" value="$(var num_modules)" />
+        <param name="use_sim_time" value="$(var use_sim_time)" />
+        <param from="$(var cfg)" />
+    </node>
+
+    <node pkg="reseq_ros2" exec="pivot_controller" name="pivot_controller" output="screen"
+        ros_args="--log-level $(var log_level)" on_exit="shutdown">
+        <param name="num_modules" value="$(var num_modules)" />
+        <param name="use_sim_time" value="$(var use_sim_time)" />
+    </node>
+
+    <node pkg="reseq_ros2" exec="scaler" name="scaler" output="screen"
+        ros_args="--log-level $(var log_level)" on_exit="shutdown">
+        <param name="version" value="$(var version)" />
+        <param name="use_sim_time" value="$(var use_sim_time)" />
+        <param from="$(var cfg)" />
+    </node>    
+
+</launch>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+    <node pkg="image_transport" exec="republish" name="jpeg_republisher" output="screen"
+        args="raw compressed">
+        <remap from="in" to="/detector/model_output" />
+        <remap from="out/compressed" to="/detector/model_output/compressed" />
+    </node>
+
+    <node pkg="reseq_ros2" exec="detector" name="detector" output="screen" />
+</launch>

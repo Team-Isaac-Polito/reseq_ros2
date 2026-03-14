@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <!-- Launch arguments -->
+    <arg name="external_log_level" default="warn" description="Log level for external nodes" />
+
+    <!-- Sensor enable/disable arguments -->
+    <arg name="lidar" default="true" description="Enable LIDAR sensor" />
+    <arg name="realsense" default="true" description="Enable RealSense camera" />
+    <arg name="cameras" default="true" description="Enable USB cameras" />
+    <arg name="num_cameras" default="2" description="Number of USB cameras to launch" />
+
+    <!-- Parameter Files -->
+    <let name="rs_cfg" value="$(find-pkg-share reseq_description)/config/realsense_rgb_motion.yaml" />
+    <let name="usb_cam_cfg_part" value="$(find-pkg-share reseq_description)/config/usb_camera" />
+
+    <!-- LIDAR -->
+    <group if="$(var lidar)">
+        <include file="$(find-pkg-share rplidar_ros)/launch/rplidar_a2m8_launch.py">
+            <arg name="frame_id" value="laser_frame" />
+        </include>
+    </group>
+
+    <!-- RealSense Camera -->
+    <group if="$(var realsense)">
+        <node pkg="realsense2_camera" exec="realsense2_camera_node"
+            name="realsense2_camera_node" namespace="realsense"
+            ros_args="--log-level $(var external_log_level)">
+            <param from="$(var rs_cfg)" />
+        </node>
+    </group>
+
+    <!-- USB Cameras -->
+    <group if="$(var cameras)">
+        <for len="$(var num_cameras)" name="i">
+            <node pkg="usb_cam" exec="usb_cam_node_exe" name="usb_cam_$(index i)"
+                namespace="usb_cam_$(index i)"
+                ros_args="--log-level $(var external_log_level)">
+                <param from="$(var usb_cam_cfg_part)_$(index i).yaml" />
+            </node>
+        </for>
+    </group>
+
+</launch>

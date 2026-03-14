@@ -6,6 +6,8 @@
       image_width: 640
       image_height: 480
       pixel_format: "yuyv2rgb"
+      ".image_raw.jpeg_quality": 30
+      ".image_raw.png_level": 3
 
       # Following parameters should be set on launch:
       # device_id, camera_name, frame_id
