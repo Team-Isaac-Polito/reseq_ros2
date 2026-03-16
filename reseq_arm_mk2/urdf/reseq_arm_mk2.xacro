@@ -99,6 +99,7 @@
       upper="2.8"
       effort="6"
       velocity="2" />
+    <dynamics damping="0.5" friction="0.1" />
   </joint>
   <link
     name="arm_diff_roll_link">
@@ -119,7 +120,7 @@
     <visual>
       <origin
         xyz="0 0 0"
-        rpy="0 0 0" />
+        rpy="0 1.5708 0" />
       <geometry>
         <mesh
           filename="package://reseq_arm_mk2/meshes/arm_diff_roll_link.STL" />
@@ -133,7 +134,7 @@
     <collision>
       <origin
         xyz="0 0 0"
-        rpy="0 0 0" />
+        rpy="0 1.5708 0" />
       <geometry>
         <mesh
           filename="package://reseq_arm_mk2/meshes/arm_diff_roll_link.STL" />
@@ -157,6 +158,7 @@
       upper="3.14"
       effort="6"
       velocity="2" />
+    <dynamics damping="0.5" friction="0.1" />
   </joint>
   <link
     name="arm_pitch_forearm_link">
@@ -215,6 +217,7 @@
       upper="2.88"
       effort="6"
       velocity="2" />
+    <dynamics damping="0.5" friction="0.1" />
   </joint>
   <link
     name="arm_roll_forearm_link">
@@ -273,6 +276,7 @@
       upper="3.14"
       effort="3"
       velocity="1" />
+    <dynamics damping="0.5" friction="0.1" />
   </joint>
   <link
     name="arm_pitch_wrist_link">
@@ -293,7 +297,7 @@
     <visual>
       <origin
         xyz="0 0 0"
-        rpy="0 0 0" />
+        rpy="0 -1.5708 0" />
       <geometry>
         <mesh
           filename="package://reseq_arm_mk2/meshes/arm_pitch_wrist_link.STL" />
@@ -307,7 +311,7 @@
     <collision>
       <origin
         xyz="0 0 0"
-        rpy="0 0 0" />
+        rpy="0 -1.5708 0" />
       <geometry>
         <mesh
           filename="package://reseq_arm_mk2/meshes/arm_pitch_wrist_link.STL" />
@@ -331,6 +335,7 @@
       upper="1.57"
       effort="3"
       velocity="1" />
+    <dynamics damping="0.5" friction="0.1" />
   </joint>
   <link
     name="arm_roll_wrist_link">
@@ -389,5 +394,35 @@
       upper="3.14"
       effort="3"
       velocity="1" />
+    <dynamics damping="0.5" friction="0.1" />
   </joint>
+
+  <gazebo reference="arm_base_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <gazebo reference="arm_diff_pitch_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <gazebo reference="arm_diff_roll_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <gazebo reference="arm_pitch_forearm_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <gazebo reference="arm_roll_forearm_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <gazebo reference="arm_pitch_wrist_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <gazebo reference="arm_roll_wrist_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
 </robot>
