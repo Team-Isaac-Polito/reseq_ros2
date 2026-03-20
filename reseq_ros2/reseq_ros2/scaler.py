@@ -61,6 +61,12 @@ class Scaler(Node):
             'service': '/moveit_controller/switch_vel',
             'inverted': False,
         },
+        {
+            'name': 'Open/Close MK2 Arm Beak',
+            'button': buttons_enum.S1,
+            'service': '/moveit_controller/close_beak',
+            'inverted': False,
+        },
     ]
 
     qos = QoSProfile(
