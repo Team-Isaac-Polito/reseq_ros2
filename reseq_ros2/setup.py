@@ -40,6 +40,7 @@ setup(
             'emulator_remote_controller = reseq_ros2.emulator_remote_controller:main',
             'pivot_controller = reseq_ros2.pivot_controller:main',
             'thermal_node = reseq_ros2.thermal_node:main',
+            'app_gateway = reseq_ros2.app_gateway:main'
         ],
     },
 )

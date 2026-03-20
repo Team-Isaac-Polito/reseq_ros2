@@ -1,43 +1,97 @@
-import rclpy
-from rclpy.node import Node
-
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
-
-import numpy as np
-import cv2
 import time
 
+import adafruit_mlx90640
 import board
 import busio
-import adafruit_mlx90640
+import cv2
+import numpy as np
+import rclpy
+from cv_bridge import CvBridge
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from std_srvs.srv import SetBool
+
 
 class ThermalCameraNode(Node):
     def __init__(self):
         super().__init__('thermal_camera_node')
 
-        # Setup I2C and sensor
-        i2c = busio.I2C(board.SCL, board.SDA, frequency=800000)
-        self.mlx = adafruit_mlx90640.MLX90640(i2c)
-        self.mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_2_HZ
-        self.get_logger().info("MLX90640 detected with serial: {}".format(
-            [hex(i) for i in self.mlx.serial_number]))
-
-        # ROS publisher
-        self.publisher_ = self.create_publisher(Image, '/thermal', 10)
-        self.bridge = CvBridge()
-
-        # Timer at 2Hz
-        self.timer = self.create_timer(0.5, self.publish_thermal_image)
-
-        # Buffer for sensor data
+        self.is_active = False  # Start disabled
+        self.mlx = None
         self.frame = [0.0] * 768  # 32x24
+        self.publisher_ = None
+        self.bridge = CvBridge()
+        self.timer = None
+        self.hardware_initialized = False
+
+        # Try to initialize hardware
+        self._initialize_hardware()
+
+        # ROS service for toggling camera on/off
+        self.srv = self.create_service(SetBool, 'activate_thermal', self.handle_toggle_camera)
+        self.get_logger().info('Thermal node ready. Service /activate_thermal active.')
+
+    def _initialize_hardware(self):
+        """Initialize hardware with error handling"""
+        try:
+            i2c = busio.I2C(board.SCL, board.SDA, frequency=800000)
+            self.mlx = adafruit_mlx90640.MLX90640(i2c)
+            self.mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_2_HZ
+            self.get_logger().info(
+                'MLX90640 detected with serial: {}'.format(
+                    [hex(i) for i in self.mlx.serial_number]
+                )
+            )
+
+            # ROS publisher - only create if hardware is ready
+            self.publisher_ = self.create_publisher(Image, '/thermal', 10)
+            self.bridge = CvBridge()
+
+            # Timer at 2Hz (but only publishes if active)
+            self.timer = self.create_timer(0.5, self.publish_thermal_image)
+
+            self.hardware_initialized = True
+            self.get_logger().info('Hardware initialized correctly')
+        except Exception as e:
+            self.get_logger().error(f"Error initializing thermal hardware: {e}")
+            self.hardware_initialized = False
+
+    def handle_toggle_camera(self, request, response):
+        """Handle camera on/off requests"""
+        if not self.hardware_initialized:
+            response.success = False
+            response.message = 'Thermal hardware not available'
+            self.get_logger().error(response.message)
+            return response
+
+        self.is_active = request.data
+
+        if self.is_active:
+            self.get_logger().info('Thermal camera activated')
+            response.message = 'Camera activated successfully'
+        else:
+            self.get_logger().info('Thermal camera deactivated')
+            response.message = 'Camera deactivated successfully'
+
+        response.success = True
+        return response
 
     def publish_thermal_image(self):
+        """Publish thermal image if camera is active"""
+        if not self.is_active:
+            return
+
+        if not self.hardware_initialized or self.mlx is None:
+            self.get_logger().warning('Hardware not initialized, unable to acquire frame')
+            return
+
         try:
             self.mlx.getFrame(self.frame)
         except ValueError:
-            self.get_logger().warning("Failed to read frame, skipping.")
+            self.get_logger().warning('Failed to read frame, skipping.')
+            return
+        except Exception as e:
+            self.get_logger().error(f'Error reading sensor: {e}')
             return
 
         # Convert to NumPy array
@@ -48,8 +102,6 @@ class ThermalCameraNode(Node):
         image_u8 = normalized.astype(np.uint8)
 
         image_u8 = cv2.flip(image_u8, 1)
-        # Resize for better visibility (optional)
-        # image_u8 = cv2.resize(image_u8, (320, 240), interpolation=cv2.INTER_NEAREST)
 
         # Convert to ROS image message
         msg = self.bridge.cv2_to_imgmsg(image_u8, encoding='mono8')
@@ -57,12 +109,18 @@ class ThermalCameraNode(Node):
         self.publisher_.publish(msg)
         self.get_logger().info('Published thermal image.')
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = ThermalCameraNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
