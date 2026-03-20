@@ -55,6 +55,12 @@ class Scaler(Node):
             'inverted': True,
             'condition': lambda b: not b[Scaler.buttons_enum.BBLUE],
         },
+        {
+            'name': 'Switch type of velocity of mk2 arm',
+            'button': buttons_enum.BGREEN,
+            'service': '/moveit_controller/switch_vel',
+            'inverted': False,
+        },
     ]
 
     qos = QoSProfile(
