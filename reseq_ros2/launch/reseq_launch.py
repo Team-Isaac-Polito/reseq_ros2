@@ -46,6 +46,7 @@ def launch_setup(context, *args, **kwargs):
     core_launch_file = os.path.join(
         get_package_share_directory('reseq_ros2'), 'launch', 'reseq_core_launch.py'
     )
+
     launch_config.append(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(core_launch_file),
@@ -132,7 +133,7 @@ def launch_setup(context, *args, **kwargs):
             )
         )
 
-    if arm:
+    if arm and digital_twin_enabled != 'true':
         arm_launch_file = os.path.join(
             get_package_share_directory('reseq_arm_mk2'), 'launch', 'arm.launch.py'
         )
