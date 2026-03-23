@@ -2,7 +2,7 @@ import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler, TimerAction
-from launch.event_handlers import OnProcessStart
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -29,7 +29,8 @@ def launch_setup(context, *args, **kwargs):
     launch_config = []
 
     robot_controllers = f'{config_path}/reseq_controllers.yaml'
-    controller_spawners = []
+    body_spawners = []
+    arm_spawners = []
     if sim_mode == 'false':
         control_node = Node(
             package='controller_manager',
@@ -55,7 +56,7 @@ def launch_setup(context, *args, **kwargs):
             external_log_level,
         ],
     )
-    controller_spawners.append(joint_state_broadcaster_spawner)
+    body_spawners.append(joint_state_broadcaster_spawner)
 
     num_modules = config.get('num_modules', 0)
     for i in range(num_modules):
@@ -71,7 +72,7 @@ def launch_setup(context, *args, **kwargs):
                 external_log_level,
             ],
         )
-        controller_spawners.append(module_controller)
+        body_spawners.append(module_controller)
 
     if arm:
         # spawn mk2_arm_controller
@@ -85,19 +86,33 @@ def launch_setup(context, *args, **kwargs):
             ],
         )
 
-        controller_spawners.append(mk2_arm_controller)
+        arm_spawners.append(mk2_arm_controller)
 
     if sim_mode == 'false':
         launch_config.append(
             RegisterEventHandler(
                 OnProcessStart(
                     target_action=control_node,
-                    on_start=[TimerAction(period=8.0, actions=controller_spawners)],
+                    on_start=[TimerAction(period=15.0, actions=[joint_state_broadcaster_spawner])],
                 )
             )
         )
+        if body_spawners[1:]:
+            launch_config.append(
+                RegisterEventHandler(
+                    OnProcessExit(
+                        target_action=joint_state_broadcaster_spawner,
+                        on_exit=[
+                            TimerAction(
+                                period=3.0,
+                                actions=body_spawners[1:] + arm_spawners,
+                            )
+                        ],
+                    )
+                )
+            )
     else:
-        launch_config.extend(controller_spawners)
+        launch_config.extend(body_spawners + arm_spawners)
 
     xacro_file = description_share_folder + f'/description/{version}/reseq.urdf.xacro'
     robot_description = xacro.process_file(
