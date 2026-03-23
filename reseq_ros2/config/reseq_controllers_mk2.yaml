@@ -1,0 +1,92 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+    use_sim_time: false
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    diff_controller1:
+      type: diff_drive_controller/DiffDriveController
+    diff_controller2:
+      type: diff_drive_controller/DiffDriveController
+    diff_controller3:
+      type: diff_drive_controller/DiffDriveController
+
+    mk2_arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+diff_controller1:
+  ros__parameters:
+    left_wheel_names:
+      - mod1__left_front_wheel
+      - mod1__left_back_wheel
+    right_wheel_names:
+      - mod1__right_front_wheel
+      - mod1__right_back_wheel
+    position_feedback: false
+    odom_frame_id: odom
+    base_frame_id: base_link
+    wheel_separation: 0.1536
+    wheel_radius: 0.0609
+    wheels_per_side: 2
+    use_stamped_vel: true
+    enable_odom_tf: true
+    enable_odom: true
+
+diff_controller2:
+  ros__parameters:
+    left_wheel_names:
+      - mod2__left_front_wheel
+      - mod2__left_back_wheel
+    right_wheel_names:
+      - mod2__right_front_wheel
+      - mod2__right_back_wheel
+    position_feedback: false
+    odom_frame_id: odom
+    base_frame_id: base_link
+    wheel_separation: 0.1536
+    wheel_radius: 0.0609
+    wheels_per_side: 2
+    use_stamped_vel: true
+    enable_odom_tf: false
+    enable_odom: false
+
+diff_controller3:
+  ros__parameters:
+    left_wheel_names:
+      - mod3__left_front_wheel
+      - mod3__left_back_wheel
+    right_wheel_names:
+      - mod3__right_front_wheel
+      - mod3__right_back_wheel
+    position_feedback: false
+    odom_frame_id: odom
+    base_frame_id: base_link
+    wheel_separation: 0.1536
+    wheel_radius: 0.0609
+    wheels_per_side: 2
+    use_stamped_vel: true
+    enable_odom_tf: false
+    enable_odom: false
+
+mk2_arm_controller:
+  ros__parameters:
+    joints:
+      - mod1__base_pitch_arm_joint
+      - mod1__base_roll_arm_joint
+      - mod1__elbow_pitch_arm_joint
+      - mod1__forearm_roll_arm_joint
+      - mod1__wrist_pitch_arm_joint
+      - mod1__wrist_roll_arm_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    action_monitor_rate: 10.0
+    allow_nonzero_velocity_at_trajectory_start: false
+    continue_last_state: false
+    default_tolerances:
+      goals: 0.1
+      goal_state: 0.1

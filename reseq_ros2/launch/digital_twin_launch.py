@@ -33,27 +33,36 @@ def launch_setup(context, *args, **kwargs):
     launch_config = []
 
     description_share = get_package_share_directory('reseq_description')
-    generate_configs = subprocess.run(
-        [
-            'python3',
-            os.path.join(description_share, 'scripts', 'generate_configs.py'),
-            config_filename,
-            '--version',
-            version,
-        ]
-        + (['--use_sim_time'] if use_sim_time == 'true' else [])
-        + (['--no_arm_controllers'] if not arm else []),
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    if version == 'mk2':
+        robot_controllers = os.path.join(
+            get_package_share_directory('reseq_ros2'),
+            'config',
+            'reseq_controllers_mk2.yaml',
+        )
+    else:
+        generate_configs = subprocess.run(
+            [
+                'python3',
+                os.path.join(description_share, 'scripts', 'generate_configs.py'),
+                config_filename,
+                '--version',
+                version,
+            ]
+            + (['--use_sim_time'] if use_sim_time == 'true' else [])
+            + (['--no_arm_controllers'] if not arm else []),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
 
-    if generate_configs.stdout:
-        print(generate_configs.stdout)
-    if generate_configs.stderr:
-        print(generate_configs.stderr)
+        if generate_configs.stdout:
+            print(generate_configs.stdout)
+        if generate_configs.stderr:
+            print(generate_configs.stderr)
 
-    robot_controllers = os.path.join(description_share, 'config', 'temp', 'reseq_controllers.yaml')
+        robot_controllers = os.path.join(
+            description_share, 'config', 'temp', 'reseq_controllers.yaml'
+        )
     body_spawners = []
     arm_spawners = []
     if sim_mode == 'false':
