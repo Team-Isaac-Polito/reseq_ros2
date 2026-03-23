@@ -1,3 +1,6 @@
+import os
+import subprocess
+
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -19,6 +22,7 @@ def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
 
     arm_arg = LaunchConfiguration('arm').perform(context=context)
@@ -28,7 +32,28 @@ def launch_setup(context, *args, **kwargs):
     config = parse_config(f'{config_path}/{version}/{config_filename}')
     launch_config = []
 
-    robot_controllers = f'{config_path}/reseq_controllers.yaml'
+    description_share = get_package_share_directory('reseq_description')
+    generate_configs = subprocess.run(
+        [
+            'python3',
+            os.path.join(description_share, 'scripts', 'generate_configs.py'),
+            config_filename,
+            '--version',
+            version,
+        ]
+        + (['--use_sim_time'] if use_sim_time == 'true' else [])
+        + (['--no_arm_controllers'] if not arm else []),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    if generate_configs.stdout:
+        print(generate_configs.stdout)
+    if generate_configs.stderr:
+        print(generate_configs.stderr)
+
+    robot_controllers = os.path.join(description_share, 'config', 'temp', 'reseq_controllers.yaml')
     body_spawners = []
     arm_spawners = []
     if sim_mode == 'false':
