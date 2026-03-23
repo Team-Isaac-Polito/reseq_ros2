@@ -16,6 +16,11 @@ controller_manager:
 {% if arm_controller %}
     mk2_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+
+{% if use_sim_time %}
+    joint_group_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+{% endif %}
 {% endif %}
 
 {% if body_controllers %}
@@ -62,4 +67,16 @@ mk2_arm_controller:
     default_tolerances:
       goals: 0.1
       goal_state: 0.1
+
+{% if use_sim_time %}
+joint_group_velocity_controller:
+  ros__parameters:
+    joints:
+      - mod1__base_pitch_arm_joint
+      - mod1__base_roll_arm_joint
+      - mod1__elbow_pitch_arm_joint
+      - mod1__forearm_roll_arm_joint
+      - mod1__wrist_pitch_arm_joint
+      - mod1__wrist_roll_arm_joint
+{% endif %}
 {% endif %}

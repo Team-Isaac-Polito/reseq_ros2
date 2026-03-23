@@ -1,115 +1,147 @@
 import os
+import subprocess
 
+import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch_param_builder import ParameterBuilder
 from launch_ros.actions import Node
-from moveit_configs_utils import MoveItConfigsBuilder
 
 
 def launch_setup(context, *args, **kwargs):
+    sim = LaunchConfiguration('sim').perform(context).lower() == 'true'
+    use_moveit = LaunchConfiguration('use_moveit').perform(context).lower() == 'true'
 
-    launch_config = []
+    description_share = get_package_share_directory('reseq_description')
+    arm_share = get_package_share_directory('reseq_arm_mk2')
 
-    # TAKE ARGUMENTS FROM CONTEXT AND APPLY TRANSFORMATIONS IF NEEDED
-    use_sim_time_arg = LaunchConfiguration('use_sim_time').perform(
-        context=context
-    )  # 'true' or 'false'
-    use_sim_time = (
-        True if use_sim_time_arg == 'true' else False
-    )  # boolean version of use_sim_time_arg
+    config_file = 'reseq_mk2_vcan.yaml' if sim else 'reseq_mk2_can.yaml'
+    generate_configs = subprocess.run(
+        [
+            'python3',
+            os.path.join(description_share, 'scripts', 'generate_configs.py'),
+            config_file,
+            '--version',
+            'mk2',
+            '--no_body_controllers',
+        ]
+        + (['--use_sim_time'] if sim else []),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    if generate_configs.stdout:
+        print(generate_configs.stdout)
+    if generate_configs.stderr:
+        print(generate_configs.stderr)
 
     controllers_config_file = os.path.join(
-        get_package_share_directory('reseq_description'),
-        'config',
-        'temp',
-        'reseq_controllers.yaml',
+        description_share, 'config', 'temp', 'reseq_controllers.yaml'
     )
+    robot_description_file = os.path.join(arm_share, 'urdf', 'arm.urdf.xacro')
+    robot_description = xacro.process_file(
+        robot_description_file,
+        mappings={
+            'sim_mode': 'true' if sim else 'false',
+            'version': 'mk2',
+            'controllers_config_file': controllers_config_file,
+        },
+    ).toxml()
 
-    # Load all MoveIt configuration files
-    moveit_config = (
-        MoveItConfigsBuilder(
-            robot_name='reseq_arm_mk2',
-            package_name='reseq_arm_mk2',
-        )
-        .robot_description(
-            file_path='urdf/reseq_arm_mk2.xacro',
-            # We must pass the same arguments as the robot_state_publisher
-            mappings={
-                'sim_mode': use_sim_time_arg,
-                'controllers_config_file': controllers_config_file,
-            },
-        )
-        .robot_description_semantic(file_path='config/reseq_arm_mk2.srdf')
-        .robot_description_kinematics(file_path='config/kinematics.yaml')
-        .joint_limits(file_path='config/joint_limits.yaml')
-        .trajectory_execution('config/moveit_controllers.yaml')
-        .pilz_cartesian_limits(file_path='config/pilz_cartesian_limits.yaml')
-        .to_moveit_configs()
-    )
-
-    # Get the path to the servo config file
-    servo_config_file = os.path.join(
-        get_package_share_directory('reseq_arm_mk2'), 'config', 'servo_config.yaml'
-    )
-
-    # Start move_group node (required for planning and IK)
-    move_group_node = Node(
-        package='moveit_ros_move_group',
-        executable='move_group',
+    robot_state_publisher_node = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        parameters=[{'robot_description': robot_description}],
         output='screen',
-        parameters=[
-            moveit_config.to_dict(),
-            {'use_sim_time': use_sim_time},
-        ],
-        remappings=[('/joint_states', '/arm_joint_states')],
-    )
-    launch_config.append(move_group_node)
-
-    moveit_servo_exec = (
-        'servo_node_main' if os.environ.get('ROS_DISTRO') == 'humble' else 'servo_node'
     )
 
-    # Define the servo node, passing ALL required configs
-    servo_node = Node(
-        package='moveit_servo',
-        executable=moveit_servo_exec,
-        name='moveit_servo_node',
-        parameters=[
-            moveit_config.to_dict(),  # All MoveIt config
-            {'use_sim_time': use_sim_time},  # Don't forget this for Gazebo
-            servo_config_file,  # Servo config file (MUST BE LAST)
-        ],
-        output='screen',
-        arguments=['--ros-args', '--log-level', 'info'],
-    )
-    launch_config.append(servo_node)
-
-    moveit_controller_node = Node(
+    cartesian_arm_controller_node = Node(
         package='reseq_arm_mk2',
-        executable='moveit_controller.py',
-        name='moveit_controller',
+        executable='cartesian_arm_controller',
+        name='cartesian_arm_controller',
         parameters=[
             {
-                'arm_module_address': 0,
-                'use_sim_time': use_sim_time,
+                'robot_description': robot_description,
+                'command_frame': 'arm_base_link',
+                'command_mode': 'trajectory',
+                'max_cartesian_vel': 2.5 if sim else 0.3,
+                'max_joint_vel': 4.0 if sim else 1.0,
+                'deadzone': 0.0 if sim else 0.02,
+                'trajectory_horizon_sec': 0.5 if sim else 0.1,
             }
         ],
         output='screen',
     )
-    launch_config.append(moveit_controller_node)
 
-    return launch_config
+    launch_entities = [
+        robot_state_publisher_node,
+        cartesian_arm_controller_node,
+    ]
+
+    if not sim:
+        joint_state_broadcaster_spawner = Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=[
+                'joint_state_broadcaster',
+                '--controller-manager',
+                '/controller_manager',
+            ],
+        )
+
+        arm_controller_spawner = Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['mk2_arm_controller', '--controller-manager', '/controller_manager'],
+        )
+
+        launch_entities.extend(
+            [
+                joint_state_broadcaster_spawner,
+                arm_controller_spawner,
+            ]
+        )
+
+    if use_moveit:
+        launch_entities.append(
+            Node(
+                package='reseq_arm_mk2',
+                executable='coordinate_controller',
+                name='coordinate_controller',
+                parameters=[{'robot_description': robot_description}],
+                output='screen',
+            )
+        )
+
+    return launch_entities
 
 
 def generate_launch_description():
+
+    # ── Declare arguments ──────────────────────────────────────────────────
+    sim_arg = DeclareLaunchArgument(
+        'sim',
+        default_value='false',
+        description='Use Gazebo simulation controllers',
+    )
+    use_moveit_arg = DeclareLaunchArgument(
+        'use_moveit',
+        default_value='true',
+        description='Launch MoveIt (for IK / RViz visualisation)',
+    )
+    log_level_arg = DeclareLaunchArgument(
+        'log_level',
+        default_value='info',
+        description='Logger level (debug|info|warn|error)',
+    )
+
     return LaunchDescription(
         [
-            DeclareLaunchArgument(
-                'use_sim_time', default_value='false', choices=['true', 'false']
-            ),
+            sim_arg,
+            use_moveit_arg,
+            log_level_arg,
             OpaqueFunction(function=launch_setup),
         ]
     )
