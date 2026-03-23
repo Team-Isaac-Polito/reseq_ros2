@@ -1,7 +1,8 @@
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler, TimerAction
+from launch.event_handlers import OnProcessStart
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -18,9 +19,6 @@ def launch_setup(context, *args, **kwargs):
     # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
-    use_sim_time = LaunchConfiguration('use_sim_time').perform(
-        context
-    )  # it's a string either 'true' or 'false'
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
 
     arm_arg = LaunchConfiguration('arm').perform(context=context)
@@ -31,6 +29,7 @@ def launch_setup(context, *args, **kwargs):
     launch_config = []
 
     robot_controllers = f'{config_path}/reseq_controllers.yaml'
+    controller_spawners = []
     if sim_mode == 'false':
         control_node = Node(
             package='controller_manager',
@@ -56,7 +55,7 @@ def launch_setup(context, *args, **kwargs):
             external_log_level,
         ],
     )
-    launch_config.append(joint_state_broadcaster_spawner)
+    controller_spawners.append(joint_state_broadcaster_spawner)
 
     num_modules = config.get('num_modules', 0)
     for i in range(num_modules):
@@ -72,7 +71,7 @@ def launch_setup(context, *args, **kwargs):
                 external_log_level,
             ],
         )
-        launch_config.append(module_controller)
+        controller_spawners.append(module_controller)
 
     if arm:
         # spawn mk2_arm_controller
@@ -86,19 +85,19 @@ def launch_setup(context, *args, **kwargs):
             ],
         )
 
-        joint_group_velocity_controller = Node(
-            package='controller_manager',
-            executable='spawner',
-            arguments=[
-                'joint_group_velocity_controller',
-                '--controller-manager',
-                '/controller_manager',
-                '--inactive',
-            ],
-        )
+        controller_spawners.append(mk2_arm_controller)
 
-        launch_config.append(mk2_arm_controller)
-        launch_config.append(joint_group_velocity_controller)
+    if sim_mode == 'false':
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessStart(
+                    target_action=control_node,
+                    on_start=[TimerAction(period=8.0, actions=controller_spawners)],
+                )
+            )
+        )
+    else:
+        launch_config.extend(controller_spawners)
 
     xacro_file = description_share_folder + f'/description/{version}/reseq.urdf.xacro'
     robot_description = xacro.process_file(
@@ -139,11 +138,12 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'use_sim_time',
                 default_value='false',
-                description="set use_sim_time to 'true' if you are using gazebo.\
-                                    In general this parameter is not set from this launch\
-                                    but instead is passed by other launch files that use this launch file.\
-                                    Setting this arg to 'true', it will set the use_sim_time parameter of all nodes launched in this file \
-                                    to True.",
+                description=(
+                    "set use_sim_time to 'true' if you are using gazebo."
+                    ' In general this parameter is not set from this launch'
+                    ' but instead is passed by other launch files that use this launch file.'
+                    ' Setting this arg to true sets use_sim_time on all nodes launched here.'
+                ),
             ),
             DeclareLaunchArgument('sim_mode', default_value='false'),
             OpaqueFunction(function=launch_setup),
