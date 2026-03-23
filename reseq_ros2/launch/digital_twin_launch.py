@@ -33,6 +33,16 @@ def launch_setup(context, *args, **kwargs):
     launch_config = []
 
     description_share = get_package_share_directory('reseq_description')
+    xacro_file = description_share_folder + f'/description/{version}/reseq.urdf.xacro'
+    robot_description = xacro.process_file(
+        xacro_file,
+        mappings={
+            'version': version,
+            'config_path': f'{config_path}/{version}/{config_filename}',
+            'sim_mode': sim_mode,
+        },
+    ).toxml()
+
     if version == 'mk2':
         robot_controllers = os.path.join(
             get_package_share_directory('reseq_ros2'),
@@ -69,11 +79,11 @@ def launch_setup(context, *args, **kwargs):
         control_node = Node(
             package='controller_manager',
             executable='ros2_control_node',
-            parameters=[robot_controllers],
-            output='both',
-            remappings=[
-                ('~/robot_description', '/robot_description'),
+            parameters=[
+                {'robot_description': robot_description},
+                robot_controllers,
             ],
+            output='both',
             arguments=['--ros-args', '--log-level', external_log_level],
         )
         launch_config.append(control_node)
@@ -148,15 +158,6 @@ def launch_setup(context, *args, **kwargs):
     else:
         launch_config.extend(body_spawners + arm_spawners)
 
-    xacro_file = description_share_folder + f'/description/{version}/reseq.urdf.xacro'
-    robot_description = xacro.process_file(
-        xacro_file,
-        mappings={
-            'version': version,
-            'config_path': f'{config_path}/{version}/{config_filename}',
-            'sim_mode': sim_mode,
-        },
-    ).toxml()
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
