@@ -1,45 +1,11 @@
 #!/usr/bin/env python3
 """
-Jacobian-based Cartesian arm controller for reseq MK2.
+Cartesian arm controller for the RESE.Q MK2 arm.
 
-Replaces MoveIt Servo with a direct Jacobian velocity loop that:
-  - Reads /joint_states at ~33 Hz
-  - Converts joystick Cartesian velocity → joint velocities via damped J†
-  - Applies PER-JOINT limit clamping (blocked joint zeroed, others continue)
-  - Publishes to /mk2_arm_controller/joint_trajectory
-  - Exposes services for home, beak, and mode switching
-
-Bug-fixes vs. previous version
---------------------------------
-BUG 1 (X axis broken at home):
-  Old code computed a single global limit_scale across all joints.  At home
-  (q=0), elbow_pitch (J2) has only 0.1 rad of negative travel.  An X command
-  pushes J2 negative → limit_scale = 0.1/(4.0×0.5) = 0.05 → ALL axes get
-  scaled to 5% of their command, so the arm barely moves.
-
-  Fix: per-joint clamping.  When J2 is blocked at its lower limit, only J2's
-  velocity is zeroed.  J0, J1, … continue at full speed.
-
-BUG 2 (Y axis broken / wrong direction):
-  Old code used jac.getColumn(c).vel.x() which is fragile across PyKDL builds.
-  If getColumn fails, the numerical fallback _fk_numerical is used.  That model
-  gives ∂y/∂q1 = +0.52, while the actual URDF kinematics gives −0.127.  The
-  OPPOSITE SIGN means Y commands move the arm backwards or not at all.
-
-  Fix: use jac[r, c] element-wise indexing (universally supported).
-
-BUG 3 (JTC rejects trajectory):
-  The stop-point was computed as position + velocity*0.1, which can exceed
-  joint limits and cause JTC to reject the entire trajectory message.
-
-  Fix: stop-point uses the same clipped positions with zero velocity.
-
-BUG 4 (home position near singularity):
-  HOME_POSITION = [0,0,0,0,0,0] places J0 and J2 at 0 rad, only 0.1 rad
-  above their lower limit (−0.1 rad), creating a near-singular configuration
-  where any motion toward the lower limit immediately saturates.
-
-  Fix: HOME_POSITION = [0.8, 0.0, 0.8, 0.0, 0.0, 0.0] – mid-range.
+It reads joint states, turns Cartesian velocity commands into joint motion
+with a damped Jacobian solve, and publishes the result to the arm
+controller. It also exposes a few small services for homing, beak control,
+and mode switching.
 """
 
 import traceback
@@ -56,7 +22,7 @@ from std_msgs.msg import Float64MultiArray, Int32
 from std_srvs.srv import SetBool, Trigger
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-# ── Optional KDL ──────────────────────────────────────────────────────────────
+# Try to use KDL when it is available.
 _HAS_KDL = False
 _KDL_ERR = 'not attempted'
 try:
@@ -111,7 +77,7 @@ class CartesianArmController(Node):
     jacobian_damping       float  0.05   damped-LS regularisation λ
     """
 
-    # ── Constants ──────────────────────────────────────────────────────────────
+    # Joint order used everywhere in this controller.
 
     JOINT_NAMES = [
         'mod1__base_pitch_arm_joint',  # J0 shoulder pitch  (differential pair)
@@ -123,9 +89,7 @@ class CartesianArmController(Node):
     ]
     N_JOINTS = len(JOINT_NAMES)
 
-    # Home: well inside limits, away from the ±0.1 rad lower-limit of J0/J2.
-    # J0 range [-0.1, 2.8], J2 range [-0.1, 2.88].  0.8 rad gives ~0.9 rad
-    # of negative room vs the 0.1 rad at home=[0,0,...].
+    # Home is kept comfortably away from the joint limits.
     HOME_POSITION = [0.8, 0.0, 0.8, 0.0, 0.0, 0.0]
 
     # Defaults – _parse_urdf_limits() replaces these from the actual URDF.
@@ -135,7 +99,7 @@ class CartesianArmController(Node):
     def __init__(self):
         super().__init__('cartesian_arm_controller')
 
-        # ── Parameters ────────────────────────────────────────────────────────
+        # Parameters we expect from the launch file.
         self.declare_parameter('robot_description', '')
         self.declare_parameter('chain_root', 'arm_base_link')
         self.declare_parameter('chain_tip', 'arm_roll_wrist_link')
@@ -150,7 +114,7 @@ class CartesianArmController(Node):
         self.declare_parameter('deadzone', 0.02)
         self.declare_parameter('jacobian_damping', 0.05)
 
-        # ── Runtime state ─────────────────────────────────────────────────────
+        # Internal state.
         self._q: np.ndarray | None = None  # measured joint positions
         self._q_cmd: np.ndarray | None = None  # integrator state
         self._cmd_vel = np.zeros(3)  # latest joystick command
@@ -159,11 +123,11 @@ class CartesianArmController(Node):
         self._moving = False
         self._diag_ctr = 0
 
-        # ── Joint limits (overwritten from URDF) ──────────────────────────────
+        # Joint limits, replaced later with values from the URDF.
         self._q_lo = self._LOWER_DEFAULT.copy()
         self._q_hi = self._UPPER_DEFAULT.copy()
 
-        # ── KDL ───────────────────────────────────────────────────────────────
+        # KDL setup.
         self._kdl_chain = None
         self._fk_solver = None
         self._jac_solver = None
@@ -174,7 +138,7 @@ class CartesianArmController(Node):
         )
         self._command_mode = self.get_parameter('command_mode').get_parameter_value().string_value
 
-        # ── ROS I/O ───────────────────────────────────────────────────────────
+        # ROS interfaces.
         self.create_subscription(Vector3, '/mk2_arm_vel', self._cb_vel, 10)
         self.create_subscription(JointState, '/joint_states', self._cb_joint_state, 10)
 
@@ -194,14 +158,14 @@ class CartesianArmController(Node):
         self._dt = 1.0 / rate
         self._timer = self.create_timer(self._dt, self._control_loop)
 
-        kdl_status = 'YES ✓' if self._kdl_chain else 'NO – numerical fallback ⚠'
+        kdl_status = 'YES' if self._kdl_chain else 'NO – numerical fallback'
         self.get_logger().info(
             f'CartesianArmController ready | KDL={kdl_status} | '
             f'frame={self._command_frame} | mode={self._command_mode} | '
             f'home={self.HOME_POSITION}'
         )
 
-    # ── KDL setup ─────────────────────────────────────────────────────────────
+    # KDL setup.
 
     def _load_kdl(self):
         if not _HAS_KDL:
@@ -214,7 +178,7 @@ class CartesianArmController(Node):
         urdf = self.get_parameter('robot_description').get_parameter_value().string_value
         if not urdf:
             self.get_logger().warn(
-                'robot_description is empty → KDL disabled. '
+                'robot_description is empty -> KDL disabled. '
                 'Pass robot_description parameter from the launch file.'
             )
             return
@@ -233,7 +197,7 @@ class CartesianArmController(Node):
         tip = self.get_parameter('chain_tip').get_parameter_value().string_value
         chain = kdl.Chain()
         if not tree.getChain(root, tip, chain):
-            self.get_logger().error(f'KDL getChain({root} → {tip}) failed.')
+            self.get_logger().error(f'KDL getChain({root} -> {tip}) failed.')
             return
 
         n = chain.getNrOfJoints()
@@ -248,9 +212,9 @@ class CartesianArmController(Node):
         self._jac_solver = kdl.ChainJntToJacSolver(chain)
         self._parse_urdf_limits(urdf)
 
-        # ── Startup diagnostics ───────────────────────────────────────────────
+        # Startup diagnostics.
         self.get_logger().info(
-            f'KDL chain {root}→{tip}: {n} joint(s)\n'
+            f'KDL chain {root}->{tip}: {n} joint(s)\n'
             f'  lower: {np.round(self._q_lo, 3).tolist()}\n'
             f'  upper: {np.round(self._q_hi, 3).tolist()}'
         )
@@ -275,7 +239,7 @@ class CartesianArmController(Node):
                 )
 
     def _parse_urdf_limits(self, urdf: str):
-        """Extract <limit lower= upper=> from the URDF for each arm joint."""
+        """Read joint limits from the URDF."""
         try:
             root_el = ET.fromstring(urdf)
             for jel in root_el.findall('joint'):
@@ -295,7 +259,7 @@ class CartesianArmController(Node):
         except Exception as e:
             self.get_logger().warn(f'Could not parse URDF joint limits: {e}')
 
-    # ── ROS callbacks ─────────────────────────────────────────────────────────
+    # ROS callbacks.
 
     def _cb_joint_state(self, msg: JointState):
         pos_map = dict(zip(msg.name, msg.position))
@@ -307,7 +271,7 @@ class CartesianArmController(Node):
     def _cb_vel(self, msg: Vector3):
         self._cmd_vel = np.array([msg.x, msg.y, msg.z])
 
-    # ── Forward kinematics ────────────────────────────────────────────────────
+    # Forward kinematics.
 
     def _fk_kdl(self, q: np.ndarray) -> np.ndarray | None:
         n = self._kdl_chain.getNrOfJoints()
@@ -321,20 +285,12 @@ class CartesianArmController(Node):
 
     def _fk_numerical(self, q: np.ndarray) -> np.ndarray:
         """
-        Simplified geometric FK fallback when KDL is unavailable.
+        Simple FK fallback for cases where KDL is not available.
 
-        Uses joint origin translations from the URDF (not the simplified
-        spherical model from the first version).  Still approximate because
-        it ignores the RPY offsets between joints.
-
-        ⚠ This WILL produce wrong Jacobian directions (especially Y-axis)
-        because the actual joint orientations are non-trivial.  If you see
-        this warning, install PyKDL and kdl_parser_py.
+        It uses joint origin translations from the URDF, so it is only an
+        approximation and will not capture the full joint orientation math.
         """
-        # Link lengths from URDF joint origin xyz values
-        # J2 origin: xyz="-0.28857 0 0"
-        # J3 origin: xyz="0.15351 0.074002 0" → L≈0.170
-        # J4 origin: xyz="0 0 0.05447"
+        # Approximate link lengths taken from the URDF joint origins.
         L1, L2, L3 = 0.289, 0.170, 0.054
         q0, q1, q2, _, q4, _ = q
         az = q1  # azimuth (base_roll)
@@ -354,15 +310,14 @@ class CartesianArmController(Node):
                 return r
         return self._fk_numerical(q)
 
-    # ── Jacobian ──────────────────────────────────────────────────────────────
+    # Jacobian.
 
     def _jacobian_kdl(self, q: np.ndarray) -> np.ndarray | None:
         """
-        Return the 3×N linear-velocity Jacobian via KDL.
+        Return the linear-velocity Jacobian via KDL.
 
-        Uses jac[r, c] element-wise access (universally supported across all
-        PyKDL versions).  Previous getColumn(c).vel.x() approach silently
-        failed on some builds, causing fallback to the wrong numerical model.
+        The element-wise access is used because it works reliably across
+        PyKDL builds.
         """
         n = self._kdl_chain.getNrOfJoints()
         q_kdl = kdl.JntArray(n)
@@ -375,7 +330,7 @@ class CartesianArmController(Node):
             return None
 
         try:
-            # Rows 0-2 = linear velocity; rows 3-5 = angular velocity (not used here)
+            # Rows 0-2 are linear velocity; rows 3-5 are angular velocity.
             J = np.array([[jac[r, c] for c in range(n)] for r in range(3)])
         except Exception as e:
             self.get_logger().warn(f'Jacobian extraction failed ({e}) – falling back.')
@@ -401,53 +356,51 @@ class CartesianArmController(Node):
         )
         return self._jacobian_numerical(q)
 
-    # ── Main control loop (33 Hz) ─────────────────────────────────────────────
+    # Main control loop (33 Hz).
 
     def _control_loop(self):
         if self._q is None:
             return
 
-        # First valid joint state: initialise the integrator
+        # Initialize the integrator on the first valid joint state.
         if self._q_cmd is None:
             self._q_cmd = self._q.copy()
             self._moving = False
 
-        # ── Dead-zone ─────────────────────────────────────────────────────────
+        # Ignore tiny inputs.
         deadzone = self.get_parameter('deadzone').get_parameter_value().double_value
         if float(np.linalg.norm(self._cmd_vel)) < deadzone:
             if self._moving:
-                # Hold current command position
+                # Keep the current target when the stick returns to center.
                 self._publish_traj(self._q_cmd.tolist(), [0.0] * self.N_JOINTS, 0.1)
                 self._moving = False
             return
 
-        # Sync integrator to actual state at start of each motion burst.
-        # This prevents a sudden jump if the arm was moved externally while paused.
+        # Re-sync at the start of each motion burst so the command does not jump.
         if not self._moving:
             self._q_cmd = self._q.copy()
             self._moving = True
 
         if not self._linear_mode:
-            # Angular / orientation mode – future work, skip silently
+            # Orientation mode is not implemented yet.
             return
 
-        # ── Parameters ────────────────────────────────────────────────────────
+        # Control parameters.
         max_cv = self.get_parameter('max_cartesian_vel').get_parameter_value().double_value
         max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
         lam = self.get_parameter('jacobian_damping').get_parameter_value().double_value
         horizon = self.get_parameter('trajectory_horizon_sec').get_parameter_value().double_value
         horizon = max(horizon, self._dt * 2.0)  # never shorter than 2 control ticks
 
-        # Scale joystick [-1,1] → Cartesian velocity (m/s) in arm_base_link frame
+        # Scale joystick input into Cartesian velocity in the arm base frame.
         cart_vel = self._cmd_vel * max_cv
 
-        # ── Jacobian (computed at integrator state, not sensor state) ─────────
-        # Using _q_cmd keeps linearisation consistent with integration below.
+        # Use the command-side state so the linearization matches the update step.
         J = self._get_jacobian(self._q_cmd)
         if J is None:
             return
 
-        # ── Damped least-squares IK ───────────────────────────────────────────
+        # Damped least-squares IK.
         # dq = J^T (J J^T + λ² I)^-1 v_cart
         try:
             JJt = J @ J.T  # 3×3
@@ -456,21 +409,14 @@ class CartesianArmController(Node):
             self.get_logger().warn('DLS solve failed.')
             return
 
-        # ── Uniform velocity scaling (preserves EE direction) ─────────────────
+        # Scale the whole command if any joint exceeds the velocity limit.
         peak = float(np.max(np.abs(dq)))
         vel_scale = 1.0
         if peak > max_jv:
             vel_scale = max_jv / peak
             dq *= vel_scale
 
-        # ── Per-joint limit clamping (KEY BUG FIX) ────────────────────────────
-        #
-        # WRONG (old): global limit_scale = min over all joints
-        #   → J2 near lower limit at home → scale ≈ 0.05 → ALL axes die
-        #
-        # RIGHT (new): clamp each joint independently
-        #   → J2 at lower limit: zero J2's velocity ONLY; J0, J1, … continue
-        #
+        # Clamp each joint independently.
         joints_clipped: list[str] = []
         for i in range(self.N_JOINTS):
             q_next = self._q_cmd[i] + dq[i] * self._dt
@@ -483,10 +429,10 @@ class CartesianArmController(Node):
                 dq[i] = min(0.0, (self._q_lo[i] - self._q_cmd[i]) / self._dt)
                 joints_clipped.append(f'J{i}↓')
 
-        # ── Integrate command state ────────────────────────────────────────────
+        # Integrate the command state.
         self._q_cmd = np.clip(self._q_cmd + dq * self._dt, self._q_lo, self._q_hi)
 
-        # ── Diagnostics (1 Hz) ────────────────────────────────────────────────
+        # Print diagnostics at 1 Hz.
         self._diag_ctr += 1
         if self._diag_ctr % 33 == 0:
             ee = self._get_ee_pos(self._q_cmd)
@@ -502,33 +448,23 @@ class CartesianArmController(Node):
                 f'  EE={np.round(ee, 4)} m'
             )
 
-        # ── Publish ───────────────────────────────────────────────────────────
+        # Publish the command.
         if self._command_mode == 'velocity':
             self._publish_velocity(dq.tolist())
         else:
             self._publish_traj(self._q_cmd.tolist(), dq.tolist(), horizon)
 
-    # ── Trajectory publisher ──────────────────────────────────────────────────
+    # Trajectory publisher.
 
     def _publish_traj(self, positions: list[float], velocities: list[float], duration_sec: float):
-        """
-        Publish a 2-point trajectory to the JointTrajectoryController.
-
-        Point 1 (at duration_sec):   target position + current velocity hint
-        Point 2 (at duration_sec+0.15): same position, zero velocity (required
-            by most JTC implementations to indicate the final resting state)
-
-        BUG FIX: stop-point uses the SAME position as point 1 (clipped to
-        limits), not position + velocity*extrapolation which could go
-        out-of-bounds and cause JTC to reject the entire trajectory.
-        """
+        """Publish a short two-point trajectory for the arm controller."""
         traj = JointTrajectory()
         traj.header.stamp.sec = 0  # execute immediately, preempt current
         traj.header.stamp.nanosec = 0
         traj.header.frame_id = self._command_frame
         traj.joint_names = self.JOINT_NAMES
 
-        # Safety clip: never send out-of-limit positions
+        # Never send positions outside the joint limits.
         pos_safe = [
             float(np.clip(positions[i], self._q_lo[i], self._q_hi[i]))
             for i in range(self.N_JOINTS)
@@ -539,7 +475,7 @@ class CartesianArmController(Node):
         pt.velocities = [float(v) for v in velocities]
         pt.time_from_start = Duration(nanoseconds=int(duration_sec * 1e9)).to_msg()
 
-        # Stop point: same clipped position, zero velocity
+        # Keep the final point still.
         pt_stop = JointTrajectoryPoint()
         pt_stop.positions = pos_safe
         pt_stop.velocities = [0.0] * self.N_JOINTS
@@ -553,11 +489,11 @@ class CartesianArmController(Node):
         msg.data = [float(v) for v in velocities]
         self._vel_pub.publish(msg)
 
-    # ── Services ──────────────────────────────────────────────────────────────
+    # Services.
 
     def _srv_home(self, _req: Trigger.Request, res: Trigger.Response) -> Trigger.Response:
         dur = self.get_parameter('home_duration_sec').get_parameter_value().double_value
-        # Reset integrator to home so the next velocity command starts from home
+        # Reset the integrator so the next move starts from home.
         self._q_cmd = np.array(self.HOME_POSITION, dtype=float)
         self._moving = False
         self._publish_traj(self.HOME_POSITION, [0.0] * self.N_JOINTS, dur)
@@ -569,26 +505,23 @@ class CartesianArmController(Node):
     def _srv_switch_vel(self, req: SetBool.Request, res: SetBool.Response) -> SetBool.Response:
         self._linear_mode = req.data
         res.success = True
-        res.message = 'Velocity → LINEAR' if req.data else 'Velocity → ANGULAR'
+        res.message = 'Velocity -> LINEAR' if req.data else 'Velocity -> ANGULAR'
         self.get_logger().info(res.message)
         return res
 
     def _srv_set_mode(self, req: SetBool.Request, res: SetBool.Response) -> SetBool.Response:
         self._velocity_mode = req.data
         res.success = True
-        res.message = 'Mode → VELOCITY' if req.data else 'Mode → POSITION INCREMENT'
+        res.message = 'Mode -> VELOCITY' if req.data else 'Mode -> POSITION INCREMENT'
         self.get_logger().info(res.message)
         return res
 
     def _srv_beak(self, req: SetBool.Request, res: SetBool.Response) -> SetBool.Response:
         self._beak_pub.publish(Int32(data=int(req.data)))
         res.success = True
-        res.message = f'Beak → {"CLOSE" if req.data else "OPEN"}'
+        res.message = f'Beak -> {"CLOSE" if req.data else "OPEN"}'
         self.get_logger().info(res.message)
         return res
-
-
-# ── Entry point ───────────────────────────────────────────────────────────────
 
 
 def main(args=None):

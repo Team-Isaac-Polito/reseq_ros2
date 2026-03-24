@@ -101,7 +101,7 @@ def generate_launch_description():
         parameters=[
             {'robot_description': robot_description},
             {'use_sim_time': True},
-            {'command_mode': 'velocity'},
+            {'command_mode': 'trajectory'},
             {'command_frame': 'arm_base_link'},
             {'max_cartesian_vel': 2.5},
             {'max_joint_vel': 4.0},
