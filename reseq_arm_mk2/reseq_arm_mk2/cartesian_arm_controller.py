@@ -91,6 +91,7 @@ class CartesianArmController(Node):
 
     # Home is kept comfortably away from the joint limits.
     HOME_POSITION = [0.8, 0.0, 0.8, 0.0, 0.0, 0.0]
+    JOINT_WEIGHTS = np.array([3.0, 2.5, 1.4, 1.0, 0.7, 0.7], dtype=float)
 
     # Defaults – _parse_urdf_limits() replaces these from the actual URDF.
     _LOWER_DEFAULT = np.array([-0.10, -3.14, -0.10, -3.14, -0.46, -3.14])
@@ -199,8 +200,24 @@ class CartesianArmController(Node):
         tip = self._chain_tip
         chain = kdl.Chain()
         if not tree.getChain(root, tip, chain):
-            self.get_logger().error(f'KDL getChain({root} -> {tip}) failed.')
-            return
+            fallback_tip = 'tool0'
+            if tip != fallback_tip and tree.getChain(root, fallback_tip, chain):
+                self.get_logger().warn(
+                    f'KDL getChain({root} -> {tip}) failed; using {fallback_tip} instead.'
+                )
+                tip = fallback_tip
+                self._chain_tip = fallback_tip
+            else:
+                fallback_tip = 'arm_roll_wrist_link'
+                if tip != fallback_tip and tree.getChain(root, fallback_tip, chain):
+                    self.get_logger().warn(
+                        f'KDL getChain({root} -> {tip}) failed; using {fallback_tip} instead.'
+                    )
+                    tip = fallback_tip
+                    self._chain_tip = fallback_tip
+                else:
+                    self.get_logger().error(f'KDL getChain({root} -> {tip}) failed.')
+                    return
 
         n = chain.getNrOfJoints()
         if n != self.N_JOINTS:
@@ -409,16 +426,19 @@ class CartesianArmController(Node):
         # Ignore tiny inputs.
         deadzone = self.get_parameter('deadzone').get_parameter_value().double_value
         if float(np.linalg.norm(self._cmd_vel)) < deadzone:
-            if self._moving:
+            if self._command_mode == 'velocity':
+                self._publish_velocity([0.0] * self.N_JOINTS)
+            elif self._moving:
                 # Keep the current target when the stick returns to center.
                 self._publish_traj(self._q.tolist(), self._q_cmd.tolist(), 0.1)
                 self._moving = False
             return
 
-        # Re-sync at the start of each motion burst so the command does not jump.
+        # Solve from the live measured pose in velocity mode so the Jacobian
+        # tracks the actual arm; keep the internal target only for trajectory mode.
         if not self._moving:
-            self._q_cmd = self._q.copy()
             self._moving = True
+        solve_q = self._q if self._command_mode == 'velocity' else self._q_cmd
 
         if not self._linear_mode:
             # Orientation mode is not implemented yet.
@@ -433,52 +453,61 @@ class CartesianArmController(Node):
 
         # Interpret the input in the configured command frame, then solve in base coordinates.
         cart_vel_cmd = self._cmd_vel * max_cv
-        cart_vel = self._command_velocity_in_base(self._q_cmd, cart_vel_cmd)
+        cart_vel = self._command_velocity_in_base(solve_q, cart_vel_cmd)
 
         # Use the command-side state so the linearization matches the update step.
-        J = self._get_jacobian(self._q_cmd)
+        J = self._get_jacobian(solve_q)
         if J is None:
             return
 
-        # Damped least-squares IK.
-        # dq = J^T (J J^T + λ² I)^-1 v_twist
+        # Damped least-squares IK on the tool translational task.
         try:
-            twist = np.zeros(6)
-            twist[:3] = cart_vel
-            JJt = J @ J.T
-            dq = J.T @ np.linalg.solve(JJt + lam**2 * np.eye(J.shape[0]), twist)  # rad/s
+            active_dofs = J.shape[1]
+            Jlin = J[:3, :active_dofs]
+            joint_weights = self.JOINT_WEIGHTS[:active_dofs]
+            inv_joint_weights = np.diag(1.0 / joint_weights)
+            JJt = Jlin @ inv_joint_weights @ Jlin.T
+            dq_active = (
+                inv_joint_weights @ Jlin.T @ np.linalg.solve(JJt + lam**2 * np.eye(3), cart_vel)
+            )
+
+            dq = np.zeros(self.N_JOINTS)
+            dq[:active_dofs] = dq_active
         except np.linalg.LinAlgError:
             self.get_logger().warn('DLS solve failed.')
             return
 
         # Scale the whole command if any joint exceeds the velocity limit.
-        peak = float(np.max(np.abs(dq)))
+        peak = float(np.max(np.abs(dq[:active_dofs])))
         vel_scale = 1.0
         if peak > max_jv:
             vel_scale = max_jv / peak
-            dq *= vel_scale
+            dq[:active_dofs] *= vel_scale
 
         # Clamp each joint independently.
         joints_clipped: list[str] = []
-        for i in range(self.N_JOINTS):
-            q_next = self._q_cmd[i] + dq[i] * self._dt
+        for i in range(active_dofs):
+            q_next = solve_q[i] + dq[i] * self._dt
             if q_next > self._q_hi[i] and dq[i] > 0.0:
                 # Approaching upper limit: reduce to exactly reach the boundary
-                dq[i] = max(0.0, (self._q_hi[i] - self._q_cmd[i]) / self._dt)
+                dq[i] = max(0.0, (self._q_hi[i] - solve_q[i]) / self._dt)
                 joints_clipped.append(f'J{i}↑')
             elif q_next < self._q_lo[i] and dq[i] < 0.0:
                 # Approaching lower limit: reduce to exactly reach the boundary
-                dq[i] = min(0.0, (self._q_lo[i] - self._q_cmd[i]) / self._dt)
+                dq[i] = min(0.0, (self._q_lo[i] - solve_q[i]) / self._dt)
                 joints_clipped.append(f'J{i}↓')
 
         # Integrate the command state.
-        self._q_cmd = np.clip(self._q_cmd + dq * self._dt, self._q_lo, self._q_hi)
+        if self._command_mode == 'velocity':
+            self._q_cmd = np.clip(self._q + dq * self._dt, self._q_lo, self._q_hi)
+        else:
+            self._q_cmd = np.clip(self._q_cmd + dq * self._dt, self._q_lo, self._q_hi)
 
         # Print diagnostics at 1 Hz.
         self._diag_ctr += 1
         if self._diag_ctr % 33 == 0:
-            ee = self._get_ee_pos(self._q_cmd)
-            achieved_cart = J @ dq  # approximate – J is at q_cmd, not q_cmd+delta
+            ee = self._get_ee_pos(self._q_cmd if self._q_cmd is not None else self._q)
+            achieved_cart = Jlin @ dq[:active_dofs]
             self.get_logger().info(
                 f'cart_in={np.round(cart_vel, 3)} '
                 f'dq={np.round(dq, 3)} '
@@ -543,10 +572,15 @@ class CartesianArmController(Node):
         # Reset the integrator so the next move starts from home.
         self._q_cmd = np.array(self.HOME_POSITION, dtype=float)
         self._moving = False
-        start_positions = self._q.tolist() if self._q is not None else self.HOME_POSITION
-        self._publish_traj(start_positions, self.HOME_POSITION, dur)
-        res.success = True
-        res.message = f'Moving to home {self.HOME_POSITION} over {dur:.1f}s'
+        if self._command_mode == 'velocity':
+            self._publish_velocity([0.0] * self.N_JOINTS)
+            res.success = True
+            res.message = 'Velocity mode: command state reset and motion stopped'
+        else:
+            start_positions = self._q.tolist() if self._q is not None else self.HOME_POSITION
+            self._publish_traj(start_positions, self.HOME_POSITION, dur)
+            res.success = True
+            res.message = f'Moving to home {self.HOME_POSITION} over {dur:.1f}s'
         self.get_logger().info(res.message)
         return res
 

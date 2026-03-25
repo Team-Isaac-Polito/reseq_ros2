@@ -91,9 +91,9 @@ def generate_launch_description():
         ],
     )
 
-    # Launch the direct Cartesian controller that publishes arm trajectories
-    # to the simulated arm controller. This avoids MoveIt Servo and keeps the
-    # Gazebo control path fully local to the workspace.
+    # Launch the direct Cartesian controller that publishes joint velocities
+    # to the simulated arm controller. This keeps the Gazebo control path
+    # local and avoids an extra trajectory interpolation layer.
     cartesian_arm_controller_node = Node(
         package='reseq_arm_mk2',
         executable='cartesian_arm_controller',
