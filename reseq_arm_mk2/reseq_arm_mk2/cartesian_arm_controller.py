@@ -64,7 +64,7 @@ class CartesianArmController(Node):
     ----------
     robot_description      str    URDF XML (forwarded from robot_state_publisher)
     chain_root             str    'arm_base_link'
-    chain_tip              str    'arm_roll_wrist_link'
+    chain_tip              str    'tool0'
     command_frame          str    'arm_base_link'
     trajectory_topic       str    '/mk2_arm_controller/joint_trajectory'
     control_rate           float  33.0   Hz
@@ -102,12 +102,12 @@ class CartesianArmController(Node):
         # Parameters we expect from the launch file.
         self.declare_parameter('robot_description', '')
         self.declare_parameter('chain_root', 'arm_base_link')
-        self.declare_parameter('chain_tip', 'arm_roll_wrist_link')
+        self.declare_parameter('chain_tip', 'tool0')
         self.declare_parameter('command_frame', 'arm_base_link')
         self.declare_parameter('trajectory_topic', '/mk2_arm_controller/joint_trajectory')
         self.declare_parameter('control_rate', 33.0)
         self.declare_parameter('max_cartesian_vel', 0.3)
-        self.declare_parameter('max_joint_vel', 1.0)
+        self.declare_parameter('max_joint_vel', 0.5)
         self.declare_parameter('home_duration_sec', 3.0)
         self.declare_parameter('trajectory_horizon_sec', 0.10)
         self.declare_parameter('command_mode', 'trajectory')
@@ -131,6 +131,8 @@ class CartesianArmController(Node):
         self._kdl_chain = None
         self._fk_solver = None
         self._jac_solver = None
+        self._chain_root = self.get_parameter('chain_root').get_parameter_value().string_value
+        self._chain_tip = self.get_parameter('chain_tip').get_parameter_value().string_value
         self._load_kdl()
 
         self._command_frame = (
@@ -193,8 +195,8 @@ class CartesianArmController(Node):
             self.get_logger().error('treeFromString failed – URDF may be malformed.')
             return
 
-        root = self.get_parameter('chain_root').get_parameter_value().string_value
-        tip = self.get_parameter('chain_tip').get_parameter_value().string_value
+        root = self._chain_root
+        tip = self._chain_tip
         chain = kdl.Chain()
         if not tree.getChain(root, tip, chain):
             self.get_logger().error(f'KDL getChain({root} -> {tip}) failed.')
@@ -283,6 +285,17 @@ class CartesianArmController(Node):
             return None
         return np.array([frame.p.x(), frame.p.y(), frame.p.z()])
 
+    def _fk_frame_kdl(self, q: np.ndarray) -> kdl.Frame | None:
+        n = self._kdl_chain.getNrOfJoints()
+        q_kdl = kdl.JntArray(n)
+        for i in range(min(n, self.N_JOINTS)):
+            q_kdl[i] = float(q[i])
+
+        frame = kdl.Frame()
+        if self._fk_solver.JntToCart(q_kdl, frame) < 0:
+            return None
+        return frame
+
     def _fk_numerical(self, q: np.ndarray) -> np.ndarray:
         """
         Simple FK fallback for cases where KDL is not available.
@@ -310,12 +323,39 @@ class CartesianArmController(Node):
                 return r
         return self._fk_numerical(q)
 
+    def _command_velocity_in_base(self, q: np.ndarray, cmd_vel: np.ndarray) -> np.ndarray:
+        command_frame = self._command_frame
+        if command_frame == self._chain_root:
+            return cmd_vel
+
+        if self._fk_solver is None:
+            self.get_logger().warn(
+                f'Cannot transform commands from {command_frame} without KDL; using base frame.',
+                throttle_duration_sec=5.0,
+            )
+            return cmd_vel
+
+        if command_frame != self._chain_tip:
+            self.get_logger().warn(
+                f'Unsupported command_frame {command_frame}; using base frame command.',
+                throttle_duration_sec=5.0,
+            )
+            return cmd_vel
+
+        frame = self._fk_frame_kdl(q)
+        if frame is None:
+            return cmd_vel
+
+        base_vec = frame.M * kdl.Vector(float(cmd_vel[0]), float(cmd_vel[1]), float(cmd_vel[2]))
+        return np.array([base_vec[0], base_vec[1], base_vec[2]])
+
     # Jacobian.
 
     def _jacobian_kdl(self, q: np.ndarray) -> np.ndarray | None:
         """
-        Return the linear-velocity Jacobian via KDL.
+        Return the full 6D Jacobian via KDL.
 
+        Rows 0-2 are linear velocity and rows 3-5 are angular velocity.
         The element-wise access is used because it works reliably across
         PyKDL builds.
         """
@@ -330,8 +370,7 @@ class CartesianArmController(Node):
             return None
 
         try:
-            # Rows 0-2 are linear velocity; rows 3-5 are angular velocity.
-            J = np.array([[jac[r, c] for c in range(n)] for r in range(3)])
+            J = np.array([[jac[r, c] for c in range(n)] for r in range(6)])
         except Exception as e:
             self.get_logger().warn(f'Jacobian extraction failed ({e}) – falling back.')
             return None
@@ -340,11 +379,11 @@ class CartesianArmController(Node):
 
     def _jacobian_numerical(self, q: np.ndarray, eps: float = 1e-4) -> np.ndarray:
         p0 = self._fk_numerical(q)
-        J = np.zeros((3, self.N_JOINTS))
+        J = np.zeros((6, self.N_JOINTS))
         for i in range(self.N_JOINTS):
             dq = q.copy()
             dq[i] += eps
-            J[:, i] = (self._fk_numerical(dq) - p0) / eps
+            J[:3, i] = (self._fk_numerical(dq) - p0) / eps
         return J
 
     def _get_jacobian(self, q: np.ndarray) -> np.ndarray | None:
@@ -372,7 +411,7 @@ class CartesianArmController(Node):
         if float(np.linalg.norm(self._cmd_vel)) < deadzone:
             if self._moving:
                 # Keep the current target when the stick returns to center.
-                self._publish_traj(self._q_cmd.tolist(), [0.0] * self.N_JOINTS, 0.1)
+                self._publish_traj(self._q.tolist(), self._q_cmd.tolist(), 0.1)
                 self._moving = False
             return
 
@@ -392,8 +431,9 @@ class CartesianArmController(Node):
         horizon = self.get_parameter('trajectory_horizon_sec').get_parameter_value().double_value
         horizon = max(horizon, self._dt * 2.0)  # never shorter than 2 control ticks
 
-        # Scale joystick input into Cartesian velocity in the arm base frame.
-        cart_vel = self._cmd_vel * max_cv
+        # Interpret the input in the configured command frame, then solve in base coordinates.
+        cart_vel_cmd = self._cmd_vel * max_cv
+        cart_vel = self._command_velocity_in_base(self._q_cmd, cart_vel_cmd)
 
         # Use the command-side state so the linearization matches the update step.
         J = self._get_jacobian(self._q_cmd)
@@ -401,10 +441,12 @@ class CartesianArmController(Node):
             return
 
         # Damped least-squares IK.
-        # dq = J^T (J J^T + λ² I)^-1 v_cart
+        # dq = J^T (J J^T + λ² I)^-1 v_twist
         try:
-            JJt = J @ J.T  # 3×3
-            dq = J.T @ np.linalg.solve(JJt + lam**2 * np.eye(3), cart_vel)  # rad/s
+            twist = np.zeros(6)
+            twist[:3] = cart_vel
+            JJt = J @ J.T
+            dq = J.T @ np.linalg.solve(JJt + lam**2 * np.eye(J.shape[0]), twist)  # rad/s
         except np.linalg.LinAlgError:
             self.get_logger().warn('DLS solve failed.')
             return
@@ -452,11 +494,13 @@ class CartesianArmController(Node):
         if self._command_mode == 'velocity':
             self._publish_velocity(dq.tolist())
         else:
-            self._publish_traj(self._q_cmd.tolist(), dq.tolist(), horizon)
+            self._publish_traj(self._q.tolist(), self._q_cmd.tolist(), horizon)
 
     # Trajectory publisher.
 
-    def _publish_traj(self, positions: list[float], velocities: list[float], duration_sec: float):
+    def _publish_traj(
+        self, start_positions: list[float], target_positions: list[float], duration_sec: float
+    ):
         """Publish a short two-point trajectory for the arm controller."""
         traj = JointTrajectory()
         traj.header.stamp.sec = 0  # execute immediately, preempt current
@@ -465,23 +509,26 @@ class CartesianArmController(Node):
         traj.joint_names = self.JOINT_NAMES
 
         # Never send positions outside the joint limits.
-        pos_safe = [
-            float(np.clip(positions[i], self._q_lo[i], self._q_hi[i]))
+        start_safe = [
+            float(np.clip(start_positions[i], self._q_lo[i], self._q_hi[i]))
+            for i in range(self.N_JOINTS)
+        ]
+        target_safe = [
+            float(np.clip(target_positions[i], self._q_lo[i], self._q_hi[i]))
             for i in range(self.N_JOINTS)
         ]
 
-        pt = JointTrajectoryPoint()
-        pt.positions = pos_safe
-        pt.velocities = [float(v) for v in velocities]
-        pt.time_from_start = Duration(nanoseconds=int(duration_sec * 1e9)).to_msg()
+        pt_start = JointTrajectoryPoint()
+        pt_start.positions = start_safe
+        pt_start.velocities = [0.0] * self.N_JOINTS
+        pt_start.time_from_start = Duration(nanoseconds=0).to_msg()
 
-        # Keep the final point still.
-        pt_stop = JointTrajectoryPoint()
-        pt_stop.positions = pos_safe
-        pt_stop.velocities = [0.0] * self.N_JOINTS
-        pt_stop.time_from_start = Duration(nanoseconds=int((duration_sec + 0.15) * 1e9)).to_msg()
+        pt_target = JointTrajectoryPoint()
+        pt_target.positions = target_safe
+        pt_target.velocities = [0.0] * self.N_JOINTS
+        pt_target.time_from_start = Duration(nanoseconds=int(duration_sec * 1e9)).to_msg()
 
-        traj.points = [pt, pt_stop]
+        traj.points = [pt_start, pt_target]
         self._traj_pub.publish(traj)
 
     def _publish_velocity(self, velocities: list[float]):
@@ -496,7 +543,8 @@ class CartesianArmController(Node):
         # Reset the integrator so the next move starts from home.
         self._q_cmd = np.array(self.HOME_POSITION, dtype=float)
         self._moving = False
-        self._publish_traj(self.HOME_POSITION, [0.0] * self.N_JOINTS, dur)
+        start_positions = self._q.tolist() if self._q is not None else self.HOME_POSITION
+        self._publish_traj(start_positions, self.HOME_POSITION, dur)
         res.success = True
         res.message = f'Moving to home {self.HOME_POSITION} over {dur:.1f}s'
         self.get_logger().info(res.message)
@@ -510,7 +558,7 @@ class CartesianArmController(Node):
         return res
 
     def _srv_set_mode(self, req: SetBool.Request, res: SetBool.Response) -> SetBool.Response:
-        self._velocity_mode = req.data
+        self._command_mode = 'velocity' if req.data else 'trajectory'
         res.success = True
         res.message = 'Mode -> VELOCITY' if req.data else 'Mode -> POSITION INCREMENT'
         self.get_logger().info(res.message)

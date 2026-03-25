@@ -91,7 +91,7 @@ def _joint_to_kdl(joint):
     if joint.joint_type == 'prismatic':
         return kdl.Joint(joint.name, parent_frame.p, parent_frame.M * axis, kdl.Joint.TransAxis)
 
-    return kdl.Joint(joint.name, getattr(kdl.Joint, 'None'))
+    return kdl.Joint(joint.name, kdl.Joint.Fixed)
 
 
 def _segment_from_joint_and_link(joint, link):

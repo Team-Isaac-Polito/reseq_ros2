@@ -25,8 +25,8 @@ moveit_servo_node:
       ## --- Robot-Frames and Groups ---
       move_group_name: mk2_arm
       planning_frame: arm_base_link
-      ee_frame_name: arm_roll_wrist_link
-      robot_link_command_frame: arm_roll_wrist_link
+      ee_frame_name: tool0
+      robot_link_command_frame: tool0
 
       ## --- Singularity Avoidance Settings ---
       lower_singularity_threshold: 10000000000000.0

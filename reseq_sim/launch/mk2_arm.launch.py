@@ -81,11 +81,11 @@ def generate_launch_description():
         ],
     )
 
-    mk2_arm_controller_spawner = Node(
+    joint_group_velocity_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
         arguments=[
-            'mk2_arm_controller',
+            'joint_group_velocity_controller',
             '--controller-manager',
             '/controller_manager',
         ],
@@ -101,10 +101,11 @@ def generate_launch_description():
         parameters=[
             {'robot_description': robot_description},
             {'use_sim_time': True},
-            {'command_mode': 'trajectory'},
+            {'chain_tip': 'tool0'},
+            {'command_mode': 'velocity'},
             {'command_frame': 'arm_base_link'},
-            {'max_cartesian_vel': 2.5},
-            {'max_joint_vel': 4.0},
+            {'max_cartesian_vel': 0.3},
+            {'max_joint_vel': 1.0},
         ],
         output='screen',
     )
@@ -131,7 +132,7 @@ def generate_launch_description():
         RegisterEventHandler(
             OnProcessExit(
                 target_action=joint_state_broadcaster_spawner,
-                on_exit=[mk2_arm_controller_spawner],
+                on_exit=[joint_group_velocity_controller_spawner],
             )
         )
     )

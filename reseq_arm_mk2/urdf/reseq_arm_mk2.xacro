@@ -397,6 +397,22 @@
     <dynamics damping="0.5" friction="0.1" />
   </joint>
 
+  <link name="tcp" />
+
+  <joint name="tcp_joint" type="fixed">
+    <parent link="arm_roll_wrist_link" />
+    <child link="tcp" />
+    <origin xyz="0 0 0.12425" rpy="0 0 0" />
+  </joint>
+
+  <link name="tool0" />
+
+  <joint name="tool0_joint" type="fixed">
+    <parent link="tcp" />
+    <child link="tool0" />
+    <origin xyz="0 0 0" rpy="0 -1.5708 1.5708" />
+  </joint>
+
   <gazebo reference="arm_base_link">
     <material>Gazebo/Grey</material>
     <selfCollide>false</selfCollide>
