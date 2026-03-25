@@ -119,7 +119,6 @@ def launch_setup(context, *args, **kwargs):
         body_spawners.append(module_controller)
 
     if arm:
-        # spawn mk2_arm_controller
         mk2_arm_controller = Node(
             package='controller_manager',
             executable='spawner',

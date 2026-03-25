@@ -4,7 +4,8 @@ import subprocess
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler, TimerAction
+from launch.event_handlers import OnProcessStart
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -82,6 +83,16 @@ def launch_setup(context, *args, **kwargs):
     ]
 
     if not sim:
+        control_node = Node(
+            package='controller_manager',
+            executable='ros2_control_node',
+            parameters=[
+                {'robot_description': robot_description},
+                controllers_config_file,
+            ],
+            output='screen',
+        )
+
         joint_state_broadcaster_spawner = Node(
             package='controller_manager',
             executable='spawner',
@@ -100,8 +111,21 @@ def launch_setup(context, *args, **kwargs):
 
         launch_entities.extend(
             [
-                joint_state_broadcaster_spawner,
-                arm_controller_spawner,
+                control_node,
+                RegisterEventHandler(
+                    OnProcessStart(
+                        target_action=control_node,
+                        on_start=[
+                            TimerAction(period=2.0, actions=[joint_state_broadcaster_spawner])
+                        ],
+                    )
+                ),
+                RegisterEventHandler(
+                    OnProcessStart(
+                        target_action=joint_state_broadcaster_spawner,
+                        on_start=[TimerAction(period=2.0, actions=[arm_controller_spawner])],
+                    )
+                ),
             ]
         )
 
