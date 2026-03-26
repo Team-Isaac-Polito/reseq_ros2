@@ -193,6 +193,27 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_config.append(robot_state_publisher_node)
 
+    if sim_mode == 'false' and arm:
+        cartesian_arm_controller_node = Node(
+            package='reseq_arm_mk2',
+            executable='cartesian_arm_controller',
+            name='cartesian_arm_controller',
+            parameters=[
+                {
+                    'robot_description': robot_description,
+                    'chain_tip': 'tool0',
+                    'command_frame': 'arm_base_link',
+                    'command_mode': 'trajectory',
+                    'max_cartesian_vel': 0.6,
+                    'max_joint_vel': 1.0,
+                    'deadzone': 0.02,
+                    'trajectory_horizon_sec': 0.1,
+                }
+            ],
+            output='screen',
+        )
+        launch_config.append(cartesian_arm_controller_node)
+
     return launch_config
 
 
