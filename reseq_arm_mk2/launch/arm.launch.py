@@ -79,7 +79,7 @@ def launch_setup(context, *args, **kwargs):
                 'max_cartesian_vel': 0.6,
                 'max_joint_vel': 1.0,
                 'deadzone': 0.0,
-                'trajectory_horizon_sec': 0.5,
+                'trajectory_horizon_sec': 0.1,
             }
         ],
         output='screen',
