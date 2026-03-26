@@ -9,7 +9,6 @@ from launch.actions import (
     IncludeLaunchDescription,
     OpaqueFunction,
     RegisterEventHandler,
-    SetEnvironmentVariable,
 )
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -226,13 +225,9 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
-            DeclareLaunchArgument('ros_domain_id', default_value='42'),
             DeclareLaunchArgument(
                 'sim', default_value='true', description='Use the Gazebo simulation controllers'
             ),
-            SetEnvironmentVariable('ROS_DOMAIN_ID', LaunchConfiguration('ros_domain_id')),
-            SetEnvironmentVariable('ROS_LOCALHOST_ONLY', '0'),
-            SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_fastrtps_cpp'),
             DeclareLaunchArgument(
                 'use_moveit',
                 default_value='true',

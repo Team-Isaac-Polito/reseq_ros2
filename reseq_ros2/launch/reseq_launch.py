@@ -4,16 +4,13 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    EmitEvent,
     ExecuteProcess,
     IncludeLaunchDescription,
     LogInfo,
     OpaqueFunction,
     RegisterEventHandler,
-    SetEnvironmentVariable,
 )
 from launch.event_handlers import OnProcessExit
-from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
@@ -175,20 +172,16 @@ def generate_config_setup(context, *args, **kwargs):
         output='screen',
     )
 
-    def on_process_exit(event, context):
-        if event.returncode == 0:
-            return [
-                LogInfo(msg='Configuration files generated.'),
-                OpaqueFunction(function=launch_setup),
-            ]
-        else:
-            return [EmitEvent(event=Shutdown(reason='Configuration generation failed'))]
-
     return [
         generate_configs,
-        # Wait for the config generation process to complete before proceeding
         RegisterEventHandler(
-            OnProcessExit(target_action=generate_configs, on_exit=on_process_exit)
+            OnProcessExit(
+                target_action=generate_configs,
+                on_exit=[
+                    LogInfo(msg='Configuration files generated.'),
+                    OpaqueFunction(function=launch_setup),
+                ],
+            )
         ),
     ]
 
@@ -196,10 +189,6 @@ def generate_config_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
-            DeclareLaunchArgument('ros_domain_id', default_value='42'),
-            SetEnvironmentVariable('ROS_DOMAIN_ID', LaunchConfiguration('ros_domain_id')),
-            SetEnvironmentVariable('ROS_LOCALHOST_ONLY', '0'),
-            SetEnvironmentVariable('RMW_IMPLEMENTATION', 'rmw_fastrtps_cpp'),
             DeclareLaunchArgument('version', default_value='mk2', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument(
