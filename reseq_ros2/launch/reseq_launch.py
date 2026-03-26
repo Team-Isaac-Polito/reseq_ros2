@@ -37,6 +37,7 @@ def launch_setup(context, *args, **kwargs):
 
     # use simulation time: should only be used with gazebo that's why default value is 'false'
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
+    sim_mode = LaunchConfiguration('sim_mode').perform(context)
     arm_arg = LaunchConfiguration('arm').perform(context=context)
     arm = True if arm_arg == 'true' else False
 
@@ -125,8 +126,8 @@ def launch_setup(context, *args, **kwargs):
                     'arm': arm_arg,
                     'log_level': log_level,
                     'external_log_level': external_log_level,
-                    'use_sim_time': 'true',
-                    'sim_mode': 'true',
+                    'use_sim_time': use_sim_time,
+                    'sim_mode': sim_mode,
                 }.items(),
             )
         )
