@@ -4,8 +4,13 @@ import subprocess
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler, TimerAction
-from launch.event_handlers import OnProcessStart
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -105,6 +110,18 @@ def launch_setup(context, *args, **kwargs):
             ],
         )
 
+        controller_manager_ready = ExecuteProcess(
+            cmd=[
+                'bash',
+                '-lc',
+                (
+                    'until ros2 service wait /controller_manager/list_controllers '
+                    '--timeout 1; do sleep 1; done'
+                ),
+            ],
+            output='screen',
+        )
+
         arm_controller_spawner = Node(
             package='controller_manager',
             executable='spawner',
@@ -117,15 +134,19 @@ def launch_setup(context, *args, **kwargs):
                 RegisterEventHandler(
                     OnProcessStart(
                         target_action=control_node,
-                        on_start=[
-                            TimerAction(period=15.0, actions=[joint_state_broadcaster_spawner])
-                        ],
+                        on_start=[controller_manager_ready],
                     )
                 ),
                 RegisterEventHandler(
-                    OnProcessStart(
+                    OnProcessExit(
+                        target_action=controller_manager_ready,
+                        on_exit=[joint_state_broadcaster_spawner],
+                    )
+                ),
+                RegisterEventHandler(
+                    OnProcessExit(
                         target_action=joint_state_broadcaster_spawner,
-                        on_start=[TimerAction(period=2.0, actions=[arm_controller_spawner])],
+                        on_exit=[arm_controller_spawner],
                     )
                 ),
             ]

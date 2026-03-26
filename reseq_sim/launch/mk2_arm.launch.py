@@ -3,12 +3,7 @@ import os
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (
-    ExecuteProcess,
-    IncludeLaunchDescription,
-    RegisterEventHandler,
-    TimerAction,
-)
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -89,6 +84,18 @@ def generate_launch_description():
         ],
     )
 
+    controller_manager_ready = ExecuteProcess(
+        cmd=[
+            'bash',
+            '-lc',
+            (
+                'until ros2 service wait /controller_manager/list_controllers '
+                '--timeout 1; do sleep 1; done'
+            ),
+        ],
+        output='screen',
+    )
+
     joint_group_velocity_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -123,7 +130,7 @@ def generate_launch_description():
     second_step = [
         rsp,
         gazebo_launch,
-        TimerAction(period=15.0, actions=[joint_state_broadcaster_spawner]),
+        controller_manager_ready,
         cartesian_arm_controller_node,
     ]
 
@@ -133,6 +140,14 @@ def generate_launch_description():
             OnProcessExit(
                 target_action=generate_configs,
                 on_exit=second_step,
+            )
+        )
+    )
+    launch_description.add_action(
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=controller_manager_ready,
+                on_exit=[joint_state_broadcaster_spawner],
             )
         )
     )
