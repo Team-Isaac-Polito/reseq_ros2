@@ -118,7 +118,7 @@ def launch_setup(context, *args, **kwargs):
                     OnProcessStart(
                         target_action=control_node,
                         on_start=[
-                            TimerAction(period=2.0, actions=[joint_state_broadcaster_spawner])
+                            TimerAction(period=15.0, actions=[joint_state_broadcaster_spawner])
                         ],
                     )
                 ),

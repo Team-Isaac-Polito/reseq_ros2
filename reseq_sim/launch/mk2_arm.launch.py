@@ -3,7 +3,12 @@ import os
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler
+from launch.actions import (
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    RegisterEventHandler,
+    TimerAction,
+)
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -118,7 +123,7 @@ def generate_launch_description():
     second_step = [
         rsp,
         gazebo_launch,
-        joint_state_broadcaster_spawner,
+        TimerAction(period=15.0, actions=[joint_state_broadcaster_spawner]),
         cartesian_arm_controller_node,
     ]
 
