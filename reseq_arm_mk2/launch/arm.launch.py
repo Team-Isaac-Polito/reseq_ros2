@@ -115,8 +115,9 @@ def launch_setup(context, *args, **kwargs):
                 'bash',
                 '-lc',
                 (
-                    'until ros2 service wait /controller_manager/list_controllers '
-                    '--timeout 1; do sleep 1; done'
+                    'until ros2 service list --include-hidden-services '
+                    '| grep -Fxq /controller_manager/list_controllers; '
+                    'do sleep 1; done'
                 ),
             ],
             output='screen',
