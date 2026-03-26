@@ -499,8 +499,9 @@ class CartesianArmController(Node):
                 dq[i] = min(0.0, (self._q_lo[i] - solve_q[i]) / self._dt)
                 joints_clipped.append(f'J{i}↓')
 
-        # Integrate the command state.
-        self._q_cmd = np.clip(self._q + dq * self._dt, self._q_lo, self._q_hi)
+        # Integrate the command state from the last target, while still solving
+        # the IK around the measured pose.
+        self._q_cmd = np.clip(self._q_cmd + dq * self._dt, self._q_lo, self._q_hi)
 
         # Print diagnostics at 1 Hz.
         self._diag_ctr += 1
