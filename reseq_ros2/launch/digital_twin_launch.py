@@ -201,8 +201,9 @@ def launch_setup(context, *args, **kwargs):
             parameters=[
                 {
                     'source_topic': '/joint_states',
-                    'output_mode': 'joint_state',
-                    'output_topic': '/arm_joint_states',
+                    'output_mode': 'trajectory',
+                    'trajectory_topic': '/mk2_arm_controller/joint_trajectory',
+                    'trajectory_duration_sec': 0.1,
                 }
             ],
             output='screen',
