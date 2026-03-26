@@ -3,13 +3,30 @@ import os
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler
-from launch.event_handlers import OnProcessExit
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
-def generate_launch_description():
+def launch_setup(context, *args, **kwargs):
+    sim = LaunchConfiguration('sim').perform(context).lower() == 'true'
+    use_moveit = LaunchConfiguration('use_moveit').perform(context).lower() == 'true'
+    launch_rsp = LaunchConfiguration('launch_rsp').perform(context).lower() == 'true'
+    launch_joint_state_broadcaster = (
+        LaunchConfiguration('launch_joint_state_broadcaster').perform(context).lower() == 'true'
+    )
+    launch_cartesian_controller = (
+        LaunchConfiguration('launch_cartesian_controller').perform(context).lower() == 'true'
+    )
+
     package_name = 'reseq_sim'
     description_share = get_package_share_directory('reseq_description')
     robot_config_file = os.path.join(description_share, 'config', 'mk2', 'reseq_mk2_vcan.yaml')
@@ -19,19 +36,17 @@ def generate_launch_description():
             'python3',
             os.path.join(description_share, 'scripts/generate_configs.py'),
             'reseq_mk2_vcan.yaml',
-            '--use_sim_time',
-            '--no_body_controllers',
             '--version',
             'mk2',
-        ],
+            '--no_body_controllers',
+        ]
+        + (['--use_sim_time'] if sim else []),
         name='generate_configs',
         output='screen',
     )
 
-    # We must pass 'sim_mode='true' to xacro
     xacro_file = get_package_share_directory('reseq_arm_mk2') + '/urdf/arm.urdf.xacro'
 
-    # Path to controllers config for the Gazebo plugin
     controllers_config_file = os.path.join(
         get_package_share_directory('reseq_description'),
         'config',
@@ -43,24 +58,28 @@ def generate_launch_description():
     robot_description = xacro.process_file(
         xacro_file,
         mappings={
-            'sim_mode': 'true',
+            'sim_mode': 'true' if sim else 'false',
             'version': 'mk2',
             'config_path': robot_config_file,
             'controllers_config_file': controllers_config_file,
         },
     ).toxml()
 
-    rsp = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        parameters=[
-            {
-                'robot_description': robot_description,
-                'use_sim_time': True,
-            }
-        ],
-    )
+    launch_entities = []
+
+    if launch_rsp:
+        rsp = Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            output='screen',
+            parameters=[
+                {
+                    'robot_description': robot_description,
+                    'use_sim_time': True,
+                }
+            ],
+        )
+        launch_entities.append(rsp)
 
     gazebo_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -74,15 +93,7 @@ def generate_launch_description():
         )
     )
 
-    joint_state_broadcaster_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=[
-            'joint_state_broadcaster',
-            '--controller-manager',
-            '/controller_manager',
-        ],
-    )
+    launch_entities.append(gazebo_launch)
 
     controller_manager_ready = ExecuteProcess(
         cmd=[
@@ -97,67 +108,164 @@ def generate_launch_description():
         output='screen',
     )
 
-    joint_group_velocity_controller_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=[
-            'joint_group_velocity_controller',
-            '--controller-manager',
-            '/controller_manager',
-        ],
-    )
+    body_spawners = []
+    if launch_joint_state_broadcaster:
+        joint_state_broadcaster_spawner = Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=[
+                'joint_state_broadcaster',
+                '--controller-manager',
+                '/controller_manager',
+            ],
+        )
+        body_spawners.append(joint_state_broadcaster_spawner)
+    else:
+        joint_state_broadcaster_spawner = None
 
-    # Launch the direct Cartesian controller that publishes joint velocities
-    # to the simulated arm controller. This keeps the Gazebo control path
-    # local and avoids an extra trajectory interpolation layer.
-    cartesian_arm_controller_node = Node(
-        package='reseq_arm_mk2',
-        executable='cartesian_arm_controller',
-        name='cartesian_arm_controller',
-        parameters=[
-            {'robot_description': robot_description},
-            {'use_sim_time': True},
-            {'chain_tip': 'tool0'},
-            {'command_mode': 'velocity'},
-            {'command_frame': 'arm_base_link'},
-            {'max_cartesian_vel': 0.6},
-            {'max_joint_vel': 1.0},
-        ],
-        output='screen',
-    )
+    if launch_cartesian_controller:
+        # Launch the same Cartesian controller path as the real arm so Gazebo
+        # follows the same joint-trajectory commands.
+        cartesian_arm_controller_node = Node(
+            package='reseq_arm_mk2',
+            executable='cartesian_arm_controller',
+            name='cartesian_arm_controller',
+            parameters=[
+                {'robot_description': robot_description},
+                {'use_sim_time': True},
+                {'chain_tip': 'tool0'},
+                {'command_mode': 'trajectory'},
+                {'command_frame': 'arm_base_link'},
+                {'max_cartesian_vel': 0.6},
+                {'max_joint_vel': 1.0},
+                {'deadzone': 0.02},
+                {'trajectory_horizon_sec': 0.1},
+            ],
+            output='screen',
+        )
+        launch_entities.append(cartesian_arm_controller_node)
 
-    # these nodes must all start after tehe configuration generation
-    # hence the name `second_step`
     second_step = [
-        rsp,
-        gazebo_launch,
         controller_manager_ready,
-        cartesian_arm_controller_node,
     ]
+    if launch_joint_state_broadcaster:
+        second_step.append(body_spawners[0])
 
-    launch_description = LaunchDescription([generate_configs])
-    launch_description.add_action(
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action=generate_configs,
-                on_exit=second_step,
+    if sim:
+        control_node = Node(
+            package='controller_manager',
+            executable='ros2_control_node',
+            parameters=[
+                {'robot_description': robot_description},
+                controllers_config_file,
+            ],
+            output='screen',
+        )
+
+        launch_entities.append(control_node)
+        launch_entities.append(
+            RegisterEventHandler(
+                OnProcessStart(
+                    target_action=control_node,
+                    on_start=[controller_manager_ready],
+                )
             )
         )
-    )
-    launch_description.add_action(
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action=controller_manager_ready,
-                on_exit=[joint_state_broadcaster_spawner],
+
+        if launch_joint_state_broadcaster:
+            launch_entities.append(
+                RegisterEventHandler(
+                    OnProcessExit(
+                        target_action=controller_manager_ready,
+                        on_exit=[body_spawners[0]],
+                    )
+                )
+            )
+            if launch_cartesian_controller:
+                launch_entities.append(
+                    RegisterEventHandler(
+                        OnProcessExit(
+                            target_action=body_spawners[0],
+                            on_exit=[],
+                        )
+                    )
+                )
+        else:
+            if launch_cartesian_controller:
+                launch_entities.append(
+                    RegisterEventHandler(
+                        OnProcessExit(
+                            target_action=controller_manager_ready,
+                            on_exit=[],
+                        )
+                    )
+                )
+
+        arm_controller_spawner = Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['mk2_arm_controller', '--controller-manager', '/controller_manager'],
+        )
+
+        if launch_joint_state_broadcaster:
+            launch_entities.append(
+                RegisterEventHandler(
+                    OnProcessExit(
+                        target_action=body_spawners[0],
+                        on_exit=[arm_controller_spawner],
+                    )
+                )
+            )
+        else:
+            launch_entities.append(
+                RegisterEventHandler(
+                    OnProcessExit(
+                        target_action=controller_manager_ready,
+                        on_exit=[arm_controller_spawner],
+                    )
+                )
+            )
+
+    if use_moveit:
+        launch_entities.append(
+            Node(
+                package='reseq_arm_mk2',
+                executable='coordinate_controller',
+                name='coordinate_controller',
+                parameters=[{'robot_description': robot_description}],
+                output='screen',
             )
         )
+
+    return [generate_configs, *launch_entities]
+
+
+def generate_launch_description():
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                'sim', default_value='true', description='Use the Gazebo simulation controllers'
+            ),
+            DeclareLaunchArgument(
+                'use_moveit',
+                default_value='true',
+                description='Launch MoveIt (for IK / RViz visualisation)',
+            ),
+            DeclareLaunchArgument(
+                'launch_rsp',
+                default_value='true',
+                description='Launch robot_state_publisher for the Gazebo stack',
+            ),
+            DeclareLaunchArgument(
+                'launch_joint_state_broadcaster',
+                default_value='true',
+                description='Launch joint_state_broadcaster for the Gazebo stack',
+            ),
+            DeclareLaunchArgument(
+                'launch_cartesian_controller',
+                default_value='true',
+                description='Launch the local Cartesian arm controller',
+            ),
+            OpaqueFunction(function=launch_setup),
+        ]
     )
-    launch_description.add_action(
-        RegisterEventHandler(
-            OnProcessExit(
-                target_action=joint_state_broadcaster_spawner,
-                on_exit=[joint_group_velocity_controller_spawner],
-            )
-        )
-    )
-    return launch_description

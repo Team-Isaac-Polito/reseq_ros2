@@ -7,10 +7,12 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     ExecuteProcess,
+    IncludeLaunchDescription,
     OpaqueFunction,
     RegisterEventHandler,
 )
 from launch.event_handlers import OnProcessExit, OnProcessStart
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -192,6 +194,22 @@ def launch_setup(context, *args, **kwargs):
         arguments=['--ros-args', '--log-level', external_log_level],
     )
     launch_config.append(robot_state_publisher_node)
+
+    sim_launch_file = os.path.join(
+        get_package_share_directory('reseq_sim'), 'launch', 'mk2_arm.launch.py'
+    )
+    launch_config.append(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(sim_launch_file),
+            launch_arguments={
+                'sim': 'true',
+                'use_moveit': 'false',
+                'launch_rsp': 'false',
+                'launch_joint_state_broadcaster': 'false',
+                'launch_cartesian_controller': 'false',
+            }.items(),
+        )
+    )
 
     if sim_mode == 'false' and arm:
         cartesian_arm_controller_node = Node(
