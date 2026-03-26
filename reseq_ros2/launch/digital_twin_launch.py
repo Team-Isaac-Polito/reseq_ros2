@@ -24,6 +24,7 @@ def launch_setup(context, *args, **kwargs):
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
+    sim_branch_use_sim_time = 'true' if sim_mode == 'true' else use_sim_time
 
     arm_arg = LaunchConfiguration('arm').perform(context=context)
     arm = True if arm_arg == 'true' else False  # bool version of arm_arg
@@ -58,7 +59,7 @@ def launch_setup(context, *args, **kwargs):
                 '--version',
                 version,
             ]
-            + (['--use_sim_time'] if use_sim_time == 'true' else [])
+            + (['--use_sim_time'] if sim_branch_use_sim_time == 'true' else [])
             + (['--no_arm_controllers'] if not arm else []),
             check=True,
             capture_output=True,
@@ -162,7 +163,10 @@ def launch_setup(context, *args, **kwargs):
         executable='robot_state_publisher',
         output='screen',
         parameters=[
-            {'robot_description': robot_description}
+            {
+                'robot_description': robot_description,
+                'use_sim_time': sim_branch_use_sim_time == 'true',
+            }
         ],  # add other parameters here if required
         arguments=['--ros-args', '--log-level', external_log_level],
     )
