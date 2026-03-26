@@ -102,6 +102,8 @@ def launch_setup(context, *args, **kwargs):
             'joint_state_broadcaster',
             '--controller-manager',
             '/controller_manager',
+            '--controller-manager-timeout',
+            '60',
             '--ros-args',
             '--log-level',
             external_log_level,
@@ -131,6 +133,8 @@ def launch_setup(context, *args, **kwargs):
                 f'diff_controller{i + 1}',
                 '--controller-manager',
                 '/controller_manager',
+                '--controller-manager-timeout',
+                '60',
                 '--ros-args',
                 '--log-level',
                 external_log_level,
@@ -146,6 +150,8 @@ def launch_setup(context, *args, **kwargs):
                 'mk2_arm_controller',
                 '--controller-manager',
                 '/controller_manager',
+                '--controller-manager-timeout',
+                '60',
             ],
         )
 

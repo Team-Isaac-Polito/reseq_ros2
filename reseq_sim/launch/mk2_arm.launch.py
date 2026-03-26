@@ -118,6 +118,8 @@ def launch_setup(context, *args, **kwargs):
                 'joint_state_broadcaster',
                 '--controller-manager',
                 '/controller_manager',
+                '--controller-manager-timeout',
+                '60',
             ],
         )
         body_spawners.append(joint_state_broadcaster_spawner)
@@ -165,7 +167,13 @@ def launch_setup(context, *args, **kwargs):
     arm_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['mk2_arm_controller', '--controller-manager', '/controller_manager'],
+        arguments=[
+            'mk2_arm_controller',
+            '--controller-manager',
+            '/controller_manager',
+            '--controller-manager-timeout',
+            '60',
+        ],
     )
 
     launch_entities.append(controller_manager_ready)
