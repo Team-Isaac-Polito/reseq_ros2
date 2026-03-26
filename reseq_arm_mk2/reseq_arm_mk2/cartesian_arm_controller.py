@@ -437,11 +437,10 @@ class CartesianArmController(Node):
                 self._moving = False
             return
 
-        # Solve from the live measured pose in velocity mode so the Jacobian
-        # tracks the actual arm; keep the internal target only for trajectory mode.
+        # Solve from the live measured pose so the Jacobian tracks the actual arm.
         if not self._moving:
             self._moving = True
-        solve_q = self._q if self._command_mode == 'velocity' else self._q_cmd
+        solve_q = self._q
 
         if not self._linear_mode:
             # Orientation mode is not implemented yet.
@@ -501,10 +500,7 @@ class CartesianArmController(Node):
                 joints_clipped.append(f'J{i}↓')
 
         # Integrate the command state.
-        if self._command_mode == 'velocity':
-            self._q_cmd = np.clip(self._q + dq * self._dt, self._q_lo, self._q_hi)
-        else:
-            self._q_cmd = np.clip(self._q_cmd + dq * self._dt, self._q_lo, self._q_hi)
+        self._q_cmd = np.clip(self._q + dq * self._dt, self._q_lo, self._q_hi)
 
         # Print diagnostics at 1 Hz.
         self._diag_ctr += 1
