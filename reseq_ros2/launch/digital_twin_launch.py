@@ -231,7 +231,7 @@ def launch_setup(context, *args, **kwargs):
                     'robot_description': robot_description,
                     'state_topic': '/arm_joint_states',
                     'chain_tip': 'tool0',
-                    'command_frame': 'tool0',
+                    'command_frame': 'arm_base_link',
                     'command_mode': 'trajectory',
                     'max_cartesian_vel': 0.6,
                     'max_joint_vel': 1.0,
