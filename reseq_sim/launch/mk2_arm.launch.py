@@ -178,15 +178,14 @@ def launch_setup(context, *args, **kwargs):
                 )
             )
         )
-        if launch_cartesian_controller:
-            launch_entities.append(
-                RegisterEventHandler(
-                    OnProcessExit(
-                        target_action=body_spawners[0],
-                        on_exit=[arm_controller_spawner],
-                    )
+        launch_entities.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=body_spawners[0],
+                    on_exit=[arm_controller_spawner],
                 )
             )
+        )
     else:
         launch_entities.append(
             RegisterEventHandler(
