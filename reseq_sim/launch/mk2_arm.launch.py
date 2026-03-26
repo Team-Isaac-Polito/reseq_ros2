@@ -17,7 +17,7 @@ def generate_launch_description():
         cmd=[
             'python3',
             os.path.join(description_share, 'scripts/generate_configs.py'),
-            'reseq_mk2_can.yaml',
+            'reseq_mk2_vcan.yaml',
             '--use_sim_time',
             '--no_body_controllers',
             '--version',
@@ -55,6 +55,7 @@ def generate_launch_description():
         parameters=[
             {
                 'robot_description': robot_description,
+                'use_sim_time': True,
             }
         ],
     )
