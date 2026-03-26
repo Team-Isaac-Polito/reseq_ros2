@@ -16,8 +16,9 @@
     <xacro:arg name="config_path" default="$(find reseq_description)/config/mk2/reseq_mk2_can.yaml" />
     <xacro:arg name="controllers_config_file" default="$(find reseq_description)/config/reseq_controllers.yaml" />
 
-    <xacro:property name="config_path_prop" value="${xacro.load_yaml(config_path)}" />
-    <xacro:property name="CanInterface" value="${config_path_prop['canbus']['channel']}" />
+    <xacro:property name="config_path_prop" value="$(arg config_path)" />
+    <xacro:property name="config" value="${xacro.load_yaml(config_path_prop)}" />
+    <xacro:property name="CanInterface" value="${config['canbus']['channel']}" />
     
     <xacro:property name="NumModules" value="0" />
     <xacro:include filename="$(find reseq_description)/description/control/ros2_control.xacro" />
