@@ -76,6 +76,7 @@ class CartesianArmController(Node):
     command_mode           str    'trajectory' or 'velocity'
     deadzone               float  0.02
     jacobian_damping       float  0.05   damped-LS regularisation λ
+    joint_weights          float[]  joint weighting for the IK solve
     """
 
     # Joint order used everywhere in this controller.
@@ -116,6 +117,7 @@ class CartesianArmController(Node):
         self.declare_parameter('command_mode', 'trajectory')
         self.declare_parameter('deadzone', 0.02)
         self.declare_parameter('jacobian_damping', 0.05)
+        self.declare_parameter('joint_weights', self.JOINT_WEIGHTS.tolist())
 
         # Internal state.
         self._q: np.ndarray | None = None  # measured joint positions
@@ -125,6 +127,14 @@ class CartesianArmController(Node):
         self._velocity_mode = True
         self._moving = False
         self._diag_ctr = 0
+
+        joint_weights_param = self.get_parameter('joint_weights').value
+        if isinstance(joint_weights_param, (list, tuple, np.ndarray)) and (
+            len(joint_weights_param) == self.N_JOINTS
+        ):
+            self._joint_weights = np.array(joint_weights_param, dtype=float)
+        else:
+            self._joint_weights = self.JOINT_WEIGHTS.copy()
 
         # Joint limits, replaced later with values from the URDF.
         self._q_lo = self._LOWER_DEFAULT.copy()
@@ -466,7 +476,7 @@ class CartesianArmController(Node):
         try:
             active_dofs = J.shape[1]
             Jlin = J[:3, :active_dofs]
-            joint_weights = self.JOINT_WEIGHTS[:active_dofs]
+            joint_weights = self._joint_weights[:active_dofs]
             inv_joint_weights = np.diag(1.0 / joint_weights)
             JJt = Jlin @ inv_joint_weights @ Jlin.T
             dq_active = (
