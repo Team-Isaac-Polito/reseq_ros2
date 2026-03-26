@@ -77,6 +77,7 @@ class CartesianArmController(Node):
     deadzone               float  0.02
     jacobian_damping       float  0.05   damped-LS regularisation λ
     joint_weights          float[]  joint weighting for the IK solve
+    posture_gain           float  0.00   nullspace bias toward HOME_POSITION
     """
 
     # Joint order used everywhere in this controller.
@@ -118,6 +119,7 @@ class CartesianArmController(Node):
         self.declare_parameter('deadzone', 0.02)
         self.declare_parameter('jacobian_damping', 0.05)
         self.declare_parameter('joint_weights', self.JOINT_WEIGHTS.tolist())
+        self.declare_parameter('posture_gain', 0.0)
 
         # Internal state.
         self._q: np.ndarray | None = None  # measured joint positions
@@ -135,6 +137,8 @@ class CartesianArmController(Node):
             self._joint_weights = np.array(joint_weights_param, dtype=float)
         else:
             self._joint_weights = self.JOINT_WEIGHTS.copy()
+
+        self._posture_gain = self.get_parameter('posture_gain').get_parameter_value().double_value
 
         # Joint limits, replaced later with values from the URDF.
         self._q_lo = self._LOWER_DEFAULT.copy()
@@ -479,9 +483,16 @@ class CartesianArmController(Node):
             joint_weights = self._joint_weights[:active_dofs]
             inv_joint_weights = np.diag(1.0 / joint_weights)
             JJt = Jlin @ inv_joint_weights @ Jlin.T
-            dq_active = (
-                inv_joint_weights @ Jlin.T @ np.linalg.solve(JJt + lam**2 * np.eye(3), cart_vel)
+            Jpinv = (
+                inv_joint_weights @ Jlin.T @ np.linalg.solve(JJt + lam**2 * np.eye(3), np.eye(3))
             )
+            dq_active = Jpinv @ cart_vel
+
+            if self._posture_gain > 0.0:
+                posture_target = np.array(self.HOME_POSITION[:active_dofs], dtype=float)
+                posture_error = posture_target - solve_q[:active_dofs]
+                null_projector = np.eye(active_dofs) - Jpinv @ Jlin
+                dq_active += null_projector @ (self._posture_gain * posture_error)
 
             dq = np.zeros(self.N_JOINTS)
             dq[:active_dofs] = dq_active
