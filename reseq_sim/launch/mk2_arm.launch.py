@@ -120,6 +120,8 @@ def launch_setup(context, *args, **kwargs):
                 '/controller_manager',
                 '--controller-manager-timeout',
                 '60',
+                '--service-call-timeout',
+                '60',
             ],
         )
         body_spawners.append(joint_state_broadcaster_spawner)
@@ -172,6 +174,8 @@ def launch_setup(context, *args, **kwargs):
             '--controller-manager',
             '/controller_manager',
             '--controller-manager-timeout',
+            '60',
+            '--service-call-timeout',
             '60',
         ],
     )
