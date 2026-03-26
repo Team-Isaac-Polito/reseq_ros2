@@ -10,7 +10,7 @@ from launch.actions import (
     OpaqueFunction,
     RegisterEventHandler,
 )
-from launch.event_handlers import OnProcessExit, OnProcessStart
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -145,69 +145,24 @@ def launch_setup(context, *args, **kwargs):
         )
         launch_entities.append(cartesian_arm_controller_node)
 
-    second_step = [
-        controller_manager_ready,
-    ]
+    arm_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['mk2_arm_controller', '--controller-manager', '/controller_manager'],
+    )
+
+    launch_entities.append(controller_manager_ready)
+
     if launch_joint_state_broadcaster:
-        second_step.append(body_spawners[0])
-
-    if sim:
-        control_node = Node(
-            package='controller_manager',
-            executable='ros2_control_node',
-            parameters=[
-                {'robot_description': robot_description},
-                controllers_config_file,
-            ],
-            output='screen',
-        )
-
-        launch_entities.append(control_node)
         launch_entities.append(
             RegisterEventHandler(
-                OnProcessStart(
-                    target_action=control_node,
-                    on_start=[controller_manager_ready],
+                OnProcessExit(
+                    target_action=controller_manager_ready,
+                    on_exit=[body_spawners[0]],
                 )
             )
         )
-
-        if launch_joint_state_broadcaster:
-            launch_entities.append(
-                RegisterEventHandler(
-                    OnProcessExit(
-                        target_action=controller_manager_ready,
-                        on_exit=[body_spawners[0]],
-                    )
-                )
-            )
-            if launch_cartesian_controller:
-                launch_entities.append(
-                    RegisterEventHandler(
-                        OnProcessExit(
-                            target_action=body_spawners[0],
-                            on_exit=[],
-                        )
-                    )
-                )
-        else:
-            if launch_cartesian_controller:
-                launch_entities.append(
-                    RegisterEventHandler(
-                        OnProcessExit(
-                            target_action=controller_manager_ready,
-                            on_exit=[],
-                        )
-                    )
-                )
-
-        arm_controller_spawner = Node(
-            package='controller_manager',
-            executable='spawner',
-            arguments=['mk2_arm_controller', '--controller-manager', '/controller_manager'],
-        )
-
-        if launch_joint_state_broadcaster:
+        if launch_cartesian_controller:
             launch_entities.append(
                 RegisterEventHandler(
                     OnProcessExit(
@@ -216,15 +171,15 @@ def launch_setup(context, *args, **kwargs):
                     )
                 )
             )
-        else:
-            launch_entities.append(
-                RegisterEventHandler(
-                    OnProcessExit(
-                        target_action=controller_manager_ready,
-                        on_exit=[arm_controller_spawner],
-                    )
+    else:
+        launch_entities.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=controller_manager_ready,
+                    on_exit=[arm_controller_spawner],
                 )
             )
+        )
 
     if use_moveit:
         launch_entities.append(
