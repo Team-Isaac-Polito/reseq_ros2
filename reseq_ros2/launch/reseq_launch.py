@@ -39,7 +39,6 @@ def launch_setup(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
     arm_arg = LaunchConfiguration('arm').perform(context=context)
-    arm = True if arm_arg == 'true' else False
 
     # Core launch file
     core_launch_file = os.path.join(
@@ -132,19 +131,6 @@ def launch_setup(context, *args, **kwargs):
             )
         )
 
-    if arm and digital_twin_enabled != 'true':
-        arm_launch_file = os.path.join(
-            get_package_share_directory('reseq_arm_mk2'), 'launch', 'arm.launch.py'
-        )
-        launch_config.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(arm_launch_file),
-                launch_arguments={
-                    'use_sim_time': use_sim_time,
-                }.items(),
-            )
-        )
-
     return launch_config
 
 
@@ -216,7 +202,7 @@ def generate_launch_description():
                 description='CV detection mode (0=idle, 1=sensor, 2=crate, 3=mapping)',
             ),
             DeclareLaunchArgument(
-                'd_twin', default_value='true', description='Enable digital twin'
+                'd_twin', default_value='false', description='Enable digital twin'
             ),
             DeclareLaunchArgument(
                 'slam',
