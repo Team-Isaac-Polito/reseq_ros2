@@ -4,7 +4,12 @@ import subprocess
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler, TimerAction
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
 from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -103,6 +108,19 @@ def launch_setup(context, *args, **kwargs):
     )
     body_spawners.append(joint_state_broadcaster_spawner)
 
+    controller_manager_ready = ExecuteProcess(
+        cmd=[
+            'bash',
+            '-lc',
+            (
+                'until ros2 service list --include-hidden-services '
+                '| grep -Fxq /controller_manager/list_controllers; '
+                'do sleep 1; done'
+            ),
+        ],
+        output='screen',
+    )
+
     num_modules = config.get('num_modules', 0)
     for i in range(num_modules):
         module_controller = Node(
@@ -137,7 +155,15 @@ def launch_setup(context, *args, **kwargs):
             RegisterEventHandler(
                 OnProcessStart(
                     target_action=control_node,
-                    on_start=[TimerAction(period=15.0, actions=[joint_state_broadcaster_spawner])],
+                    on_start=[controller_manager_ready],
+                )
+            )
+        )
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=controller_manager_ready,
+                    on_exit=[joint_state_broadcaster_spawner],
                 )
             )
         )
@@ -146,12 +172,7 @@ def launch_setup(context, *args, **kwargs):
                 RegisterEventHandler(
                     OnProcessExit(
                         target_action=joint_state_broadcaster_spawner,
-                        on_exit=[
-                            TimerAction(
-                                period=3.0,
-                                actions=body_spawners[1:] + arm_spawners,
-                            )
-                        ],
+                        on_exit=body_spawners[1:] + arm_spawners,
                     )
                 )
             )
