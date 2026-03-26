@@ -246,7 +246,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 'launch_cartesian_controller',
-                default_value='false',
+                default_value='true',
                 description=(
                     'Launch the local Cartesian arm controller instead of '
                     'following the Jetson trajectory bridge'
