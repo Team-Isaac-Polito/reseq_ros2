@@ -68,7 +68,7 @@ def launch_setup(context, *args, **kwargs):
                 'chain_tip': 'tool0',
                 'command_frame': 'arm_base_link',
                 'command_mode': 'trajectory',
-                'max_cartesian_vel': 0.3,
+                'max_cartesian_vel': 0.6,
                 'max_joint_vel': 1.0,
                 'deadzone': 0.0 if sim else 0.02,
                 'trajectory_horizon_sec': 0.5 if sim else 0.1,

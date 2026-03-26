@@ -43,7 +43,7 @@ def launch_setup(context, *args, **kwargs):
         },
     ).toxml()
 
-    if version == 'mk2':
+    if version == 'mk2' and sim_mode == 'false':
         robot_controllers = os.path.join(
             get_package_share_directory('reseq_ros2'),
             'config',

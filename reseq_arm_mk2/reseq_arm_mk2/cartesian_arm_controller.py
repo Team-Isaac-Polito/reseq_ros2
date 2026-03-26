@@ -107,7 +107,7 @@ class CartesianArmController(Node):
         self.declare_parameter('command_frame', 'arm_base_link')
         self.declare_parameter('trajectory_topic', '/mk2_arm_controller/joint_trajectory')
         self.declare_parameter('control_rate', 33.0)
-        self.declare_parameter('max_cartesian_vel', 0.3)
+        self.declare_parameter('max_cartesian_vel', 0.6)
         self.declare_parameter('max_joint_vel', 0.5)
         self.declare_parameter('home_duration_sec', 3.0)
         self.declare_parameter('trajectory_horizon_sec', 0.10)

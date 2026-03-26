@@ -104,7 +104,7 @@ def generate_launch_description():
             {'chain_tip': 'tool0'},
             {'command_mode': 'velocity'},
             {'command_frame': 'arm_base_link'},
-            {'max_cartesian_vel': 0.3},
+            {'max_cartesian_vel': 0.6},
             {'max_joint_vel': 1.0},
         ],
         output='screen',
