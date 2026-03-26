@@ -45,7 +45,7 @@ class CartesianArmController(Node):
     Subscribed Topics
     -----------------
     /mk2_arm_vel          geometry_msgs/Vector3   joystick input  [-1, 1]
-    /joint_states         sensor_msgs/JointState
+    /arm_joint_states     sensor_msgs/JointState
 
     Published Topics
     ----------------
@@ -66,6 +66,7 @@ class CartesianArmController(Node):
     chain_root             str    'arm_base_link'
     chain_tip              str    'tool0'
     command_frame          str    'arm_base_link'
+    state_topic            str    '/arm_joint_states'
     trajectory_topic       str    '/mk2_arm_controller/joint_trajectory'
     control_rate           float  33.0   Hz
     max_cartesian_vel      float  0.3    m/s  (joystick [-1,1] scaled by this)
@@ -105,6 +106,7 @@ class CartesianArmController(Node):
         self.declare_parameter('chain_root', 'arm_base_link')
         self.declare_parameter('chain_tip', 'tool0')
         self.declare_parameter('command_frame', 'arm_base_link')
+        self.declare_parameter('state_topic', '/arm_joint_states')
         self.declare_parameter('trajectory_topic', '/mk2_arm_controller/joint_trajectory')
         self.declare_parameter('control_rate', 33.0)
         self.declare_parameter('max_cartesian_vel', 0.6)
@@ -140,10 +142,11 @@ class CartesianArmController(Node):
             self.get_parameter('command_frame').get_parameter_value().string_value
         )
         self._command_mode = self.get_parameter('command_mode').get_parameter_value().string_value
+        state_topic = self.get_parameter('state_topic').get_parameter_value().string_value
 
         # ROS interfaces.
         self.create_subscription(Vector3, '/mk2_arm_vel', self._cb_vel, 10)
-        self.create_subscription(JointState, '/joint_states', self._cb_joint_state, 10)
+        self.create_subscription(JointState, state_topic, self._cb_joint_state, 10)
 
         traj_topic = self.get_parameter('trajectory_topic').get_parameter_value().string_value
         self._traj_pub = self.create_publisher(JointTrajectory, traj_topic, 10)

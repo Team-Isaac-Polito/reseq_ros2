@@ -229,6 +229,7 @@ def launch_setup(context, *args, **kwargs):
             parameters=[
                 {
                     'robot_description': robot_description,
+                    'state_topic': '/arm_joint_states',
                     'chain_tip': 'tool0',
                     'command_frame': 'arm_base_link',
                     'command_mode': 'trajectory',

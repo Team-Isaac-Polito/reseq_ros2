@@ -137,6 +137,7 @@ def launch_setup(context, *args, **kwargs):
             parameters=[
                 {'robot_description': robot_description},
                 {'use_sim_time': True},
+                {'state_topic': '/joint_states'},
                 {'chain_tip': 'tool0'},
                 {'command_mode': 'trajectory'},
                 {'command_frame': 'arm_base_link'},
