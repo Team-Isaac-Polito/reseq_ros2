@@ -194,6 +194,22 @@ def launch_setup(context, *args, **kwargs):
     launch_config.append(robot_state_publisher_node)
 
     if sim_mode == 'false' and arm:
+        arm_state_bridge_node = Node(
+            package='reseq_arm_mk2',
+            executable='arm_state_bridge',
+            name='arm_state_bridge',
+            parameters=[
+                {
+                    'source_topic': '/joint_states',
+                    'output_mode': 'joint_state',
+                    'output_topic': '/arm_joint_states',
+                }
+            ],
+            output='screen',
+        )
+        launch_config.append(arm_state_bridge_node)
+
+    if sim_mode == 'false' and arm:
         cartesian_arm_controller_node = Node(
             package='reseq_arm_mk2',
             executable='cartesian_arm_controller',

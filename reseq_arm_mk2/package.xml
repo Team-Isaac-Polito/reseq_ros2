@@ -24,6 +24,7 @@ for the RESE.Q MK2 Manipulator</p>
   <depend>python3-pykdl</depend>
 
   <!-- trajectory publishing -->
+  <depend>sensor_msgs</depend>
   <depend>trajectory_msgs</depend>
   <depend>std_srvs</depend>
   <export>

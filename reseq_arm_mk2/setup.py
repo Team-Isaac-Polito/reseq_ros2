@@ -30,6 +30,7 @@ setup(
     entry_points={
         'console_scripts': [
             'cartesian_arm_controller = reseq_arm_mk2.cartesian_arm_controller:main',
+            'arm_state_bridge = reseq_arm_mk2.arm_state_bridge:main',
             'coordinate_controller = reseq_arm_mk2.coordinate_controller:main',
             'moveit_controller = reseq_arm_mk2.moveit_controller:main',
         ],
