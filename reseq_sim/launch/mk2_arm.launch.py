@@ -144,6 +144,22 @@ def launch_setup(context, *args, **kwargs):
             output='screen',
         )
         launch_entities.append(cartesian_arm_controller_node)
+    else:
+        arm_state_bridge_node = Node(
+            package='reseq_arm_mk2',
+            executable='arm_state_bridge',
+            name='arm_state_bridge',
+            parameters=[
+                {
+                    'source_topic': '/arm_joint_states',
+                    'output_mode': 'trajectory',
+                    'trajectory_topic': '/mk2_arm_controller/joint_trajectory',
+                    'trajectory_duration_sec': 0.1,
+                }
+            ],
+            output='screen',
+        )
+        launch_entities.append(arm_state_bridge_node)
 
     arm_controller_spawner = Node(
         package='controller_manager',
