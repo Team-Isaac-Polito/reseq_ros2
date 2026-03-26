@@ -92,11 +92,13 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'use_sim_time',
                 default_value='false',
-                description="set use_sim_time to 'true' if you are using gazebo.\
-                                    In general this parameter is not set from this launch\
-                                    but instead is passed by other launch files that use this launch file.\
-                                    Setting this arg to 'true', it will set the use_sim_time parameter of all nodes launched in this file \
-                                    to True.",
+                description=(
+                    "set use_sim_time to 'true' if you are using gazebo. "
+                    'In general this parameter is not set from this launch '
+                    'but instead is passed by other launch files that use this launch file. '
+                    "Setting this arg to 'true', it will set the use_sim_time parameter "
+                    'of all nodes launched in this file to True.'
+                ),
             ),
             OpaqueFunction(function=launch_setup),
         ]

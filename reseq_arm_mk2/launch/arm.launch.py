@@ -18,6 +18,7 @@ def launch_setup(context, *args, **kwargs):
     arm_share = get_package_share_directory('reseq_arm_mk2')
 
     config_file = 'reseq_mk2_vcan.yaml' if sim else 'reseq_mk2_can.yaml'
+    robot_config_file = os.path.join(description_share, 'config', 'mk2', config_file)
     generate_configs = subprocess.run(
         [
             'python3',
@@ -47,6 +48,7 @@ def launch_setup(context, *args, **kwargs):
         mappings={
             'sim_mode': 'true' if sim else 'false',
             'version': 'mk2',
+            'config_path': robot_config_file,
             'controllers_config_file': controllers_config_file,
         },
     ).toxml()

@@ -12,6 +12,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     package_name = 'reseq_sim'
     description_share = get_package_share_directory('reseq_description')
+    robot_config_file = os.path.join(description_share, 'config', 'mk2', 'reseq_mk2_vcan.yaml')
 
     generate_configs = ExecuteProcess(
         cmd=[
@@ -44,6 +45,7 @@ def generate_launch_description():
         mappings={
             'sim_mode': 'true',
             'version': 'mk2',
+            'config_path': robot_config_file,
             'controllers_config_file': controllers_config_file,
         },
     ).toxml()
