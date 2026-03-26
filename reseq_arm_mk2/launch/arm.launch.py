@@ -78,8 +78,8 @@ def launch_setup(context, *args, **kwargs):
                 'command_mode': 'trajectory',
                 'max_cartesian_vel': 0.6,
                 'max_joint_vel': 1.0,
-                'deadzone': 0.0 if sim else 0.02,
-                'trajectory_horizon_sec': 0.5 if sim else 0.1,
+                'deadzone': 0.0,
+                'trajectory_horizon_sec': 0.5,
             }
         ],
         output='screen',
