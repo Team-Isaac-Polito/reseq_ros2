@@ -131,6 +131,19 @@ def launch_setup(context, *args, **kwargs):
                 }.items(),
             )
         )
+    elif arm_arg == 'true' and sim_mode == 'false':
+        arm_launch_file = os.path.join(
+            get_package_share_directory('reseq_arm_mk2'), 'launch', 'arm.launch.py'
+        )
+        launch_config.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(arm_launch_file),
+                launch_arguments={
+                    'sim': 'false',
+                    'use_moveit': 'true',
+                }.items(),
+            )
+        )
 
     return launch_config
 
