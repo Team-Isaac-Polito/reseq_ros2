@@ -499,9 +499,10 @@ class CartesianArmController(Node):
                 dq[i] = min(0.0, (self._q_lo[i] - solve_q[i]) / self._dt)
                 joints_clipped.append(f'J{i}↓')
 
-        # Advance the target by the trajectory horizon so the published
-        # waypoint matches the intended servo speed.
-        self._q_cmd = np.clip(solve_q + dq * horizon, self._q_lo, self._q_hi)
+        # Accumulate the target so repeated preemptions still produce
+        # continuous motion, while the IK itself is linearized at the
+        # measured pose.
+        self._q_cmd = np.clip(self._q_cmd + dq * horizon, self._q_lo, self._q_hi)
 
         # Print diagnostics at 1 Hz.
         self._diag_ctr += 1
