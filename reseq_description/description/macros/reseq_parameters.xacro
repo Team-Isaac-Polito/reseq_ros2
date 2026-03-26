@@ -18,6 +18,7 @@
   
   <!-- chassis related -->
   <xacro:property name="NumModules" value="${config['num_modules']}"/>
+  <xacro:property name="CanInterface" value="${config['canbus']['channel']}"/>
   <xacro:property name="WheelBase" value="${config['xacro']['WheelBase']}"/>
   <xacro:property name="EquivalentWheelDiameter" value="${r_eq*2}"/>
   <xacro:property name="ModuleWidth" value="${config['xacro']['ModuleWidth']}"/>

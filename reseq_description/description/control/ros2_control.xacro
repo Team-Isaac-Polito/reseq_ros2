@@ -10,7 +10,7 @@
             </xacro:unless>
 
             <param name="num_modules">${NumModules}</param>
-            <!-- TODO: vcan, and gazebo alternatives -->
+            <param name="can_interface">${CanInterface}</param>
         </hardware>
 
         <xacro:include filename="$(find reseq_description)/description/control/body_joints.xacro"/>
