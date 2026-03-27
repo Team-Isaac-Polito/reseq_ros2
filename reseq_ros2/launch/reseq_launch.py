@@ -109,7 +109,23 @@ def launch_setup(context, *args, **kwargs):
                 )
             )
 
-    if digital_twin_enabled == 'true':
+    if sim_mode == 'true':
+        sim_launch_file = os.path.join(
+            get_package_share_directory('reseq_sim'), 'launch', 'mk2_arm.launch.py'
+        )
+        launch_config.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(sim_launch_file),
+                launch_arguments={
+                    'sim': 'true',
+                    'use_moveit': 'false',
+                    'launch_rsp': 'true',
+                    'launch_joint_state_broadcaster': 'true',
+                    'launch_cartesian_controller': 'true',
+                }.items(),
+            )
+        )
+    elif digital_twin_enabled == 'true':
         # Digital twin launch file
         digital_twin_launch_file = os.path.join(
             get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py'
@@ -137,7 +153,7 @@ def launch_setup(context, *args, **kwargs):
                 PythonLaunchDescriptionSource(arm_launch_file),
                 launch_arguments={
                     'sim': 'false',
-                    'use_moveit': 'true',
+                    'use_moveit': 'false',
                 }.items(),
             )
         )

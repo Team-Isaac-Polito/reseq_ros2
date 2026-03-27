@@ -75,7 +75,7 @@ def launch_setup(context, *args, **kwargs):
                 'state_topic': '/arm_joint_states',
                 'chain_tip': 'tcp',
                 'command_frame': 'arm_base_link',
-                'command_mode': 'trajectory',
+                'command_mode': 'velocity',
                 'max_cartesian_vel': 0.6,
                 'max_joint_vel': 1.0,
                 'deadzone': 0.0,
@@ -128,11 +128,11 @@ def launch_setup(context, *args, **kwargs):
             output='screen',
         )
 
-        arm_controller_spawner = Node(
+        joint_group_velocity_controller_spawner = Node(
             package='controller_manager',
             executable='spawner',
             arguments=[
-                'mk2_arm_controller',
+                'joint_group_velocity_controller',
                 '--controller-manager',
                 '/controller_manager',
                 '--controller-manager-timeout',
@@ -160,7 +160,7 @@ def launch_setup(context, *args, **kwargs):
                 RegisterEventHandler(
                     OnProcessExit(
                         target_action=joint_state_broadcaster_spawner,
-                        on_exit=[arm_controller_spawner],
+                        on_exit=[joint_group_velocity_controller_spawner],
                     )
                 ),
             ]
@@ -190,7 +190,7 @@ def generate_launch_description():
     )
     use_moveit_arg = DeclareLaunchArgument(
         'use_moveit',
-        default_value='true',
+        default_value='false',
         description='Launch MoveIt (for IK / RViz visualisation)',
     )
     log_level_arg = DeclareLaunchArgument(

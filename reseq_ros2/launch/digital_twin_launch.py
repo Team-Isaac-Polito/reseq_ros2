@@ -146,11 +146,11 @@ def launch_setup(context, *args, **kwargs):
         body_spawners.append(module_controller)
 
     if arm:
-        mk2_arm_controller = Node(
+        joint_group_velocity_controller = Node(
             package='controller_manager',
             executable='spawner',
             arguments=[
-                'mk2_arm_controller',
+                'joint_group_velocity_controller',
                 '--controller-manager',
                 '/controller_manager',
                 '--controller-manager-timeout',
@@ -159,8 +159,7 @@ def launch_setup(context, *args, **kwargs):
                 '60',
             ],
         )
-
-        arm_spawners.append(mk2_arm_controller)
+        arm_spawners.append(joint_group_velocity_controller)
 
     if sim_mode == 'false':
         launch_config.append(
@@ -232,7 +231,7 @@ def launch_setup(context, *args, **kwargs):
                     'state_topic': '/arm_joint_states',
                     'chain_tip': 'tcp',
                     'command_frame': 'arm_base_link',
-                    'command_mode': 'trajectory',
+                    'command_mode': 'velocity',
                     'max_cartesian_vel': 0.6,
                     'max_joint_vel': 1.0,
                     'deadzone': 0.0,

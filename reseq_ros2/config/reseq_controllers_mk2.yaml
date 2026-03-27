@@ -16,6 +16,9 @@ controller_manager:
     mk2_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
+    joint_group_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+
 diff_controller1:
   ros__parameters:
     left_wheel_names:
@@ -90,3 +93,13 @@ mk2_arm_controller:
     default_tolerances:
       goals: 0.1
       goal_state: 0.1
+
+joint_group_velocity_controller:
+  ros__parameters:
+    joints:
+      - mod1__base_pitch_arm_joint
+      - mod1__base_roll_arm_joint
+      - mod1__elbow_pitch_arm_joint
+      - mod1__forearm_roll_arm_joint
+      - mod1__wrist_pitch_arm_joint
+      - mod1__wrist_roll_arm_joint

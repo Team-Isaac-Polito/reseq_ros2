@@ -268,7 +268,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 'use_moveit',
-                default_value='true',
+                default_value='false',
                 description='Launch MoveIt (for IK / RViz visualisation)',
             ),
             DeclareLaunchArgument(

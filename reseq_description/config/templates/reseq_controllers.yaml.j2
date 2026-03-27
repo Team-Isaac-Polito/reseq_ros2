@@ -17,10 +17,8 @@ controller_manager:
     mk2_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-{% if use_sim_time %}
     joint_group_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
-{% endif %}
 {% endif %}
 
 {% if body_controllers %}
@@ -68,7 +66,6 @@ mk2_arm_controller:
       goals: 0.1
       goal_state: 0.1
 
-{% if use_sim_time %}
 joint_group_velocity_controller:
   ros__parameters:
     joints:
@@ -78,5 +75,4 @@ joint_group_velocity_controller:
       - mod1__forearm_roll_arm_joint
       - mod1__wrist_pitch_arm_joint
       - mod1__wrist_roll_arm_joint
-{% endif %}
 {% endif %}
