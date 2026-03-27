@@ -118,6 +118,8 @@ class CartesianArmController(Node):
         self.declare_parameter('deadzone', 0.02)
         self.declare_parameter('jacobian_damping', 0.05)
         self.declare_parameter('joint_weights', self.JOINT_WEIGHTS.tolist())
+        self.declare_parameter('limit_margin', 0.35)
+        self.declare_parameter('limit_avoidance_gain', 0.35)
 
         # Internal state.
         self._q: np.ndarray | None = None  # measured joint positions
@@ -507,33 +509,38 @@ class CartesianArmController(Node):
             vel_scale = max_jv / peak
             dq[:active_dofs] *= vel_scale
 
-        # Keep the motion direction intact when a joint approaches a limit.
-        # Scaling the whole command is less distortion-prone than clipping
-        # joints one-by-one, which can bend a Cartesian move into a lift.
+        # Pull gently away from hard joint limits so the arm can recover
+        # instead of getting stuck with one saturated joint dominating the solve.
+        limit_margin = self.get_parameter('limit_margin').get_parameter_value().double_value
+        limit_avoidance_gain = (
+            self.get_parameter('limit_avoidance_gain').get_parameter_value().double_value
+        )
+        limit_bias = np.zeros(self.N_JOINTS)
+        for i in range(active_dofs):
+            dist_lo = max(0.0, solve_q[i] - self._q_lo[i])
+            dist_hi = max(0.0, self._q_hi[i] - solve_q[i])
+            if dist_lo < limit_margin:
+                limit_bias[i] += limit_avoidance_gain * (1.0 - dist_lo / limit_margin)
+            if dist_hi < limit_margin:
+                limit_bias[i] -= limit_avoidance_gain * (1.0 - dist_hi / limit_margin)
+        dq[:active_dofs] += limit_bias[:active_dofs]
+
+        # Clamp only the joints that would violate their bounds. This keeps the
+        # remaining joints free to continue moving instead of freezing the whole arm.
         joints_clipped: list[str] = []
-        limit_scale = 1.0
         for i in range(active_dofs):
             if dq[i] > 0.0:
-                remaining = self._q_hi[i] - solve_q[i]
-                if remaining <= 0.0:
-                    limit_scale = 0.0
+                remaining = max(0.0, self._q_hi[i] - solve_q[i])
+                max_step = remaining / self._dt
+                if dq[i] > max_step:
+                    dq[i] = max_step
                     joints_clipped.append(f'J{i}↑')
-                else:
-                    limit_scale = min(limit_scale, remaining / (dq[i] * self._dt))
-                    if remaining / (dq[i] * self._dt) < 1.0:
-                        joints_clipped.append(f'J{i}↑')
             elif dq[i] < 0.0:
-                remaining = solve_q[i] - self._q_lo[i]
-                if remaining <= 0.0:
-                    limit_scale = 0.0
+                remaining = max(0.0, solve_q[i] - self._q_lo[i])
+                min_step = -remaining / self._dt
+                if dq[i] < min_step:
+                    dq[i] = min_step
                     joints_clipped.append(f'J{i}↓')
-                else:
-                    limit_scale = min(limit_scale, remaining / (-dq[i] * self._dt))
-                    if remaining / (-dq[i] * self._dt) < 1.0:
-                        joints_clipped.append(f'J{i}↓')
-
-        if limit_scale < 1.0:
-            dq[:active_dofs] *= max(0.0, limit_scale)
 
         # Accumulate the target so repeated preemptions still produce
         # continuous motion, while the IK itself is linearized at the
