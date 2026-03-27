@@ -77,7 +77,6 @@ class CartesianArmController(Node):
     deadzone               float  0.02
     jacobian_damping       float  0.05   damped-LS regularisation λ
     joint_weights          float[]  joint weighting for the IK solve
-    posture_gain           float  0.00   command-scaled nullspace bias toward HOME_POSITION
     """
 
     # Joint order used everywhere in this controller.
@@ -94,7 +93,7 @@ class CartesianArmController(Node):
 
     # Home is kept comfortably away from the joint limits.
     HOME_POSITION = [0.8, 0.0, 0.8, 0.0, 0.0, 0.0]
-    JOINT_WEIGHTS = np.array([3.0, 2.5, 1.4, 1.0, 0.7, 0.7], dtype=float)
+    JOINT_WEIGHTS = np.ones(6, dtype=float)
 
     # Defaults – _parse_urdf_limits() replaces these from the actual URDF.
     _LOWER_DEFAULT = np.array([-0.10, -3.14, -0.10, -3.14, -0.46, -3.14])
@@ -119,7 +118,6 @@ class CartesianArmController(Node):
         self.declare_parameter('deadzone', 0.02)
         self.declare_parameter('jacobian_damping', 0.05)
         self.declare_parameter('joint_weights', self.JOINT_WEIGHTS.tolist())
-        self.declare_parameter('posture_gain', 0.0)
 
         # Internal state.
         self._q: np.ndarray | None = None  # measured joint positions
@@ -128,6 +126,7 @@ class CartesianArmController(Node):
         self._linear_mode = True
         self._velocity_mode = True
         self._moving = False
+        self._ee_z_ref: float | None = None
         self._diag_ctr = 0
 
         joint_weights_param = self.get_parameter('joint_weights').value
@@ -137,8 +136,6 @@ class CartesianArmController(Node):
             self._joint_weights = np.array(joint_weights_param, dtype=float)
         else:
             self._joint_weights = self.JOINT_WEIGHTS.copy()
-
-        self._posture_gain = self.get_parameter('posture_gain').get_parameter_value().double_value
 
         # Joint limits, replaced later with values from the URDF.
         self._q_lo = self._LOWER_DEFAULT.copy()
@@ -449,12 +446,15 @@ class CartesianArmController(Node):
                 # Keep the current target when the stick returns to center.
                 self._publish_traj(self._q.tolist(), self._q_cmd.tolist(), 0.1)
                 self._moving = False
+            self._ee_z_ref = None
             return
 
         # Solve from the live measured pose so the Jacobian tracks the actual arm.
         if not self._moving:
             self._moving = True
         solve_q = self._q
+        if self._ee_z_ref is None:
+            self._ee_z_ref = float(self._get_ee_pos(solve_q)[2])
 
         if not self._linear_mode:
             # Orientation mode is not implemented yet.
@@ -470,6 +470,13 @@ class CartesianArmController(Node):
         # Interpret the input in the configured command frame, then solve in base coordinates.
         cart_vel_cmd = self._cmd_vel * max_cv
         cart_vel = self._command_velocity_in_base(solve_q, cart_vel_cmd)
+
+        # Hold the current height unless the user is explicitly commanding Z.
+        # This keeps lateral motion from slowly climbing as the arm changes posture.
+        if self._ee_z_ref is not None and abs(cart_vel_cmd[2]) < deadzone:
+            z_error = self._ee_z_ref - float(self._get_ee_pos(solve_q)[2])
+            z_hold_vel = 2.0 * z_error
+            cart_vel[2] = float(np.clip(z_hold_vel, -max_cv, max_cv))
 
         # Use the command-side state so the linearization matches the update step.
         J = self._get_jacobian(solve_q)
@@ -487,21 +494,6 @@ class CartesianArmController(Node):
                 inv_joint_weights @ Jlin.T @ np.linalg.solve(JJt + lam**2 * np.eye(3), cart_vel)
             )
 
-            if self._posture_gain > 0.0:
-                cart_mag = float(np.linalg.norm(cart_vel))
-                if cart_mag > 0.0:
-                    posture_target = np.array(self.HOME_POSITION[:active_dofs], dtype=float)
-                    posture_error = posture_target - solve_q[:active_dofs]
-                    null_projector = np.eye(active_dofs) - (
-                        inv_joint_weights
-                        @ Jlin.T
-                        @ np.linalg.solve(JJt + lam**2 * np.eye(3), Jlin)
-                    )
-                    posture_scale = min(1.0, cart_mag / max(max_cv, 1e-6))
-                    dq_active += null_projector @ (
-                        posture_scale * self._posture_gain * posture_error
-                    )
-
             dq = np.zeros(self.N_JOINTS)
             dq[:active_dofs] = dq_active
         except np.linalg.LinAlgError:
@@ -515,18 +507,33 @@ class CartesianArmController(Node):
             vel_scale = max_jv / peak
             dq[:active_dofs] *= vel_scale
 
-        # Clamp each joint independently.
+        # Keep the motion direction intact when a joint approaches a limit.
+        # Scaling the whole command is less distortion-prone than clipping
+        # joints one-by-one, which can bend a Cartesian move into a lift.
         joints_clipped: list[str] = []
+        limit_scale = 1.0
         for i in range(active_dofs):
-            q_next = solve_q[i] + dq[i] * self._dt
-            if q_next > self._q_hi[i] and dq[i] > 0.0:
-                # Approaching upper limit: reduce to exactly reach the boundary
-                dq[i] = max(0.0, (self._q_hi[i] - solve_q[i]) / self._dt)
-                joints_clipped.append(f'J{i}↑')
-            elif q_next < self._q_lo[i] and dq[i] < 0.0:
-                # Approaching lower limit: reduce to exactly reach the boundary
-                dq[i] = min(0.0, (self._q_lo[i] - solve_q[i]) / self._dt)
-                joints_clipped.append(f'J{i}↓')
+            if dq[i] > 0.0:
+                remaining = self._q_hi[i] - solve_q[i]
+                if remaining <= 0.0:
+                    limit_scale = 0.0
+                    joints_clipped.append(f'J{i}↑')
+                else:
+                    limit_scale = min(limit_scale, remaining / (dq[i] * self._dt))
+                    if remaining / (dq[i] * self._dt) < 1.0:
+                        joints_clipped.append(f'J{i}↑')
+            elif dq[i] < 0.0:
+                remaining = solve_q[i] - self._q_lo[i]
+                if remaining <= 0.0:
+                    limit_scale = 0.0
+                    joints_clipped.append(f'J{i}↓')
+                else:
+                    limit_scale = min(limit_scale, remaining / (-dq[i] * self._dt))
+                    if remaining / (-dq[i] * self._dt) < 1.0:
+                        joints_clipped.append(f'J{i}↓')
+
+        if limit_scale < 1.0:
+            dq[:active_dofs] *= max(0.0, limit_scale)
 
         # Accumulate the target so repeated preemptions still produce
         # continuous motion, while the IK itself is linearized at the

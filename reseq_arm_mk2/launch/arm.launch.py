@@ -80,8 +80,6 @@ def launch_setup(context, *args, **kwargs):
                 'max_joint_vel': 1.0,
                 'deadzone': 0.0,
                 'trajectory_horizon_sec': 0.1,
-                'joint_weights': [4.0, 1.0, 4.0, 1.0, 3.0, 0.7],
-                'posture_gain': 0.05,
             }
         ],
         output='screen',

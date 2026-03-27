@@ -139,7 +139,7 @@ def launch_setup(context, *args, **kwargs):
                 {'use_sim_time': True},
                 {'state_topic': '/joint_states'},
                 {'chain_tip': 'tool0'},
-                {'command_mode': 'trajectory'},
+                {'command_mode': 'velocity'},
                 {'command_frame': 'arm_base_link'},
                 {'max_cartesian_vel': 0.6},
                 {'max_joint_vel': 1.0},
@@ -166,19 +166,35 @@ def launch_setup(context, *args, **kwargs):
         )
         launch_entities.append(arm_state_bridge_node)
 
-    arm_controller_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=[
-            'mk2_arm_controller',
-            '--controller-manager',
-            '/controller_manager',
-            '--controller-manager-timeout',
-            '60',
-            '--service-call-timeout',
-            '60',
-        ],
-    )
+    joint_group_velocity_controller_spawner = None
+    if launch_cartesian_controller:
+        joint_group_velocity_controller_spawner = Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=[
+                'joint_group_velocity_controller',
+                '--controller-manager',
+                '/controller_manager',
+                '--controller-manager-timeout',
+                '60',
+                '--service-call-timeout',
+                '60',
+            ],
+        )
+    else:
+        arm_controller_spawner = Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=[
+                'mk2_arm_controller',
+                '--controller-manager',
+                '/controller_manager',
+                '--controller-manager-timeout',
+                '60',
+                '--service-call-timeout',
+                '60',
+            ],
+        )
 
     launch_entities.append(controller_manager_ready)
 
@@ -191,19 +207,40 @@ def launch_setup(context, *args, **kwargs):
                 )
             )
         )
+        if joint_group_velocity_controller_spawner is not None:
+            launch_entities.append(
+                RegisterEventHandler(
+                    OnProcessExit(
+                        target_action=body_spawners[0],
+                        on_exit=[joint_group_velocity_controller_spawner],
+                    )
+                )
+            )
+    else:
+        if joint_group_velocity_controller_spawner is not None:
+            launch_entities.append(
+                RegisterEventHandler(
+                    OnProcessExit(
+                        target_action=controller_manager_ready,
+                        on_exit=[joint_group_velocity_controller_spawner],
+                    )
+                )
+            )
+        else:
+            launch_entities.append(
+                RegisterEventHandler(
+                    OnProcessExit(
+                        target_action=controller_manager_ready,
+                        on_exit=[arm_controller_spawner],
+                    )
+                )
+            )
+
+    if not launch_cartesian_controller and launch_joint_state_broadcaster:
         launch_entities.append(
             RegisterEventHandler(
                 OnProcessExit(
                     target_action=body_spawners[0],
-                    on_exit=[arm_controller_spawner],
-                )
-            )
-        )
-    else:
-        launch_entities.append(
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action=controller_manager_ready,
                     on_exit=[arm_controller_spawner],
                 )
             )
