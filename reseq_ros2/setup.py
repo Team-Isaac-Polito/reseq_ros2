@@ -35,6 +35,7 @@ setup(
             'pivot_controller = reseq_ros2.pivot_controller:main',
             'thermal_node = reseq_ros2.thermal_node:main',
             'app_gateway = reseq_ros2.app_gateway:main',
+            'thermal_pointcloud_fusion = reseq_ros2.thermal_pointcloud_fusion:main',
         ],
     },
 )
