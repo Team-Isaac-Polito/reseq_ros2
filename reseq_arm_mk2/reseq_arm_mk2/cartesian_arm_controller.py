@@ -4,8 +4,8 @@ Cartesian arm controller for the RESE.Q MK2 arm.
 
 It reads joint states, turns Cartesian velocity commands into joint motion
 with a damped Jacobian solve, and publishes the result to the arm
-controller. It also exposes a few small services for homing, beak control,
-and mode switching.
+controller. It also exposes a few small services for homing and mode
+switching.
 """
 
 import traceback
@@ -18,7 +18,7 @@ from rclpy.duration import Duration
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64MultiArray, Int32
+from std_msgs.msg import Float64MultiArray
 from std_srvs.srv import SetBool, Trigger
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
@@ -51,14 +51,12 @@ class CartesianArmController(Node):
     ----------------
     /mk2_arm_controller/joint_trajectory          trajectory_msgs/JointTrajectory
     /joint_group_velocity_controller/commands     std_msgs/Float64MultiArray
-    reseq/module33/mk2_arm/beak/setpoint          std_msgs/Int32
 
     Services
     --------
     /cartesian_arm_controller/go_home       std_srvs/Trigger
     /cartesian_arm_controller/switch_vel    std_srvs/SetBool  True=linear False=angular
     /cartesian_arm_controller/set_mode      std_srvs/SetBool  True=velocity False=pos-incr
-    /cartesian_arm_controller/close_beak    std_srvs/SetBool  True=close False=open
 
     Parameters
     ----------
@@ -172,12 +170,10 @@ class CartesianArmController(Node):
         self._vel_pub_legacy = self.create_publisher(
             Float64MultiArray, '/joint_group_velocity_controller/command', 10
         )
-        self._beak_pub = self.create_publisher(Int32, 'reseq/module33/mk2_arm/beak/setpoint', 10)
 
         self.create_service(Trigger, '/cartesian_arm_controller/go_home', self._srv_home)
         self.create_service(SetBool, '/cartesian_arm_controller/switch_vel', self._srv_switch_vel)
         self.create_service(SetBool, '/cartesian_arm_controller/set_mode', self._srv_set_mode)
-        self.create_service(SetBool, '/cartesian_arm_controller/close_beak', self._srv_beak)
 
         rate = self.get_parameter('control_rate').get_parameter_value().double_value
         self._dt = 1.0 / rate
@@ -709,13 +705,6 @@ class CartesianArmController(Node):
         self._command_mode = 'velocity' if req.data else 'trajectory'
         res.success = True
         res.message = 'Mode -> VELOCITY' if req.data else 'Mode -> POSITION INCREMENT'
-        self.get_logger().info(res.message)
-        return res
-
-    def _srv_beak(self, req: SetBool.Request, res: SetBool.Response) -> SetBool.Response:
-        self._beak_pub.publish(Int32(data=int(req.data)))
-        res.success = True
-        res.message = f'Beak -> {"CLOSE" if req.data else "OPEN"}'
         self.get_logger().info(res.message)
         return res
 
