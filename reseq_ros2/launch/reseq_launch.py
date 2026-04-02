@@ -36,6 +36,7 @@ def launch_setup(context, *args, **kwargs):
     # use simulation time: should only be used with gazebo that's why default value is 'false'
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
+    use_moveit = LaunchConfiguration('use_moveit').perform(context)
     arm_arg = LaunchConfiguration('arm').perform(context=context)
 
     # Core launch file
@@ -118,7 +119,7 @@ def launch_setup(context, *args, **kwargs):
                 PythonLaunchDescriptionSource(sim_launch_file),
                 launch_arguments={
                     'sim': 'true',
-                    'use_moveit': 'false',
+                    'use_moveit': use_moveit,
                     'launch_rsp': 'true',
                     'launch_joint_state_broadcaster': 'true',
                     'launch_cartesian_controller': 'true',
@@ -153,7 +154,7 @@ def launch_setup(context, *args, **kwargs):
                 PythonLaunchDescriptionSource(arm_launch_file),
                 launch_arguments={
                     'sim': 'false',
-                    'use_moveit': 'false',
+                    'use_moveit': use_moveit,
                 }.items(),
             )
         )
@@ -249,6 +250,7 @@ def generate_launch_description():
             # this argument is passed as 'true' by sim_launch.py file
             DeclareLaunchArgument('use_sim_time', default_value='false'),
             DeclareLaunchArgument('sim_mode', default_value='false'),
+            DeclareLaunchArgument('use_moveit', default_value='false'),
             DeclareLaunchArgument('no_body_controllers', default_value='false'),
             DeclareLaunchArgument('no_arm_controllers', default_value='false'),
             OpaqueFunction(function=generate_config_setup),

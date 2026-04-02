@@ -269,7 +269,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'use_moveit',
                 default_value='false',
-                description='Launch MoveIt (for IK / RViz visualisation)',
+                description='Launch MoveIt-related arm tools',
             ),
             DeclareLaunchArgument(
                 'launch_rsp',

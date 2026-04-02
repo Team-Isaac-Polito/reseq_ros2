@@ -191,7 +191,7 @@ def generate_launch_description():
     use_moveit_arg = DeclareLaunchArgument(
         'use_moveit',
         default_value='false',
-        description='Launch MoveIt (for IK / RViz visualisation)',
+        description='Launch MoveIt-related arm tools',
     )
     log_level_arg = DeclareLaunchArgument(
         'log_level',
