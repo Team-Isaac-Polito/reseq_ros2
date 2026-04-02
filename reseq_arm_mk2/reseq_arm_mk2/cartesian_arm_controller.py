@@ -91,8 +91,9 @@ class CartesianArmController(Node):
     ]
     N_JOINTS = len(JOINT_NAMES)
 
-    # Home is kept comfortably away from the joint limits.
+    # Fallback home pose used until the startup pose is captured from joint states.
     HOME_POSITION = [0.8, 0.0, 0.8, 0.0, 0.0, 0.0]
+    HOME_TOLERANCE = 0.03
     JOINT_WEIGHTS = np.ones(6, dtype=float)
 
     # Defaults – _parse_urdf_limits() replaces these from the actual URDF.
@@ -130,6 +131,8 @@ class CartesianArmController(Node):
         self._moving = False
         self._ee_z_ref: float | None = None
         self._diag_ctr = 0
+        self._home_active = False
+        self._home_position: np.ndarray | None = None
 
         joint_weights_param = self.get_parameter('joint_weights').value
         if isinstance(joint_weights_param, (list, tuple, np.ndarray)) and (
@@ -300,6 +303,11 @@ class CartesianArmController(Node):
         pos_map = dict(zip(msg.name, msg.position))
         try:
             self._q = np.array([pos_map[n] for n in self.JOINT_NAMES])
+            if self._home_position is None:
+                self._home_position = self._q.copy()
+                self.get_logger().info(
+                    f'Captured startup home pose: {np.round(self._home_position, 3).tolist()}'
+                )
         except KeyError:
             pass  # not all arm joints present yet
 
@@ -439,8 +447,17 @@ class CartesianArmController(Node):
             self._q_cmd = self._q.copy()
             self._moving = False
 
-        # Ignore tiny inputs.
         deadzone = self.get_parameter('deadzone').get_parameter_value().double_value
+        if self._home_active and float(np.linalg.norm(self._cmd_vel)) > deadzone:
+            self._home_active = False
+            self._moving = False
+            self.get_logger().info('Manual velocity command received; canceling home motion.')
+
+        if self._home_active:
+            self._run_home_velocity()
+            return
+
+        # Ignore tiny inputs.
         if float(np.linalg.norm(self._cmd_vel)) < deadzone:
             if self._command_mode == 'velocity':
                 self._publish_velocity([0.0] * self.N_JOINTS)
@@ -569,6 +586,44 @@ class CartesianArmController(Node):
         else:
             self._publish_traj(self._q.tolist(), self._q_cmd.tolist(), horizon)
 
+    def _run_home_velocity(self):
+        """Drive the arm toward HOME_POSITION when the node is in velocity mode."""
+        if self._q is None:
+            return
+
+        target = self._get_home_position()
+        self._q_cmd = target.copy()
+        error = target - self._q
+
+        if float(np.max(np.abs(error))) < self.HOME_TOLERANCE:
+            self._home_active = False
+            self._moving = False
+            self._ee_z_ref = None
+            self._publish_velocity([0.0] * self.N_JOINTS)
+            self.get_logger().info('Home reached.')
+            return
+
+        max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
+        dur = self.get_parameter('home_duration_sec').get_parameter_value().double_value
+        home_gain = 1.0 / max(dur, self._dt)
+        dq = error * home_gain
+        dq = np.clip(dq, -max_jv, max_jv)
+
+        for i in range(self.N_JOINTS):
+            if dq[i] > 0.0:
+                remaining = max(0.0, self._q_hi[i] - self._q[i])
+                dq[i] = min(dq[i], remaining / self._dt)
+            elif dq[i] < 0.0:
+                remaining = max(0.0, self._q[i] - self._q_lo[i])
+                dq[i] = max(dq[i], -remaining / self._dt)
+
+        self._publish_velocity(dq.tolist())
+
+    def _get_home_position(self) -> np.ndarray:
+        if self._home_position is not None:
+            return self._home_position.copy()
+        return np.array(self.HOME_POSITION, dtype=float)
+
     # Trajectory publisher.
 
     def _publish_traj(
@@ -613,18 +668,27 @@ class CartesianArmController(Node):
 
     def _srv_home(self, _req: Trigger.Request, res: Trigger.Response) -> Trigger.Response:
         dur = self.get_parameter('home_duration_sec').get_parameter_value().double_value
-        # Reset the integrator so the next move starts from home.
-        self._q_cmd = np.array(self.HOME_POSITION, dtype=float)
-        self._moving = False
+        if self._q is None:
+            res.success = False
+            res.message = 'No joint state yet; cannot home arm'
+            self.get_logger().warn(res.message)
+            return res
+
+        home_target = self._get_home_position()
+        self._q_cmd = home_target.copy()
+        self._moving = True
+        self._cmd_vel = np.zeros(3)
+        self._ee_z_ref = None
         if self._command_mode == 'velocity':
-            self._publish_velocity([0.0] * self.N_JOINTS)
+            self._home_active = True
             res.success = True
-            res.message = 'Velocity mode: command state reset and motion stopped'
+            res.message = f'Homing to {np.round(home_target, 3).tolist()} over {dur:.1f}s'
         else:
-            start_positions = self._q.tolist() if self._q is not None else self.HOME_POSITION
-            self._publish_traj(start_positions, self.HOME_POSITION, dur)
+            self._home_active = False
+            start_positions = self._q.tolist() if self._q is not None else home_target.tolist()
+            self._publish_traj(start_positions, home_target.tolist(), dur)
             res.success = True
-            res.message = f'Moving to home {self.HOME_POSITION} over {dur:.1f}s'
+            res.message = f'Moving to home {np.round(home_target, 3).tolist()} over {dur:.1f}s'
         self.get_logger().info(res.message)
         return res
 
