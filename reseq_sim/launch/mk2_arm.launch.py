@@ -1,28 +1,134 @@
 import os
+import subprocess
+import time
 
+import rclpy
 import xacro
 from ament_index_python.packages import get_package_share_directory
+from controller_manager import (
+    configure_controller,
+    list_controllers,
+    load_controller,
+    switch_controllers,
+)
+from controller_manager.controller_manager_services import ServiceNotFoundError
+from controller_manager_msgs.srv import SwitchController
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    ExecuteProcess,
     IncludeLaunchDescription,
     OpaqueFunction,
-    RegisterEventHandler,
+    TimerAction,
 )
-from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+
+
+def _wait_for_controllers(node, timeout_sec: float = 60.0):
+    deadline = time.monotonic() + timeout_sec
+    while time.monotonic() < deadline:
+        try:
+            return list_controllers(
+                node,
+                '/controller_manager',
+                service_timeout=1.0,
+                call_timeout=10.0,
+            ).controller
+        except ServiceNotFoundError:
+            time.sleep(1.0)
+
+    raise RuntimeError('Timed out waiting for /controller_manager/list_controllers')
+
+
+def _ensure_controller_active(node, controller_name: str):
+    controllers = _wait_for_controllers(node)
+    controller = next((c for c in controllers if c.name == controller_name), None)
+
+    if controller is None:
+        ret = load_controller(
+            node,
+            '/controller_manager',
+            controller_name,
+            service_timeout=10.0,
+            call_timeout=10.0,
+        )
+        if not ret.ok:
+            raise RuntimeError(f'Failed to load controller {controller_name}')
+        controller_state = 'unconfigured'
+    else:
+        controller_state = controller.state
+
+    if controller_state == 'active':
+        node.get_logger().info(f'Controller {controller_name} already active.')
+        return
+
+    if controller_state == 'unconfigured':
+        ret = configure_controller(
+            node,
+            '/controller_manager',
+            controller_name,
+            service_timeout=10.0,
+            call_timeout=10.0,
+        )
+        if not ret.ok:
+            raise RuntimeError(f'Failed to configure controller {controller_name}')
+        controller_state = 'inactive'
+
+    if controller_state == 'inactive':
+        ret = switch_controllers(
+            node,
+            '/controller_manager',
+            [],
+            [controller_name],
+            SwitchController.Request.STRICT,
+            True,
+            10.0,
+            10.0,
+        )
+        if not ret.ok:
+            raise RuntimeError(f'Failed to activate controller {controller_name}')
+
+    node.get_logger().info(f'Controller {controller_name} active.')
+
+
+def ensure_sim_controllers(context, *args, **kwargs):
+    launch_joint_state_broadcaster = (
+        LaunchConfiguration('launch_joint_state_broadcaster').perform(context).lower() == 'true'
+    )
+    launch_cartesian_controller = (
+        LaunchConfiguration('launch_cartesian_controller').perform(context).lower() == 'true'
+    )
+
+    controller_names = []
+    if launch_joint_state_broadcaster:
+        controller_names.append('joint_state_broadcaster')
+    if launch_cartesian_controller:
+        controller_names.append('joint_group_velocity_controller')
+    else:
+        controller_names.append('mk2_arm_controller')
+
+    shutdown_rclpy = False
+    if not rclpy.ok():
+        rclpy.init(args=None)
+        shutdown_rclpy = True
+
+    node = rclpy.create_node('mk2_arm_controller_setup')
+    try:
+        for controller_name in controller_names:
+            _ensure_controller_active(node, controller_name)
+    finally:
+        node.destroy_node()
+        if shutdown_rclpy and rclpy.ok():
+            rclpy.shutdown()
+
+    return []
 
 
 def launch_setup(context, *args, **kwargs):
     sim = LaunchConfiguration('sim').perform(context).lower() == 'true'
     use_moveit = LaunchConfiguration('use_moveit').perform(context).lower() == 'true'
     launch_rsp = LaunchConfiguration('launch_rsp').perform(context).lower() == 'true'
-    launch_joint_state_broadcaster = (
-        LaunchConfiguration('launch_joint_state_broadcaster').perform(context).lower() == 'true'
-    )
     launch_cartesian_controller = (
         LaunchConfiguration('launch_cartesian_controller').perform(context).lower() == 'true'
     )
@@ -31,8 +137,8 @@ def launch_setup(context, *args, **kwargs):
     description_share = get_package_share_directory('reseq_description')
     robot_config_file = os.path.join(description_share, 'config', 'mk2', 'reseq_mk2_vcan.yaml')
 
-    generate_configs = ExecuteProcess(
-        cmd=[
+    generate_configs = subprocess.run(
+        [
             'python3',
             os.path.join(description_share, 'scripts/generate_configs.py'),
             'reseq_mk2_vcan.yaml',
@@ -41,14 +147,20 @@ def launch_setup(context, *args, **kwargs):
             '--no_body_controllers',
         ]
         + (['--use_sim_time'] if sim else []),
-        name='generate_configs',
-        output='screen',
+        check=True,
+        capture_output=True,
+        text=True,
     )
+
+    if generate_configs.stdout:
+        print(generate_configs.stdout)
+    if generate_configs.stderr:
+        print(generate_configs.stderr)
 
     xacro_file = get_package_share_directory('reseq_arm_mk2') + '/urdf/arm.urdf.xacro'
 
     controllers_config_file = os.path.join(
-        get_package_share_directory('reseq_description'),
+        description_share,
         'config',
         'temp',
         'reseq_controllers.yaml',
@@ -68,181 +180,77 @@ def launch_setup(context, *args, **kwargs):
     launch_entities = []
 
     if launch_rsp:
-        rsp = Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            output='screen',
-            parameters=[
-                {
-                    'robot_description': robot_description,
-                    'use_sim_time': True,
-                }
-            ],
+        launch_entities.append(
+            Node(
+                package='robot_state_publisher',
+                executable='robot_state_publisher',
+                output='screen',
+                parameters=[
+                    {
+                        'robot_description': robot_description,
+                        'use_sim_time': True,
+                    }
+                ],
+            )
         )
-        launch_entities.append(rsp)
 
-    gazebo_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                os.path.join(
-                    get_package_share_directory(package_name=package_name),
-                    'launch',
-                    'gazebo_launch.py',
-                )
-            ]
+    launch_entities.append(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                [
+                    os.path.join(
+                        get_package_share_directory(package_name=package_name),
+                        'launch',
+                        'gazebo_launch.py',
+                    )
+                ]
+            )
         )
     )
 
-    launch_entities.append(gazebo_launch)
-
-    controller_manager_ready = ExecuteProcess(
-        cmd=[
-            'bash',
-            '-lc',
-            (
-                'until ros2 service list --include-hidden-services '
-                '| grep -Fxq /controller_manager/list_controllers; '
-                'do sleep 1; done'
-            ),
-        ],
-        output='screen',
+    launch_entities.append(
+        TimerAction(
+            period=5.0,
+            actions=[OpaqueFunction(function=ensure_sim_controllers)],
+        )
     )
 
-    body_spawners = []
-    if launch_joint_state_broadcaster:
-        joint_state_broadcaster_spawner = Node(
-            package='controller_manager',
-            executable='spawner',
-            arguments=[
-                'joint_state_broadcaster',
-                '--controller-manager',
-                '/controller_manager',
-                '--controller-manager-timeout',
-                '60',
-                '--service-call-timeout',
-                '60',
-            ],
-        )
-        body_spawners.append(joint_state_broadcaster_spawner)
-    else:
-        joint_state_broadcaster_spawner = None
-
     if launch_cartesian_controller:
-        # Launch the same Cartesian controller path as the real arm so Gazebo
-        # follows the same joint-trajectory commands.
-        cartesian_arm_controller_node = Node(
-            package='reseq_arm_mk2',
-            executable='cartesian_arm_controller',
-            name='cartesian_arm_controller',
-            parameters=[
-                {'robot_description': robot_description},
-                {'use_sim_time': True},
-                {'state_topic': '/joint_states'},
-                {'chain_tip': 'tool0'},
-                {'command_mode': 'velocity'},
-                {'command_frame': 'arm_base_link'},
-                {'max_cartesian_vel': 0.6},
-                {'max_joint_vel': 1.0},
-                {'deadzone': 0.02},
-                {'trajectory_horizon_sec': 0.1},
-            ],
-            output='screen',
-        )
-        launch_entities.append(cartesian_arm_controller_node)
-    else:
-        arm_state_bridge_node = Node(
-            package='reseq_arm_mk2',
-            executable='arm_state_bridge',
-            name='arm_state_bridge',
-            parameters=[
-                {
-                    'source_topic': '/arm_joint_states',
-                    'output_mode': 'trajectory',
-                    'trajectory_topic': '/mk2_arm_controller/joint_trajectory',
-                    'trajectory_duration_sec': 0.1,
-                }
-            ],
-            output='screen',
-        )
-        launch_entities.append(arm_state_bridge_node)
-
-    joint_group_velocity_controller_spawner = None
-    if launch_cartesian_controller:
-        joint_group_velocity_controller_spawner = Node(
-            package='controller_manager',
-            executable='spawner',
-            arguments=[
-                'joint_group_velocity_controller',
-                '--controller-manager',
-                '/controller_manager',
-                '--controller-manager-timeout',
-                '60',
-                '--service-call-timeout',
-                '60',
-            ],
-        )
-    else:
-        arm_controller_spawner = Node(
-            package='controller_manager',
-            executable='spawner',
-            arguments=[
-                'mk2_arm_controller',
-                '--controller-manager',
-                '/controller_manager',
-                '--controller-manager-timeout',
-                '60',
-                '--service-call-timeout',
-                '60',
-            ],
-        )
-
-    launch_entities.append(controller_manager_ready)
-
-    if launch_joint_state_broadcaster:
         launch_entities.append(
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action=controller_manager_ready,
-                    on_exit=[body_spawners[0]],
-                )
+            Node(
+                package='reseq_arm_mk2',
+                executable='cartesian_arm_controller',
+                name='cartesian_arm_controller',
+                parameters=[
+                    {'robot_description': robot_description},
+                    {'use_sim_time': True},
+                    {'state_topic': '/joint_states'},
+                    {'chain_tip': 'tool0'},
+                    {'command_mode': 'velocity'},
+                    {'command_frame': 'arm_base_link'},
+                    {'max_cartesian_vel': 0.6},
+                    {'max_joint_vel': 1.0},
+                    {'deadzone': 0.02},
+                    {'trajectory_horizon_sec': 0.1},
+                ],
+                output='screen',
             )
         )
-        if joint_group_velocity_controller_spawner is not None:
-            launch_entities.append(
-                RegisterEventHandler(
-                    OnProcessExit(
-                        target_action=body_spawners[0],
-                        on_exit=[joint_group_velocity_controller_spawner],
-                    )
-                )
-            )
     else:
-        if joint_group_velocity_controller_spawner is not None:
-            launch_entities.append(
-                RegisterEventHandler(
-                    OnProcessExit(
-                        target_action=controller_manager_ready,
-                        on_exit=[joint_group_velocity_controller_spawner],
-                    )
-                )
-            )
-        else:
-            launch_entities.append(
-                RegisterEventHandler(
-                    OnProcessExit(
-                        target_action=controller_manager_ready,
-                        on_exit=[arm_controller_spawner],
-                    )
-                )
-            )
-
-    if not launch_cartesian_controller and launch_joint_state_broadcaster:
         launch_entities.append(
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action=body_spawners[0],
-                    on_exit=[arm_controller_spawner],
-                )
+            Node(
+                package='reseq_arm_mk2',
+                executable='arm_state_bridge',
+                name='arm_state_bridge',
+                parameters=[
+                    {
+                        'source_topic': '/arm_joint_states',
+                        'output_mode': 'trajectory',
+                        'trajectory_topic': '/mk2_arm_controller/joint_trajectory',
+                        'trajectory_duration_sec': 0.1,
+                    }
+                ],
+                output='screen',
             )
         )
 
@@ -257,14 +265,16 @@ def launch_setup(context, *args, **kwargs):
             )
         )
 
-    return [generate_configs, *launch_entities]
+    return launch_entities
 
 
 def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument(
-                'sim', default_value='true', description='Use the Gazebo simulation controllers'
+                'sim',
+                default_value='true',
+                description='Use the Gazebo simulation controllers',
             ),
             DeclareLaunchArgument(
                 'use_moveit',

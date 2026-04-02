@@ -169,6 +169,9 @@ class CartesianArmController(Node):
         self._vel_pub = self.create_publisher(
             Float64MultiArray, '/joint_group_velocity_controller/commands', 10
         )
+        self._vel_pub_legacy = self.create_publisher(
+            Float64MultiArray, '/joint_group_velocity_controller/command', 10
+        )
         self._beak_pub = self.create_publisher(Int32, 'reseq/module33/mk2_arm/beak/setpoint', 10)
 
         self.create_service(Trigger, '/cartesian_arm_controller/go_home', self._srv_home)
@@ -574,7 +577,9 @@ class CartesianArmController(Node):
                 f'dq={np.round(dq, 3)} '
                 f'cart_out={np.round(achieved_cart, 3)} '
                 f'vel_scale={vel_scale:.2f} '
-                f'clipped={joints_clipped}\n'
+                f'clipped={joints_clipped} '
+                f'vel_subs={self._vel_pub.get_subscription_count()} '
+                f'vel_legacy_subs={self._vel_pub_legacy.get_subscription_count()}\n'
                 f'  q_cmd={np.round(self._q_cmd, 3)}\n'
                 f'  q_meas={np.round(self._q, 3)}\n'
                 f'  EE={np.round(ee, 4)} m'
@@ -663,6 +668,7 @@ class CartesianArmController(Node):
         msg = Float64MultiArray()
         msg.data = [float(v) for v in velocities]
         self._vel_pub.publish(msg)
+        self._vel_pub_legacy.publish(msg)
 
     # Services.
 

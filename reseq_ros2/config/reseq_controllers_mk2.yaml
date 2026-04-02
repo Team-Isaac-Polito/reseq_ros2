@@ -96,6 +96,7 @@ mk2_arm_controller:
 
 joint_group_velocity_controller:
   ros__parameters:
+    interface_name: velocity
     joints:
       - mod1__base_pitch_arm_joint
       - mod1__base_roll_arm_joint
