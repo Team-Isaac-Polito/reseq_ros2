@@ -72,7 +72,7 @@ class MoveitController(Node):
 
         self.beak_pub = self.create_publisher(  # TODO: Fix with HW interface
             Int32,
-            'reseq/module33/mk2_arm/beak/setpoint',
+            'reseq/module1/mk2_arm/beak/setpoint',
             10,
         )
         self.get_logger().info('Node Moveit Controller started successfully')
@@ -171,7 +171,7 @@ class MoveitController(Node):
             TODO: This currently uses a direct topic publish but should be
             updated to use the hardware interface.
         """
-        self.beak_pub.publish(Int32(data=int(request.data)))
+        self.beak_pub.publish(Int32(data=int(not request.data)))
         response.success = True
         response.message = f'Sent request to {"CLOSE" if request.data else "OPEN"} the arm beak'
         self.get_logger().info(response.message)

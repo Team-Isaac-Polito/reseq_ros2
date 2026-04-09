@@ -124,6 +124,15 @@
   ]
 }
 - {
+  msg_id: 0x5B, # Arm beak command
+  modules: "only_first",
+  length: 4,
+  is_command: true,
+  fields: [
+    { name: "beak", type: "command", data_type: "int32"}
+  ]
+}
+- {
   msg_id: 0x80, # Arm base velocity states (P + R)
   modules: "only_first",
   length: 8,
