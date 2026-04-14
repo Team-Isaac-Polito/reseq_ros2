@@ -447,7 +447,10 @@ class CartesianArmController(Node):
             self._moving = False
 
         deadzone = self.get_parameter('deadzone').get_parameter_value().double_value
-        if self._home_active and float(np.linalg.norm(self._cmd_vel)) > deadzone:
+        cmd_norm = float(np.linalg.norm(self._cmd_vel))
+        # Treat a perfectly centered stick as idle even when deadzone is configured to 0.0.
+        idle_threshold = max(deadzone, 1e-6)
+        if self._home_active and cmd_norm > idle_threshold:
             self._home_active = False
             self._moving = False
             self.get_logger().info('Manual velocity command received; canceling home motion.')
@@ -457,7 +460,7 @@ class CartesianArmController(Node):
             return
 
         # Ignore tiny inputs.
-        if float(np.linalg.norm(self._cmd_vel)) < deadzone:
+        if cmd_norm <= idle_threshold:
             if self._command_mode == 'velocity':
                 self._publish_velocity([0.0] * self.N_JOINTS)
             elif self._moving:
