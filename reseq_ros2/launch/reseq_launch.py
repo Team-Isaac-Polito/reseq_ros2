@@ -126,8 +126,8 @@ def launch_setup(context, *args, **kwargs):
                 }.items(),
             )
         )
-    elif digital_twin_enabled == 'true':
-        # Digital twin launch file
+    elif digital_twin_enabled == 'true' or sim_mode == 'false':
+        # The digital_twin launch also owns the real hardware control stack.
         digital_twin_launch_file = os.path.join(
             get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py'
         )
@@ -142,18 +142,6 @@ def launch_setup(context, *args, **kwargs):
                     'external_log_level': external_log_level,
                     'use_sim_time': use_sim_time,
                     'sim_mode': sim_mode,
-                }.items(),
-            )
-        )
-    elif arm_arg == 'true' and sim_mode == 'false':
-        arm_launch_file = os.path.join(
-            get_package_share_directory('reseq_arm_mk2'), 'launch', 'arm.launch.py'
-        )
-        launch_config.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(arm_launch_file),
-                launch_arguments={
-                    'sim': 'false',
                     'use_moveit': use_moveit,
                 }.items(),
             )

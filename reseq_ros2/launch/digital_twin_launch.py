@@ -30,6 +30,7 @@ def launch_setup(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
     sim_branch_use_sim_time = 'true' if sim_mode == 'true' else use_sim_time
+    use_moveit = LaunchConfiguration('use_moveit').perform(context).lower() == 'true'
 
     arm_arg = LaunchConfiguration('arm').perform(context=context)
     arm = True if arm_arg == 'true' else False  # bool version of arm_arg
@@ -146,11 +147,14 @@ def launch_setup(context, *args, **kwargs):
         body_spawners.append(module_controller)
 
     if arm:
-        joint_group_velocity_controller = Node(
+        arm_controller_name = (
+            'joint_group_velocity_controller' if sim_mode == 'true' else 'mk2_arm_controller'
+        )
+        arm_controller_spawner = Node(
             package='controller_manager',
             executable='spawner',
             arguments=[
-                'joint_group_velocity_controller',
+                arm_controller_name,
                 '--controller-manager',
                 '/controller_manager',
                 '--controller-manager-timeout',
@@ -159,7 +163,7 @@ def launch_setup(context, *args, **kwargs):
                 '60',
             ],
         )
-        arm_spawners.append(joint_group_velocity_controller)
+        arm_spawners.append(arm_controller_spawner)
 
     if sim_mode == 'false':
         launch_config.append(
@@ -231,7 +235,7 @@ def launch_setup(context, *args, **kwargs):
                     'state_topic': '/arm_joint_states',
                     'chain_tip': 'tcp',
                     'command_frame': 'arm_base_link',
-                    'command_mode': 'velocity',
+                    'command_mode': 'trajectory',
                     'max_cartesian_vel': 0.6,
                     'max_joint_vel': 1.0,
                     'deadzone': 0.0,
@@ -241,6 +245,17 @@ def launch_setup(context, *args, **kwargs):
             output='screen',
         )
         launch_config.append(cartesian_arm_controller_node)
+
+    if sim_mode == 'false' and arm and use_moveit:
+        launch_config.append(
+            Node(
+                package='reseq_arm_mk2',
+                executable='coordinate_controller',
+                name='coordinate_controller',
+                parameters=[{'robot_description': robot_description}],
+                output='screen',
+            )
+        )
 
     return launch_config
 
@@ -269,6 +284,11 @@ def generate_launch_description():
                 ),
             ),
             DeclareLaunchArgument('sim_mode', default_value='false'),
+            DeclareLaunchArgument(
+                'use_moveit',
+                default_value='false',
+                description='Launch MoveIt-related arm tools',
+            ),
             OpaqueFunction(function=launch_setup),
         ]
     )

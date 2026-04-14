@@ -18,6 +18,7 @@ from launch_ros.actions import Node
 def launch_setup(context, *args, **kwargs):
     sim = LaunchConfiguration('sim').perform(context).lower() == 'true'
     use_moveit = LaunchConfiguration('use_moveit').perform(context).lower() == 'true'
+    command_mode = 'velocity' if sim else 'trajectory'
 
     description_share = get_package_share_directory('reseq_description')
     arm_share = get_package_share_directory('reseq_arm_mk2')
@@ -75,7 +76,7 @@ def launch_setup(context, *args, **kwargs):
                 'state_topic': '/arm_joint_states',
                 'chain_tip': 'tcp',
                 'command_frame': 'arm_base_link',
-                'command_mode': 'velocity',
+                'command_mode': command_mode,
                 'max_cartesian_vel': 0.6,
                 'max_joint_vel': 1.0,
                 'deadzone': 0.0,
@@ -128,11 +129,11 @@ def launch_setup(context, *args, **kwargs):
             output='screen',
         )
 
-        joint_group_velocity_controller_spawner = Node(
+        arm_controller_spawner = Node(
             package='controller_manager',
             executable='spawner',
             arguments=[
-                'joint_group_velocity_controller',
+                'mk2_arm_controller',
                 '--controller-manager',
                 '/controller_manager',
                 '--controller-manager-timeout',
@@ -160,7 +161,7 @@ def launch_setup(context, *args, **kwargs):
                 RegisterEventHandler(
                     OnProcessExit(
                         target_action=joint_state_broadcaster_spawner,
-                        on_exit=[joint_group_velocity_controller_spawner],
+                        on_exit=[arm_controller_spawner],
                     )
                 ),
             ]
