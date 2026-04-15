@@ -31,6 +31,8 @@ def launch_setup(context, *args, **kwargs):
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
     sim_branch_use_sim_time = 'true' if sim_mode == 'true' else use_sim_time
     use_moveit = LaunchConfiguration('use_moveit').perform(context).lower() == 'true'
+    arm_max_cartesian_vel = float(LaunchConfiguration('arm_max_cartesian_vel').perform(context))
+    arm_max_joint_vel = float(LaunchConfiguration('arm_max_joint_vel').perform(context))
 
     arm_arg = LaunchConfiguration('arm').perform(context=context)
     arm = True if arm_arg == 'true' else False  # bool version of arm_arg
@@ -147,9 +149,7 @@ def launch_setup(context, *args, **kwargs):
         body_spawners.append(module_controller)
 
     if arm:
-        arm_controller_name = (
-            'joint_group_velocity_controller' if sim_mode == 'true' else 'mk2_arm_controller'
-        )
+        arm_controller_name = 'joint_group_velocity_controller'
         arm_controller_spawner = Node(
             package='controller_manager',
             executable='spawner',
@@ -235,9 +235,9 @@ def launch_setup(context, *args, **kwargs):
                     'state_topic': '/arm_joint_states',
                     'chain_tip': 'tcp',
                     'command_frame': 'arm_base_link',
-                    'command_mode': 'trajectory',
-                    'max_cartesian_vel': 0.6,
-                    'max_joint_vel': 1.0,
+                    'command_mode': 'velocity',
+                    'max_cartesian_vel': arm_max_cartesian_vel,
+                    'max_joint_vel': arm_max_joint_vel,
                     'deadzone': 0.02,
                     'trajectory_horizon_sec': 0.1,
                 }
@@ -284,6 +284,16 @@ def generate_launch_description():
                 ),
             ),
             DeclareLaunchArgument('sim_mode', default_value='false'),
+            DeclareLaunchArgument(
+                'arm_max_cartesian_vel',
+                default_value='0.4',
+                description='Cartesian velocity scale for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_max_joint_vel',
+                default_value='0.8',
+                description='Joint velocity clamp for the arm controller',
+            ),
             DeclareLaunchArgument(
                 'use_moveit',
                 default_value='false',

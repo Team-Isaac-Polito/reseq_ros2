@@ -18,7 +18,9 @@ from launch_ros.actions import Node
 def launch_setup(context, *args, **kwargs):
     sim = LaunchConfiguration('sim').perform(context).lower() == 'true'
     use_moveit = LaunchConfiguration('use_moveit').perform(context).lower() == 'true'
-    command_mode = 'velocity' if sim else 'trajectory'
+    arm_max_cartesian_vel = float(LaunchConfiguration('arm_max_cartesian_vel').perform(context))
+    arm_max_joint_vel = float(LaunchConfiguration('arm_max_joint_vel').perform(context))
+    command_mode = 'velocity'
 
     description_share = get_package_share_directory('reseq_description')
     arm_share = get_package_share_directory('reseq_arm_mk2')
@@ -77,8 +79,8 @@ def launch_setup(context, *args, **kwargs):
                 'chain_tip': 'tcp',
                 'command_frame': 'arm_base_link',
                 'command_mode': command_mode,
-                'max_cartesian_vel': 0.6,
-                'max_joint_vel': 1.0,
+                'max_cartesian_vel': arm_max_cartesian_vel,
+                'max_joint_vel': arm_max_joint_vel,
                 'deadzone': 0.02,
                 'trajectory_horizon_sec': 0.1,
             }
@@ -133,7 +135,7 @@ def launch_setup(context, *args, **kwargs):
             package='controller_manager',
             executable='spawner',
             arguments=[
-                'mk2_arm_controller',
+                'joint_group_velocity_controller',
                 '--controller-manager',
                 '/controller_manager',
                 '--controller-manager-timeout',
@@ -194,6 +196,16 @@ def generate_launch_description():
         default_value='false',
         description='Launch MoveIt-related arm tools',
     )
+    arm_max_cartesian_vel_arg = DeclareLaunchArgument(
+        'arm_max_cartesian_vel',
+        default_value='0.4',
+        description='Cartesian velocity scale for the arm controller',
+    )
+    arm_max_joint_vel_arg = DeclareLaunchArgument(
+        'arm_max_joint_vel',
+        default_value='0.8',
+        description='Joint velocity clamp for the arm controller',
+    )
     log_level_arg = DeclareLaunchArgument(
         'log_level',
         default_value='info',
@@ -204,6 +216,8 @@ def generate_launch_description():
         [
             sim_arg,
             use_moveit_arg,
+            arm_max_cartesian_vel_arg,
+            arm_max_joint_vel_arg,
             log_level_arg,
             OpaqueFunction(function=launch_setup),
         ]

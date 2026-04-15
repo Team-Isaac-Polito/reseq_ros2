@@ -114,6 +114,7 @@ class CartesianArmController(Node):
         self.declare_parameter('home_duration_sec', 3.0)
         self.declare_parameter('trajectory_horizon_sec', 0.10)
         self.declare_parameter('command_mode', 'trajectory')
+        self.declare_parameter('startup_hold_positions', [float('nan')] * self.N_JOINTS)
         self.declare_parameter('deadzone', 0.02)
         self.declare_parameter('jacobian_damping', 0.05)
         self.declare_parameter('joint_weights', self.JOINT_WEIGHTS.tolist())
@@ -131,6 +132,13 @@ class CartesianArmController(Node):
         self._diag_ctr = 0
         self._home_active = False
         self._home_position: np.ndarray | None = None
+        self._startup_hold_sent = False
+        startup_hold_positions = list(self.get_parameter('startup_hold_positions').value)
+        self._startup_hold_target = None
+        if len(startup_hold_positions) == self.N_JOINTS:
+            startup_hold_array = np.array(startup_hold_positions, dtype=float)
+            if np.isfinite(startup_hold_array).any():
+                self._startup_hold_target = startup_hold_array
 
         joint_weights_param = self.get_parameter('joint_weights').value
         if isinstance(joint_weights_param, (list, tuple, np.ndarray)) and (
@@ -446,6 +454,17 @@ class CartesianArmController(Node):
             self._q_cmd = self._q.copy()
             self._moving = False
 
+        if self._command_mode == 'trajectory' and not self._startup_hold_sent:
+            if self._traj_pub.get_subscription_count() > 0:
+                startup_target = (
+                    np.clip(self._startup_hold_target, self._q_lo, self._q_hi)
+                    if self._startup_hold_target is not None
+                    else self._q.copy()
+                )
+                self._q_cmd = startup_target.copy()
+                self._publish_traj(self._q.tolist(), startup_target.tolist(), 0.1)
+                self._startup_hold_sent = True
+
         deadzone = self.get_parameter('deadzone').get_parameter_value().double_value
         cmd_norm = float(np.linalg.norm(self._cmd_vel))
         # Treat a perfectly centered stick as idle even when deadzone is configured to 0.0.
@@ -463,9 +482,12 @@ class CartesianArmController(Node):
         if cmd_norm <= idle_threshold:
             if self._command_mode == 'velocity':
                 self._publish_velocity([0.0] * self.N_JOINTS)
-            elif self._moving:
-                # Keep the current target when the stick returns to center.
-                self._publish_traj(self._q.tolist(), self._q_cmd.tolist(), 0.1)
+            else:
+                # In trajectory mode the arm needs a steady hold target while idle.
+                # Without this, Gazebo can let the joints settle under gravity after
+                # the last short trajectory finishes, which shows up as a startup tilt.
+                hold_target = self._q_cmd.tolist() if self._q_cmd is not None else self._q.tolist()
+                self._publish_traj(self._q.tolist(), hold_target, 0.1)
                 self._moving = False
             self._ee_z_ref = None
             return
@@ -561,10 +583,14 @@ class CartesianArmController(Node):
                     dq[i] = min_step
                     joints_clipped.append(f'J{i}↓')
 
-        # Accumulate the target so repeated preemptions still produce
-        # continuous motion, while the IK itself is linearized at the
-        # measured pose.
-        self._q_cmd = np.clip(self._q_cmd + dq * horizon, self._q_lo, self._q_hi)
+        # In trajectory mode, generate the next target from the measured pose.
+        # This keeps the published joint step consistent with the Jacobian
+        # linearization and avoids accumulating backlog when hardware tracking
+        # lags behind the previously commanded target.
+        if self._command_mode == 'trajectory':
+            self._q_cmd = np.clip(solve_q + dq * horizon, self._q_lo, self._q_hi)
+        else:
+            self._q_cmd = np.clip(self._q_cmd + dq * horizon, self._q_lo, self._q_hi)
 
         # Print diagnostics at 1 Hz.
         self._diag_ctr += 1

@@ -38,6 +38,8 @@ def launch_setup(context, *args, **kwargs):
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
     use_moveit = LaunchConfiguration('use_moveit').perform(context)
     arm_arg = LaunchConfiguration('arm').perform(context=context)
+    arm_max_cartesian_vel = LaunchConfiguration('arm_max_cartesian_vel').perform(context)
+    arm_max_joint_vel = LaunchConfiguration('arm_max_joint_vel').perform(context)
 
     # Core launch file
     core_launch_file = os.path.join(
@@ -123,6 +125,8 @@ def launch_setup(context, *args, **kwargs):
                     'launch_rsp': 'true',
                     'launch_joint_state_broadcaster': 'true',
                     'launch_cartesian_controller': 'true',
+                    'arm_max_cartesian_vel': arm_max_cartesian_vel,
+                    'arm_max_joint_vel': arm_max_joint_vel,
                 }.items(),
             )
         )
@@ -142,6 +146,8 @@ def launch_setup(context, *args, **kwargs):
                     'external_log_level': external_log_level,
                     'use_sim_time': use_sim_time,
                     'sim_mode': sim_mode,
+                    'arm_max_cartesian_vel': arm_max_cartesian_vel,
+                    'arm_max_joint_vel': arm_max_joint_vel,
                     'use_moveit': use_moveit,
                 }.items(),
             )
@@ -238,6 +244,16 @@ def generate_launch_description():
             # this argument is passed as 'true' by sim_launch.py file
             DeclareLaunchArgument('use_sim_time', default_value='false'),
             DeclareLaunchArgument('sim_mode', default_value='false'),
+            DeclareLaunchArgument(
+                'arm_max_cartesian_vel',
+                default_value='0.4',
+                description='Cartesian velocity scale for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_max_joint_vel',
+                default_value='0.8',
+                description='Joint velocity clamp for the arm controller',
+            ),
             DeclareLaunchArgument('use_moveit', default_value='false'),
             DeclareLaunchArgument('no_body_controllers', default_value='false'),
             DeclareLaunchArgument('no_arm_controllers', default_value='false'),

@@ -40,7 +40,6 @@ def _wait_for_controllers(node, timeout_sec: float = 60.0):
 
     raise RuntimeError('Timed out waiting for /controller_manager/list_controllers')
 
-
 def _ensure_controller_active(node, controller_name: str):
     controllers = _wait_for_controllers(node)
     controller = next((c for c in controllers if c.name == controller_name), None)
@@ -113,7 +112,7 @@ def ensure_sim_controllers(context, *args, **kwargs):
         rclpy.init(args=None)
         shutdown_rclpy = True
 
-    node = rclpy.create_node('mk2_arm_controller_setup')
+    node = rclpy.create_node('arm_controller_setup')
     try:
         for controller_name in controller_names:
             _ensure_controller_active(node, controller_name)
@@ -132,6 +131,12 @@ def launch_setup(context, *args, **kwargs):
     launch_cartesian_controller = (
         LaunchConfiguration('launch_cartesian_controller').perform(context).lower() == 'true'
     )
+    arm_max_cartesian_vel = float(LaunchConfiguration('arm_max_cartesian_vel').perform(context))
+    arm_max_joint_vel = float(LaunchConfiguration('arm_max_joint_vel').perform(context))
+    arm_trajectory_horizon_sec = float(
+        LaunchConfiguration('arm_trajectory_horizon_sec').perform(context)
+    )
+    arm_jacobian_damping = float(LaunchConfiguration('arm_jacobian_damping').perform(context))
 
     package_name = 'reseq_sim'
     description_share = get_package_share_directory('reseq_description')
@@ -204,13 +209,16 @@ def launch_setup(context, *args, **kwargs):
                         'gazebo_launch.py',
                     )
                 ]
-            )
+            ),
+            launch_arguments={
+                'world': LaunchConfiguration('world'),
+            }.items(),
         )
     )
 
     launch_entities.append(
         TimerAction(
-            period=5.0,
+            period=0.5,
             actions=[OpaqueFunction(function=ensure_sim_controllers)],
         )
     )
@@ -225,13 +233,15 @@ def launch_setup(context, *args, **kwargs):
                     {'robot_description': robot_description},
                     {'use_sim_time': True},
                     {'state_topic': '/joint_states'},
-                    {'chain_tip': 'tool0'},
+                    {'chain_tip': 'tcp'},
                     {'command_mode': 'velocity'},
                     {'command_frame': 'arm_base_link'},
-                    {'max_cartesian_vel': 0.6},
-                    {'max_joint_vel': 1.0},
+                    {'max_cartesian_vel': arm_max_cartesian_vel},
+                    {'max_joint_vel': arm_max_joint_vel},
+                    {'startup_hold_positions': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
                     {'deadzone': 0.02},
-                    {'trajectory_horizon_sec': 0.1},
+                    {'trajectory_horizon_sec': arm_trajectory_horizon_sec},
+                    {'jacobian_damping': arm_jacobian_damping},
                 ],
                 output='screen',
             )
@@ -244,10 +254,11 @@ def launch_setup(context, *args, **kwargs):
                 name='arm_state_bridge',
                 parameters=[
                     {
-                        'source_topic': '/arm_joint_states',
+                        'source_topic': '/joint_states',
                         'output_mode': 'trajectory',
                         'trajectory_topic': '/mk2_arm_controller/joint_trajectory',
                         'trajectory_duration_sec': 0.1,
+                        'startup_positions': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     }
                 ],
                 output='screen',
@@ -271,6 +282,11 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                'world',
+                default_value='empty.world',
+                description='World to load for the Gazebo arm simulation',
+            ),
             DeclareLaunchArgument(
                 'sim',
                 default_value='true',
@@ -298,6 +314,26 @@ def generate_launch_description():
                     'Launch the local Cartesian arm controller instead of '
                     'following the Jetson trajectory bridge'
                 ),
+            ),
+            DeclareLaunchArgument(
+                'arm_max_cartesian_vel',
+                default_value='0.4',
+                description='Cartesian velocity scale for the Gazebo arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_max_joint_vel',
+                default_value='0.8',
+                description='Joint velocity clamp for the Gazebo arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_trajectory_horizon_sec',
+                default_value='0.1',
+                description='Trajectory lookahead horizon for the Gazebo arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_jacobian_damping',
+                default_value='0.04',
+                description='Jacobian damping term for the Gazebo arm controller',
             ),
             OpaqueFunction(function=launch_setup),
         ]

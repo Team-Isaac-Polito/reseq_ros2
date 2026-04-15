@@ -29,7 +29,6 @@ def generate_launch_description():
     # START GAZEBO AND SPAWN ENTITIES #
     ###################################
 
-    # Launch gazebo with the world specified in `world_path`
     world_path = PathJoinSubstitution(
         [get_package_share_directory(package_name), 'worlds', LaunchConfiguration('world')]
     )

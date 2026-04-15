@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import math
+import time
+
 import rclpy
 from rclpy.duration import Duration
 from rclpy.node import Node
@@ -18,6 +21,9 @@ class ArmStateBridge(Node):
         self.declare_parameter('output_topic', '/arm_joint_states')
         self.declare_parameter('trajectory_topic', '/mk2_arm_controller/joint_trajectory')
         self.declare_parameter('trajectory_duration_sec', 0.1)
+        self.declare_parameter('startup_positions', [float('nan')] * 6)
+        self.declare_parameter('startup_position_tolerance', 0.02)
+        self.declare_parameter('startup_hold_sec', 1.0)
         self.declare_parameter(
             'joint_names',
             [
@@ -35,7 +41,21 @@ class ArmStateBridge(Node):
         self._output_topic = self.get_parameter('output_topic').value
         self._trajectory_topic = self.get_parameter('trajectory_topic').value
         self._trajectory_duration_sec = self.get_parameter('trajectory_duration_sec').value
+        startup_positions = list(self.get_parameter('startup_positions').value)
+        self._startup_position_tolerance = float(
+            self.get_parameter('startup_position_tolerance').value
+        )
+        self._startup_hold_sec = float(self.get_parameter('startup_hold_sec').value)
         self._joint_names = list(self.get_parameter('joint_names').value)
+        self._startup_positions = None
+        if len(startup_positions) == len(self._joint_names):
+            startup_is_configured = any(
+                math.isfinite(float(value)) for value in startup_positions
+            )
+            if startup_is_configured:
+                self._startup_positions = [float(value) for value in startup_positions]
+        self._startup_complete = self._startup_positions is None
+        self._startup_started_at: float | None = None
         output_topic = (
             self._output_topic if self._output_mode == 'joint_state' else self._trajectory_topic
         )
@@ -96,7 +116,21 @@ class ArmStateBridge(Node):
         pt_start.time_from_start = Duration(nanoseconds=0).to_msg()
 
         pt_target = JointTrajectoryPoint()
-        pt_target.positions = list(filtered.position)
+        target_positions = list(filtered.position)
+        if not self._startup_complete:
+            if self._startup_started_at is None:
+                self._startup_started_at = time.monotonic()
+            startup_error = max(
+                abs(filtered.position[index] - self._startup_positions[index])
+                for index in range(len(self._joint_names))
+            )
+            startup_hold_elapsed = (time.monotonic() - self._startup_started_at) >= self._startup_hold_sec
+            if (not startup_hold_elapsed) or startup_error > self._startup_position_tolerance:
+                target_positions = list(self._startup_positions)
+            else:
+                self._startup_complete = True
+
+        pt_target.positions = target_positions
         pt_target.velocities = [0.0] * len(self._joint_names)
         pt_target.time_from_start = Duration(seconds=float(self._trajectory_duration_sec)).to_msg()
 
