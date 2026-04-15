@@ -51,6 +51,7 @@ class AppGateway(Node):
         self.get_logger().info(f'UI request for module {module_id}: {action}')
 
         if action == 'query':
+            self.sync_states_with_graph()
             state = 'RUNNING' if self.node_states.get(module_id) else 'STOPPED'
             response.success = True
             response.message = f'{module_id}: {state}'
@@ -96,8 +97,6 @@ class AppGateway(Node):
 
     def sync_states_with_graph(self):
         available_services = [s[0] for s in self.get_service_names_and_types()]
-        self.get_logger().info(f'Available services in graph: {available_services}')
-        self.get_logger().info(f'Any debug: {any("/start_motor" in s for s in available_services)}')
         self.node_states['lidar'] = any('/start_motor' in s for s in available_services)
         self.node_states['thermal'] = any('/activate_thermal' in s for s in available_services)
         self.get_logger().info(f'Global state found in graph: {self.node_states}')
