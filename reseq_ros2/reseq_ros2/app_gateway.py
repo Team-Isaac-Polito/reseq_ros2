@@ -96,7 +96,8 @@ class AppGateway(Node):
 
     def sync_states_with_graph(self):
         available_services = [s[0] for s in self.get_service_names_and_types()]
-        print(f'Available services in graph: {available_services}')
+        self.get_logger().info(f'Available services in graph: {available_services}')
+        self.get_logger().info(f'Any debug: {any("/start_motor" in s for s in available_services)}')
         self.node_states['lidar'] = any('/start_motor' in s for s in available_services)
         self.node_states['thermal'] = any('/activate_thermal' in s for s in available_services)
         self.get_logger().info(f'Global state found in graph: {self.node_states}')
