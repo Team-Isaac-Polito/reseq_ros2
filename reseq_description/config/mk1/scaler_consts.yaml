@@ -8,6 +8,7 @@ scaler_consts:
   r_angular_vel:             # [rad/s] Range of the angular velocity (pivot mode)
     - -2.8387
     - 2.8387
+  arm_input_scale: 1.0       # [-] Scale applied to left-stick arm commands before /mk2_arm_vel
   r_pitch_vel:               # [LSB/s] Range of pitch velocity
     - -183
     - 183

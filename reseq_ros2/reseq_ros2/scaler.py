@@ -96,6 +96,9 @@ class Scaler(Node):
             .get_parameter_value()
             .double_array_value
         )
+        self.arm_input_scale = (
+            self.declare_parameter('arm_input_scale', 1.0).get_parameter_value().double_value
+        )
 
         for h in self.handlers:
             h['service'] = self.create_client(SetBool, h['service'])
@@ -135,11 +138,13 @@ class Scaler(Node):
 
         # TODO probably to merge with another version of scaler.py
 
-        self.moveit_pub.publish(Vector3(
-            x = data.left.x,
-            y = data.left.y,
-            z = data.left.z,
-        ))
+        self.moveit_pub.publish(
+            Vector3(
+                x=self.scale_arm_input(data.left.x),
+                y=self.scale_arm_input(data.left.y),
+                z=self.scale_arm_input(data.left.z),
+            )
+        )
 
 
         if self.control_mode == Scaler.control_mode_enum.AGEVAR:
@@ -161,6 +166,10 @@ class Scaler(Node):
 
     def scale(self, val, scaling_range):
         return (val + 1) / 2 * (scaling_range[1] - scaling_range[0]) + scaling_range[0]
+
+    def scale_arm_input(self, val: float) -> float:
+        scaled = float(val) * self.arm_input_scale
+        return max(-1.0, min(1.0, scaled))
 
 
 def main(args=None):

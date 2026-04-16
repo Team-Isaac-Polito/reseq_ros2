@@ -8,3 +8,4 @@ scaler_consts:
   r_angular_vel:             # [rad/s] Range of the angular velocity (pivot mode)
     - -2.4912
     - 2.4912
+  arm_input_scale: 0.5       # [-] Scale applied to left-stick arm commands before /mk2_arm_vel
