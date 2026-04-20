@@ -11,12 +11,12 @@ class AppGateway(Node):
     def __init__(self):
         super().__init__('app_gateway')
         self.callback_group = ReentrantCallbackGroup()
-        self.service_mapping = {'thermal': '/activate_thermal', 'microphone': '/activate_microphone'}
-
+        self.service_mapping = {
+            'thermal': '/activate_thermal', 
+            'microphone': '/activate_microphone'
+        }
         self.node_states = {'thermal': False, 'lidar': False, 'microphone': False}
-
         self.sync_states_with_graph()
-
         self.hw_clients = {}
         for ui_name, hw_service in self.service_mapping.items():
             self.hw_clients[ui_name] = self.create_client(
@@ -51,6 +51,7 @@ class AppGateway(Node):
         self.get_logger().info(f'UI request for module {module_id}: {action}')
 
         if action == 'query':
+            self.sync_states_with_graph()
             state = 'RUNNING' if self.node_states.get(module_id) else 'STOPPED'
             response.success = True
             response.message = f'{module_id}: {state}'
@@ -82,9 +83,14 @@ class AppGateway(Node):
             lidar_online = any('/start_motor' in s for s in available_services)
             thermal_online = any('/activate_thermal' in s for s in available_services)
             microphone_online = any('/activate_microphone' in s for s in available_services)
+            online_map = {
+                'lidar': lidar_online,
+                'thermal': thermal_online,
+                'microphone': microphone_online
+            }
             status_msg = []
             for m, state in self.node_states.items():
-                if (m == 'lidar' and not lidar_online) or (m == 'thermal' and not thermal_online) or (m == 'microphone' and not microphone_online):
+                if not online_map.get(m, False):
                     status_msg.append(f'{m}: OFFLINE')
                 else:
                     status_msg.append(f'{m}: {"RUNNING" if state else "STOPPED"}')
