@@ -103,9 +103,15 @@ class AppGateway(Node):
 
     def sync_states_with_graph(self):
         available_services = [s[0] for s in self.get_service_names_and_types()]
-        self.node_states['lidar'] = any('/start_motor' in s for s in available_services)
-        self.node_states['thermal'] = any('/activate_thermal' in s for s in available_services)
-        self.node_states['microphone'] = any('/activate_microphone' in s for s in available_services)
+        lidar_present = any('/start_motor' in s for s in available_services)
+        thermal_present = any('/activate_thermal' in s for s in available_services)
+        micro_present = any('/activate_microphone' in s for s in available_services)
+        if not lidar_present:
+            self.node_states['lidar'] = False
+        if not thermal_present:
+            self.node_states['thermal'] = False
+        if not micro_present:
+            self.node_states['microphone'] = False
         self.get_logger().info(f'Global state found in graph: {self.node_states}')
 
 
