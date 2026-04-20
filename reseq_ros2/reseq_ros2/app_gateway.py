@@ -11,9 +11,9 @@ class AppGateway(Node):
     def __init__(self):
         super().__init__('app_gateway')
         self.callback_group = ReentrantCallbackGroup()
-        self.service_mapping = {'thermal': '/activate_thermal', 'velocity': '/vel'}
+        self.service_mapping = {'thermal': '/activate_thermal', 'microphone': '/activate_microphone'}
 
-        self.node_states = {'thermal': False, 'lidar': False, 'velocity': False}
+        self.node_states = {'thermal': False, 'lidar': False, 'microphone': False}
 
         self.sync_states_with_graph()
 
@@ -81,9 +81,10 @@ class AppGateway(Node):
 
             lidar_online = any('/start_motor' in s for s in available_services)
             thermal_online = any('/activate_thermal' in s for s in available_services)
+            microphone_online = any('/activate_microphone' in s for s in available_services)
             status_msg = []
             for m, state in self.node_states.items():
-                if (m == 'lidar' and not lidar_online) or (m == 'thermal' and not thermal_online):
+                if (m == 'lidar' and not lidar_online) or (m == 'thermal' and not thermal_online) or (m == 'microphone' and not microphone_online):
                     status_msg.append(f'{m}: OFFLINE')
                 else:
                     status_msg.append(f'{m}: {"RUNNING" if state else "STOPPED"}')
@@ -98,6 +99,7 @@ class AppGateway(Node):
         available_services = [s[0] for s in self.get_service_names_and_types()]
         self.node_states['lidar'] = any('/start_motor' in s for s in available_services)
         self.node_states['thermal'] = any('/activate_thermal' in s for s in available_services)
+        self.node_states['microphone'] = any('/activate_microphone' in s for s in available_services)
         self.get_logger().info(f'Global state found in graph: {self.node_states}')
 
 
@@ -111,7 +113,7 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        if node.stop_motor_cli.wait_for_service(timeout_sec=1.0):
+        if node.stop_motor_cli.wait_for_service(timeout_sec=2.0):
             node.stop_motor_cli.call_async(Empty.Request())
         node.destroy_node()
         rclpy.shutdown()
