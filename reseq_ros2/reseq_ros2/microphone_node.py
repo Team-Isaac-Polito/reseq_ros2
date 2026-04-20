@@ -1,6 +1,8 @@
 from rclpy.node import Node
 from std_srvs.srv import SetBool
 import subprocess
+import rclpy
+from rclpy.executors import MultiThreadedExecutor
 
 
 class MicrophoneNode(Node):
@@ -37,4 +39,26 @@ class MicrophoneNode(Node):
         if self.audio_process:
             self.get_logger().info('Terminating C++ audio process')
             self.audio_process.terminate()
+            try:
+                self.audio_process.wait(timeout=1.0)
+            except subprocess.TimeoutExpired:
+                self.audio_process.kill()
         super().destroy_node()
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = MicrophoneNode()
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_audio_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
