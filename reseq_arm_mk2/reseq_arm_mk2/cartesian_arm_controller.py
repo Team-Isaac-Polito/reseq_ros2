@@ -118,6 +118,151 @@ def _startup_recovery_command(
     return dq, False
 
 
+def _unwrap_joint_positions(
+    current_q: np.ndarray,
+    reference_q: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+) -> np.ndarray:
+    """Keep periodic joints continuous by unwrapping them against a reference pose."""
+    unwrapped_q = np.array(current_q, dtype=float, copy=True)
+    periodic_mask = (q_hi - q_lo) >= (2.0 * np.pi - 0.05)
+    if not np.any(periodic_mask):
+        return unwrapped_q
+
+    delta = unwrapped_q[periodic_mask] - reference_q[periodic_mask]
+    unwrapped_q[periodic_mask] = (
+        reference_q[periodic_mask] + ((delta + np.pi) % (2.0 * np.pi)) - np.pi
+    )
+    return unwrapped_q
+
+
+def _solve_weighted_dls_task_velocity(
+    task_jacobian: np.ndarray,
+    cart_vel: np.ndarray,
+    joint_weights: np.ndarray,
+    damping: float,
+) -> np.ndarray:
+    """Solve the weighted damped least-squares task velocity for the active joints."""
+    inv_joint_weights = np.diag(1.0 / joint_weights)
+    jj_t = task_jacobian @ inv_joint_weights @ task_jacobian.T
+    return (
+        inv_joint_weights
+        @ task_jacobian.T
+        @ np.linalg.solve(
+            jj_t + damping**2 * np.eye(task_jacobian.shape[0]),
+            cart_vel,
+        )
+    )
+
+
+def _solve_task_velocity_with_limit_redistribution(
+    current_q: np.ndarray,
+    task_jacobian: np.ndarray,
+    cart_vel: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    dt: float,
+    max_joint_vel: float,
+    damping: float,
+    joint_weights: np.ndarray,
+) -> tuple[np.ndarray, list[str], float]:
+    """Solve a task velocity and re-run it when a joint clips against a limit.
+
+    If one joint saturates, remove it from the current solve and let the remaining
+    joints redistribute the same Cartesian request instead of freezing the whole arm.
+    """
+    n_joints = task_jacobian.shape[1]
+    active = np.ones(n_joints, dtype=bool)
+    clipped_joints: list[str] = []
+    dq_final = np.zeros(n_joints)
+    vel_scale = 1.0
+
+    for _ in range(n_joints):
+        active_indices = np.flatnonzero(active)
+        if active_indices.size == 0:
+            break
+
+        active_jacobian = task_jacobian[:, active_indices]
+        active_weights = np.array(joint_weights[active_indices], dtype=float)
+        dq_active = _solve_weighted_dls_task_velocity(
+            task_jacobian=active_jacobian,
+            cart_vel=cart_vel,
+            joint_weights=active_weights,
+            damping=damping,
+        )
+
+        dq_candidate = np.zeros(n_joints)
+        dq_candidate[active_indices] = dq_active
+        dq_candidate += _joint_limit_recovery_velocity(
+            current_q=current_q,
+            q_lo=q_lo,
+            q_hi=q_hi,
+            max_joint_vel=max_joint_vel,
+        )
+
+        peak = float(np.max(np.abs(dq_active)))
+        vel_scale = 1.0
+        if peak > max_joint_vel:
+            vel_scale = max_joint_vel / peak
+            dq_candidate[active_indices] *= vel_scale
+
+        dq_clamped = _clamp_joint_velocity_to_limits(current_q, dq_candidate, q_lo, q_hi, dt)
+        clipped_indices = []
+        for idx in active_indices:
+            if dq_candidate[idx] > 0.0 and dq_clamped[idx] < dq_candidate[idx]:
+                clipped_indices.append(idx)
+            elif dq_candidate[idx] < 0.0 and dq_clamped[idx] > dq_candidate[idx]:
+                clipped_indices.append(idx)
+
+        dq_final = dq_clamped
+        if not clipped_indices:
+            return dq_final, clipped_joints, vel_scale
+
+        for idx in clipped_indices:
+            active[idx] = False
+            clipped_joints.append(f'J{idx}{"↑" if dq_candidate[idx] > 0.0 else "↓"}')
+
+    return dq_final, clipped_joints, vel_scale
+
+
+def _joint_limit_hold_scale(
+    current_q: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    margin_ratio: float = 0.15,
+) -> float:
+    """Fade the idle z hold as any joint approaches its hard limit."""
+    span = np.maximum(q_hi - q_lo, 1e-6)
+    limit_margin = np.maximum(span * margin_ratio, 1e-6)
+    distance_to_limit = np.minimum(current_q - q_lo, q_hi - current_q)
+    normalized_distance = np.clip(distance_to_limit / limit_margin, 0.0, 1.0)
+    hold_scale = float(np.min(normalized_distance))
+    return hold_scale * hold_scale
+
+
+def _joint_limit_recovery_velocity(
+    current_q: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    max_joint_vel: float,
+    margin_ratio: float = 0.2,
+    recovery_gain: float = 0.25,
+) -> np.ndarray:
+    """Nudge joints back toward the interior when the arm is near a hard stop."""
+    span = np.maximum(q_hi - q_lo, 1e-6)
+    limit_margin = np.maximum(span * margin_ratio, 1e-6)
+    distance_to_limit = np.minimum(current_q - q_lo, q_hi - current_q)
+    proximity = np.clip((limit_margin - distance_to_limit) / limit_margin, 0.0, 1.0)
+    if not np.any(proximity):
+        return np.zeros_like(current_q)
+
+    center = 0.5 * (q_lo + q_hi)
+    recovery = np.clip((center - current_q) / limit_margin, -1.0, 1.0)
+    recovery *= proximity * recovery_gain * max_joint_vel
+    return recovery
+
+
 class CartesianArmController(Node):
     """
     Jacobian-based Cartesian arm controller.
@@ -200,15 +345,21 @@ class CartesianArmController(Node):
         self.declare_parameter('joint_weights', self.JOINT_WEIGHTS.tolist())
         self.declare_parameter('idle_hold_gain', 1.5)
         self.declare_parameter('idle_hold_tolerance', 0.01)
+        self.declare_parameter('front_branch_gain', 0.05)
 
         # Internal state.
         self._q: np.ndarray | None = None  # measured joint positions
+        self._q_continuous: np.ndarray | None = None  # unwraps periodic joints across ±pi
         self._q_cmd: np.ndarray | None = None  # integrator state
         self._cmd_vel = np.zeros(3)  # latest joystick command
         self._linear_mode = True
         self._velocity_mode = True
         self._moving = False
         self._ee_z_ref: float | None = None
+        self._front_x_ref: float | None = None
+        self._front_branch_gain = (
+            self.get_parameter('front_branch_gain').get_parameter_value().double_value
+        )
         self._diag_ctr = 0
         self._home_active = False
         self._startup_home: np.ndarray | None = None
@@ -356,6 +507,7 @@ class CartesianArmController(Node):
             self.get_logger().info(
                 f'FK(home) = [{p_home[0]:.4f}, {p_home[1]:.4f}, {p_home[2]:.4f}] m'
             )
+            self._front_x_ref = float(p_home[0])
 
         J_home = self._jacobian_kdl(q_home)
         if J_home is not None:
@@ -396,6 +548,15 @@ class CartesianArmController(Node):
         pos_map = dict(zip(msg.name, msg.position))
         try:
             self._q = np.array([pos_map[n] for n in self.JOINT_NAMES])
+            if self._q_continuous is None:
+                self._q_continuous = self._q.copy()
+            else:
+                self._q_continuous = _unwrap_joint_positions(
+                    current_q=self._q,
+                    reference_q=self._q_continuous,
+                    q_lo=self._q_lo,
+                    q_hi=self._q_hi,
+                )
             if self._startup_home is None:
                 self._startup_measured_pose = self._q.copy()
                 hold_tolerance = (
@@ -571,10 +732,6 @@ class CartesianArmController(Node):
         cmd_norm = float(np.linalg.norm(self._cmd_vel))
         # Treat a perfectly centered stick as idle even when deadzone is configured to 0.0.
         idle_threshold = max(deadzone, 1e-6)
-        if self._home_active and cmd_norm > idle_threshold:
-            self._home_active = False
-            self._moving = False
-            self.get_logger().info('Manual velocity command received; canceling home motion.')
 
         if self._home_active:
             self._run_home_velocity()
@@ -614,9 +771,7 @@ class CartesianArmController(Node):
                 # In trajectory mode the arm needs a steady hold target while idle.
                 # Without this, Gazebo can let the joints settle under gravity after
                 # the last short trajectory finishes, which shows up as a startup tilt.
-                hold_target = (
-                    self._q_cmd.tolist() if self._q_cmd is not None else self._q.tolist()
-                )
+                hold_target = self._q_cmd.tolist() if self._q_cmd is not None else self._q.tolist()
                 self._publish_traj(self._q.tolist(), hold_target, 0.1)
             self._moving = False
             self._ee_z_ref = None
@@ -625,7 +780,7 @@ class CartesianArmController(Node):
         # Solve from the live measured pose so the Jacobian tracks the actual arm.
         if not self._moving:
             self._moving = True
-        solve_q = self._q
+        solve_q = self._q_continuous if self._q_continuous is not None else self._q
         if self._ee_z_ref is None:
             self._ee_z_ref = float(self._get_ee_pos(solve_q)[2])
 
@@ -649,7 +804,17 @@ class CartesianArmController(Node):
         if self._ee_z_ref is not None and abs(cart_vel_cmd[2]) < deadzone:
             z_error = self._ee_z_ref - float(self._get_ee_pos(solve_q)[2])
             z_hold_vel = 2.0 * z_error
-            cart_vel[2] = float(np.clip(z_hold_vel, -max_cv, max_cv))
+            hold_scale = _joint_limit_hold_scale(solve_q, self._q_lo, self._q_hi)
+            # Relax the height hold near saturation so a reverse x/y command can
+            # back the arm away from the limit instead of fighting the stale z target.
+            cart_vel[2] = float(np.clip(z_hold_vel * hold_scale, -max_cv, max_cv))
+
+        if self._front_x_ref is not None and abs(cart_vel_cmd[0]) < deadzone:
+            x_error = self._front_x_ref - float(self._get_ee_pos(solve_q)[0])
+            if x_error > 0.0:
+                # Keep lateral motion on the front side of the workspace unless the
+                # operator is explicitly commanding X.
+                cart_vel[0] = float(np.clip(2.0 * x_error, 0.0, max_cv))
 
         J = self._get_jacobian(solve_q)
         if J is None:
@@ -660,35 +825,37 @@ class CartesianArmController(Node):
             active_dofs = J.shape[1]
             Jlin = J[:3, :active_dofs]
             joint_weights = self._joint_weights[:active_dofs]
-            inv_joint_weights = np.diag(1.0 / joint_weights)
-            JJt = Jlin @ inv_joint_weights @ Jlin.T
-            dq_active = (
-                inv_joint_weights @ Jlin.T @ np.linalg.solve(JJt + lam**2 * np.eye(3), cart_vel)
+            dq, joints_clipped, vel_scale = _solve_task_velocity_with_limit_redistribution(
+                current_q=solve_q,
+                task_jacobian=Jlin,
+                cart_vel=cart_vel,
+                q_lo=self._q_lo,
+                q_hi=self._q_hi,
+                dt=self._dt,
+                max_joint_vel=max_jv,
+                damping=lam,
+                joint_weights=joint_weights,
             )
-
-            dq = np.zeros(self.N_JOINTS)
-            dq[:active_dofs] = dq_active
         except np.linalg.LinAlgError:
             self.get_logger().warn('DLS solve failed.')
             return
 
-        # Scale the whole command if any joint exceeds the velocity limit.
-        peak = float(np.max(np.abs(dq[:active_dofs])))
-        vel_scale = 1.0
-        if peak > max_jv:
-            vel_scale = max_jv / peak
-            dq[:active_dofs] *= vel_scale
-
-        # Clamp only the joints that would violate their bounds. This keeps the
-        # remaining joints free to continue moving instead of freezing the whole arm.
-        joints_clipped: list[str] = []
-        dq_before_clamp = dq.copy()
-        dq = _clamp_joint_velocity_to_limits(solve_q, dq, self._q_lo, self._q_hi, self._dt)
-        for i in range(active_dofs):
-            if dq_before_clamp[i] > 0.0 and dq[i] < dq_before_clamp[i]:
-                joints_clipped.append(f'J{i}↑')
-            elif dq_before_clamp[i] < 0.0 and dq[i] > dq_before_clamp[i]:
-                joints_clipped.append(f'J{i}↓')
+        if (
+            self._startup_home is not None
+            and self._front_x_ref is not None
+            and abs(cart_vel_cmd[0]) < deadzone
+            and self._front_branch_gain > 0.0
+        ):
+            # Bias the nullspace toward the startup/front branch while the user is
+            # only steering y/z. This keeps reversals from flipping to the back side.
+            branch_bias = np.clip(
+                self._front_branch_gain * (self._startup_home - solve_q),
+                -0.25 * max_jv,
+                0.25 * max_jv,
+            )
+            dq = dq + branch_bias
+            dq = np.clip(dq, -max_jv, max_jv)
+            dq = _clamp_joint_velocity_to_limits(solve_q, dq, self._q_lo, self._q_hi, self._dt)
 
         # In trajectory mode, generate the next target from the measured pose.
         # This keeps the published joint step consistent with the Jacobian
@@ -739,7 +906,8 @@ class CartesianArmController(Node):
 
         target = self._get_home_position()
         self._q_cmd = target.copy()
-        error = target - self._q
+        current_q = self._q_continuous if self._q_continuous is not None else self._q
+        error = target - current_q
 
         if float(np.max(np.abs(error))) < self.HOME_TOLERANCE:
             self._home_active = False
@@ -766,9 +934,12 @@ class CartesianArmController(Node):
 
         max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
         hold_gain = self.get_parameter('idle_hold_gain').get_parameter_value().double_value
-        hold_tolerance = self.get_parameter('idle_hold_tolerance').get_parameter_value().double_value
+        hold_tolerance = (
+            self.get_parameter('idle_hold_tolerance').get_parameter_value().double_value
+        )
+        current_q = self._q_continuous if self._q_continuous is not None else self._q
         dq, reached_target = _startup_recovery_command(
-            current_q=self._q,
+            current_q=current_q,
             target_q=self._startup_home,
             q_lo=self._q_lo,
             q_hi=self._q_hi,
