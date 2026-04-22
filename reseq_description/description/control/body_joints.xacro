@@ -16,6 +16,24 @@
                 <xacro:control_joint_factory id="${module}" />
             </xacro:if>
 
+            <!-- IMU sensor hardware interfaces.
+                 Sim: GazeboSimSystem reads the Gazebo IMU sensor and exposes these state interfaces.
+                 Hardware: ReseqHardware reads CAN messages 0x92 (accel) and 0x93 (gyro)
+                 from the STEVAL-MKI178V2 / ISM330DLC board via PicoLowLevel firmware.
+                 imu_sensor_broadcaster reads these interfaces and publishes sensor_msgs/Imu. -->
+            <sensor name="imu${module}">
+                <state_interface name="orientation.x"/>
+                <state_interface name="orientation.y"/>
+                <state_interface name="orientation.z"/>
+                <state_interface name="orientation.w"/>
+                <state_interface name="angular_velocity.x"/>
+                <state_interface name="angular_velocity.y"/>
+                <state_interface name="angular_velocity.z"/>
+                <state_interface name="linear_acceleration.x"/>
+                <state_interface name="linear_acceleration.y"/>
+                <state_interface name="linear_acceleration.z"/>
+            </sensor>
+
             <xacro:loop module="${module + 1}" n_modules="${n_modules}" />
 
         </xacro:if>

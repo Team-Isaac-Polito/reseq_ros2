@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!--
+    IMU sensor macro for each chassis module.
+    Physical IMU: STEVAL-MKI178V2 (ISM330DLC - 6-axis, 3-axis gyro + 3-axis accel)
+    Mounted on top inside each module.
+
+    TODO: Verify exact mounting position and orientation for each module
+          with the embedded area once hardware is finalized.
+          Current placement: centered on top face of chassis box.
+
+    @param id: chassis module id (1-based)
+    @param physics_link: the non-fixed (non-merged) Gazebo link to attach the sensor to.
+           For module 1 use "base_link", for modules 2+ use "joint_p_${id}_link".
+  -->
+  <xacro:macro name="imu_sensor" params="id physics_link">
+
+    <joint name="imu${id}_joint" type="fixed">
+      <parent link="chassis${id}_link"/>
+      <child link="imu${id}_link"/>
+      <!-- TODO: Verify exact position. Placed at top-center of chassis module. -->
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+    </joint>
+
+    <link name="imu${id}_link">
+      <visual>
+        <geometry>
+          <box size="0.02 0.02 0.005"/>
+        </geometry>
+        <material name="IMUColor"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.02 0.02 0.005"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.01"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+      </inertial>
+    </link>
+
+    <!-- Place the physics IMU sensor on the joint, not the link.
+         This prevents URDF→SDF fixed-joint merging from "losing" the sensor. -->
+    <gazebo reference="${physics_link}">
+      <sensor name="imu${id}" type="imu">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <visualize>false</visualize>
+        <topic>imu${id}/data</topic>
+        <gz_frame_id>imu${id}_link</gz_frame_id>
+        <imu>
+          <angular_velocity>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <!-- ISM330DLC gyro noise ~8.5 mdps/sqrt(Hz) = ~0.000148 rad/s/sqrt(Hz) -->
+                <stddev>0.00148</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.00001</bias_stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.00148</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.00001</bias_stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.00148</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.00001</bias_stddev>
+              </noise>
+            </z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <!-- ISM330DLC accel noise ~180 ug/sqrt(Hz) = ~0.00177 m/s^2/sqrt(Hz) -->
+                <stddev>0.0177</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.0001</bias_stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.0177</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.0001</bias_stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.0177</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.0001</bias_stddev>
+              </noise>
+            </z>
+          </linear_acceleration>
+          <!-- Orientation noise ensures a non-zero covariance is published.
+               robot_localization uses this to weight the absolute-yaw measurement
+               (imu0_config index 5) against wheel odometry heading. -->
+          <orientation>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.005</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.0001</bias_stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.005</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.0001</bias_stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.005</stddev>
+                <bias_mean>0.0</bias_mean>
+                <bias_stddev>0.0001</bias_stddev>
+              </noise>
+            </z>
+          </orientation>
+        </imu>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>
