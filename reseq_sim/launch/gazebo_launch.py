@@ -25,10 +25,6 @@ def generate_launch_description():
         description='File containing bridge topics between gazebo and ros2',
     )
 
-    ###################################
-    # START GAZEBO AND SPAWN ENTITIES #
-    ###################################
-
     world_path = PathJoinSubstitution(
         [get_package_share_directory(package_name), 'worlds', LaunchConfiguration('world')]
     )

@@ -58,6 +58,7 @@ def launch_setup(context, *args, **kwargs):
             'version': 'mk2',
             'config_path': robot_config_file,
             'controllers_config_file': controllers_config_file,
+            'base_z': '0.0',
         },
     ).toxml()
 
@@ -68,6 +69,10 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
+    launch_entities = [
+        robot_state_publisher_node,
+    ]
+
     cartesian_arm_controller_node = Node(
         package='reseq_arm_mk2',
         executable='cartesian_arm_controller',
@@ -75,7 +80,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             {
                 'robot_description': robot_description,
-                'state_topic': '/arm_joint_states',
+                'state_topic': '/joint_states',
                 'chain_tip': 'tcp',
                 'command_frame': 'arm_base_link',
                 'command_mode': command_mode,
@@ -87,11 +92,6 @@ def launch_setup(context, *args, **kwargs):
         ],
         output='screen',
     )
-
-    launch_entities = [
-        robot_state_publisher_node,
-        cartesian_arm_controller_node,
-    ]
 
     if not sim:
         control_node = Node(
@@ -122,11 +122,8 @@ def launch_setup(context, *args, **kwargs):
             cmd=[
                 'bash',
                 '-lc',
-                (
-                    'until ros2 service list --include-hidden-services '
-                    '| grep -Fxq /controller_manager/list_controllers; '
-                    'do sleep 1; done'
-                ),
+                'until ros2 service type /controller_manager/list_controllers '
+                '> /dev/null 2>&1; do sleep 1; done',
             ],
             output='screen',
         )
@@ -168,6 +165,9 @@ def launch_setup(context, *args, **kwargs):
                 ),
             ]
         )
+        launch_entities.append(cartesian_arm_controller_node)
+    else:
+        launch_entities.append(cartesian_arm_controller_node)
 
     if use_moveit:
         launch_entities.append(

@@ -38,6 +38,86 @@ else:
         _HAS_KDL = True
 
 
+def _clamp_joint_velocity_to_limits(
+    current_q: np.ndarray,
+    dq: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    dt: float,
+) -> np.ndarray:
+    """Clamp per-joint velocity so the next step cannot cross hard limits."""
+    dq_limited = np.array(dq, dtype=float, copy=True)
+    for i in range(len(dq_limited)):
+        if dq_limited[i] > 0.0:
+            remaining = max(0.0, q_hi[i] - current_q[i])
+            dq_limited[i] = min(dq_limited[i], remaining / dt)
+        elif dq_limited[i] < 0.0:
+            remaining = max(0.0, current_q[i] - q_lo[i])
+            dq_limited[i] = max(dq_limited[i], -remaining / dt)
+    return dq_limited
+
+
+def _compute_joint_hold_velocity(
+    current_q: np.ndarray,
+    target_q: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    dt: float,
+    gain: float,
+    max_joint_vel: float,
+    tolerance: float,
+) -> np.ndarray:
+    """Proportional pose hold in joint-velocity space around a target pose."""
+    error = target_q - current_q
+    dq = gain * error
+    dq[np.abs(error) <= tolerance] = 0.0
+    dq = np.clip(dq, -max_joint_vel, max_joint_vel)
+    return _clamp_joint_velocity_to_limits(current_q, dq, q_lo, q_hi, dt)
+
+
+def _advance_velocity_hold_target(
+    current_q: np.ndarray,
+    dq: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    dt: float,
+) -> np.ndarray:
+    """Keep the velocity-mode hold target near the measured arm state.
+
+    In velocity mode the robot only receives `dq`, not a future joint position
+    target. Advancing the internal hold target by a long trajectory horizon
+    makes the arm chase a phantom pose when the operator releases the stick.
+    """
+    return np.clip(current_q + dq * dt, q_lo, q_hi)
+
+
+def _startup_recovery_command(
+    current_q: np.ndarray,
+    target_q: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    dt: float,
+    gain: float,
+    max_joint_vel: float,
+    tolerance: float,
+) -> tuple[np.ndarray, bool]:
+    """Return the startup hold velocity and whether the target pose is reached."""
+    max_error = float(np.max(np.abs(target_q - current_q)))
+    if max_error <= tolerance:
+        return np.zeros_like(current_q), True
+    dq = _compute_joint_hold_velocity(
+        current_q=current_q,
+        target_q=target_q,
+        q_lo=q_lo,
+        q_hi=q_hi,
+        dt=dt,
+        gain=gain,
+        max_joint_vel=max_joint_vel,
+        tolerance=tolerance,
+    )
+    return dq, False
+
+
 class CartesianArmController(Node):
     """
     Jacobian-based Cartesian arm controller.
@@ -118,8 +198,8 @@ class CartesianArmController(Node):
         self.declare_parameter('deadzone', 0.02)
         self.declare_parameter('jacobian_damping', 0.05)
         self.declare_parameter('joint_weights', self.JOINT_WEIGHTS.tolist())
-        self.declare_parameter('limit_margin', 0.35)
-        self.declare_parameter('limit_avoidance_gain', 0.35)
+        self.declare_parameter('idle_hold_gain', 1.5)
+        self.declare_parameter('idle_hold_tolerance', 0.01)
 
         # Internal state.
         self._q: np.ndarray | None = None  # measured joint positions
@@ -131,14 +211,20 @@ class CartesianArmController(Node):
         self._ee_z_ref: float | None = None
         self._diag_ctr = 0
         self._home_active = False
-        self._home_position: np.ndarray | None = None
+        self._startup_home: np.ndarray | None = None
+        self._startup_measured_pose: np.ndarray | None = None
         self._startup_hold_sent = False
+        self._startup_hold_complete = False
+        self._startup_recovery_active = False
+        self._startup_recovery_logged = False
         startup_hold_positions = list(self.get_parameter('startup_hold_positions').value)
         self._startup_hold_target = None
         if len(startup_hold_positions) == self.N_JOINTS:
             startup_hold_array = np.array(startup_hold_positions, dtype=float)
             if np.isfinite(startup_hold_array).any():
                 self._startup_hold_target = startup_hold_array
+        if self._startup_hold_target is None:
+            self._startup_hold_complete = True
 
         joint_weights_param = self.get_parameter('joint_weights').value
         if isinstance(joint_weights_param, (list, tuple, np.ndarray)) and (
@@ -310,11 +396,29 @@ class CartesianArmController(Node):
         pos_map = dict(zip(msg.name, msg.position))
         try:
             self._q = np.array([pos_map[n] for n in self.JOINT_NAMES])
-            if self._home_position is None:
-                self._home_position = self._q.copy()
-                self.get_logger().info(
-                    f'Captured startup home pose: {np.round(self._home_position, 3).tolist()}'
+            if self._startup_home is None:
+                self._startup_measured_pose = self._q.copy()
+                hold_tolerance = (
+                    self.get_parameter('idle_hold_tolerance').get_parameter_value().double_value
                 )
+                if self._startup_hold_target is not None:
+                    self._startup_home = np.clip(self._startup_hold_target, self._q_lo, self._q_hi)
+                    startup_error = float(
+                        np.max(np.abs(self._startup_home - self._startup_measured_pose))
+                    )
+                    self._startup_recovery_active = startup_error > hold_tolerance
+                    self._startup_hold_complete = not self._startup_recovery_active
+                    self.get_logger().info(
+                        'Captured startup joint state: '
+                        f'measured={np.round(self._startup_measured_pose, 3).tolist()} '
+                        f'hold_target={np.round(self._startup_home, 3).tolist()}'
+                    )
+                else:
+                    self._startup_home = self._q.copy()
+                    self._startup_hold_complete = True
+                    self.get_logger().info(
+                        f'Captured startup home pose: {np.round(self._startup_home, 3).tolist()}'
+                    )
         except KeyError:
             pass  # not all arm joints present yet
 
@@ -451,16 +555,14 @@ class CartesianArmController(Node):
 
         # Initialize the integrator on the first valid joint state.
         if self._q_cmd is None:
-            self._q_cmd = self._q.copy()
+            self._q_cmd = (
+                self._startup_home.copy() if self._startup_home is not None else self._q.copy()
+            )
             self._moving = False
 
         if self._command_mode == 'trajectory' and not self._startup_hold_sent:
             if self._traj_pub.get_subscription_count() > 0:
-                startup_target = (
-                    np.clip(self._startup_hold_target, self._q_lo, self._q_hi)
-                    if self._startup_hold_target is not None
-                    else self._q.copy()
-                )
+                startup_target = self._q_cmd.copy() if self._q_cmd is not None else self._q.copy()
                 self._q_cmd = startup_target.copy()
                 self._publish_traj(self._q.tolist(), startup_target.tolist(), 0.1)
                 self._startup_hold_sent = True
@@ -478,17 +580,45 @@ class CartesianArmController(Node):
             self._run_home_velocity()
             return
 
+        if self._startup_recovery_active:
+            self._run_startup_recovery()
+            return
+
         # Ignore tiny inputs.
         if cmd_norm <= idle_threshold:
             if self._command_mode == 'velocity':
-                self._publish_velocity([0.0] * self.N_JOINTS)
+                max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
+                hold_gain = self.get_parameter('idle_hold_gain').get_parameter_value().double_value
+                hold_tolerance = (
+                    self.get_parameter('idle_hold_tolerance').get_parameter_value().double_value
+                )
+                hold_target = self._q_cmd.copy() if self._q_cmd is not None else self._q.copy()
+                if not self._startup_hold_complete and self._startup_hold_target is not None:
+                    startup_target = np.clip(self._startup_hold_target, self._q_lo, self._q_hi)
+                    hold_target = startup_target
+                    if float(np.max(np.abs(startup_target - self._q))) <= hold_tolerance:
+                        self._startup_hold_complete = True
+                hold_dq = _compute_joint_hold_velocity(
+                    current_q=self._q,
+                    target_q=hold_target,
+                    q_lo=self._q_lo,
+                    q_hi=self._q_hi,
+                    dt=self._dt,
+                    gain=hold_gain,
+                    max_joint_vel=max_jv,
+                    tolerance=hold_tolerance,
+                )
+                self._q_cmd = hold_target.copy()
+                self._publish_velocity(hold_dq.tolist())
             else:
                 # In trajectory mode the arm needs a steady hold target while idle.
                 # Without this, Gazebo can let the joints settle under gravity after
                 # the last short trajectory finishes, which shows up as a startup tilt.
-                hold_target = self._q_cmd.tolist() if self._q_cmd is not None else self._q.tolist()
+                hold_target = (
+                    self._q_cmd.tolist() if self._q_cmd is not None else self._q.tolist()
+                )
                 self._publish_traj(self._q.tolist(), hold_target, 0.1)
-                self._moving = False
+            self._moving = False
             self._ee_z_ref = None
             return
 
@@ -521,7 +651,6 @@ class CartesianArmController(Node):
             z_hold_vel = 2.0 * z_error
             cart_vel[2] = float(np.clip(z_hold_vel, -max_cv, max_cv))
 
-        # Use the command-side state so the linearization matches the update step.
         J = self._get_jacobian(solve_q)
         if J is None:
             return
@@ -550,38 +679,16 @@ class CartesianArmController(Node):
             vel_scale = max_jv / peak
             dq[:active_dofs] *= vel_scale
 
-        # Pull gently away from hard joint limits so the arm can recover
-        # instead of getting stuck with one saturated joint dominating the solve.
-        limit_margin = self.get_parameter('limit_margin').get_parameter_value().double_value
-        limit_avoidance_gain = (
-            self.get_parameter('limit_avoidance_gain').get_parameter_value().double_value
-        )
-        limit_bias = np.zeros(self.N_JOINTS)
-        for i in range(active_dofs):
-            dist_lo = max(0.0, solve_q[i] - self._q_lo[i])
-            dist_hi = max(0.0, self._q_hi[i] - solve_q[i])
-            if dist_lo < limit_margin:
-                limit_bias[i] += limit_avoidance_gain * (1.0 - dist_lo / limit_margin)
-            if dist_hi < limit_margin:
-                limit_bias[i] -= limit_avoidance_gain * (1.0 - dist_hi / limit_margin)
-        dq[:active_dofs] += limit_bias[:active_dofs]
-
         # Clamp only the joints that would violate their bounds. This keeps the
         # remaining joints free to continue moving instead of freezing the whole arm.
         joints_clipped: list[str] = []
+        dq_before_clamp = dq.copy()
+        dq = _clamp_joint_velocity_to_limits(solve_q, dq, self._q_lo, self._q_hi, self._dt)
         for i in range(active_dofs):
-            if dq[i] > 0.0:
-                remaining = max(0.0, self._q_hi[i] - solve_q[i])
-                max_step = remaining / self._dt
-                if dq[i] > max_step:
-                    dq[i] = max_step
-                    joints_clipped.append(f'J{i}↑')
-            elif dq[i] < 0.0:
-                remaining = max(0.0, solve_q[i] - self._q_lo[i])
-                min_step = -remaining / self._dt
-                if dq[i] < min_step:
-                    dq[i] = min_step
-                    joints_clipped.append(f'J{i}↓')
+            if dq_before_clamp[i] > 0.0 and dq[i] < dq_before_clamp[i]:
+                joints_clipped.append(f'J{i}↑')
+            elif dq_before_clamp[i] < 0.0 and dq[i] > dq_before_clamp[i]:
+                joints_clipped.append(f'J{i}↓')
 
         # In trajectory mode, generate the next target from the measured pose.
         # This keeps the published joint step consistent with the Jacobian
@@ -590,7 +697,16 @@ class CartesianArmController(Node):
         if self._command_mode == 'trajectory':
             self._q_cmd = np.clip(solve_q + dq * horizon, self._q_lo, self._q_hi)
         else:
-            self._q_cmd = np.clip(self._q_cmd + dq * horizon, self._q_lo, self._q_hi)
+            # Velocity mode should hold near the actual arm pose, not a
+            # long-horizon prediction. Using the trajectory lookahead here
+            # causes a snap when manual input returns to zero.
+            self._q_cmd = _advance_velocity_hold_target(
+                current_q=solve_q,
+                dq=dq,
+                q_lo=self._q_lo,
+                q_hi=self._q_hi,
+                dt=self._dt,
+            )
 
         # Print diagnostics at 1 Hz.
         self._diag_ctr += 1
@@ -617,7 +733,7 @@ class CartesianArmController(Node):
             self._publish_traj(self._q.tolist(), self._q_cmd.tolist(), horizon)
 
     def _run_home_velocity(self):
-        """Drive the arm toward HOME_POSITION when the node is in velocity mode."""
+        """Drive the arm toward the configured home target in velocity mode."""
         if self._q is None:
             return
 
@@ -639,19 +755,54 @@ class CartesianArmController(Node):
         dq = error * home_gain
         dq = np.clip(dq, -max_jv, max_jv)
 
-        for i in range(self.N_JOINTS):
-            if dq[i] > 0.0:
-                remaining = max(0.0, self._q_hi[i] - self._q[i])
-                dq[i] = min(dq[i], remaining / self._dt)
-            elif dq[i] < 0.0:
-                remaining = max(0.0, self._q[i] - self._q_lo[i])
-                dq[i] = max(dq[i], -remaining / self._dt)
+        dq = _clamp_joint_velocity_to_limits(self._q, dq, self._q_lo, self._q_hi, self._dt)
+
+        self._publish_velocity(dq.tolist())
+
+    def _run_startup_recovery(self):
+        """Recover the arm to the configured startup hold pose before accepting manual motion."""
+        if self._q is None or self._startup_home is None:
+            return
+
+        max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
+        hold_gain = self.get_parameter('idle_hold_gain').get_parameter_value().double_value
+        hold_tolerance = self.get_parameter('idle_hold_tolerance').get_parameter_value().double_value
+        dq, reached_target = _startup_recovery_command(
+            current_q=self._q,
+            target_q=self._startup_home,
+            q_lo=self._q_lo,
+            q_hi=self._q_hi,
+            dt=self._dt,
+            gain=hold_gain,
+            max_joint_vel=max_jv,
+            tolerance=hold_tolerance,
+        )
+
+        self._q_cmd = self._startup_home.copy()
+        self._moving = False
+        self._ee_z_ref = None
+
+        if not self._startup_recovery_logged:
+            self.get_logger().info(
+                'Startup recovery active: '
+                f'measured={np.round(self._q, 3).tolist()} '
+                f'target={np.round(self._startup_home, 3).tolist()}'
+            )
+            self._startup_recovery_logged = True
+
+        if reached_target:
+            self._startup_recovery_active = False
+            self._startup_hold_complete = True
+            self._startup_recovery_logged = False
+            self._publish_velocity([0.0] * self.N_JOINTS)
+            self.get_logger().info('Startup recovery complete.')
+            return
 
         self._publish_velocity(dq.tolist())
 
     def _get_home_position(self) -> np.ndarray:
-        if self._home_position is not None:
-            return self._home_position.copy()
+        if self._startup_home is not None:
+            return self._startup_home.copy()
         return np.array(self.HOME_POSITION, dtype=float)
 
     # Trajectory publisher.

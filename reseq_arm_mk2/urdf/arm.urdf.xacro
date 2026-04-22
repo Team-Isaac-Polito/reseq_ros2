@@ -2,19 +2,20 @@
 
 <robot
     name="reseq_arm_mk2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:arg name="sim_mode" default="false" />
+    <xacro:arg name="version" default="mk2" />
+    <xacro:arg name="config_path" default="$(find reseq_description)/config/mk2/reseq_mk2_can.yaml" />
+    <xacro:arg name="controllers_config_file" default="$(find reseq_description)/config/reseq_controllers.yaml" />
+    <xacro:arg name="base_z" default="0.0" />
     
     <link name="world" />
 
     <joint name="world_to_base_joint" type="fixed">
         <parent link="world"/> 
         <child link="arm_base_link"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 $(arg base_z)" rpy="0 0 0"/>
     </joint>
-    
-    <xacro:arg name="sim_mode" default="false" />
-    <xacro:arg name="version" default="mk2" />
-    <xacro:arg name="config_path" default="$(find reseq_description)/config/mk2/reseq_mk2_can.yaml" />
-    <xacro:arg name="controllers_config_file" default="$(find reseq_description)/config/reseq_controllers.yaml" />
 
     <xacro:property name="config_path_prop" value="$(arg config_path)" />
     <xacro:property name="config" value="${xacro.load_yaml(config_path_prop)}" />

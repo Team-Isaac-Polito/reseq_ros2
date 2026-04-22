@@ -119,11 +119,7 @@ def launch_setup(context, *args, **kwargs):
         cmd=[
             'bash',
             '-lc',
-            (
-                'until ros2 service list --include-hidden-services '
-                '| grep -Fxq /controller_manager/list_controllers; '
-                'do sleep 1; done'
-            ),
+            'until ros2 service type /controller_manager/list_controllers >/dev/null 2>&1; do sleep 1; done',
         ],
         output='screen',
     )

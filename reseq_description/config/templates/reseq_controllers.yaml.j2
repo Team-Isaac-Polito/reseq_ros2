@@ -14,9 +14,6 @@ controller_manager:
 {% endif %}
 
 {% if arm_controller %}
-    mk2_arm_controller:
-      type: joint_trajectory_controller/JointTrajectoryController
-
     joint_group_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
 {% endif %}
@@ -45,27 +42,6 @@ diff_controller{{ i + 1 }}:
 {% endif %}
 
 {% if arm_controller %}
-mk2_arm_controller:
-  ros__parameters:
-    joints:
-      - mod1__base_pitch_arm_joint
-      - mod1__base_roll_arm_joint
-      - mod1__elbow_pitch_arm_joint
-      - mod1__forearm_roll_arm_joint
-      - mod1__wrist_pitch_arm_joint
-      - mod1__wrist_roll_arm_joint
-    command_interfaces:
-      - position
-    state_interfaces:
-      - position
-      - velocity
-    action_monitor_rate: 10.0
-    allow_nonzero_velocity_at_trajectory_start: false
-    continue_last_state: false
-    default_tolerances:
-      goals: 0.1
-      goal_state: 0.1
-
 joint_group_velocity_controller:
   ros__parameters:
     interface_name: velocity
