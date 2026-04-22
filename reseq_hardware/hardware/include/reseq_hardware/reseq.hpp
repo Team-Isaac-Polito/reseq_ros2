@@ -28,6 +28,10 @@ namespace reseq_hardware
 const uint8_t HANDSHAKE_MSG_ID = 0x22;
 const int THROTTLE_WARN = 5000;
 
+/// Format: 6 bytes = 3 × int16_t (little-endian: x, y, z)
+const uint8_t IMU_RAW_ACCEL = 0x92;  ///< Accelerometer: 0.061 mg/LSB at ±2g
+const uint8_t IMU_RAW_GYRO  = 0x93;  ///< Gyroscope: 0.004375 dps/LSB at 125dps
+
 /**
  * @brief Obtains the module ID from the index and robot version.
  * @param idx Index value.
@@ -46,6 +50,27 @@ struct JointBuffers
   std::vector<double> velocity;
   std::vector<double> effort;
   std::vector<double> command;
+};
+
+/**
+ * @brief Per-sensor data buffers for IMU state interfaces.
+ * Each vector stores values for all sensors packed as [sensor0, sensor1, ...].
+ * orientation: 4 values/sensor (x,y,z,w); angular_velocity/linear_acceleration: 3 values/sensor.
+ */
+struct ImuSensorBuffers
+{
+  std::vector<double> orientation;           ///< x, y, z, w per sensor
+  std::vector<double> angular_velocity;      ///< rad/s per sensor
+  std::vector<double> linear_acceleration;   ///< m/s² per sensor
+};
+
+/**
+ * @brief Information about a registered IMU sensor.
+ */
+struct ImuSensorInfo
+{
+  size_t index;       ///< 0-based index into ImuSensorBuffers vectors
+  uint8_t module_id;  ///< CAN mod_id (e.g. 0x21 for module 1, mk2)
 };
 
 /**
@@ -188,6 +213,9 @@ private:
   std::map<CanID, CanMessageMapping> can_mappings_;        ///< CAN message mappings.
   JointBuffers joint_buffers_;                             ///< Buffers for joint data.
   MessageBuffer recv_buffer_;                              ///< Buffer for received messages.
+
+  std::unordered_map<std::string, ImuSensorInfo> sensor_info_;  ///< IMU sensor information map.
+  ImuSensorBuffers sensor_buffers_;                             ///< Buffers for IMU sensor data.
 
   std::chrono::steady_clock::time_point last_write_time_{std::chrono::steady_clock::now()};
   std::chrono::milliseconds command_cycle_{80};    ///< Command cycle duration.

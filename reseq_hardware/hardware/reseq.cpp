@@ -1,4 +1,5 @@
 #include "reseq_hardware/reseq.hpp"
+#include <cmath>                                 // for M_PI
 #include <stddef.h>                              // for size_t
 #include <ratio>                                 // for ratio
 #include <rclcpp/clock.hpp>                      // for Clock::SharedPtr
@@ -74,6 +75,28 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
 
   // Parse configuration file for CAN mappings
   parse_config_file(config_file_);
+
+  // Parse IMU sensors declared in the ros2_control URDF block
+  // Expected sensor names: "imu1", "imu2", etc. (1-based module index)
+  const size_t num_sensors = info.sensors.size();
+  sensor_buffers_.orientation.resize(num_sensors * 4, 0.0);
+  sensor_buffers_.angular_velocity.resize(num_sensors * 3, 0.0);
+  sensor_buffers_.linear_acceleration.resize(num_sensors * 3, 0.0);
+  // Initialise all orientations to identity quaternion (w = 1, x = y = z = 0)
+  for (size_t i = 0; i < num_sensors; i++) {
+    sensor_buffers_.orientation[i * 4 + 3] = 1.0;
+  }
+  sensor_info_.clear();
+  for (size_t i = 0; i < num_sensors; i++) {
+    const auto & sensor = info.sensors[i];
+    // Strip the "imu" prefix to get the 1-based module index
+    const uint8_t mod_idx = static_cast<uint8_t>(std::stoul(sensor.name.substr(3)));
+    const uint8_t mod_id = idx_to_mod(mod_idx, mk_version_);
+    sensor_info_[sensor.name] = ImuSensorInfo{i, mod_id};
+    RCLCPP_INFO(
+      rclcpp::get_logger("ReseqHardware"),
+      "Registered IMU sensor: %s (mod_id=0x%02X)", sensor.name.c_str(), mod_id);
+  }
 
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -188,6 +211,38 @@ hardware_interface::return_type ReseqHardware::read(
         *clock_,
         THROTTLE_WARN,
         "Stale CAN message received: %02X%02X", snap.id.mod_id, snap.id.msg_id);
+      continue;
+    }
+
+    // Handle raw IMU CAN messages (0x92 accel, 0x93 gyro) from ISM330DLC / LSM6DSL
+    // Format: 6 bytes = 3 × int16_t little-endian (x, y, z)
+    // Sensitivity: accel 0.061 mg/LSB at ±2g; gyro 0.004375 dps/LSB at 125dps
+    if (snap.id.msg_id == IMU_RAW_ACCEL || snap.id.msg_id == IMU_RAW_GYRO) {
+      if (snap.size >= 6) {
+        const uint8_t mod_idx = (snap.id.mod_id - static_cast<uint8_t>(mk_version_ * 0x10)) & 0x0F;
+        const std::string sensor_name = "imu" + std::to_string(mod_idx);
+        const auto it = sensor_info_.find(sensor_name);
+        if (it != sensor_info_.end()) {
+          int16_t rx, ry, rz;
+          std::memcpy(&rx, snap.data + 0, sizeof(int16_t));
+          std::memcpy(&ry, snap.data + 2, sizeof(int16_t));
+          std::memcpy(&rz, snap.data + 4, sizeof(int16_t));
+          const size_t idx = it->second.index;
+          if (snap.id.msg_id == IMU_RAW_ACCEL) {
+            // 0.061 mg/LSB × 1e-3 g/mg × 9.80665 m/s²/g
+            constexpr double ACCEL_SCALE = 0.061e-3 * 9.80665;
+            sensor_buffers_.linear_acceleration[idx * 3 + 0] = rx * ACCEL_SCALE;
+            sensor_buffers_.linear_acceleration[idx * 3 + 1] = ry * ACCEL_SCALE;
+            sensor_buffers_.linear_acceleration[idx * 3 + 2] = rz * ACCEL_SCALE;
+          } else {
+            // 0.004375 dps/LSB × π/180 rad/dps
+            const double GYRO_SCALE = 0.004375 * M_PI / 180.0;
+            sensor_buffers_.angular_velocity[idx * 3 + 0] = rx * GYRO_SCALE;
+            sensor_buffers_.angular_velocity[idx * 3 + 1] = ry * GYRO_SCALE;
+            sensor_buffers_.angular_velocity[idx * 3 + 2] = rz * GYRO_SCALE;
+          }
+        }
+      }
       continue;
     }
 
@@ -306,6 +361,20 @@ std::vector<hardware_interface::StateInterface> ReseqHardware::export_state_inte
           joint_name, state_mode,
           buffer_ptr));
     }
+  }
+  // Add IMU sensor state interfaces (10 interfaces per sensor)
+  for (const auto & [sensor_name, sinfo] : sensor_info_) {
+    const size_t idx = sinfo.index;
+    state_ifs.emplace_back(sensor_name, "orientation.x",         &sensor_buffers_.orientation[idx * 4 + 0]);
+    state_ifs.emplace_back(sensor_name, "orientation.y",         &sensor_buffers_.orientation[idx * 4 + 1]);
+    state_ifs.emplace_back(sensor_name, "orientation.z",         &sensor_buffers_.orientation[idx * 4 + 2]);
+    state_ifs.emplace_back(sensor_name, "orientation.w",         &sensor_buffers_.orientation[idx * 4 + 3]);
+    state_ifs.emplace_back(sensor_name, "angular_velocity.x",    &sensor_buffers_.angular_velocity[idx * 3 + 0]);
+    state_ifs.emplace_back(sensor_name, "angular_velocity.y",    &sensor_buffers_.angular_velocity[idx * 3 + 1]);
+    state_ifs.emplace_back(sensor_name, "angular_velocity.z",    &sensor_buffers_.angular_velocity[idx * 3 + 2]);
+    state_ifs.emplace_back(sensor_name, "linear_acceleration.x", &sensor_buffers_.linear_acceleration[idx * 3 + 0]);
+    state_ifs.emplace_back(sensor_name, "linear_acceleration.y", &sensor_buffers_.linear_acceleration[idx * 3 + 1]);
+    state_ifs.emplace_back(sensor_name, "linear_acceleration.z", &sensor_buffers_.linear_acceleration[idx * 3 + 2]);
   }
   return state_ifs;
 }
