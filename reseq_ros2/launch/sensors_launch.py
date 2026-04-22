@@ -126,6 +126,18 @@ def launch_setup(context, *args, **kwargs):
                             arguments=['--ros-args', '--log-level', external_log_level],
                         )
                     )
+            # Adds the Thermal Camera Node if thermal is set to true in the config file
+            if name == 'thermal':
+                launch_config.append(
+                    Node(
+                        package='reseq_ros2',
+                        executable='thermal_node',
+                        name='thermal_node',
+                        parameters=[{'use_sim_time': use_sim_time == 'true'}],
+                        arguments=['--ros-args', '--log-level', external_log_level],
+                        output='screen',
+                    )
+                )
 
     return launch_config
 
