@@ -13,8 +13,12 @@ from launch.actions import (
 )
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.launch_description_sources import (
+    FrontendLaunchDescriptionSource,
+    PythonLaunchDescriptionSource,
+)
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 from reseq_ros2.utils.launch_utils import default_filename
 
@@ -145,6 +149,29 @@ def launch_setup(context, *args, **kwargs):
             )
         )
 
+    # App launch file
+    app_enabled = LaunchConfiguration('app').perform(context)
+    if app_enabled == 'true':
+        # include the rosebridge websocket server
+        rosbridge_launch_file = os.path.join(
+            get_package_share_directory('rosbridge_server'),
+            'launch',
+            'rosbridge_websocket_launch.xml',
+        )
+        launch_config.append(
+            IncludeLaunchDescription(FrontendLaunchDescriptionSource(rosbridge_launch_file))
+        )
+        # include the app gateway node
+        launch_config.append(
+            Node(
+                package='reseq_ros2',
+                executable='app_gateway',
+                name='app_gateway',
+                parameters=[{'use_sim_time': use_sim_time == 'true'}],
+                output='screen',
+            )
+        )
+
     return launch_config
 
 
@@ -236,6 +263,11 @@ def generate_launch_description():
                 'external_log_level',
                 default_value='warn',
                 description='Set log level for external nodes',
+            ),
+            DeclareLaunchArgument(
+                'app',
+                default_value='true',
+                description='Enable Mobile App support (rosbridge and app_gateway)',
             ),
             # this argument is passed as 'true' by sim_launch.py file
             DeclareLaunchArgument('use_sim_time', default_value='false'),

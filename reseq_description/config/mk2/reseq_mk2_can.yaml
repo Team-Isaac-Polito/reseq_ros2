@@ -23,3 +23,4 @@ sensors:
   - realsense: true
   - lidar: true
   - usb_cameras: 2
+  - thermal: true
