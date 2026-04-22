@@ -23,14 +23,14 @@
 
 # Docker file for aarch64 based Jetson device
 ARG BASE_IMAGE="nvcr.io/nvidia/l4t-cuda:12.2.12-devel"
-FROM ${BASE_IMAGE} as nvidia-realsense
+FROM ${BASE_IMAGE} AS nvidia-realsense
 
 # Store list of packages (must be first)
 RUN mkdir -p /opt/nvidia/isaac_ros_dev_base && dpkg-query -W | sort > /opt/nvidia/isaac_ros_dev_base/aarch64-start-packages.csv
 
 # Disable terminal interaction for apt
 ENV DEBIAN_FRONTEND=noninteractive
-ENV SHELL /bin/bash
+ENV SHELL=/bin/bash
 SHELL ["/bin/bash", "-c"]
 
 # Ensure we have universe
@@ -378,8 +378,26 @@ ARG INSTALL_DEV_TOOLS=true
 # Keep only image-specific extras here; workspace-declared ROS packages are
 # resolved by rosdep in the final stage from the checked-out package.xml files.
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-humble-xacro \
+    ros-humble-image-transport-plugins \
+    ros-humble-rplidar-ros \
     ros-humble-rosbridge-server \
+    ros-humble-usb-cam \
+    ros-humble-controller-manager \
+    ros-humble-diff-drive-controller \
+    ros-humble-joint-state-broadcaster \
     ros-humble-slam-toolbox \
+    ros-humble-ros2-control-test-assets \
+    ros-humble-geometry-msgs \
+    ros-humble-moveit-ros-move-group \
+    ros-humble-moveit-servo \
+    ros-humble-moveit-configs-utils \
+    ros-humble-moveit-planners-ompl \
+    ros-humble-moveit-kinematics \
+    ros-humble-pick-ik \
+    ros-humble-ros2controlcli \
+    ros-humble-forward-command-controller \
+    ros-humble-velocity-controllers \
     iproute2 \
     usbutils \
     python3-libnvinfer-dev \
@@ -399,14 +417,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir \
         ultralytics \
         opencv-contrib-python \
-        numpy==1.23.5 \
         Jetson.GPIO \
         adafruit-circuitpython-mlx90640 \
         adafruit-blinka \
     && wget https://nvidia.box.com/shared/static/mp164asf3sceb570wvjsrezk1p4ftj8t.whl -O torch-2.3.0-cp310-cp310-linux_aarch64.whl \
     && wget https://nvidia.box.com/shared/static/u0ziu01c0kyji4zz3gxam79181nebylf.whl -O torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl \
     && wget https://nvidia.box.com/shared/static/48dtuob7meiw6ebgfsfqakc9vse62sg4.whl -O onnxruntime_gpu-1.18.0-cp310-cp310-linux_aarch64.whl \
-    \
     && pip install torch-2.3.0-cp310-cp310-linux_aarch64.whl \
     && pip install torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl \
     && pip install onnxruntime_gpu-1.18.0-cp310-cp310-linux_aarch64.whl \
@@ -416,6 +432,7 @@ RUN pip install --no-cache-dir \
     && apt-get update \
     && apt-get -y install libcusparselt0 libcusparselt-dev \
     && rm cuda-keyring_1.1-1_all.deb \
+    && pip install numpy==1.23.5 \
     && rm -rf /var/lib/apt/lists/* \
     && echo "Ultralytics and dependencies successfully installed using JetPack 6.0 compatible wheels."
 
