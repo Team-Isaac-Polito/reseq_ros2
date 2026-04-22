@@ -7,6 +7,7 @@ import rclpy
 from geometry_msgs.msg import Twist, Vector3
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+from std_msgs.msg import Bool
 from std_srvs.srv import SetBool
 
 from reseq_interfaces.msg import Remote
@@ -80,6 +81,7 @@ class Scaler(Node):
         # initialize the button/switch handlers
         self.previous_buttons = [False, False, False, False, False, True, True, True, True, True]
         self.control_mode = Scaler.control_mode_enum.AGEVAR
+        self.autonomy_enabled = False
 
         self.r_linear_vel = (
             self.declare_parameter('r_linear_vel', [-0.1600, -0.1600])
@@ -87,12 +89,12 @@ class Scaler(Node):
             .double_array_value
         )
         self.r_inverse_radius = (
-            self.declare_parameter('r_inverse_radius', [-2.5478, -2.5478])
+            self.declare_parameter('r_inverse_radius', [-2.5478, 2.5478])
             .get_parameter_value()
             .double_array_value
         )
         self.r_angular_vel = (
-            self.declare_parameter('r_angular_vel', [-2.4912, -2.4912])
+            self.declare_parameter('r_angular_vel', [-2.4912, 2.4912])
             .get_parameter_value()
             .double_array_value
         )
@@ -104,9 +106,21 @@ class Scaler(Node):
 
         self.moveit_pub = self.create_publisher(Vector3, '/mk2_arm_vel', 10)
 
-        self.speed_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.speed_pub = self.create_publisher(Twist, '/cmd_vel_teleop', 10)
+        self.autonomy_pub = self.create_publisher(Bool, '/autonomy/enabled', 10)
+
+        self.create_service(SetBool, '/autonomy/enable', self.handle_autonomy_enable)
 
         self.get_logger().info('Scaler node started')
+
+    def handle_autonomy_enable(
+        self, request: SetBool.Request, response: SetBool.Response
+    ) -> SetBool.Response:
+        self.autonomy_enabled = request.data
+        self.autonomy_pub.publish(Bool(data=self.autonomy_enabled))
+        response.success = True
+        response.message = 'Autonomy enabled' if self.autonomy_enabled else 'Autonomy disabled'
+        return response
 
     def handle_buttons(self, buttons: list[bool]):
         if buttons == self.previous_buttons:
@@ -135,12 +149,13 @@ class Scaler(Node):
 
         # TODO probably to merge with another version of scaler.py
 
-        self.moveit_pub.publish(Vector3(
-            x = data.left.x,
-            y = data.left.y,
-            z = data.left.z,
-        ))
-
+        self.moveit_pub.publish(
+            Vector3(
+                x=data.left.x,
+                y=data.left.y,
+                z=data.left.z,
+            )
+        )
 
         if self.control_mode == Scaler.control_mode_enum.AGEVAR:
             cmd_vel = self.agevarScaler(cmd_vel)
