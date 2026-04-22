@@ -844,10 +844,12 @@ class CartesianArmController(Node):
             self._startup_home is not None
             and self._front_x_ref is not None
             and abs(cart_vel_cmd[0]) < deadzone
+            and abs(cart_vel_cmd[1]) > deadzone
             and self._front_branch_gain > 0.0
         ):
             # Bias the nullspace toward the startup/front branch while the user is
-            # only steering y/z. This keeps reversals from flipping to the back side.
+            # steering y. This keeps reversals from flipping to the back side without
+            # injecting a sideways pull into pure vertical motion.
             branch_bias = np.clip(
                 self._front_branch_gain * (self._startup_home - solve_q),
                 -0.25 * max_jv,
