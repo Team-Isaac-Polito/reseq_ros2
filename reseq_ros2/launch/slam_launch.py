@@ -9,7 +9,6 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import LaunchConfigurationEquals
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -22,7 +21,9 @@ def generate_launch_description():
         'slam_mode',
         default_value='mapping',
         choices=['mapping', 'localization'],
-        description='SLAM mode: mapping (build new map) or localization (localise on existing map)',
+        description=(
+            'SLAM mode: mapping (build new map) or localization (localise on an existing map)'
+        ),
     )
 
     params_arg = DeclareLaunchArgument(
@@ -47,11 +48,27 @@ def generate_launch_description():
         ],
     )
 
+    lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_slam',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'autostart': True,
+                'bond_timeout': 0.0,
+                'node_names': ['slam_toolbox'],
+            }
+        ],
+    )
+
     return LaunchDescription(
         [
             slam_mode_arg,
             params_arg,
             use_sim_time_arg,
             slam_node,
+            lifecycle_manager,
         ]
     )

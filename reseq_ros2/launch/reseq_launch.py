@@ -2,15 +2,9 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    EmitEvent,
-    ExecuteProcess,
-    IncludeLaunchDescription,
-    LogInfo,
-    OpaqueFunction,
-    RegisterEventHandler,
-)
+from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
+                            IncludeLaunchDescription, LogInfo, OpaqueFunction,
+                            RegisterEventHandler)
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.launch_description_sources import (
@@ -38,6 +32,11 @@ def launch_setup(context, *args, **kwargs):
     # add optional nodes for sensors
     sensors_enabled = LaunchConfiguration('sensors').perform(context)
     digital_twin_enabled = LaunchConfiguration('d_twin').perform(context)
+    autonomy_enabled = LaunchConfiguration('autonomy').perform(context)
+    map_file = LaunchConfiguration('map_file').perform(context).strip()
+    use_static_map = bool(map_file)
+    spawn_x = LaunchConfiguration('spawn_x').perform(context)
+    spawn_y = LaunchConfiguration('spawn_y').perform(context)
 
     # use simulation time: should only be used with gazebo that's why default value is 'false'
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
@@ -61,6 +60,8 @@ def launch_setup(context, *args, **kwargs):
             }.items(),
         )
     )
+
+    has_scan_pipeline = sensors_enabled == 'true' or use_sim_time == 'true'
 
     # Sensor launch file
     if sensors_enabled == 'true':
@@ -99,22 +100,41 @@ def launch_setup(context, *args, **kwargs):
                 print(f'Warning: computer_vision package not found: {e}')
                 pass
 
-        # SLAM launch (requires RPLIDAR from sensors)
-        slam_enabled = LaunchConfiguration('slam').perform(context)
-        if slam_enabled == 'true':
-            slam_mode = LaunchConfiguration('slam_mode').perform(context)
-            slam_launch_file = os.path.join(
-                get_package_share_directory('reseq_ros2'), 'launch', 'slam_launch.py'
+    slam_enabled = LaunchConfiguration('slam').perform(context)
+    if (
+        has_scan_pipeline
+        and not use_static_map
+        and (slam_enabled == 'true' or autonomy_enabled == 'true')
+    ):
+        slam_mode = LaunchConfiguration('slam_mode').perform(context)
+        slam_launch_file = os.path.join(
+            get_package_share_directory('reseq_ros2'), 'launch', 'slam_launch.py'
+        )
+        launch_config.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(slam_launch_file),
+                launch_arguments={
+                    'slam_mode': slam_mode,
+                    'use_sim_time': use_sim_time,
+                }.items(),
             )
-            launch_config.append(
-                IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(slam_launch_file),
-                    launch_arguments={
-                        'slam_mode': slam_mode,
-                        'use_sim_time': use_sim_time,
-                    }.items(),
-                )
+        )
+
+    if has_scan_pipeline and autonomy_enabled == 'true':
+        autonomy_launch_file = os.path.join(
+            get_package_share_directory('reseq_ros2'), 'launch', 'autonomy_launch.py'
+        )
+        launch_config.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(autonomy_launch_file),
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
+                    'map_file': map_file,
+                    'spawn_x': spawn_x,
+                    'spawn_y': spawn_y,
+                }.items(),
             )
+        )
 
     if digital_twin_enabled == 'true':
         # Digital twin launch file
@@ -181,6 +201,10 @@ def generate_config_setup(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     no_body_controllers = LaunchConfiguration('no_body_controllers').perform(context)
     no_arm_controllers = LaunchConfiguration('no_arm_controllers').perform(context)
+    arm_arg = LaunchConfiguration('arm').perform(context)
+
+    if arm_arg == 'false':
+        no_arm_controllers = 'true'
 
     cmd = [
         'python3',
@@ -255,6 +279,26 @@ def generate_launch_description():
                 default_value='mapping',
                 choices=['mapping', 'localization'],
                 description='SLAM mode: mapping (new map) or localization (existing map)',
+            ),
+            DeclareLaunchArgument(
+                'autonomy',
+                default_value='false',
+                description='Enable autonomous navigation and frontier exploration',
+            ),
+            DeclareLaunchArgument(
+                'map_file',
+                default_value='',
+                description='Optional static map yaml file for navigation without SLAM',
+            ),
+            DeclareLaunchArgument(
+                'spawn_x',
+                default_value='0.0',
+                description='Robot spawn x position used to align simulated static maps',
+            ),
+            DeclareLaunchArgument(
+                'spawn_y',
+                default_value='0.0',
+                description='Robot spawn y position used to align simulated static maps',
             ),
             DeclareLaunchArgument(
                 'log_level', default_value='info', description='Set log level for reseq nodes'
