@@ -222,6 +222,8 @@ hardware_interface::return_type ReseqHardware::read(
       double value = 0.0;
       if (field.data_type == "float32") {
         value = read_value<float>(snap.data, field.offset);
+      } else if (field.data_type == "int32") {
+        value = static_cast<double>(read_value<int32_t>(snap.data, field.offset));
       } else {
         RCLCPP_ERROR(
           rclcpp::get_logger(
@@ -277,6 +279,9 @@ hardware_interface::return_type ReseqHardware::write(
 
       if (field.data_type == "float32") {
         write_value<float>(data, field.offset, value);
+      } else if (field.data_type == "int32") {
+        int32_t int_value = static_cast<int32_t>(value);
+        write_value<int32_t>(data, field.offset, int_value);
       } else {
         RCLCPP_ERROR(
           rclcpp::get_logger(

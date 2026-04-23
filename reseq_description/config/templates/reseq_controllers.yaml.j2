@@ -16,6 +16,9 @@ controller_manager:
 {% if arm_controller %}
     mk2_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+
+    beak_controller:
+      type: position_controllers/JointGroupPositionController
 {% endif %}
 
 {% if body_controllers %}
@@ -62,4 +65,13 @@ mk2_arm_controller:
     default_tolerances:
       goals: 0.1
       goal_state: 0.1
+
+beak_controller:
+  ros__parameters:
+    joints:
+      - mod1__beak
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
 {% endif %}
