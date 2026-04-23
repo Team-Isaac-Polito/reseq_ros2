@@ -100,7 +100,6 @@ CMD ["/bin/bash", "-lc", "\
   source /opt/ros/$ROS_DISTRO/setup.bash; \
   source /ros2_ws/install/setup.bash; \
   export GZ_SIM_RESOURCE_PATH=/ros2_ws/src; \
-  ros2 launch rosbridge_server rosbridge_websocket_launch.xml & \
   python3 -m http.server 8080 --directory /ros2_ws/ros_app/build/web & \
   if [ \"$LAUNCH_RVIZ\" = \"true\" ]; then \
     rviz2 -d /ros2_ws/src/reseq_ros2/config/slam_rviz.yaml & \
