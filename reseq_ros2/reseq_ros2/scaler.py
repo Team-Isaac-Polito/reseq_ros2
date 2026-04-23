@@ -99,6 +99,9 @@ class Scaler(Node):
         self.arm_input_scale = (
             self.declare_parameter('arm_input_scale', 1.0).get_parameter_value().double_value
         )
+        self.arm_input_deadzone = (
+            self.declare_parameter('arm_input_deadzone', 0.08).get_parameter_value().double_value
+        )
 
         for h in self.handlers:
             h['service'] = self.create_client(SetBool, h['service'])
@@ -146,7 +149,6 @@ class Scaler(Node):
             )
         )
 
-
         if self.control_mode == Scaler.control_mode_enum.AGEVAR:
             cmd_vel = self.agevarScaler(cmd_vel)
         else:
@@ -168,8 +170,15 @@ class Scaler(Node):
         return (val + 1) / 2 * (scaling_range[1] - scaling_range[0]) + scaling_range[0]
 
     def scale_arm_input(self, val: float) -> float:
-        scaled = float(val) * self.arm_input_scale
-        return max(-1.0, min(1.0, scaled))
+        value = float(val)
+        magnitude = abs(value)
+        if magnitude <= self.arm_input_deadzone:
+            return 0.0
+
+        span = max(1.0 - self.arm_input_deadzone, 1e-6)
+        scaled = ((magnitude - self.arm_input_deadzone) / span) * self.arm_input_scale
+        scaled = max(-1.0, min(1.0, scaled))
+        return scaled if value >= 0.0 else -scaled
 
 
 def main(args=None):

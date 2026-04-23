@@ -56,6 +56,16 @@ class TestScalerFunctional(unittest.TestCase):
         scaled_val = node.scale(val, scaling_range)
         self.assertAlmostEqual(scaled_val, expected_val, places=5)
 
+    def test_4b_scale_arm_input_deadzone(self):
+        """Test the arm-input deadzone around zero."""
+        node = self.scaler
+        node.arm_input_scale = 0.5
+        node.arm_input_deadzone = 0.08
+
+        self.assertEqual(node.scale_arm_input(0.05), 0.0)
+        self.assertGreater(node.scale_arm_input(0.2), 0.0)
+        self.assertLess(node.scale_arm_input(-0.2), 0.0)
+
     def test_5_agevarScaler(self):
         """Test the agevarScaler function."""
         node = self.scaler

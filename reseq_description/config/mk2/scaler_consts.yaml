@@ -1,11 +1,12 @@
 scaler_consts:
-  r_linear_vel:              # [m/s] Range of the linear velocity (agevar mode)
+  r_linear_vel: # [m/s] Range of the linear velocity (agevar mode)
     - -0.1600
     - 0.1600
-  r_inverse_radius:          # [1/m] Range of the inverse radius of curvature (agevar mode)
+  r_inverse_radius: # [1/m] Range of the inverse radius of curvature (agevar mode)
     - -2.5478
     - 2.5478
-  r_angular_vel:             # [rad/s] Range of the angular velocity (pivot mode)
+  r_angular_vel: # [rad/s] Range of the angular velocity (pivot mode)
     - -2.4912
     - 2.4912
-  arm_input_scale: 0.5       # [-] Scale applied to left-stick arm commands before /mk2_arm_vel
+  arm_input_scale: 0.5 # [-] Scale applied to left-stick arm commands before /mk2_arm_vel
+  arm_input_deadzone: 0.08 # [-] Deadzone applied to arm stick inputs before scaling

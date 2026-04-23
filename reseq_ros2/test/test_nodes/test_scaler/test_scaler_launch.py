@@ -57,6 +57,7 @@ class TestScalerLaunch(unittest.TestCase):
             'r_inverse_radius': [-1.5385, 1.5385],
             'r_angular_vel': [-2.8387, 2.8387],
             'arm_input_scale': 1.0,
+            'arm_input_deadzone': 0.08,
             'version': 'mk1',
             'r_pitch_vel': [-183, 183],
             'r_head_pitch_vel': [-400, 400],

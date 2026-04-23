@@ -72,6 +72,7 @@ def launch_setup(context, *args, **kwargs):
                     'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
                     'r_angular_vel': config['scaler_consts']['r_angular_vel'],
                     'arm_input_scale': config['scaler_consts'].get('arm_input_scale', 1.0),
+                    'arm_input_deadzone': config['scaler_consts'].get('arm_input_deadzone', 0.08),
                     'version': config['version'],
                     'use_sim_time': use_sim_time,
                 }
