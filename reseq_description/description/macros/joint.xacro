@@ -122,6 +122,9 @@
       <origin xyz="${-WheelBase/2} 0 0" rpy="0 0 0" />
     </joint>
 
+    <!-- AMS AS5048B encoder measuring the yaw angle of this inter-module joint.-->
+    <xacro:absolute_encoder id="${id}" physics_link="joint_y_${id}_link" />
+
   </xacro:macro>
 
 </robot>
