@@ -70,7 +70,8 @@ class Agevar(Node):
 
         # Smoothed yaw commands per joint (stores URDF joint angles)
         self.yaw_commands = [0.0] * self.n_joints
-        self.smooth_alpha = 1.0
+        self.adaptive_alpha = [1.0] * self.n_joints
+        self.smooth_alpha = 0.7
 
         # Time tracking (with wall-clock fallback for sim time startup)
         self.last_time = None
@@ -208,8 +209,16 @@ class Agevar(Node):
                     turn_dir = 1.0 if angular_vel > 0 else -1.0
                     raw_angle = turn_dir * YAW_LIMIT
 
-                # Exponential smoothing
-                self.yaw_commands[j] += self.smooth_alpha * (raw_angle - self.yaw_commands[j])
+                # Compute tracking error using encoder feedback
+                error = self.yaw_commands[j] - self.yaw_angles[j]
+                error_mag = abs(error)
+
+                # Update per‑joint adaptive alpha
+                self.adaptive_alpha[j] = self._compute_adaptive_alpha(error_mag)
+
+                # Apply smoothing using per‑joint alpha
+                alpha = self.adaptive_alpha[j]
+                self.yaw_commands[j] += alpha * (raw_angle - self.yaw_commands[j])
 
                 # Publish to ForwardCommandController (direct URDF convention)
                 yaw_msg = Float64MultiArray()
@@ -301,6 +310,16 @@ class Agevar(Node):
             if joint_name in self.latest_feedback.name:
                 idx = self.latest_feedback.name.index(joint_name)
                 self.yaw_angles[i] = self.latest_feedback.position[idx]
+
+    def _compute_adaptive_alpha(self, error_mag):
+        # Tunable parameters
+        max_alpha = 1.0
+        min_alpha = 0.1
+        k = 3.0  # sensitivity
+
+        alpha = max_alpha / (1.0 + k * error_mag)
+        alpha = max(min_alpha, min(max_alpha, alpha))
+        return alpha
 
 
 def main(args=None):
