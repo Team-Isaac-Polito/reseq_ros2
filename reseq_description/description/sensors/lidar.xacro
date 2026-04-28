@@ -4,33 +4,33 @@
   <joint name="laser_joint" type="fixed">
     <parent link="chassis2_link"/>
     <child link="laser_frame"/>
-    <origin xyz="-0.07 0 0.1" rpy="0 0 0"/>
+    <origin xyz="-0.07 0 0.2" rpy="0 0 0"/>
   </joint>
 
   <link name="laser_frame">
     <!-- lidar -->
     <visual>
       <geometry>
-        <cylinder radius="0.05" length="0.04"/>
+        <cylinder radius="0.03" length="0.04"/>
       </geometry>
       <material name="LidarColor"/>
     </visual>
     <!-- pole to lidar -->
     <visual>
-      <origin xyz="0 0 -0.05" rpy="0 0 0"/>
+      <origin xyz="0 0 -0.1" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.01" length="0.1"/>
+        <cylinder radius="0.01" length="0.15"/>
       </geometry>
       <material name="LidarColor"/>
     </visual>
 
     <collision>
       <geometry>
-        <cylinder radius="0.05" length="0.04"/>
+        <cylinder radius="0.03" length="0.04"/>
       </geometry>
     </collision>
 
-    <xacro:inertial_cylinder_z mass="0.1" length="0.04" radius="0.05">
+    <xacro:inertial_cylinder_z mass="0.1" length="0.04" radius="0.03">
       <origin xyz="0 0 0" rpy="0 0 ${pi/2}"/>
     </xacro:inertial_cylinder_z>
   </link>
