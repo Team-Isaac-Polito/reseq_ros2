@@ -11,20 +11,20 @@ slam_toolbox:
     # ROS params
     odom_frame: odom
     map_frame: map
-    base_frame: chassis2_link  # Lidar is on chassis2_link
+    base_frame: laser_frame    # Exact lidar link
     scan_topic: /scan
     mode: mapping  # mapping or localization
 
     # Process params
     debug_logging: false
-    throttle_scans: 2          # Process every 2nd scan (5 Hz) to prevent queue-full drops
+    throttle_scans: 1 
     transform_publish_period: 0.02
     map_update_interval: 0.2
     resolution: 0.05
     max_laser_range: 12.0  # RPLIDAR A2M8 max range
     minimum_time_interval: 0.05
     transform_timeout: 0.5
-    tf_buffer_duration: 60.0   # Extended to handle queued scans safely
+    tf_buffer_duration: 30.0 
 
     # General params
     use_scan_matching: true
