@@ -47,6 +47,7 @@ def launch_setup(context, *args, **kwargs):
             {
                 'robot_description': robot_description,
                 'use_sim_time': use_sim_time_arg == 'true',
+                'publish_frequency': 50.0,
             }
         ],  # add other parameters here if required
         arguments=['--ros-args', '--log-level', external_log_level],
