@@ -4,7 +4,7 @@
 
 ekf_filter_node:
   ros__parameters:
-    frequency: 100.0
+    frequency: 50.0
     sensor_timeout: 0.5
     two_d_mode: true          # Planar robot, suppress z/roll/pitch
     transform_time_offset: 0.0
@@ -21,16 +21,16 @@ ekf_filter_node:
     # Provides: x, y, yaw, vx, vy, vyaw
     odom0: /diff_controller1/odom
     odom0_config: [true,  true,  false,   # x, y, z position
-                   false, false, true,    # roll, pitch, yaw
+                   false, false, false,   # roll, pitch, yaw (disabled: track slip causes large cumulative yaw error during FTL turns)
                    true,  true,  false,   # vx, vy, vz
-                   false, false, true,    # vroll, vpitch, vyaw
+                   false, false, false,   # vroll, vpitch, vyaw (disabled: use IMU gyro instead, tracks slip during FTL)
                    false, false, false]   # ax, ay, az
     odom0_queue_size: 10
     odom0_nodelay: false
     odom0_differential: false
     odom0_relative: false
 
-    # IMU from chassis1 module (primary module with base_link)
+    # IMU LSM6DSL from chassis1 module (primary module with base_link)
     # imu_sensor_broadcaster publishes to /{controller_name}/imu
     # Provides: angular velocity
     imu0: /imu1_broadcaster/imu
