@@ -59,6 +59,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-robot-state-publisher \
     ros-jazzy-velocity-controllers \
     ros-jazzy-xacro \
+    ros-jazzy-rqt-tf-tree \
     curl \
     unzip \
     && rm -rf /var/lib/apt/lists/*
