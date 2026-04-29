@@ -5,7 +5,7 @@ import traceback
 from collections import deque
 
 import rclpy
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Twist
 from nav2_msgs.action import NavigateToPose
 from nav_msgs.msg import OccupancyGrid, Path
 from rclpy.action import ActionClient
@@ -155,6 +155,8 @@ class AutonomyCoordinator(Node):
 
         self.status_pub = self.create_publisher(String, self.status_topic, 10)
         self.path_pub = self.create_publisher(Path, self.planned_path_topic, 10)
+        self.autonomy_enable_pub = self.create_publisher(Bool, '/autonomy/enabled', 10)
+        self.nav_cmd_pub = self.create_publisher(Twist, '/cmd_vel_nav', 10)
         self.mode_client = self.create_client(SetMode, self.detection_service)
         self.nav_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
         self.tf_buffer = Buffer()
@@ -359,7 +361,11 @@ class AutonomyCoordinator(Node):
         self.goal_handle = None
         self.active_goal = None
         result = future.result()
+
         if result.status == 4:
+            # Force robot stop
+            self.nav_cmd_pub.publish(Twist())
+
             if self.planner_mode == 'user_path' and self.user_path_index < len(
                 self.user_path_waypoints
             ):
