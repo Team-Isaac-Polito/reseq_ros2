@@ -75,6 +75,42 @@ def _compute_joint_hold_velocity(
     return _clamp_joint_velocity_to_limits(current_q, dq, q_lo, q_hi, dt)
 
 
+def _idle_hold_command(
+    current_q: np.ndarray,
+    hold_target: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    dt: float,
+    gain: float,
+    max_joint_vel: float,
+    tolerance: float,
+    hold_armed: bool,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return the idle hold target and velocity command.
+
+    Before the operator has moved the arm, a captured startup pose is only an
+    observation. On real hardware the first joint state can briefly contain the
+    hardware interface's zero-initialized buffers, so an unarmed hold must never
+    drive back toward that value.
+    """
+    if not hold_armed:
+        passive_target = np.array(current_q, dtype=float, copy=True)
+        return passive_target, np.zeros_like(current_q)
+
+    target = np.array(hold_target, dtype=float, copy=True)
+    dq = _compute_joint_hold_velocity(
+        current_q=current_q,
+        target_q=target,
+        q_lo=q_lo,
+        q_hi=q_hi,
+        dt=dt,
+        gain=gain,
+        max_joint_vel=max_joint_vel,
+        tolerance=tolerance,
+    )
+    return target, dq
+
+
 def _advance_velocity_hold_target(
     current_q: np.ndarray,
     dq: np.ndarray,
@@ -376,6 +412,7 @@ class CartesianArmController(Node):
                 self._startup_hold_target = startup_hold_array
         if self._startup_hold_target is None:
             self._startup_hold_complete = True
+        self._idle_hold_armed = self._startup_hold_target is not None
 
         joint_weights_param = self.get_parameter('joint_weights').value
         if isinstance(joint_weights_param, (list, tuple, np.ndarray)) and (
@@ -580,6 +617,9 @@ class CartesianArmController(Node):
                     self.get_logger().info(
                         f'Captured startup home pose: {np.round(self._startup_home, 3).tolist()}'
                     )
+            elif self._startup_hold_target is None and not self._idle_hold_armed:
+                self._startup_measured_pose = self._q.copy()
+                self._startup_home = self._q.copy()
         except KeyError:
             pass  # not all arm joints present yet
 
@@ -755,15 +795,16 @@ class CartesianArmController(Node):
                     hold_target = startup_target
                     if float(np.max(np.abs(startup_target - self._q))) <= hold_tolerance:
                         self._startup_hold_complete = True
-                hold_dq = _compute_joint_hold_velocity(
+                hold_target, hold_dq = _idle_hold_command(
                     current_q=self._q,
-                    target_q=hold_target,
+                    hold_target=hold_target,
                     q_lo=self._q_lo,
                     q_hi=self._q_hi,
                     dt=self._dt,
                     gain=hold_gain,
                     max_joint_vel=max_jv,
                     tolerance=hold_tolerance,
+                    hold_armed=self._idle_hold_armed,
                 )
                 self._q_cmd = hold_target.copy()
                 self._publish_velocity(hold_dq.tolist())
@@ -780,6 +821,7 @@ class CartesianArmController(Node):
         # Solve from the live measured pose so the Jacobian tracks the actual arm.
         if not self._moving:
             self._moving = True
+        self._idle_hold_armed = True
         solve_q = self._q_continuous if self._q_continuous is not None else self._q
         if self._ee_z_ref is None:
             self._ee_z_ref = float(self._get_ee_pos(solve_q)[2])
@@ -1032,6 +1074,7 @@ class CartesianArmController(Node):
         home_target = self._get_home_position()
         self._q_cmd = home_target.copy()
         self._moving = True
+        self._idle_hold_armed = True
         self._cmd_vel = np.zeros(3)
         self._ee_z_ref = None
         if self._command_mode == 'velocity':
