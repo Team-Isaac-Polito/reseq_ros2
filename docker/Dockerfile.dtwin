@@ -75,14 +75,14 @@ COPY reseq_ros2 /ros2_ws/src/reseq_ros2
 COPY reseq_sim /ros2_ws/src/reseq_sim
 COPY reseq_arm_mk2 /ros2_ws/src/reseq_arm_mk2
 
-ENV GZ_SIM_RESOURCE_PATH=/ros2_ws/src
+ENV GZ_SIM_RESOURCE_PATH=/ros2_ws/src:/ros2_ws/src/reseq_sim/arena
 ENV SKIP_KEYS="computer_vision realsense2_camera apriltag_ros apriltag_msgs rplidar_ros usb_cam v4l-utils reach_ros ros_gz"
 
 RUN /bin/bash -lc 'source /opt/ros/$ROS_DISTRO/setup.bash \
     && apt-get update \
     && rosdep update \
     && rosdep install -iy --from-paths /ros2_ws/src --ignore-src --rosdistro $ROS_DISTRO --skip-keys "$SKIP_KEYS" -t exec -t build \
-    && colcon build --packages-select reseq_interfaces reseq_description reseq_arm_mk2 reseq_ros2 reseq_sim --event-handlers console_direct+'
+    && colcon build --packages-select reseq_interfaces reseq_description reseq_arm_mk2 reseq_ros2 reseq_sim 1_Flat_KRails 2_Sloped_KRails --event-handlers console_direct+'
 
 # ── Flutter SDK (web only) ──────────────────────────────────────────────
 ENV FLUTTER_HOME=/opt/flutter
@@ -100,7 +100,7 @@ WORKDIR /ros2_ws
 CMD ["/bin/bash", "-lc", "\
   source /opt/ros/$ROS_DISTRO/setup.bash; \
   source /ros2_ws/install/setup.bash; \
-  export GZ_SIM_RESOURCE_PATH=/ros2_ws/src; \
+  export GZ_SIM_RESOURCE_PATH=/ros2_ws/src:/ros2_ws/src/reseq_sim/arena:/ros2_ws/install/reseq_sim/share/reseq_sim/arena; \
   python3 -m http.server 8080 --directory /ros2_ws/ros_app/build/web & \
   if [ \"$LAUNCH_RVIZ\" = \"true\" ]; then \
     rviz2 -d /ros2_ws/src/reseq_ros2/config/slam_rviz.yaml & \

@@ -78,7 +78,10 @@ def generate_launch_description():
     world_arg = DeclareLaunchArgument(
         'world',
         default_value='simple_course.world',
-        description='World to load in Gazebo',
+        description=(
+            'World to load in Gazebo. Available: simple_course.world, '
+            'flat_krails.world, sloped_krails.world'
+        ),
     )
     map_file_arg = DeclareLaunchArgument(
         'map_file',
