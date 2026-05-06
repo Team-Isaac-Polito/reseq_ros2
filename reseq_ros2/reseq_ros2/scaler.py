@@ -106,6 +106,8 @@ class Scaler(Node):
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
+        self.lift_pub = self.create_publisher(Vector3, '/inter_module_lift_vel', 10)
+
         self.get_logger().info('Scaler node started')
 
     def handle_buttons(self, buttons: list[bool]):
@@ -135,12 +137,32 @@ class Scaler(Node):
 
         # TODO probably to merge with another version of scaler.py
 
-        self.moveit_pub.publish(Vector3(
-            x = data.left.x,
-            y = data.left.y,
-            z = data.left.z,
-        ))
+        self.moveit_pub.publish(
+            Vector3(
+                x=data.left.x,
+                y=data.left.y,
+                z=data.left.z,
+            )
+        )
 
+        # LIFTING CONTROL: S2, S3, S4 Switches + Right Joystick Z axis
+        s2 = data.buttons[self.buttons_enum.S2]
+        s3 = data.buttons[self.buttons_enum.S3]
+        s4 = data.buttons[self.buttons_enum.S4]
+
+        if s2 or s3 or s4:
+            lift_msg = Vector3()
+            lift_msg.x = data.right.z  # Pitch set via right.z
+
+            if s2:
+                lift_msg.z = 1.0
+            elif s3:
+                lift_msg.z = 2.0
+            elif s4:
+                lift_msg.z = 3.0
+
+            self.lift_pub.publish(lift_msg)
+            self.get_logger().info(f'Lifting module {lift_msg.z} with pitch {lift_msg.x}')
 
         if self.control_mode == Scaler.control_mode_enum.AGEVAR:
             cmd_vel = self.agevarScaler(cmd_vel)
