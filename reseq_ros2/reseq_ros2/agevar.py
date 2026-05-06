@@ -68,10 +68,21 @@ class Agevar(Node):
         self._dist.append(0.0)
         self._heading.append(0.0)
 
+        # Backward path buffer — rebuilt fresh on each forward→backward switch.
+        self._bwd_dist = deque(maxlen=5000)
+        self._bwd_heading = deque(maxlen=5000)
+        self._bwd_distance = 0.0
+        self._bwd_head_theta = 0.0
+        self._bwd_dist.append(0.0)
+        self._bwd_heading.append(0.0)
+
         # Smoothed yaw commands per joint (stores URDF joint angles)
         self.yaw_commands = [0.0] * self.n_joints
         self.adaptive_alpha = [1.0] * self.n_joints
         self.smooth_alpha = 0.7
+
+        # Track previous sign to detect direction changes and flush the path buffer
+        self._prev_sign = 1
 
         # Time tracking (with wall-clock fallback for sim time startup)
         self.last_time = None
@@ -103,12 +114,7 @@ class Agevar(Node):
 
         if not self.enabled:
             for pub in self.controller_pubs:
-                pub.publish(TwistStamped())  # stop all controllers
-            for pub in self.yaw_pubs:
-                msg = Float64MultiArray()
-                msg.data = [0.0]
-                pub.publish(msg)
-            self.yaw_commands = [0.0] * self.n_joints
+                pub.publish(TwistStamped())  # stop all drive controllers
 
         response.success = True
         response.message = 'Agevar node enabled' if self.enabled else 'Agevar node disabled'
@@ -128,9 +134,9 @@ class Agevar(Node):
         dt = (now - self.last_time).nanoseconds / 1e9
         self.last_time = now
 
-        # Detect sim clock stuck at 0 (common during startup)
+        # Detect sim clock stuck at 0
         if dt <= 0 or (not self.clock_valid and now.nanoseconds == 0):
-            # Use wall clock as fallback (assumes ~real-time velocity interpretation)
+            # Use wall clock as fallback
             dt = wall_now - self.last_wall
 
         if now.nanoseconds > 0:
@@ -151,6 +157,53 @@ class Agevar(Node):
         angular_vel = msg.angular.z
         sign = 1 if linear_vel >= 0 else -1
 
+        # On direction reversal, reset the appropriate path buffer.
+        if sign != self._prev_sign:
+            if sign == -1:  # forward → backward: last module becomes physical head
+                # Compute the last module's current heading from the forward path buffer.
+                last_lag_dist = self.head_distance - self.n_joints * self.module_spacing
+                self._bwd_head_theta = self._interp_heading(last_lag_dist)
+
+                # Reconstruct the backward buffer from the current joint commands
+                self._bwd_distance = 0.0
+                self._bwd_dist.clear()
+                self._bwd_heading.clear()
+                entries_bwd = []
+                cumulative_bwd = self._bwd_head_theta
+                for j in range(self.n_joints + 1):
+                    entries_bwd.append((-j * self.module_spacing, cumulative_bwd))
+                    if j < self.n_joints:
+                        cumulative_bwd += self.yaw_commands[self.n_joints - 1 - j]
+                
+                # Append in ascending distance order
+                for d, h in reversed(entries_bwd):
+                    self._bwd_dist.append(d)
+                    self._bwd_heading.append(h)
+
+            else:
+                # Update head_theta to the first module's actual current heading.
+                first_lag_dist = self._bwd_distance - self.n_joints * self.module_spacing
+                if first_lag_dist >= 0.0:
+                    self.head_theta = self._interp_heading(
+                        first_lag_dist, self._bwd_dist, self._bwd_heading
+                    )
+                
+                # Reconstruct the forward path buffer from the current joint commands.
+                self._dist.clear()
+                self._heading.clear()
+                entries = []
+                cumulative_h = self.head_theta
+                for j in range(self.n_joints + 1):
+                    entries.append((self.head_distance - j * self.module_spacing, cumulative_h))
+                    if j < self.n_joints:
+                        cumulative_h += self.yaw_commands[j]
+                
+                # Append in ascending distance order
+                for d, h in reversed(entries):
+                    self._dist.append(d)
+                    self._heading.append(h)
+            self._prev_sign = sign
+
         dt = self._compute_dt()
         if dt <= 0:
             return
@@ -164,44 +217,67 @@ class Agevar(Node):
         is_moving = abs_v > 0.01
 
         if is_rotating or is_moving:
-            # Dead-reckon head heading: θ += ω * dt
-            self.head_theta += angular_vel * dt
-
-            if is_moving:
-                # Normal forward/backward motion: advance path by true distance
-                self.head_distance += abs_v * dt
+            if sign == 1:
+                # Forward: dead-reckon first module heading from cmd_vel.
+                self.head_theta += angular_vel * dt
+                if is_moving:
+                    self.head_distance += abs_v * dt
+                else:
+                    # Pure rotation: virtual advance so the buffer fills.
+                    virtual_v = abs_w * self.module_spacing * 2.0
+                    self.head_distance += virtual_v * dt
+                
+                self._dist.append(self.head_distance)
+                self._heading.append(self.head_theta)
+                max_lookback = (self.n_joints + 1) * self.module_spacing + 0.5
+                min_needed = self.head_distance - max_lookback
+                while len(self._dist) > 2 and self._dist[1] < min_needed:
+                    self._dist.popleft()
+                    self._heading.popleft()
             else:
-                # Pure rotation: advance path by a small virtual distance so
-                # the path buffer fills and joint angle commands are generated.
-                # The virtual step is proportional to turn rate so faster turns
-                # propagate angles at the right relative speed.
-                virtual_v = abs_w * self.module_spacing * 2.0
-                self.head_distance += virtual_v * dt
+                # Backward: dead-reckon last module (new head) heading into its own buffer.
+                self._bwd_head_theta += angular_vel * dt
+                if is_moving:
+                    self._bwd_distance += abs_v * dt
+                else:
+                    # Pure rotation: virtual advance so the buffer fills.
+                    virtual_v = abs_w * self.module_spacing * 2.0
+                    self._bwd_distance += virtual_v * dt
+                
+                self._bwd_dist.append(self._bwd_distance)
+                self._bwd_heading.append(self._bwd_head_theta)
+                max_lookback = (self.n_joints + 1) * self.module_spacing + 0.5
+                min_needed = self._bwd_distance - max_lookback
+                while len(self._bwd_dist) > 2 and self._bwd_dist[1] < min_needed:
+                    self._bwd_dist.popleft()
+                    self._bwd_heading.popleft()
 
-            # Store heading at this distance
-            self._dist.append(self.head_distance)
-            self._heading.append(self.head_theta)
-
-            # Prune old entries no joint will ever need
-            max_lookback = (self.n_joints + 1) * self.module_spacing + 0.5
-            min_needed = self.head_distance - max_lookback
-            while len(self._dist) > 2 and self._dist[1] < min_needed:
-                self._dist.popleft()
-                self._heading.popleft()
-
-            # Compute joint angles via follow-the-leader heading differences
+            # Compute joint angles via follow-the-leader heading differences.
             for j in range(self.n_joints):
                 if is_moving:
-                    front_dist = self.head_distance - j * self.module_spacing
-                    rear_dist = self.head_distance - (j + 1) * self.module_spacing
+                    if sign == 1:
+                        # Forward: followers lag behind (lower accumulated distance).
+                        front_dist = self.head_distance - j * self.module_spacing
+                        rear_dist = self.head_distance - (j + 1) * self.module_spacing
+                        front_heading = self._interp_heading(front_dist)
+                        rear_heading = self._interp_heading(rear_dist)
+                    else:
+                        # Backward: followers lag behind the last module in backward-distance.
+                        front_dist = self._bwd_distance - j * self.module_spacing
+                        rear_dist = self._bwd_distance - (j + 1) * self.module_spacing
+                        front_heading = self._interp_heading(
+                            front_dist, self._bwd_dist, self._bwd_heading
+                        )
+                        rear_heading = self._interp_heading(
+                            rear_dist, self._bwd_dist, self._bwd_heading
+                        )
 
-                    front_heading = self._interp_heading(front_dist)
-                    rear_heading = self._interp_heading(rear_dist)
-
-                    # Joint angle = heading difference (negative for left turns in URDF convention)
+                    # Joint angle = heading difference (negative for left turns)
                     raw_angle = rear_heading - front_heading
+
                     # Normalize to [-π, π]
                     raw_angle = atan2(sin(raw_angle), cos(raw_angle))
+
                     # Clamp to joint limits
                     raw_angle = max(-YAW_LIMIT, min(YAW_LIMIT, raw_angle))
                 else:
@@ -209,21 +285,26 @@ class Agevar(Node):
                     turn_dir = 1.0 if angular_vel > 0 else -1.0
                     raw_angle = turn_dir * YAW_LIMIT
 
+                # In backward mode, joint j from the last module's perspective maps to
+                # physical joint in the yaw_commands array.
+                cmd_idx = j if sign == 1 else (self.n_joints - 1 - j)
+
                 # Compute tracking error using encoder feedback
-                error = self.yaw_commands[j] - self.yaw_angles[j]
+                error = self.yaw_commands[cmd_idx] - self.yaw_angles[cmd_idx]
                 error_mag = abs(error)
 
                 # Update per‑joint adaptive alpha
-                self.adaptive_alpha[j] = self._compute_adaptive_alpha(error_mag)
+                self.adaptive_alpha[cmd_idx] = self._compute_adaptive_alpha(error_mag)
 
                 # Apply smoothing using per‑joint alpha
-                alpha = self.adaptive_alpha[j]
-                self.yaw_commands[j] += alpha * (raw_angle - self.yaw_commands[j])
+                alpha = self.adaptive_alpha[cmd_idx]
+                delta = raw_angle - self.yaw_commands[cmd_idx]
+                
+                self.yaw_commands[cmd_idx] += alpha * delta
 
-                # Publish to ForwardCommandController (direct URDF convention)
                 yaw_msg = Float64MultiArray()
-                yaw_msg.data = [self.yaw_commands[j]]
-                self.yaw_pubs[j].publish(yaw_msg)
+                yaw_msg.data = [self.yaw_commands[cmd_idx]]
+                self.yaw_pubs[cmd_idx].publish(yaw_msg)
 
         # Compute per-module velocities using AGEVAR kinematic model
         modules = list(range(self.n_mod))
@@ -245,6 +326,7 @@ class Agevar(Node):
                 if sign == 1:
                     joint_idx = mod_id
                 else:
+                    # Backward: modules iterate [n-1, n-2, ..., 0].
                     joint_idx = mod_id - 1
 
                 if 0 <= joint_idx < self.n_joints:
@@ -259,33 +341,41 @@ class Agevar(Node):
 
                 self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
 
-    def _interp_heading(self, target_dist):
-        """Interpolate heading from the path buffer using binary search."""
-        if not self._dist:
+    def _interp_heading(self, target_dist, dist_buf=None, heading_buf=None):
+        """Interpolate heading from a path buffer using binary search.
+
+        Uses the forward buffer (_dist/_heading) by default; pass _bwd_dist/_bwd_heading
+        for the backward buffer.
+        """
+        if dist_buf is None:
+            dist_buf = self._dist
+        if heading_buf is None:
+            heading_buf = self._heading
+
+        if not dist_buf:
             return 0.0
 
-        if target_dist <= self._dist[0]:
-            return self._heading[0]
-        if target_dist >= self._dist[-1]:
-            return self._heading[-1]
+        if target_dist <= dist_buf[0]:
+            return heading_buf[0]
+        if target_dist >= dist_buf[-1]:
+            return heading_buf[-1]
 
         # Binary search for the interval containing target_dist
-        # bisect_left on a deque via list conversion for the search key
-        idx = bisect_left(self._dist, target_dist)
+        idx = bisect_left(dist_buf, target_dist)
 
         if idx == 0:
-            return self._heading[0]
-        if idx >= len(self._dist):
-            return self._heading[-1]
+            return heading_buf[0]
+        if idx >= len(dist_buf):
+            return heading_buf[-1]
 
-        d0 = self._dist[idx - 1]
-        d1 = self._dist[idx]
+        d0 = dist_buf[idx - 1]
+        d1 = dist_buf[idx]
         if d1 == d0:
-            return self._heading[idx - 1]
+            return heading_buf[idx - 1]
 
         t = (target_dist - d0) / (d1 - d0)
-        h0 = self._heading[idx - 1]
-        h1 = self._heading[idx]
+        h0 = heading_buf[idx - 1]
+        h1 = heading_buf[idx]
         return h0 + t * (h1 - h0)
 
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
