@@ -4,7 +4,7 @@ import math
 import traceback
 
 import rclpy
-from geometry_msgs.msg import PoseStamped, Twist
+from geometry_msgs.msg import Point32, Polygon as PolygonMsg, PoseStamped, Twist
 from nav2_msgs.action import NavigateToPose
 from nav_msgs.msg import Path
 from rclpy.action import ActionClient
@@ -53,9 +53,12 @@ class AutonomyCoordinator(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
+        self._footprint_pub = self.create_publisher(PolygonMsg, '/robot_footprint_local', 10)
+
         self.create_subscription(Bool, self.enabled_topic, self.enabled_callback, 10)
         self.create_subscription(Path, self.user_path_topic, self.user_path_callback, 10)
         self.create_timer(self.loop_period, self.control_loop)
+        self.create_timer(0.1, self._publish_footprint)  # 10 Hz footprint updates
 
     def enabled_callback(self, msg: Bool) -> None:
         if msg.data and not self.autonomy_enabled:
@@ -99,6 +102,53 @@ class AutonomyCoordinator(Node):
     def publish_status(self, status: str) -> None:
         self.status_pub.publish(String(data=status))
 
+    def _publish_footprint(self) -> None:
+        """Publish a parallelogram footprint covering chassis1 (head) to chassis4 (tail).
+
+        The polygon is in base_link frame and is consumed by the local costmap
+        via the footprint_topic parameter.  At 10 Hz this keeps the footprint
+        accurate as the snake bends through turns.
+        """
+        hw = 0.12   # half-width of robot body (m)
+        hl = 0.15   # extension beyond chassis1/chassis4 centre (m)
+
+        try:
+            t4 = self.tf_buffer.lookup_transform(
+                'base_link', 'chassis4_link', rclpy.time.Time()
+            )
+            c4x = t4.transform.translation.x
+            c4y = t4.transform.translation.y
+        except TransformException:
+            # Fallback: straight configuration
+            c4x, c4y = -1.26, 0.0
+
+        dist = math.sqrt(c4x ** 2 + c4y ** 2)
+        if dist < 0.01:
+            fx, fy = 1.0, 0.0
+        else:
+            # Unit vector from chassis4 toward chassis1 (= forward direction)
+            fx, fy = -c4x / dist, -c4y / dist
+
+        # Perpendicular (left side)
+        px, py = -fy, fx
+
+        # 4 corners of the parallelogram (counter-clockwise)
+        corners = [
+            (hl * fx + hw * px,             hl * fy + hw * py),              # chassis1 front-left
+            (c4x - hl * fx + hw * px,       c4y - hl * fy + hw * py),        # chassis4 rear-left
+            (c4x - hl * fx - hw * px,       c4y - hl * fy - hw * py),        # chassis4 rear-right
+            (hl * fx - hw * px,             hl * fy - hw * py),              # chassis1 front-right
+        ]
+
+        msg = PolygonMsg()
+        for x, y in corners:
+            pt = Point32()
+            pt.x = float(x)
+            pt.y = float(y)
+            pt.z = 0.0
+            msg.points.append(pt)
+        self._footprint_pub.publish(msg)
+
     def current_robot_pose(self) -> tuple[float, float] | None:
         try:
             transform = self.tf_buffer.lookup_transform(
@@ -130,10 +180,13 @@ class AutonomyCoordinator(Node):
 
         # Skip waypoints that the robot has already passed (within goal tolerance)
         pose = self.current_robot_pose()
+
+        # Skip waypoints already within tolerance.
         if pose is not None:
             while (
                 self.user_path_index < len(self.user_path_waypoints)
-                and math.dist(self.user_path_waypoints[self.user_path_index], pose) < 0.15
+                and math.dist(self.user_path_waypoints[self.user_path_index], pose)
+                < self.goal_tolerance
             ):
                 self.user_path_index += 1
 
@@ -143,6 +196,7 @@ class AutonomyCoordinator(Node):
         return self.user_path_waypoints[self.user_path_index]
 
     def send_goal(self, goal_xy: tuple[float, float]) -> None:
+        """Send a Nav2 NavigateToPose goal to the given waypoint."""
         if not self.nav_client.wait_for_server(timeout_sec=1.0):
             self.publish_status('nav2_unavailable')
             return

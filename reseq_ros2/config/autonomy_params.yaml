@@ -3,7 +3,7 @@ cmd_vel_mux:
     use_sim_time: true
     output_topic: /cmd_vel
     teleop_topic: /cmd_vel_teleop
-    nav_topic: /cmd_vel_smoothed
+    nav_topic: /cmd_vel_nav
     autonomy_topic: /autonomy/enabled
     status_topic: /autonomy/cmd_source
     health_topic: /autonomy/health
@@ -19,9 +19,7 @@ cmd_vel_mux:
 autonomy_coordinator:
   ros__parameters:
     use_sim_time: true
-    planner_mode: user_path
     enabled_topic: /autonomy/enabled
-    map_topic: /map
     status_topic: /autonomy/explorer_status
     planned_path_topic: /autonomy/planned_path
     user_path_topic: /autonomy/user_path
@@ -29,11 +27,6 @@ autonomy_coordinator:
     target_frame: map
     robot_frame: base_link
     loop_period: 2.0
-    frontier_min_cluster_size: 8
-    frontier_min_distance: 0.6
-    frontier_goal_timeout: 90.0
-    goal_progress_timeout: 25.0
-    trajectory_row_stride_cells: 8
-    trajectory_edge_margin_cells: 2
-    trajectory_min_row_width_cells: 6
+    goal_tolerance: 0.15
+    goal_timeout: 90.0
     pause_on_detection: false
