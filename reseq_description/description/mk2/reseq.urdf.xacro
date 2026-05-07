@@ -22,4 +22,9 @@
 
   <xacro:include filename="$(find reseq_description)/description/control/ros2_control.xacro" />
 
+  <!-- Cameras holder (RGBD + thermal) on the arm end-effector — Gazebo sim only -->
+  <xacro:if value="$(arg sim_mode)">
+    <xacro:include filename="$(find reseq_description)/description/sensors/gazebo/cameras_holder.xacro" />
+  </xacro:if>
+
 </robot>
