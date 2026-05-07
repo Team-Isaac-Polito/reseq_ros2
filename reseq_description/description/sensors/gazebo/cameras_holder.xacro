@@ -32,20 +32,21 @@
             <always_on>true</always_on>
             <topic>rgbd_camera</topic>
             <camera>
-                <horizontal_fov>1.0469999999999999</horizontal_fov> <!--default value corresponds to 60 degrees horizontal field of view-->
+                <!-- 69 degrees is the FOV of the D435 RGB module -->
+                <horizontal_fov>1.204</horizontal_fov>
                 <image>
-                    <width>1280</width>
-                    <height>720</height>
+                    <width>640</width>
+                    <height>480</height>
                     <!-- format is okay the default value since the realsense is rgb8-->
                 </image>
                 <clip>
-                    <near>0.3</near>
-                    <far>3</far>
+                    <near>0.28</near>
+                    <far>10.0</far>
                 </clip>
                 <depth_camera>
                     <clip>
-                        <near>0.3</near>
-                        <far>3</far>
+                        <near>0.28</near> <!-- Minimum depth distance for D435i -->
+                        <far>10.0</far>
                     </clip>
                 </depth_camera>
             </camera>
@@ -67,6 +68,10 @@
                     <width>32</width>
                     <height>24</height>
                 </image>
+                <clip>
+                    <near>0.1</near>
+                    <far>5.0</far>
+                </clip>
             </camera>
 
         </sensor>
