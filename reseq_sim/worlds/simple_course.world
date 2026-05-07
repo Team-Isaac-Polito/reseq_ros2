@@ -1,7 +1,7 @@
 <sdf version="1.6">
   <world name="simple_course">
     <physics name="1ms" type="ignored">
-      <max_step_size>0.004</max_step_size>
+      <max_step_size>0.01</max_step_size>
       <real_time_factor>1.0</real_time_factor>
     </physics>
     <plugin
@@ -19,7 +19,7 @@
     <plugin
       filename="gz-sim-sensors-system"
       name="gz::sim::systems::Sensors">
-      <render_engine>ogre</render_engine>
+      <render_engine>ogre2</render_engine>
     </plugin>
     <plugin
       filename="gz-sim-imu-system"
