@@ -60,6 +60,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-velocity-controllers \
     ros-jazzy-xacro \
     ros-jazzy-rqt-tf-tree \
+    f3d \
     curl \
     unzip \
     && rm -rf /var/lib/apt/lists/*
@@ -68,6 +69,19 @@ RUN rosdep init || true
 
 WORKDIR /ros2_ws
 RUN mkdir -p /ros2_ws/src
+
+# ── Flutter SDK (web only) ──────────────────────────────────────────────
+ENV FLUTTER_HOME=/opt/flutter
+ENV PATH="$FLUTTER_HOME/bin:$PATH"
+RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git $FLUTTER_HOME \
+    && flutter config --enable-web --no-analytics \
+    && flutter precache --web
+
+# ── Build Flutter web app ───────────────────────────────────────────────
+COPY ros_app /ros2_ws/ros_app
+WORKDIR /ros2_ws/ros_app
+RUN flutter pub get && flutter build web --release
+WORKDIR /ros2_ws
 
 COPY reseq_interfaces /ros2_ws/src/reseq_interfaces
 COPY reseq_description /ros2_ws/src/reseq_description
@@ -83,19 +97,6 @@ RUN /bin/bash -lc 'source /opt/ros/$ROS_DISTRO/setup.bash \
     && rosdep update \
     && rosdep install -iy --from-paths /ros2_ws/src --ignore-src --rosdistro $ROS_DISTRO --skip-keys "$SKIP_KEYS" -t exec -t build \
     && colcon build --packages-select reseq_interfaces reseq_description reseq_arm_mk2 reseq_ros2 reseq_sim 1_Flat_KRails 2_Sloped_KRails --event-handlers console_direct+'
-
-# ── Flutter SDK (web only) ──────────────────────────────────────────────
-ENV FLUTTER_HOME=/opt/flutter
-ENV PATH="$FLUTTER_HOME/bin:$PATH"
-RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git $FLUTTER_HOME \
-    && flutter config --enable-web --no-analytics \
-    && flutter precache --web
-
-# ── Build Flutter web app ───────────────────────────────────────────────
-COPY ros_app /ros2_ws/ros_app
-WORKDIR /ros2_ws/ros_app
-RUN flutter pub get && flutter build web --release
-WORKDIR /ros2_ws
 
 CMD ["/bin/bash", "-lc", "\
   source /opt/ros/$ROS_DISTRO/setup.bash; \
