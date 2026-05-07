@@ -2,6 +2,9 @@
 
 Uses online async mode by default. Pass ``slam_mode:=localization`` to
 localise on an existing map instead of building a new one.
+
+In mapping mode, also launches the ply_saver node which accumulates
+colored PointCloud2 frames from the RGBD camera into reseq_map_3d.ply.
 """
 
 import os
@@ -9,7 +12,8 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
 
@@ -63,6 +67,28 @@ def generate_launch_description():
         ],
     )
 
+    # ply_saver: accumulates colored PointCloud2 frames into a PLY map.
+    ply_saver_node = Node(
+        package='reseq_ros2',
+        executable='ply_saver',
+        name='ply_saver',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'pointcloud_topic': '/camera/depth/color/points',
+                'save_path': '/ros2_ws/maps',
+                'save_interval': 60.0,
+                'voxel_size': 0.05,
+                'frame_skip': 5,
+                'max_range': 10.0,
+            }
+        ],
+        condition=IfCondition(
+            PythonExpression(["'", LaunchConfiguration('slam_mode'), "' == 'mapping'"])
+        ),
+    )
+
     return LaunchDescription(
         [
             slam_mode_arg,
@@ -70,5 +96,6 @@ def generate_launch_description():
             use_sim_time_arg,
             slam_node,
             lifecycle_manager,
+            ply_saver_node,
         ]
     )
