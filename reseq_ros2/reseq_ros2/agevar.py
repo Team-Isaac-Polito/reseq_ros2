@@ -401,6 +401,55 @@ class Agevar(Node):
                 idx = self.latest_feedback.name.index(joint_name)
                 self.yaw_angles[i] = self.latest_feedback.position[idx]
 
+        # Fuse encoder feedback into path buffer to correct dead-reckoning drift
+        if not hasattr(self, '_encoder_correction_applied'):
+            self._encoder_correction_applied = False
+
+        # Compute correction term: actual encoder angle - commanded angle
+        # For forward motion, compare first module's encoder vs path buffer
+        if self._prev_sign == 1 and len(self._dist) > 1:
+            # Get expected heading from forward path buffer at current head distance
+            expected_heading = self._interp_heading(self.head_distance)
+            actual_heading = self.yaw_angles[0]
+            
+            # Compute heading error (normalized to [-π, π])
+            heading_error = atan2(sin(actual_heading - expected_heading), 
+                                 cos(actual_heading - expected_heading))
+            
+            # Apply gentle correction to path buffer (K = 0.1 to 0.3)
+            K_correction = 0.2  # Correction gain
+            if abs(heading_error) > 0.01:
+                correction = K_correction * heading_error
+                
+                for i in range(len(self._heading)):
+                    self._heading[i] += correction
+                self.head_theta += correction
+                self.get_logger().debug(
+                    f'Encoder fusion: corrected path buffer by {correction:.4f} rad'
+                )
+
+        # For backward motion, compare last module's encoder vs backward path buffer
+        elif self._prev_sign == -1 and len(self._bwd_dist) > 1:
+            # Get expected heading from backward path buffer
+            expected_heading = self._interp_heading(
+                self._bwd_distance, self._bwd_dist, self._bwd_heading
+            )
+            # Last module is index n_mod-1 (physical leader in backward mode)
+            actual_heading = self.yaw_angles[self.n_mod - 1]
+            
+            heading_error = atan2(sin(actual_heading - expected_heading),
+                                 cos(actual_heading - expected_heading))
+            
+            K_correction = 0.2
+            if abs(heading_error) > 0.01:
+                correction = K_correction * heading_error
+                for i in range(len(self._bwd_heading)):
+                    self._bwd_heading[i] += correction
+                self._bwd_head_theta += correction
+                self.get_logger().debug(
+                    f'Encoder fusion (backward): corrected by {correction:.4f} rad'
+                )
+
     def _compute_adaptive_alpha(self, error_mag):
         # Tunable parameters
         max_alpha = 1.0
