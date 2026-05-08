@@ -89,7 +89,7 @@ local_costmap:
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
-        observation_sources: scan
+        observation_sources: scan pointcloud pointcloud_dropoff
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -98,6 +98,28 @@ local_costmap:
           data_type: LaserScan
           raytrace_max_range: 8.0
           obstacle_max_range: 6.0
+        pointcloud:
+          topic: /camera/depth/color/points
+          max_obstacle_height: 2.0
+          # 0.05 m floor clearance prevents the ground plane from being
+          # marked as an obstacle when the RealSense looks slightly downward.
+          min_obstacle_height: 0.05
+          clearing: true
+          marking: true
+          data_type: PointCloud2
+          raytrace_max_range: 4.0
+          obstacle_max_range: 3.5
+        pointcloud_dropoff:
+          topic: /camera/depth/color/points
+          # Detect drop-offs: only mark points that are well below floor level
+          # (e.g., ramp edges, platform ledges on the KRails arena).
+          min_obstacle_height: -0.5
+          max_obstacle_height: -0.03
+          clearing: false
+          marking: true
+          data_type: PointCloud2
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         cost_scaling_factor: 5.0
@@ -122,7 +144,7 @@ global_costmap:
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
-        observation_sources: scan
+        observation_sources: scan pointcloud pointcloud_dropoff
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -131,6 +153,24 @@ global_costmap:
           data_type: LaserScan
           raytrace_max_range: 8.0
           obstacle_max_range: 6.0
+        pointcloud:
+          topic: /camera/depth/color/points
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.05
+          clearing: true
+          marking: true
+          data_type: PointCloud2
+          raytrace_max_range: 4.0
+          obstacle_max_range: 3.5
+        pointcloud_dropoff:
+          topic: /camera/depth/color/points
+          min_obstacle_height: -0.5
+          max_obstacle_height: -0.03
+          clearing: false
+          marking: true
+          data_type: PointCloud2
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         cost_scaling_factor: 5.0
@@ -218,12 +258,24 @@ collision_monitor:
       min_points: 6
       visualize: false
       enabled: true
-    observation_sources: ["scan"]
+    observation_sources: ["scan", "pointcloud", "pointcloud_dropoff"]
     scan:
       type: scan
       topic: /scan
       min_height: 0.15
       max_height: 2.0
+      enabled: true
+    pointcloud:
+      type: pointcloud
+      topic: /camera/depth/color/points
+      min_height: 0.05
+      max_height: 2.0
+      enabled: true
+    pointcloud_dropoff:
+      type: pointcloud
+      topic: /camera/depth/color/points
+      min_height: -0.5
+      max_height: -0.03
       enabled: true
 
 docking_server:
