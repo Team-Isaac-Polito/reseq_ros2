@@ -78,7 +78,7 @@ RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git $
     && flutter precache --web
 
 # ── Build Flutter web app ───────────────────────────────────────────────
-COPY ros_app /ros2_ws/ros_app
+RUN git clone https://github.com/Team-Isaac-Polito/ros_app /ros2_ws/ros_app
 WORKDIR /ros2_ws/ros_app
 RUN flutter pub get && flutter build web --release
 WORKDIR /ros2_ws
