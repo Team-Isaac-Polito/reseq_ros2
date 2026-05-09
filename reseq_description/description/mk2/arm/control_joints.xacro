@@ -49,4 +49,8 @@
             <command_interface name="velocity" />
         </xacro:if>
     </joint>
+    <joint name="mod1__beak">
+        <command_interface name="position" />
+        <state_interface name="position" />
+    </joint>
 </robot>

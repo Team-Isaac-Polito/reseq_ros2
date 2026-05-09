@@ -92,6 +92,16 @@ def generate_launch_description():
         ],
     )
 
+    beak_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=[
+            'beak_controller',
+            '--controller-manager',
+            '/controller_manager',
+        ],
+    )
+
     # Load all MoveIt configuration files
     moveit_config = (
         MoveItConfigsBuilder(
@@ -179,6 +189,7 @@ def generate_launch_description():
         move_group_node,
         servo_node,
         moveit_controller_node,
+        beak_controller_spawner,
     ]
 
     launch_description = LaunchDescription([generate_configs])

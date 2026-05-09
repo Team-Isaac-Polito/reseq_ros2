@@ -5,8 +5,9 @@ import rclpy
 from geometry_msgs.msg import TwistStamped, Vector3
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Int32
+#from std_msgs.msg import Int32
 from std_srvs.srv import SetBool
+from std_msgs.msg import Float64MultiArray
 
 
 class MoveitController(Node):
@@ -70,9 +71,14 @@ class MoveitController(Node):
             'mod1__wrist_roll_arm_joint',
         ]
 
+        # self.beak_pub = self.create_publisher(  # TODO: Fix with HW interface
+        #     Float64MultiArray,
+        #     'reseq/module1/mk2_arm/beak/setpoint',
+        #     10,
+        # )
         self.beak_pub = self.create_publisher(  # TODO: Fix with HW interface
-            Int32,
-            'reseq/module33/mk2_arm/beak/setpoint',
+            Float64MultiArray,
+            '/beak_controller/commands',
             10,
         )
         self.get_logger().info('Node Moveit Controller started successfully')
@@ -171,7 +177,7 @@ class MoveitController(Node):
             TODO: This currently uses a direct topic publish but should be
             updated to use the hardware interface.
         """
-        self.beak_pub.publish(Int32(data=int(request.data)))
+        self.beak_pub.publish(Float64MultiArray(data=[float(not request.data)]))
         response.success = True
         response.message = f'Sent request to {"CLOSE" if request.data else "OPEN"} the arm beak'
         self.get_logger().info(response.message)
