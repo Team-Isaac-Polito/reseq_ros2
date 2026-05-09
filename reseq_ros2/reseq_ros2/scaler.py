@@ -152,17 +152,23 @@ class Scaler(Node):
 
         if s2 or s3 or s4:
             lift_msg = Vector3()
-            lift_msg.x = data.right.z  # Pitch set via right.z
+            lift_msg.x = data.right.z  # Pitch of the lifting module
+            lift_msg.y = 0.0
 
             if s2:
                 lift_msg.z = 1.0
-            elif s3:
-                lift_msg.z = 2.0
-            elif s4:
-                lift_msg.z = 3.0
+                self.lift_pub.publish(lift_msg)
+                self.get_logger().info(f'Lifting module {lift_msg.z} with pitch {lift_msg.x}')
 
-            self.lift_pub.publish(lift_msg)
-            self.get_logger().info(f'Lifting module {lift_msg.z} with pitch {lift_msg.x}')
+            if s3:
+                lift_msg.z = 2.0
+                self.lift_pub.publish(lift_msg)
+                self.get_logger().info(f'Lifting module {lift_msg.z} with pitch {lift_msg.x}')
+
+            if s4:
+                lift_msg.z = 3.0
+                self.lift_pub.publish(lift_msg)
+                self.get_logger().info(f'Lifting module {lift_msg.z} with pitch {lift_msg.x}')
 
         if self.control_mode == Scaler.control_mode_enum.AGEVAR:
             cmd_vel = self.agevarScaler(cmd_vel)
