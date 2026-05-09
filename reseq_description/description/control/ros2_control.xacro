@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:arg name="can_interface" default="can0"/>
+
     <ros2_control name="ReseqHardwareSystem" type="system">
         <hardware>
             <xacro:if value="$(arg sim_mode)" >
@@ -7,10 +9,11 @@
             </xacro:if>
             <xacro:unless value="$(arg sim_mode)">
                 <plugin>reseq_hardware/ReseqHardware</plugin>
+                <param name="can_interface">$(arg can_interface)</param>
+                <param name="mk_version">$(arg version)</param>
             </xacro:unless>
 
             <param name="num_modules">${NumModules}</param>
-            <!-- TODO: vcan, and gazebo alternatives -->
         </hardware>
 
         <xacro:include filename="$(find reseq_description)/description/control/body_joints.xacro"/>
