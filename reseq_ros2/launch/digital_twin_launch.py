@@ -225,12 +225,12 @@ def launch_setup(context, *args, **kwargs):
                         'robot_description': robot_description,
                         'use_sim_time': sim_branch_use_sim_time == 'true',
                         'state_topic': arm_state_topic,
+                        'velocity_topic': '/mk2_arm_vel_scaled',
                         'chain_tip': 'tcp',
                         'command_frame': 'arm_base_link',
                         'command_mode': 'velocity',
                         'max_cartesian_vel': arm_max_cartesian_vel,
                         'max_joint_vel': arm_max_joint_vel,
-                        'startup_hold_positions': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                         'deadzone': 0.02,
                         'trajectory_horizon_sec': 0.1,
                     }

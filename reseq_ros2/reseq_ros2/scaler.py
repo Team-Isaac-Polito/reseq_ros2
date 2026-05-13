@@ -98,13 +98,20 @@ class Scaler(Node):
             .get_parameter_value()
             .double_array_value
         )
+        self.arm_input_scale = (
+            self.declare_parameter('arm_input_scale', 1.0).get_parameter_value().double_value
+        )
+        self.arm_input_deadzone = (
+            self.declare_parameter('arm_input_deadzone', 0.08).get_parameter_value().double_value
+        )
+        arm_vel_topic = self.declare_parameter('arm_vel_topic', '/mk2_arm_vel').value
 
         for h in self.handlers:
             h['service'] = self.create_client(SetBool, h['service'])
 
         self.create_subscription(Remote, '/remote', self.remote_callback, self.qos)
 
-        self.moveit_pub = self.create_publisher(Vector3, '/mk2_arm_vel', 10)
+        self.arm_vel_pub = self.create_publisher(Vector3, arm_vel_topic, 10)
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel_teleop', 10)
         self.autonomy_pub = self.create_publisher(Bool, '/autonomy/enabled', 10)
