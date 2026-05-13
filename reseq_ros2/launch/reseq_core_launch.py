@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, EmitEvent, OpaqueFunction
 from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -42,7 +42,7 @@ def launch_setup(context, *args, **kwargs):
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
         )
     )
     launch_config.append(
@@ -57,7 +57,7 @@ def launch_setup(context, *args, **kwargs):
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
         )
     )
 
@@ -76,7 +76,7 @@ def launch_setup(context, *args, **kwargs):
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
         )
     )
 

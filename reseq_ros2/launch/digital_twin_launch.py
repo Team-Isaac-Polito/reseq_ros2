@@ -1,10 +1,16 @@
 import os
+import subprocess
 
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, RegisterEventHandler
-from launch.event_handlers import OnProcessExit
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -14,22 +20,93 @@ share_folder = get_package_share_directory('reseq_ros2')
 description_share_folder = get_package_share_directory('reseq_description')
 
 
+def _spawner(name: str, external_log_level: str, *extra_args: str) -> Node:
+    return Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=[
+            name,
+            '--controller-manager',
+            '/controller_manager',
+            '--controller-manager-timeout',
+            '60',
+            '--service-call-timeout',
+            '60',
+            *extra_args,
+            '--ros-args',
+            '--log-level',
+            external_log_level,
+        ],
+    )
+
+
+def _append_spawner_chain(launch_config, start_action, spawners):
+    if not spawners:
+        return
+
+    launch_config.append(
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=start_action,
+                on_exit=[spawners[0]],
+            )
+        )
+    )
+
+    for previous_spawner, next_spawner in zip(spawners, spawners[1:]):
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=previous_spawner,
+                    on_exit=[next_spawner],
+                )
+            )
+        )
+
+
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a
 # command line argument directly in the launch file
 def launch_setup(context, *args, **kwargs):
     version = LaunchConfiguration('version').perform(context)
-    # Get config path from command line, otherwise use the default path
     config_filename = LaunchConfiguration('config_file').perform(context)
     external_log_level = LaunchConfiguration('external_log_level').perform(context)
-    use_sim_time_arg = LaunchConfiguration('use_sim_time').perform(context)
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
+    sim_branch_use_sim_time = 'true' if sim_mode == 'true' else use_sim_time
+    use_moveit = LaunchConfiguration('use_moveit').perform(context).lower() == 'true'
+    launch_yaw_controllers = (
+        LaunchConfiguration('launch_yaw_controllers').perform(context).lower() == 'true'
+    )
+    arm_max_cartesian_vel = float(LaunchConfiguration('arm_max_cartesian_vel').perform(context))
+    arm_max_joint_vel = float(LaunchConfiguration('arm_max_joint_vel').perform(context))
 
     arm_arg = LaunchConfiguration('arm').perform(context=context)
-    arm = True if arm_arg == 'true' else False  # bool version of arm_arg
+    arm = arm_arg == 'true'
 
-    # Parse the config file
+    description_share = get_package_share_directory('reseq_description')
+    generate_configs = subprocess.run(
+        [
+            'python3',
+            os.path.join(description_share, 'scripts', 'generate_configs.py'),
+            config_filename,
+            '--version',
+            version,
+        ]
+        + (['--use_sim_time'] if sim_branch_use_sim_time == 'true' else [])
+        + (['--no_arm_controllers'] if not arm else []),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if generate_configs.stdout:
+        print(generate_configs.stdout)
+    if generate_configs.stderr:
+        print(generate_configs.stderr)
+
     config = parse_config(f'{config_path}/{version}/{config_filename}')
-    xacro_file = description_share_folder + f'/description/{version}/reseq.urdf.xacro'
+    robot_controllers = os.path.join(description_share, 'config', 'temp', 'reseq_controllers.yaml')
+
+    xacro_file = os.path.join(description_share_folder, 'description', version, 'reseq.urdf.xacro')
     robot_description = xacro.process_file(
         xacro_file,
         mappings={
@@ -39,6 +116,7 @@ def launch_setup(context, *args, **kwargs):
             'sim_mode': sim_mode,
         },
     ).toxml()
+
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -46,155 +124,131 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             {
                 'robot_description': robot_description,
-                'use_sim_time': use_sim_time_arg == 'true',
+                'use_sim_time': sim_branch_use_sim_time == 'true',
                 'publish_frequency': 50.0,
             }
-        ],  # add other parameters here if required
+        ],
         arguments=['--ros-args', '--log-level', external_log_level],
     )
 
     launch_config = [robot_state_publisher_node]
 
-    robot_controllers = f'{config_path}/reseq_controllers.yaml'
     if sim_mode == 'false':
         control_node = Node(
             package='controller_manager',
             executable='ros2_control_node',
-            parameters=[robot_controllers],
-            output='both',
-            remappings=[
-                ('~/robot_description', '/robot_description'),
+            parameters=[
+                {'robot_description': robot_description},
+                robot_controllers,
             ],
+            output='both',
             arguments=['--ros-args', '--log-level', external_log_level],
         )
         launch_config.append(control_node)
 
-    spawners = []
-    spawners.append(
-        Node(
-            package='controller_manager',
-            executable='spawner',
-            arguments=[
-                'joint_state_broadcaster',
-                '--controller-manager',
-                '/controller_manager',
-                '--switch-timeout',
-                '30.0',
-                '--ros-args',
-                '--log-level',
-                external_log_level,
-            ],
-        )
-    )
+    body_spawners = [_spawner('joint_state_broadcaster', external_log_level)]
 
     num_modules = config.get('num_modules', 0)
     for i in range(num_modules):
-        spawners.append(
-            Node(
-                package='controller_manager',
-                executable='spawner',
-                arguments=[
-                    f'diff_controller{i + 1}',
-                    '--controller-manager',
-                    '/controller_manager',
-                    '--switch-timeout',
-                    '30.0',
-                    '--ros-args',
-                    '--log-level',
-                    external_log_level,
-                ],
+        body_spawners.append(_spawner(f'diff_controller{i + 1}', external_log_level))
+
+    if sim_branch_use_sim_time == 'true' and launch_yaw_controllers:
+        for i in range(num_modules - 1):
+            body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
+
+    for i in range(num_modules):
+        body_spawners.append(_spawner(f'imu{i + 1}_broadcaster', external_log_level))
+
+    arm_spawners = []
+    if arm:
+        arm_spawners.append(_spawner('joint_group_velocity_controller', external_log_level))
+
+    controller_manager_ready = ExecuteProcess(
+        cmd=[
+            'zsh',
+            '-lc',
+            'until ros2 service type /controller_manager/list_controllers '
+            '> /dev/null 2>&1; do sleep 1; done',
+        ],
+        output='screen',
+    )
+
+    if sim_mode == 'false':
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessStart(target_action=control_node, on_start=[controller_manager_ready])
             )
         )
+    else:
+        launch_config.append(controller_manager_ready)
 
-    # Spawn yaw joint controllers (ForwardCommandController — sim only)
-    if use_sim_time_arg == 'true':
-        for i in range(num_modules - 1):
-            spawners.append(
-                Node(
-                    package='controller_manager',
-                    executable='spawner',
-                    arguments=[
-                        f'yaw_controller{i + 2}',
-                        '--controller-manager',
-                        '/controller_manager',
-                        '--switch-timeout',
-                        '30.0',
-                        '--ros-args',
-                        '--log-level',
-                        external_log_level,
-                    ],
-                )
-            )
+    _append_spawner_chain(launch_config, controller_manager_ready, body_spawners + arm_spawners)
 
-    # Spawn IMU sensor broadcasters (reads hardware state interfaces from either
-    # GazeboSimSystem or ReseqHardware and publishes sensor_msgs/Imu to /{name}/imu)
-    for i in range(num_modules):
-        spawners.append(
+    ekf_config = os.path.join(share_folder, 'config', 'ekf.yaml')
+    launch_config.append(
+        Node(
+            package='robot_localization',
+            executable='ekf_node',
+            name='ekf_filter_node',
+            output='screen',
+            parameters=[ekf_config, {'use_sim_time': sim_branch_use_sim_time == 'true'}],
+            arguments=['--ros-args', '--log-level', external_log_level],
+        )
+    )
+
+    if sim_mode == 'false' and arm:
+        launch_config.append(
             Node(
-                package='controller_manager',
-                executable='spawner',
-                arguments=[
-                    f'imu{i + 1}_broadcaster',
-                    '--controller-manager',
-                    '/controller_manager',
-                    '--switch-timeout',
-                    '30.0',
-                    '--ros-args',
-                    '--log-level',
-                    external_log_level,
+                package='reseq_arm_mk2',
+                executable='arm_state_bridge',
+                name='arm_state_bridge',
+                parameters=[
+                    {
+                        'source_topic': '/joint_states',
+                        'output_mode': 'joint_state',
+                        'output_topic': '/arm_joint_states',
+                    }
                 ],
+                output='screen',
             )
         )
 
     if arm:
-        spawners.append(
+        arm_state_topic = '/joint_states' if sim_mode == 'true' else '/arm_joint_states'
+        launch_config.append(
             Node(
-                package='controller_manager',
-                executable='spawner',
-                arguments=[
-                    'mk2_arm_controller',
-                    '--controller-manager',
-                    '/controller_manager',
-                    '--switch-timeout',
-                    '30.0',
+                package='reseq_arm_mk2',
+                executable='cartesian_arm_controller',
+                name='cartesian_arm_controller',
+                parameters=[
+                    {
+                        'robot_description': robot_description,
+                        'use_sim_time': sim_branch_use_sim_time == 'true',
+                        'state_topic': arm_state_topic,
+                        'chain_tip': 'tcp',
+                        'command_frame': 'arm_base_link',
+                        'command_mode': 'velocity',
+                        'max_cartesian_vel': arm_max_cartesian_vel,
+                        'max_joint_vel': arm_max_joint_vel,
+                        'startup_hold_positions': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                        'deadzone': 0.02,
+                        'trajectory_horizon_sec': 0.1,
+                    }
                 ],
-            )
-        )
-        spawners.append(
-            Node(
-                package='controller_manager',
-                executable='spawner',
-                arguments=[
-                    'joint_group_velocity_controller',
-                    '--controller-manager',
-                    '/controller_manager',
-                    '--inactive',
-                    '--switch-timeout',
-                    '30.0',
-                ],
+                output='screen',
             )
         )
 
-    if spawners:
-        launch_config.append(spawners[0])
-        for previous_spawner, current_spawner in zip(spawners, spawners[1:]):
-            launch_config.append(
-                RegisterEventHandler(
-                    OnProcessExit(target_action=previous_spawner, on_exit=[current_spawner])
-                )
+    if sim_mode == 'false' and arm and use_moveit:
+        launch_config.append(
+            Node(
+                package='reseq_arm_mk2',
+                executable='coordinate_controller',
+                name='coordinate_controller',
+                parameters=[{'robot_description': robot_description}],
+                output='screen',
             )
-
-    # EKF node: fuse wheel odometry + IMU to reduce angular drift from wheel slip
-    ekf_config = os.path.join(share_folder, 'config', 'ekf.yaml')
-    ekf_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        output='screen',
-        parameters=[ekf_config, {'use_sim_time': use_sim_time_arg == 'true'}],
-        arguments=['--ros-args', '--log-level', external_log_level],
-    )
-    launch_config.append(ekf_node)
+        )
 
     return launch_config
 
@@ -218,13 +272,31 @@ def generate_launch_description():
                 description=(
                     "set use_sim_time to 'true' if you are using gazebo. "
                     'In general this parameter is not set from this launch '
-                    'but instead is passed by other launch files that use '
-                    "this launch file. Setting this arg to 'true' sets the "
-                    'use_sim_time parameter of all nodes launched in this '
-                    'file to True.'
+                    'but instead is passed by other launch files that use this launch file. '
+                    "Setting this arg to 'true' sets use_sim_time on all launched nodes."
                 ),
             ),
             DeclareLaunchArgument('sim_mode', default_value='false'),
+            DeclareLaunchArgument(
+                'arm_max_cartesian_vel',
+                default_value='0.4',
+                description='Cartesian velocity scale for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_max_joint_vel',
+                default_value='0.8',
+                description='Joint velocity clamp for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'use_moveit',
+                default_value='false',
+                description='Launch MoveIt-related arm tools',
+            ),
+            DeclareLaunchArgument(
+                'launch_yaw_controllers',
+                default_value='false',
+                description='Launch yaw position controllers in simulation/hardware control stack',
+            ),
             OpaqueFunction(function=launch_setup),
         ]
     )
