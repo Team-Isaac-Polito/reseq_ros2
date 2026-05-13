@@ -154,13 +154,14 @@ class Scaler(Node):
         # inverse of Radius of curvature (AGEVAR) or angular velocity (PIVOT) (-1:1)
         cmd_vel.angular.z = -data.right.x
 
-        # TODO probably to merge with another version of scaler.py
-
-        self.moveit_pub.publish(
+        # The app joystick is screen-oriented: X is right/left, Y is forward/back.
+        # The arm controller expects Cartesian commands in arm_base_link:
+        # +X forward, +Y left, +Z up. Invert screen X so pushing right moves right.
+        self.arm_vel_pub.publish(
             Vector3(
-                x=data.left.x,
-                y=data.left.y,
-                z=data.left.z,
+                x=self.scale_arm_input(data.left.y),
+                y=self.scale_arm_input(-data.left.x),
+                z=self.scale_arm_input(data.left.z),
             )
         )
 
@@ -183,6 +184,17 @@ class Scaler(Node):
 
     def scale(self, val, scaling_range):
         return (val + 1) / 2 * (scaling_range[1] - scaling_range[0]) + scaling_range[0]
+
+    def scale_arm_input(self, val: float) -> float:
+        value = float(val)
+        magnitude = abs(value)
+        if magnitude <= self.arm_input_deadzone:
+            return 0.0
+
+        span = max(1.0 - self.arm_input_deadzone, 1e-6)
+        scaled = ((magnitude - self.arm_input_deadzone) / span) * self.arm_input_scale
+        scaled = max(-1.0, min(1.0, scaled))
+        return scaled if value >= 0.0 else -scaled
 
 
 def main(args=None):
