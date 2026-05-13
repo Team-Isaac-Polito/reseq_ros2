@@ -156,12 +156,11 @@ def launch_setup(context, *args, **kwargs):
         for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
 
+    if arm:
+        body_spawners.append(_spawner('joint_group_velocity_controller', external_log_level))
+
     for i in range(num_modules):
         body_spawners.append(_spawner(f'imu{i + 1}_broadcaster', external_log_level))
-
-    arm_spawners = []
-    if arm:
-        arm_spawners.append(_spawner('joint_group_velocity_controller', external_log_level))
 
     controller_manager_ready = ExecuteProcess(
         cmd=[
@@ -182,7 +181,7 @@ def launch_setup(context, *args, **kwargs):
     else:
         launch_config.append(controller_manager_ready)
 
-    _append_spawner_chain(launch_config, controller_manager_ready, body_spawners + arm_spawners)
+    _append_spawner_chain(launch_config, controller_manager_ready, body_spawners)
 
     ekf_config = os.path.join(share_folder, 'config', 'ekf.yaml')
     launch_config.append(

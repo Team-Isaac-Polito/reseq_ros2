@@ -177,9 +177,16 @@ class Scaler(Node):
         return data
 
     def agevarScaler(self, data: Twist):
-        data.linear.x = self.scale(data.linear.x, self.r_linear_vel)
-        data.angular.z = self.scale(data.angular.z, self.r_inverse_radius)
-        data.angular.z *= data.linear.x  # Angular vel
+        linear_input = data.linear.x
+        angular_input = data.angular.z
+
+        data.linear.x = self.scale(linear_input, self.r_linear_vel)
+        if abs(linear_input) <= 0.08 and abs(angular_input) > 0.08:
+            data.linear.x = 0.0
+            data.angular.z = self.scale(angular_input, self.r_angular_vel)
+        else:
+            data.angular.z = self.scale(angular_input, self.r_inverse_radius)
+            data.angular.z *= data.linear.x  # Angular vel
         return data
 
     def scale(self, val, scaling_range):
