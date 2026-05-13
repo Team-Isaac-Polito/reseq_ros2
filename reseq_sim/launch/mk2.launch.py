@@ -41,6 +41,7 @@ def launch_setup(context, *args, **kwargs):
             'map_file': LaunchConfiguration('map_file'),
             'spawn_x': LaunchConfiguration('spawn_x'),
             'spawn_y': LaunchConfiguration('spawn_y'),
+            'launch_yaw_controllers': 'true',
         }.items(),
     )
 
