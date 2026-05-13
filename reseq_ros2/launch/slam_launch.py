@@ -82,6 +82,10 @@ def generate_launch_description():
                 'voxel_size': 0.05,
                 'frame_skip': 5,
                 'max_range': 10.0,
+                'scan_topic': '/scan',
+                'scan_frame_skip': 2,
+                'scan_max_range': 12.0,
+                'scan_color_rgb': [255, 210, 0],
             }
         ],
         condition=IfCondition(

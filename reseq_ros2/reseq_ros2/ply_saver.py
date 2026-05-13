@@ -20,9 +20,12 @@ import rclpy
 import tf2_ros
 from rclpy.node import Node
 from rclpy.qos import (
-    QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy,
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
 )
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import LaserScan, PointCloud2
 
 
 def _parse_xyz_rgb(msg: PointCloud2):
@@ -43,12 +46,12 @@ def _parse_xyz_rgb(msg: PointCloud2):
 
     raw = np.frombuffer(bytes(msg.data), dtype=np.uint8).reshape(n, step)
 
-    xyz = raw[:, ox:ox + 12].copy().view(np.float32).reshape(n, 3).astype(np.float64)
+    xyz = raw[:, ox : ox + 12].copy().view(np.float32).reshape(n, 3).astype(np.float64)
 
     if rgb_dt == 7:  # FLOAT32 - Gazebo bridge packs RGBA into one float32
-        rgb = raw[:, o_rgb:o_rgb + 4].astype(np.uint8)[:, :3].copy()
+        rgb = raw[:, o_rgb : o_rgb + 4].astype(np.uint8)[:, :3].copy()
     else:  # UINT8, UINT32, etc. - RealSense native format
-        rgb = raw[:, o_rgb:o_rgb + 3].copy()
+        rgb = raw[:, o_rgb : o_rgb + 3].copy()
 
     valid = np.isfinite(xyz).all(axis=1)
     return xyz[valid], rgb[valid]
@@ -59,11 +62,14 @@ def _tf_to_Rt(tf_stamped):
     tr = tf_stamped.transform.translation
     q = tf_stamped.transform.rotation
     x, y, z, w = q.x, q.y, q.z, q.w
-    R = np.array([
-        [1 - 2*(y*y + z*z),     2*(x*y - w*z),     2*(x*z + w*y)],
-        [    2*(x*y + w*z), 1 - 2*(x*x + z*z),     2*(y*z - w*x)],
-        [    2*(x*z - w*y),     2*(y*z + w*x), 1 - 2*(x*x + y*y)],
-    ], dtype=np.float64)
+    R = np.array(
+        [
+            [1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
+            [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
+            [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)],
+        ],
+        dtype=np.float64,
+    )
     t = np.array([tr.x, tr.y, tr.z], dtype=np.float64)
     return R, t
 
@@ -92,6 +98,10 @@ class PlySaver(Node):
         self.declare_parameter('voxel_size', 0.05)
         self.declare_parameter('frame_skip', 5)
         self.declare_parameter('max_range', 10.0)
+        self.declare_parameter('scan_topic', '/scan')
+        self.declare_parameter('scan_frame_skip', 2)
+        self.declare_parameter('scan_max_range', 12.0)
+        self.declare_parameter('scan_color_rgb', [255, 210, 0])
 
         self._pc_topic = self.get_parameter('pointcloud_topic').get_parameter_value().string_value
         save_dir = Path(self.get_parameter('save_path').get_parameter_value().string_value)
@@ -99,29 +109,62 @@ class PlySaver(Node):
         self._voxel_size = self.get_parameter('voxel_size').get_parameter_value().double_value
         self._frame_skip = self.get_parameter('frame_skip').get_parameter_value().integer_value
         self._max_range = self.get_parameter('max_range').get_parameter_value().double_value
+        self._scan_topic = self.get_parameter('scan_topic').get_parameter_value().string_value
+        self._scan_frame_skip = (
+            self.get_parameter('scan_frame_skip').get_parameter_value().integer_value
+        )
+        self._scan_max_range = (
+            self.get_parameter('scan_max_range').get_parameter_value().double_value
+        )
+        scan_rgb = self.get_parameter('scan_color_rgb').value
+        self._scan_rgb = tuple(int(max(0, min(255, c))) for c in scan_rgb[:3])
 
         self._ply_path = save_dir / 'reseq_map_3d.ply'
         self._voxel_map = {}
         self._frame_idx: int = 0
+        self._scan_frame_idx: int = 0
 
         self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer, self)
 
-        qos = QoSProfile(
+        pc_qos = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1,
         )
+        scan_qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.VOLATILE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=5,
+        )
         self.create_subscription(
-            PointCloud2, self._pc_topic, self._pc_cb, qos,
+            PointCloud2,
+            self._pc_topic,
+            self._pc_cb,
+            pc_qos,
+        )
+        self.create_subscription(
+            LaserScan,
+            self._scan_topic,
+            self._scan_cb,
+            scan_qos,
         )
 
         self.create_timer(interval, self._save)
         self.get_logger().info(
-            f'PlySaver listening on [{self._pc_topic}], '
+            f'PlySaver listening on [{self._pc_topic}] and [{self._scan_topic}], '
             f'save every {interval:.0f}s -> {self._ply_path}'
         )
+
+    def _accumulate_pts(self, pts_map: np.ndarray, rgb: np.ndarray) -> None:
+        if len(pts_map) == 0:
+            return
+        vs = self._voxel_size
+        voxel_keys = tuple(np.floor(pts_map[:, i] / vs).astype(np.int64) for i in range(3))
+        for k0, k1, k2, c in zip(*voxel_keys, rgb):
+            self._voxel_map[(int(k0), int(k1), int(k2))] = (int(c[0]), int(c[1]), int(c[2]))
 
     def _pc_cb(self, msg: PointCloud2) -> None:
         self._frame_idx += 1
@@ -140,7 +183,8 @@ class PlySaver(Node):
 
         try:
             tf_s = self._tf_buffer.lookup_transform(
-                'map', msg.header.frame_id,
+                'map',
+                msg.header.frame_id,
                 rclpy.time.Time(),
                 rclpy.duration.Duration(seconds=0.2),
             )
@@ -150,17 +194,56 @@ class PlySaver(Node):
 
         R, t = _tf_to_Rt(tf_s)
         pts_map = (R @ pts.T).T + t
-
-        vs = self._voxel_size
-        voxel_keys = tuple(np.floor(pts_map[:, i] / vs).astype(np.int64) for i in range(3))
-        
-        # Update voxel map (last observation wins per voxel)
-        for k0, k1, k2, c in zip(*voxel_keys, rgb):
-            self._voxel_map[(int(k0), int(k1), int(k2))] = (int(c[0]), int(c[1]), int(c[2]))
+        self._accumulate_pts(pts_map, rgb)
 
         if self._frame_idx % (self._frame_skip * 30) == 0:
+            self.get_logger().info(f'PlySaver: {len(self._voxel_map)} voxels accumulated')
+
+    def _scan_cb(self, msg: LaserScan) -> None:
+        self._scan_frame_idx += 1
+        if self._scan_frame_idx % max(1, self._scan_frame_skip) != 0:
+            return
+
+        ranges = np.asarray(msg.ranges, dtype=np.float64)
+        if ranges.size == 0:
+            return
+
+        max_r = min(
+            self._scan_max_range, msg.range_max if msg.range_max > 0.0 else self._scan_max_range
+        )
+        valid = np.isfinite(ranges) & (ranges >= msg.range_min) & (ranges <= max_r)
+        if not np.any(valid):
+            return
+
+        idx = np.nonzero(valid)[0]
+        r = ranges[valid]
+        angles = msg.angle_min + idx * msg.angle_increment
+
+        x = r * np.cos(angles)
+        y = r * np.sin(angles)
+        z = np.zeros_like(x)
+        pts_scan = np.column_stack((x, y, z))
+
+        try:
+            scan_stamp = rclpy.time.Time.from_msg(msg.header.stamp)
+            tf_s = self._tf_buffer.lookup_transform(
+                'map',
+                msg.header.frame_id,
+                scan_stamp,
+                rclpy.duration.Duration(seconds=0.2),
+            )
+        except Exception as e:
+            self.get_logger().debug(f'Scan TF lookup failed: {e}')
+            return
+
+        R, t = _tf_to_Rt(tf_s)
+        pts_map = (R @ pts_scan.T).T + t
+        scan_rgb = np.tile(np.array(self._scan_rgb, dtype=np.uint8), (len(pts_map), 1))
+        self._accumulate_pts(pts_map, scan_rgb)
+
+        if self._scan_frame_idx % (max(1, self._scan_frame_skip) * 30) == 0:
             self.get_logger().info(
-                f'PlySaver: {len(self._voxel_map)} voxels accumulated'
+                f'PlySaver: {len(self._voxel_map)} voxels accumulated (camera+scan)'
             )
 
     def _save(self) -> None:
@@ -177,9 +260,7 @@ class PlySaver(Node):
 
         try:
             _write_ply_rgb(self._ply_path, pts, colors)
-            self.get_logger().info(
-                f'PlySaver: saved {n} pts -> {self._ply_path.name}'
-            )
+            self.get_logger().info(f'PlySaver: saved {n} pts -> {self._ply_path.name}')
         except OSError as exc:
             self.get_logger().error(f'PlySaver: save failed: {exc}')
 
