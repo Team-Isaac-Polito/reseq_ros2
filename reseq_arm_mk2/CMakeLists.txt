@@ -11,6 +11,7 @@ foreach(dir config launch meshes urdf viz)
 endforeach(dir)
 
 ament_python_install_package(${PROJECT_NAME})
+ament_python_install_package(kdl_parser_py)
 
 install(PROGRAMS
   # "reseq_arm_mk2/coordinate_controller.py"
