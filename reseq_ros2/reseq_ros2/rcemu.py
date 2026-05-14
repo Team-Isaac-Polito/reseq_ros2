@@ -54,6 +54,7 @@ class RCEmulator(Node):
             'l': lambda: self._incr_axis('right', 'x', 1),
             'j': lambda: self._incr_axis('right', 'x', -1),
             'm': lambda: self._toggle_button('BBLUE'),
+            'n': lambda: self._toggle_button('BWHITE'),
             'u': lambda: self._toggle_button('S5'),
             'h': lambda: setattr(self, 'increment', self.increment * 2),
             'b': lambda: setattr(self, 'increment', max(self.increment / 2, 0.01)),
@@ -71,6 +72,7 @@ class RCEmulator(Node):
         print('Use QE to control left joystick Z axis')
         print('u: Toggle S5 button (Pivot on Head)')
         print('m: Toggle BBLUE button (Enable/Disable Agevar/Pivot)')
+        print('n: Toggle BWHITE button (Arm Home)')
         print('h: Double increment (current {})'.format(self.increment))
         print('b: Halve increment (current {})'.format(self.increment))
         print('z or Ctrl-C to quit')

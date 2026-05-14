@@ -100,6 +100,9 @@ def launch_setup(context, *args, **kwargs):
         launch_config.append(mk2_arm_controller)
         launch_config.append(joint_group_velocity_controller)
 
+    # Get CAN channel from config (defaults to 'can0' if not specified)
+    can_interface = config.get('canbus', {}).get('channel', 'can0')
+
     xacro_file = description_share_folder + f'/description/{version}/reseq.urdf.xacro'
     robot_description = xacro.process_file(
         xacro_file,
@@ -107,6 +110,7 @@ def launch_setup(context, *args, **kwargs):
             'version': version,
             'config_path': f'{config_path}/{version}/{config_filename}',
             'sim_mode': sim_mode,
+            'can_interface': can_interface,
         },
     ).toxml()
     robot_state_publisher_node = Node(

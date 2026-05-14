@@ -8,6 +8,8 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Int32
 from std_srvs.srv import SetBool
 
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from rclpy.duration import Duration
 
 class MoveitController(Node):
     """ROS2 node for controlling the arm using MoveIt Servo.
@@ -45,6 +47,7 @@ class MoveitController(Node):
         self.linear_vel_enabled = True
         self.create_service(SetBool, '/moveit_controller/switch_vel', self.switch_vel_type)
         self.create_service(SetBool, '/moveit_controller/close_beak', self.handle_beak)
+        self.create_service(SetBool, '/moveit_controller/home', self.handle_home)
 
         self.planning_frame_id = (
             self.declare_parameter('planning_frame_id', 'arm_base_link')
@@ -75,6 +78,13 @@ class MoveitController(Node):
             'reseq/module33/mk2_arm/beak/setpoint',
             10,
         )
+
+        self.trajectory_pub = self.create_publisher( 
+            JointTrajectory,
+            '/mk2_arm_controller/joint_trajectory',
+            10,
+        )
+
         self.get_logger().info('Node Moveit Controller started successfully')
 
     def mirror_states(self, msg: JointState):
@@ -177,6 +187,29 @@ class MoveitController(Node):
         self.get_logger().info(response.message)
         return response
 
+    def handle_home(
+        self, request: SetBool.Request, response: SetBool.Response
+    ) -> SetBool.Response:
+        """Service callback to move the arm to home position.
+        
+        Args:
+            request (SetBool.Request): Service request (data field is ignored)
+            response (SetBool.Response): Service response to be filled
+
+        Returns:
+            SetBool.Response: Response indicating success
+        """
+        traj = JointTrajectory()
+        traj.joint_names = self.state_to_mirror
+        point = JointTrajectoryPoint()
+        point.positions = [0.0]*len(self.state_to_mirror)
+        point.time_from_start = Duration(seconds=3).to_msg()
+        traj.points = [point]
+        self.trajectory_pub.publish(traj)
+        response.success = True
+        response.message = 'Arm moving to home position'
+        self.get_logger().info(response.message)
+        return response
 
 def main(args=None):
     rclpy.init(args=args)
