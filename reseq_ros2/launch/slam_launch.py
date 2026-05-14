@@ -39,7 +39,7 @@ def generate_launch_description():
     use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='false')
     ply_save_path_arg = DeclareLaunchArgument(
         'ply_save_path',
-        default_value=os.environ.get('RESEQ_PLY_SAVE_PATH', '/tmp/reseq_maps'),
+        default_value=os.environ.get('RESEQ_PLY_SAVE_PATH', '/ros2_ws/maps'),
         description='Directory where ply_saver writes the 3D map',
     )
 

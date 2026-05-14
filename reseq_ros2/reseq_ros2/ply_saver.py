@@ -196,9 +196,6 @@ class PlySaver(Node):
         pts_map = (R @ pts.T).T + t
         self._accumulate_pts(pts_map, rgb)
 
-        if self._frame_idx % (self._frame_skip * 30) == 0:
-            self.get_logger().info(f'PlySaver: {len(self._voxel_map)} voxels accumulated')
-
     def _scan_cb(self, msg: LaserScan) -> None:
         self._scan_frame_idx += 1
         if self._scan_frame_idx % max(1, self._scan_frame_skip) != 0:
@@ -240,11 +237,6 @@ class PlySaver(Node):
         pts_map = (R @ pts_scan.T).T + t
         scan_rgb = np.tile(np.array(self._scan_rgb, dtype=np.uint8), (len(pts_map), 1))
         self._accumulate_pts(pts_map, scan_rgb)
-
-        if self._scan_frame_idx % (max(1, self._scan_frame_skip) * 30) == 0:
-            self.get_logger().info(
-                f'PlySaver: {len(self._voxel_map)} voxels accumulated (camera+scan)'
-            )
 
     def _save(self) -> None:
         n = len(self._voxel_map)
