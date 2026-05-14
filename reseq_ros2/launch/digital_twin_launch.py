@@ -164,7 +164,7 @@ def launch_setup(context, *args, **kwargs):
 
     controller_manager_ready = ExecuteProcess(
         cmd=[
-            'zsh',
+            'bash',
             '-lc',
             'until ros2 service type /controller_manager/list_controllers '
             '> /dev/null 2>&1; do sleep 1; done',
@@ -217,7 +217,7 @@ def launch_setup(context, *args, **kwargs):
         launch_config.append(
             Node(
                 package='reseq_arm_mk2',
-                executable='cartesian_arm_controller',
+                executable='cartesian_arm_controller.py',
                 name='cartesian_arm_controller',
                 parameters=[
                     {
@@ -242,7 +242,7 @@ def launch_setup(context, *args, **kwargs):
         launch_config.append(
             Node(
                 package='reseq_arm_mk2',
-                executable='coordinate_controller',
+                executable='coordinate_controller.py',
                 name='coordinate_controller',
                 parameters=[{'robot_description': robot_description}],
                 output='screen',

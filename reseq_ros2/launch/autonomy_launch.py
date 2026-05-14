@@ -98,7 +98,7 @@ def launch_setup(context, *args, **kwargs):
     if wait_for_odom:
         wait_for_odom_action = ExecuteProcess(
             cmd=[
-                'zsh',
+                'bash',
                 '-lc',
                 (
                     'until ros2 topic info /diff_controller1/odom 2>/dev/null '

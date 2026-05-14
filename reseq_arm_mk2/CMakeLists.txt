@@ -14,7 +14,8 @@ ament_python_install_package(${PROJECT_NAME})
 ament_python_install_package(kdl_parser_py)
 
 install(PROGRAMS
-  # "reseq_arm_mk2/coordinate_controller.py"
+  "reseq_arm_mk2/cartesian_arm_controller.py"
+  "reseq_arm_mk2/coordinate_controller.py"
   "reseq_arm_mk2/moveit_controller.py"
   DESTINATION lib/${PROJECT_NAME}
 )
