@@ -14,9 +14,11 @@ with pointcloud.enable:=true also uses RELIABLE, so this works on both platforms
 """
 
 from pathlib import Path
+from std_msgs.msg import Header
 
 import numpy as np
 import rclpy
+import sensor_msgs_py.point_cloud2 as pc2
 import tf2_ros
 from rclpy.node import Node
 from rclpy.qos import (
@@ -26,6 +28,7 @@ from rclpy.qos import (
     QoSReliabilityPolicy,
 )
 from sensor_msgs.msg import LaserScan, PointCloud2
+from sensor_msgs.msg import PointField
 
 
 def _parse_xyz_rgb(msg: PointCloud2):
@@ -39,7 +42,7 @@ def _parse_xyz_rgb(msg: PointCloud2):
     if not all(k in fields for k in ('x', 'y', 'z', 'rgb')):
         return None, None
 
-    ox, oy, oz = fields['x'][0], fields['y'][0], fields['z'][0]
+    ox = fields['x'][0]
     o_rgb, rgb_dt = fields['rgb']
     step = msg.point_step
     n = msg.width * msg.height
@@ -95,6 +98,7 @@ class PlySaver(Node):
         self.declare_parameter('pointcloud_topic', '/camera/depth/color/points')
         self.declare_parameter('save_path', '/ros2_ws/maps')
         self.declare_parameter('save_interval', 60.0)
+        self.declare_parameter('publish_interval', 5.0)
         self.declare_parameter('voxel_size', 0.05)
         self.declare_parameter('frame_skip', 5)
         self.declare_parameter('max_range', 10.0)
@@ -106,6 +110,9 @@ class PlySaver(Node):
         self._pc_topic = self.get_parameter('pointcloud_topic').get_parameter_value().string_value
         save_dir = Path(self.get_parameter('save_path').get_parameter_value().string_value)
         interval = self.get_parameter('save_interval').get_parameter_value().double_value
+        publish_interval = (
+            self.get_parameter('publish_interval').get_parameter_value().double_value
+        )
         self._voxel_size = self.get_parameter('voxel_size').get_parameter_value().double_value
         self._frame_skip = self.get_parameter('frame_skip').get_parameter_value().integer_value
         self._max_range = self.get_parameter('max_range').get_parameter_value().double_value
@@ -120,6 +127,7 @@ class PlySaver(Node):
         self._scan_rgb = tuple(int(max(0, min(255, c))) for c in scan_rgb[:3])
 
         self._ply_path = save_dir / 'reseq_map_3d.ply'
+        self._map_topic = '/ply_map/points'
         self._voxel_map = {}
         self._frame_idx: int = 0
         self._scan_frame_idx: int = 0
@@ -152,7 +160,10 @@ class PlySaver(Node):
             scan_qos,
         )
 
+        self._map_pub = self.create_publisher(PointCloud2, self._map_topic, pc_qos)
+
         self.create_timer(interval, self._save)
+        self.create_timer(publish_interval, self._publish_map_cloud)
         self.get_logger().info(
             f'PlySaver listening on [{self._pc_topic}] and [{self._scan_topic}], '
             f'save every {interval:.0f}s -> {self._ply_path}'
@@ -165,6 +176,41 @@ class PlySaver(Node):
         voxel_keys = tuple(np.floor(pts_map[:, i] / vs).astype(np.int64) for i in range(3))
         for k0, k1, k2, c in zip(*voxel_keys, rgb):
             self._voxel_map[(int(k0), int(k1), int(k2))] = (int(c[0]), int(c[1]), int(c[2]))
+
+    def _voxel_map_to_pointcloud(self) -> PointCloud2 | None:
+        if not self._voxel_map:
+            return None
+
+        vs = self._voxel_size
+        items = list(self._voxel_map.items())
+        keys = np.array([k for k, _ in items], dtype=np.int64)
+        colors = np.array([v for _, v in items], dtype=np.uint8)
+        pts = keys.astype(np.float64) * vs + vs / 2.0
+
+        rgb_uint32 = (
+            (colors[:, 0].astype(np.uint32) << 16)
+            | (colors[:, 1].astype(np.uint32) << 8)
+            | colors[:, 2].astype(np.uint32)
+        )
+        rgb_float = rgb_uint32.view(np.float32)
+
+        header = Header()
+        header.stamp = self.get_clock().now().to_msg()
+        header.frame_id = 'map'
+        fields = [
+            PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
+            PointField(name='rgb', offset=12, datatype=PointField.FLOAT32, count=1),
+        ]
+        cloud_rows = np.column_stack((pts.astype(np.float32), rgb_float.astype(np.float32)))
+        return pc2.create_cloud(header, fields, cloud_rows.tolist())
+
+    def _publish_map_cloud(self) -> None:
+        cloud_msg = self._voxel_map_to_pointcloud()
+        if cloud_msg is None:
+            return
+        self._map_pub.publish(cloud_msg)
 
     def _pc_cb(self, msg: PointCloud2) -> None:
         self._frame_idx += 1
@@ -195,9 +241,6 @@ class PlySaver(Node):
         R, t = _tf_to_Rt(tf_s)
         pts_map = (R @ pts.T).T + t
         self._accumulate_pts(pts_map, rgb)
-
-        if self._frame_idx % (self._frame_skip * 30) == 0:
-            self.get_logger().info(f'PlySaver: {len(self._voxel_map)} voxels accumulated')
 
     def _scan_cb(self, msg: LaserScan) -> None:
         self._scan_frame_idx += 1
@@ -240,11 +283,6 @@ class PlySaver(Node):
         pts_map = (R @ pts_scan.T).T + t
         scan_rgb = np.tile(np.array(self._scan_rgb, dtype=np.uint8), (len(pts_map), 1))
         self._accumulate_pts(pts_map, scan_rgb)
-
-        if self._scan_frame_idx % (max(1, self._scan_frame_skip) * 30) == 0:
-            self.get_logger().info(
-                f'PlySaver: {len(self._voxel_map)} voxels accumulated (camera+scan)'
-            )
 
     def _save(self) -> None:
         n = len(self._voxel_map)

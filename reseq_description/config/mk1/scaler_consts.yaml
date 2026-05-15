@@ -8,7 +8,10 @@ scaler_consts:
   r_angular_vel:             # [rad/s] Range of the angular velocity (pivot mode)
     - -2.8387
     - 2.8387
-  r_pitch_vel:               # [LSB/s] Range of pitch velocity
+  arm_vel_topic: /mk2_arm_vel_scaled # Scaler-only arm command topic consumed by the Cartesian controller
+  arm_input_scale: 1.0 # [-] Scale applied to left-stick arm commands before arm_vel_topic
+  arm_input_deadzone: 0.08 # [-] Deadzone applied to arm stick inputs before scaling
+  r_pitch_vel: # [LSB/s] Range of pitch velocity
     - -183
     - 183
   r_head_pitch_vel:          # [LSB/s] Range of indepepndent head pitch velocity

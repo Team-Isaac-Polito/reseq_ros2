@@ -41,7 +41,10 @@ def launch_setup(context, *args, **kwargs):
     # use simulation time: should only be used with gazebo that's why default value is 'false'
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
-
+    use_moveit = LaunchConfiguration('use_moveit').perform(context)
+    launch_yaw_controllers = LaunchConfiguration('launch_yaw_controllers').perform(context)
+    arm_max_cartesian_vel = LaunchConfiguration('arm_max_cartesian_vel').perform(context)
+    arm_max_joint_vel = LaunchConfiguration('arm_max_joint_vel').perform(context)
     arm_arg = LaunchConfiguration('arm').perform(context=context)
     arm = True if arm_arg == 'true' else False
 
@@ -132,42 +135,35 @@ def launch_setup(context, *args, **kwargs):
                     'map_file': map_file,
                     'spawn_x': spawn_x,
                     'spawn_y': spawn_y,
+                    'wait_for_odom': 'true' if sim_mode == 'true' else 'false',
                 }.items(),
             )
         )
 
-    if digital_twin_enabled == 'true':
-        # Digital twin launch file
-        digital_twin_launch_file = os.path.join(
-            get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py'
+    # The digital_twin launch owns robot_description and ros2_control setup.
+    # In Gazebo it publishes the full MK2 model and lets gz_ros2_control provide
+    # /controller_manager; on hardware it starts ros2_control_node directly.
+    digital_twin_launch_file = os.path.join(
+        get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py'
+    )
+    launch_config.append(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(digital_twin_launch_file),
+            launch_arguments={
+                'version': version,
+                'config_file': config_filename,
+                'arm': arm_arg,
+                'log_level': log_level,
+                'external_log_level': external_log_level,
+                'use_sim_time': use_sim_time,
+                'sim_mode': sim_mode,
+                'arm_max_cartesian_vel': arm_max_cartesian_vel,
+                'arm_max_joint_vel': arm_max_joint_vel,
+                'use_moveit': use_moveit,
+                'launch_yaw_controllers': launch_yaw_controllers,
+            }.items(),
         )
-        launch_config.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(digital_twin_launch_file),
-                launch_arguments={
-                    'version': version,
-                    'config_file': config_filename,
-                    'arm': arm_arg,
-                    'log_level': log_level,
-                    'external_log_level': external_log_level,
-                    'use_sim_time': use_sim_time,
-                    'sim_mode': sim_mode,
-                }.items(),
-            )
-        )
-
-    if arm:
-        arm_launch_file = os.path.join(
-            get_package_share_directory('reseq_arm_mk2'), 'launch', 'arm.launch.py'
-        )
-        launch_config.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(arm_launch_file),
-                launch_arguments={
-                    'use_sim_time': use_sim_time,
-                }.items(),
-            )
-        )
+    )
 
     # App launch file
     app_enabled = LaunchConfiguration('app').perform(context)
@@ -316,6 +312,18 @@ def generate_launch_description():
             # this argument is passed as 'true' by sim_launch.py file
             DeclareLaunchArgument('use_sim_time', default_value='false'),
             DeclareLaunchArgument('sim_mode', default_value='false'),
+            DeclareLaunchArgument(
+                'arm_max_cartesian_vel',
+                default_value='0.4',
+                description='Cartesian velocity scale for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_max_joint_vel',
+                default_value='0.8',
+                description='Joint velocity clamp for the arm controller',
+            ),
+            DeclareLaunchArgument('use_moveit', default_value='false'),
+            DeclareLaunchArgument('launch_yaw_controllers', default_value='false'),
             DeclareLaunchArgument('no_body_controllers', default_value='false'),
             DeclareLaunchArgument('no_arm_controllers', default_value='false'),
             OpaqueFunction(function=generate_config_setup),

@@ -98,13 +98,20 @@ class Scaler(Node):
             .get_parameter_value()
             .double_array_value
         )
+        self.arm_input_scale = (
+            self.declare_parameter('arm_input_scale', 1.0).get_parameter_value().double_value
+        )
+        self.arm_input_deadzone = (
+            self.declare_parameter('arm_input_deadzone', 0.08).get_parameter_value().double_value
+        )
+        arm_vel_topic = self.declare_parameter('arm_vel_topic', '/mk2_arm_vel').value
 
         for h in self.handlers:
             h['service'] = self.create_client(SetBool, h['service'])
 
         self.create_subscription(Remote, '/remote', self.remote_callback, self.qos)
 
-        self.moveit_pub = self.create_publisher(Vector3, '/mk2_arm_vel', 10)
+        self.arm_vel_pub = self.create_publisher(Vector3, arm_vel_topic, 10)
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel_teleop', 10)
         self.autonomy_pub = self.create_publisher(Bool, '/autonomy/enabled', 10)
@@ -147,13 +154,14 @@ class Scaler(Node):
         # inverse of Radius of curvature (AGEVAR) or angular velocity (PIVOT) (-1:1)
         cmd_vel.angular.z = -data.right.x
 
-        # TODO probably to merge with another version of scaler.py
-
-        self.moveit_pub.publish(
+        # The app joystick is screen-oriented: X is right/left, Y is forward/back.
+        # The arm controller expects Cartesian commands in arm_base_link:
+        # +X forward, +Y left, +Z up. Invert screen X so pushing right moves right.
+        self.arm_vel_pub.publish(
             Vector3(
-                x=data.left.x,
-                y=data.left.y,
-                z=data.left.z,
+                x=self.scale_arm_input(data.left.y),
+                y=self.scale_arm_input(-data.left.x),
+                z=self.scale_arm_input(data.left.z),
             )
         )
 
@@ -169,13 +177,31 @@ class Scaler(Node):
         return data
 
     def agevarScaler(self, data: Twist):
-        data.linear.x = self.scale(data.linear.x, self.r_linear_vel)
-        data.angular.z = self.scale(data.angular.z, self.r_inverse_radius)
-        data.angular.z *= data.linear.x  # Angular vel
+        linear_input = data.linear.x
+        angular_input = data.angular.z
+
+        data.linear.x = self.scale(linear_input, self.r_linear_vel)
+        if abs(linear_input) <= 0.08 and abs(angular_input) > 0.08:
+            data.linear.x = 0.0
+            data.angular.z = self.scale(angular_input, self.r_angular_vel)
+        else:
+            data.angular.z = self.scale(angular_input, self.r_inverse_radius)
+            data.angular.z *= data.linear.x  # Angular vel
         return data
 
     def scale(self, val, scaling_range):
         return (val + 1) / 2 * (scaling_range[1] - scaling_range[0]) + scaling_range[0]
+
+    def scale_arm_input(self, val: float) -> float:
+        value = float(val)
+        magnitude = abs(value)
+        if magnitude <= self.arm_input_deadzone:
+            return 0.0
+
+        span = max(1.0 - self.arm_input_deadzone, 1e-6)
+        scaled = ((magnitude - self.arm_input_deadzone) / span) * self.arm_input_scale
+        scaled = max(-1.0, min(1.0, scaled))
+        return scaled if value >= 0.0 else -scaled
 
 
 def main(args=None):

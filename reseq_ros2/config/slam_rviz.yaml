@@ -137,7 +137,7 @@ Visualization Manager:
       Color Transformer: RGB8
       Decay Time: 0
       Enabled: true
-      Name: RGBD Point Cloud
+      Name: Point Cloud Map
       Position Transformer: XYZ
       Size (m): 0.03
       Style: Points
@@ -146,7 +146,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /camera/depth/color/points
+        Value: /ply_map/points
       Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true

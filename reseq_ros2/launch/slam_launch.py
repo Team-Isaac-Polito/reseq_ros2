@@ -37,18 +37,43 @@ def generate_launch_description():
     )
 
     use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='false')
+    ply_save_path_arg = DeclareLaunchArgument(
+        'ply_save_path',
+        default_value=os.environ.get('RESEQ_PLY_SAVE_PATH', '/ros2_ws/maps'),
+        description='Directory where ply_saver writes the 3D map',
+    )
 
     slam_node = Node(
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
         output='screen',
+        remappings=[
+            ('/map', '/slam_map'),
+            ('/map_metadata', '/slam_map_metadata'),
+        ],
         parameters=[
             LaunchConfiguration('slam_params_file'),
             {
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'mode': LaunchConfiguration('slam_mode'),
             },
+        ],
+    )
+
+    map_republisher_node = Node(
+        package='reseq_ros2',
+        executable='map_republisher',
+        name='map_republisher',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'input_topic': '/slam_map',
+                'output_topic': '/map',
+                'metadata_topic': '/map_metadata',
+                'publish_rate': 1.0,
+            }
         ],
     )
 
@@ -77,7 +102,7 @@ def generate_launch_description():
             {
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'pointcloud_topic': '/camera/depth/color/points',
-                'save_path': '/ros2_ws/maps',
+                'save_path': LaunchConfiguration('ply_save_path'),
                 'save_interval': 60.0,
                 'voxel_size': 0.05,
                 'frame_skip': 5,
@@ -98,7 +123,9 @@ def generate_launch_description():
             slam_mode_arg,
             params_arg,
             use_sim_time_arg,
+            ply_save_path_arg,
             slam_node,
+            map_republisher_node,
             lifecycle_manager,
             ply_saver_node,
         ]

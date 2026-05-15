@@ -40,6 +40,7 @@ setup(
             'thermal_pointcloud_fusion = reseq_ros2.thermal_pointcloud_fusion:main',
             'user_path_publisher = reseq_ros2.user_path_publisher:main',
             'ply_saver = reseq_ros2.ply_saver:main',
+            'map_republisher = reseq_ros2.map_republisher:main',
         ],
     },
 )
