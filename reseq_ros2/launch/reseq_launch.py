@@ -44,7 +44,9 @@ def launch_setup(context, *args, **kwargs):
     use_moveit = LaunchConfiguration('use_moveit').perform(context)
     launch_yaw_controllers = LaunchConfiguration('launch_yaw_controllers').perform(context)
     arm_max_cartesian_vel = LaunchConfiguration('arm_max_cartesian_vel').perform(context)
+    arm_max_angular_vel = LaunchConfiguration('arm_max_angular_vel').perform(context)
     arm_max_joint_vel = LaunchConfiguration('arm_max_joint_vel').perform(context)
+    arm_robot_forward_rpy = LaunchConfiguration('arm_robot_forward_rpy').perform(context)
     arm_arg = LaunchConfiguration('arm').perform(context=context)
     arm = True if arm_arg == 'true' else False
 
@@ -158,7 +160,9 @@ def launch_setup(context, *args, **kwargs):
                 'use_sim_time': use_sim_time,
                 'sim_mode': sim_mode,
                 'arm_max_cartesian_vel': arm_max_cartesian_vel,
+                'arm_max_angular_vel': arm_max_angular_vel,
                 'arm_max_joint_vel': arm_max_joint_vel,
+                'arm_robot_forward_rpy': arm_robot_forward_rpy,
                 'use_moveit': use_moveit,
                 'launch_yaw_controllers': launch_yaw_controllers,
             }.items(),
@@ -318,9 +322,19 @@ def generate_launch_description():
                 description='Cartesian velocity scale for the arm controller',
             ),
             DeclareLaunchArgument(
+                'arm_max_angular_vel',
+                default_value='0.8',
+                description='Angular velocity scale for arm rotation mode',
+            ),
+            DeclareLaunchArgument(
                 'arm_max_joint_vel',
                 default_value='0.8',
                 description='Joint velocity clamp for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_robot_forward_rpy',
+                default_value='0.0 0.0 0.0',
+                description='Fixed robot-forward tool orientation RPY relative to arm_base_link',
             ),
             DeclareLaunchArgument('use_moveit', default_value='false'),
             DeclareLaunchArgument('launch_yaw_controllers', default_value='false'),

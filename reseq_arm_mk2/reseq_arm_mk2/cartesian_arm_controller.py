@@ -173,6 +173,55 @@ def _unwrap_joint_positions(
     return unwrapped_q
 
 
+def _rotation_matrix_from_rpy(roll: float, pitch: float, yaw: float) -> np.ndarray:
+    """Return a base-to-tool rotation matrix from fixed-axis RPY angles."""
+    cr, sr = np.cos(roll), np.sin(roll)
+    cp, sp = np.cos(pitch), np.sin(pitch)
+    cy, sy = np.cos(yaw), np.sin(yaw)
+
+    rx = np.array([[1.0, 0.0, 0.0], [0.0, cr, -sr], [0.0, sr, cr]])
+    ry = np.array([[cp, 0.0, sp], [0.0, 1.0, 0.0], [-sp, 0.0, cp]])
+    rz = np.array([[cy, -sy, 0.0], [sy, cy, 0.0], [0.0, 0.0, 1.0]])
+    return rz @ ry @ rx
+
+
+def _rotation_error_vector(current_rotation: np.ndarray, desired_rotation: np.ndarray) -> np.ndarray:
+    """Return the base-frame angular correction from current to desired orientation."""
+    r_err = desired_rotation @ current_rotation.T
+    cos_theta = float(np.clip((np.trace(r_err) - 1.0) * 0.5, -1.0, 1.0))
+    theta = float(np.arccos(cos_theta))
+    skew_vec = np.array(
+        [
+            r_err[2, 1] - r_err[1, 2],
+            r_err[0, 2] - r_err[2, 0],
+            r_err[1, 0] - r_err[0, 1],
+        ]
+    )
+    if theta < 1e-6:
+        return 0.5 * skew_vec
+
+    sin_theta = float(np.sin(theta))
+    if abs(sin_theta) < 1e-6:
+        return np.zeros(3)
+    return (theta / (2.0 * sin_theta)) * skew_vec
+
+
+def _rotation_mode_angular_velocity(cmd_vel: np.ndarray, max_angular_vel: float) -> np.ndarray:
+    """Map scaler arm input to robot-frame roll, tilt, and pan angular velocity."""
+    return max_angular_vel * np.array(
+        [
+            cmd_vel[0],  # roll around robot/tool-forward X
+            cmd_vel[2],  # tilt around robot Y
+            cmd_vel[1],  # pan/yaw around robot Z
+        ],
+        dtype=float,
+    )
+
+
+def _clip_vector(vec: np.ndarray, limit: float) -> np.ndarray:
+    return np.clip(vec, -abs(limit), abs(limit))
+
+
 def _solve_weighted_dls_task_velocity(
     task_jacobian: np.ndarray,
     cart_vel: np.ndarray,
@@ -189,6 +238,21 @@ def _solve_weighted_dls_task_velocity(
             jj_t + damping**2 * np.eye(task_jacobian.shape[0]),
             cart_vel,
         )
+    )
+
+
+def _weighted_dls_pseudoinverse(
+    task_jacobian: np.ndarray,
+    joint_weights: np.ndarray,
+    damping: float,
+) -> np.ndarray:
+    """Return the weighted DLS pseudo-inverse for a task Jacobian."""
+    inv_joint_weights = np.diag(1.0 / joint_weights)
+    jj_t = task_jacobian @ inv_joint_weights @ task_jacobian.T
+    return (
+        inv_joint_weights
+        @ task_jacobian.T
+        @ np.linalg.inv(jj_t + damping**2 * np.eye(task_jacobian.shape[0]))
     )
 
 
@@ -262,6 +326,65 @@ def _solve_task_velocity_with_limit_redistribution(
     return dq_final, clipped_joints, vel_scale
 
 
+def _solve_prioritized_task_velocity(
+    current_q: np.ndarray,
+    primary_jacobian: np.ndarray,
+    primary_vel: np.ndarray,
+    secondary_jacobian: np.ndarray | None,
+    secondary_vel: np.ndarray | None,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    dt: float,
+    max_joint_vel: float,
+    damping: float,
+    joint_weights: np.ndarray,
+    secondary_weight: float,
+) -> tuple[np.ndarray, list[str], float]:
+    """Solve the primary task and optionally add a nullspace secondary task."""
+    dq, joints_clipped, vel_scale = _solve_task_velocity_with_limit_redistribution(
+        current_q=current_q,
+        task_jacobian=primary_jacobian,
+        cart_vel=primary_vel,
+        q_lo=q_lo,
+        q_hi=q_hi,
+        dt=dt,
+        max_joint_vel=max_joint_vel,
+        damping=damping,
+        joint_weights=joint_weights,
+    )
+
+    if (
+        secondary_jacobian is None
+        or secondary_vel is None
+        or secondary_weight <= 0.0
+        or secondary_jacobian.size == 0
+    ):
+        return dq, joints_clipped, vel_scale
+
+    pinv_primary = _weighted_dls_pseudoinverse(primary_jacobian, joint_weights, damping)
+    nullspace = np.eye(primary_jacobian.shape[1]) - pinv_primary @ primary_jacobian
+    residual = secondary_vel - secondary_jacobian @ dq
+    projected_secondary = secondary_jacobian @ nullspace
+    if np.linalg.norm(projected_secondary) < 1e-9 or np.linalg.norm(residual) < 1e-9:
+        return dq, joints_clipped, vel_scale
+
+    dq_secondary = nullspace @ _solve_weighted_dls_task_velocity(
+        task_jacobian=projected_secondary,
+        cart_vel=secondary_weight * residual,
+        joint_weights=joint_weights,
+        damping=damping,
+    )
+    dq_candidate = dq + dq_secondary
+    peak = float(np.max(np.abs(dq_candidate)))
+    if peak > max_joint_vel:
+        vel_scale = min(vel_scale, max_joint_vel / peak)
+        dq_candidate *= max_joint_vel / peak
+    dq_candidate = _clamp_joint_velocity_to_limits(
+        current_q, dq_candidate, q_lo, q_hi, dt
+    )
+    return dq_candidate, joints_clipped, vel_scale
+
+
 def _joint_limit_hold_scale(
     current_q: np.ndarray,
     q_lo: np.ndarray,
@@ -331,12 +454,18 @@ class CartesianArmController(Node):
     control_rate           float  33.0   Hz
     max_cartesian_vel      float  0.3    m/s  (joystick [-1,1] scaled by this)
     max_joint_vel          float  1.0    rad/s per joint
+    max_angular_vel        float  0.8    rad/s for camera pan/tilt/roll commands
     home_duration_sec      float  3.0    s
     trajectory_horizon_sec float  0.10   s
     command_mode           str    'trajectory' or 'velocity'
     deadzone               float  0.02
     jacobian_damping       float  0.05   damped-LS regularisation λ
     joint_weights          float[]  joint weighting for the IK solve
+    robot_forward_rpy      float[] fixed tool orientation for "camera forward"
+    orientation_hold_gain  float  proportional gain for forward orientation hold
+    orientation_task_weight float weight for linear-mode orientation hold
+    position_hold_gain     float  proportional gain for rotation-mode position hold
+    secondary_task_weight  float  weight for nullspace angular task
     """
 
     # Joint order used everywhere in this controller.
@@ -373,6 +502,7 @@ class CartesianArmController(Node):
         self.declare_parameter('trajectory_topic', '/mk2_arm_controller/joint_trajectory')
         self.declare_parameter('control_rate', 33.0)
         self.declare_parameter('max_cartesian_vel', 0.6)
+        self.declare_parameter('max_angular_vel', 0.8)
         self.declare_parameter('max_joint_vel', 0.5)
         self.declare_parameter('home_duration_sec', 3.0)
         self.declare_parameter('trajectory_horizon_sec', 0.10)
@@ -384,6 +514,11 @@ class CartesianArmController(Node):
         self.declare_parameter('idle_hold_gain', 1.5)
         self.declare_parameter('idle_hold_tolerance', 0.01)
         self.declare_parameter('front_branch_gain', 0.05)
+        self.declare_parameter('robot_forward_rpy', [0.0, 0.0, 0.0])
+        self.declare_parameter('orientation_hold_gain', 1.0)
+        self.declare_parameter('orientation_task_weight', 0.8)
+        self.declare_parameter('position_hold_gain', 2.0)
+        self.declare_parameter('secondary_task_weight', 1.0)
 
         # Internal state.
         self._q: np.ndarray | None = None  # measured joint positions
@@ -394,9 +529,19 @@ class CartesianArmController(Node):
         self._velocity_mode = True
         self._moving = False
         self._ee_z_ref: float | None = None
+        self._ee_pos_ref: np.ndarray | None = None
         self._front_x_ref: float | None = None
         self._front_branch_gain = (
             self.get_parameter('front_branch_gain').get_parameter_value().double_value
+        )
+        forward_rpy = list(self.get_parameter('robot_forward_rpy').value)
+        if len(forward_rpy) != 3:
+            self.get_logger().warn('robot_forward_rpy must have 3 values; using [0, 0, 0].')
+            forward_rpy = [0.0, 0.0, 0.0]
+        self._forward_rotation = _rotation_matrix_from_rpy(
+            float(forward_rpy[0]),
+            float(forward_rpy[1]),
+            float(forward_rpy[2]),
         )
         self._diag_ctr = 0
         self._home_active = False
@@ -652,6 +797,17 @@ class CartesianArmController(Node):
             return None
         return frame
 
+    def _rotation_kdl_to_matrix(self, rotation) -> np.ndarray:
+        return np.array([[rotation[r, c] for c in range(3)] for r in range(3)], dtype=float)
+
+    def _get_ee_rotation(self, q: np.ndarray) -> np.ndarray | None:
+        if self._fk_solver is None:
+            return None
+        frame = self._fk_frame_kdl(q)
+        if frame is None:
+            return None
+        return self._rotation_kdl_to_matrix(frame.M)
+
     def _fk_numerical(self, q: np.ndarray) -> np.ndarray:
         """
         Simple FK fallback for cases where KDL is not available.
@@ -827,6 +983,8 @@ class CartesianArmController(Node):
                 self._publish_traj(self._q.tolist(), hold_target, 0.1)
             self._moving = False
             self._ee_z_ref = None
+            if self._linear_mode:
+                self._ee_pos_ref = None
             return
 
         # Solve from the live measured pose so the Jacobian tracks the actual arm.
@@ -837,64 +995,125 @@ class CartesianArmController(Node):
         if self._ee_z_ref is None:
             self._ee_z_ref = float(self._get_ee_pos(solve_q)[2])
 
-        if not self._linear_mode:
-            # Orientation mode is not implemented yet.
-            return
-
         # Control parameters.
         max_cv = self.get_parameter('max_cartesian_vel').get_parameter_value().double_value
+        max_av = self.get_parameter('max_angular_vel').get_parameter_value().double_value
         max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
         lam = self.get_parameter('jacobian_damping').get_parameter_value().double_value
         horizon = self.get_parameter('trajectory_horizon_sec').get_parameter_value().double_value
         horizon = max(horizon, self._dt * 2.0)  # never shorter than 2 control ticks
 
-        # Interpret the input in the configured command frame, then solve in base coordinates.
-        cart_vel_cmd = self._cmd_vel * max_cv
-        cart_vel = self._command_velocity_in_base(solve_q, cart_vel_cmd)
-
-        # Hold the current height unless the user is explicitly commanding Z.
-        # This keeps lateral motion from slowly climbing as the arm changes posture.
-        if self._ee_z_ref is not None and abs(cart_vel_cmd[2]) < deadzone:
-            z_error = self._ee_z_ref - float(self._get_ee_pos(solve_q)[2])
-            z_hold_vel = 2.0 * z_error
-            hold_scale = _joint_limit_hold_scale(solve_q, self._q_lo, self._q_hi)
-            # Relax the height hold near saturation so a reverse x/y command can
-            # back the arm away from the limit instead of fighting the stale z target.
-            cart_vel[2] = float(np.clip(z_hold_vel * hold_scale, -max_cv, max_cv))
-
-        if self._front_x_ref is not None and abs(cart_vel_cmd[0]) < deadzone:
-            x_error = self._front_x_ref - float(self._get_ee_pos(solve_q)[0])
-            if x_error > 0.0:
-                # Keep lateral motion on the front side of the workspace unless the
-                # operator is explicitly commanding X.
-                cart_vel[0] = float(np.clip(2.0 * x_error, 0.0, max_cv))
-
         J = self._get_jacobian(solve_q)
         if J is None:
             return
 
-        # Damped least-squares IK on the tool translational task.
+        active_dofs = J.shape[1]
+        Jlin = J[:3, :active_dofs]
+        cart_vel_cmd = self._cmd_vel * max_cv
+        cart_vel = np.zeros(3)
+        angular_vel = np.zeros(3)
+        secondary_jacobian = None
+        secondary_vel = None
+        primary_jacobian = Jlin
+        primary_vel = cart_vel
+        mode_label = 'linear'
+
+        if self._linear_mode:
+            # Interpret the input in the configured command frame, then solve in base coordinates.
+            cart_vel = self._command_velocity_in_base(solve_q, cart_vel_cmd)
+
+            # Hold the current height unless the user is explicitly commanding Z.
+            # This keeps lateral motion from slowly climbing as the arm changes posture.
+            if self._ee_z_ref is not None and abs(cart_vel_cmd[2]) < deadzone:
+                z_error = self._ee_z_ref - float(self._get_ee_pos(solve_q)[2])
+                z_hold_vel = 2.0 * z_error
+                hold_scale = _joint_limit_hold_scale(solve_q, self._q_lo, self._q_hi)
+                # Relax the height hold near saturation so a reverse x/y command can
+                # back the arm away from the limit instead of fighting the stale z target.
+                cart_vel[2] = float(np.clip(z_hold_vel * hold_scale, -max_cv, max_cv))
+
+            if self._front_x_ref is not None and abs(cart_vel_cmd[0]) < deadzone:
+                x_error = self._front_x_ref - float(self._get_ee_pos(solve_q)[0])
+                if x_error > 0.0:
+                    # Keep lateral motion on the front side of the workspace unless the
+                    # operator is explicitly commanding X.
+                    cart_vel[0] = float(np.clip(2.0 * x_error, 0.0, max_cv))
+
+            primary_jacobian = Jlin
+            primary_vel = cart_vel
+            current_rotation = self._get_ee_rotation(solve_q)
+            if current_rotation is not None:
+                hold_gain = (
+                    self.get_parameter('orientation_hold_gain').get_parameter_value().double_value
+                )
+                orientation_task_weight = (
+                    self.get_parameter('orientation_task_weight')
+                    .get_parameter_value()
+                    .double_value
+                )
+                angular_vel = _clip_vector(
+                    hold_gain
+                    * _rotation_error_vector(
+                        current_rotation=current_rotation,
+                        desired_rotation=self._forward_rotation,
+                    ),
+                    max_av,
+                )
+                if orientation_task_weight > 0.0:
+                    primary_jacobian = np.vstack(
+                        [Jlin, orientation_task_weight * J[3:6, :active_dofs]]
+                    )
+                    primary_vel = np.concatenate(
+                        [cart_vel, orientation_task_weight * angular_vel]
+                    )
+        else:
+            mode_label = 'rotation'
+            if self._fk_solver is None:
+                self.get_logger().warn(
+                    'Rotation mode requires KDL; holding joint position instead.',
+                    throttle_duration_sec=5.0,
+                )
+                self._publish_velocity([0.0] * self.N_JOINTS)
+                return
+
+            if self._ee_pos_ref is None:
+                self._ee_pos_ref = self._get_ee_pos(solve_q).copy()
+            pos_gain = self.get_parameter('position_hold_gain').get_parameter_value().double_value
+            position_error = self._ee_pos_ref - self._get_ee_pos(solve_q)
+            cart_vel = _clip_vector(pos_gain * position_error, max_cv)
+            angular_vel = _rotation_mode_angular_velocity(self._cmd_vel, max_av)
+            primary_jacobian = Jlin
+            primary_vel = cart_vel
+            secondary_jacobian = J[3:6, :active_dofs]
+            secondary_vel = angular_vel
+
+        # Damped least-squares IK on the active Cartesian task.
         try:
-            active_dofs = J.shape[1]
-            Jlin = J[:3, :active_dofs]
             joint_weights = self._joint_weights[:active_dofs]
-            dq, joints_clipped, vel_scale = _solve_task_velocity_with_limit_redistribution(
+            secondary_weight = (
+                self.get_parameter('secondary_task_weight').get_parameter_value().double_value
+            )
+            dq, joints_clipped, vel_scale = _solve_prioritized_task_velocity(
                 current_q=solve_q,
-                task_jacobian=Jlin,
-                cart_vel=cart_vel,
+                primary_jacobian=primary_jacobian,
+                primary_vel=primary_vel,
+                secondary_jacobian=secondary_jacobian,
+                secondary_vel=secondary_vel,
                 q_lo=self._q_lo,
                 q_hi=self._q_hi,
                 dt=self._dt,
                 max_joint_vel=max_jv,
                 damping=lam,
                 joint_weights=joint_weights,
+                secondary_weight=secondary_weight,
             )
         except np.linalg.LinAlgError:
             self.get_logger().warn('DLS solve failed.')
             return
 
         if (
-            self._startup_home is not None
+            self._linear_mode
+            and self._startup_home is not None
             and self._front_x_ref is not None
             and abs(cart_vel_cmd[0]) < deadzone
             and abs(cart_vel_cmd[1]) > deadzone
@@ -908,6 +1127,12 @@ class CartesianArmController(Node):
                 -0.25 * max_jv,
                 0.25 * max_jv,
             )
+            try:
+                pinv_primary = _weighted_dls_pseudoinverse(primary_jacobian, joint_weights, lam)
+                nullspace = np.eye(primary_jacobian.shape[1]) - pinv_primary @ primary_jacobian
+                branch_bias = nullspace @ branch_bias
+            except np.linalg.LinAlgError:
+                branch_bias = np.zeros_like(branch_bias)
             dq = dq + branch_bias
             dq = np.clip(dq, -max_jv, max_jv)
             dq = _clamp_joint_velocity_to_limits(solve_q, dq, self._q_lo, self._q_hi, self._dt)
@@ -934,11 +1159,13 @@ class CartesianArmController(Node):
         self._diag_ctr += 1
         if self._diag_ctr % 33 == 0:
             ee = self._get_ee_pos(self._q_cmd if self._q_cmd is not None else self._q)
-            achieved_cart = Jlin @ dq[:active_dofs]
+            achieved_task = Jlin @ dq[:active_dofs]
             self.get_logger().info(
+                f'mode={mode_label} '
                 f'cart_in={np.round(cart_vel, 3)} '
+                f'angular_in={np.round(angular_vel, 3)} '
                 f'dq={np.round(dq, 3)} '
-                f'cart_out={np.round(achieved_cart, 3)} '
+                f'linear_out={np.round(achieved_task, 3)} '
                 f'vel_scale={vel_scale:.2f} '
                 f'clipped={joints_clipped} '
                 f'vel_subs={self._vel_pub.get_subscription_count()} '
@@ -1088,6 +1315,7 @@ class CartesianArmController(Node):
         self._idle_hold_armed = True
         self._cmd_vel = np.zeros(3)
         self._ee_z_ref = None
+        self._ee_pos_ref = None
         if self._command_mode == 'velocity':
             self._home_active = True
             res.success = True
@@ -1103,8 +1331,14 @@ class CartesianArmController(Node):
 
     def _srv_switch_vel(self, req: SetBool.Request, res: SetBool.Response) -> SetBool.Response:
         self._linear_mode = req.data
+        self._ee_z_ref = None
+        if req.data:
+            self._ee_pos_ref = None
+        elif self._q is not None:
+            current_q = self._q_continuous if self._q_continuous is not None else self._q
+            self._ee_pos_ref = self._get_ee_pos(current_q).copy()
         res.success = True
-        res.message = 'Velocity -> LINEAR' if req.data else 'Velocity -> ANGULAR'
+        res.message = 'End-effector mode -> LINEAR' if req.data else 'End-effector mode -> ROTATION'
         self.get_logger().info(res.message)
         return res
 
