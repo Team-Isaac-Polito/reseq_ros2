@@ -154,7 +154,8 @@ def launch_setup(context, *args, **kwargs):
         )
         launch_config.append(control_node)
 
-    body_spawners = [_spawner('joint_state_broadcaster', external_log_level)]
+    joint_state_spawner = _spawner('joint_state_broadcaster', external_log_level)
+    body_spawners = []
 
     num_modules = config.get('num_modules', 0)
     for i in range(num_modules):
@@ -167,7 +168,6 @@ def launch_setup(context, *args, **kwargs):
     arm_velocity_spawner = None
     if arm:
         arm_velocity_spawner = _spawner('joint_group_velocity_controller', external_log_level)
-        body_spawners.append(arm_velocity_spawner)
 
     for i in range(num_modules):
         body_spawners.append(_spawner(f'imu{i + 1}_broadcaster', external_log_level))
@@ -191,7 +191,24 @@ def launch_setup(context, *args, **kwargs):
     else:
         launch_config.append(controller_manager_ready)
 
-    _append_spawner_chain(launch_config, controller_manager_ready, body_spawners)
+    launch_config.append(
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=controller_manager_ready,
+                on_exit=[joint_state_spawner],
+            )
+        )
+    )
+    _append_spawner_chain(launch_config, joint_state_spawner, body_spawners)
+    if arm_velocity_spawner is not None:
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=joint_state_spawner,
+                    on_exit=[arm_velocity_spawner],
+                )
+            )
+        )
 
     ekf_config = os.path.join(share_folder, 'config', 'ekf.yaml')
     launch_config.append(
