@@ -222,13 +222,35 @@ def _forward_axis_error_vector(
     return np.cross(current_forward, desired_forward)
 
 
-def _rotation_mode_angular_velocity(cmd_vel: np.ndarray, max_angular_vel: float) -> np.ndarray:
-    """Map scaler arm input to robot-frame roll, tilt, and pan angular velocity."""
+def _dominant_rotation_input(cmd_vel: np.ndarray, deadzone: float) -> np.ndarray:
+    """Keep full-stick rotation commands on one tool axis."""
+    filtered = np.array(cmd_vel, dtype=float, copy=True)
+    if deadzone <= 0.0:
+        return filtered
+
+    magnitudes = np.abs(filtered)
+    dominant = int(np.argmax(magnitudes))
+    dominant_mag = float(magnitudes[dominant])
+    if dominant_mag <= deadzone:
+        return np.zeros_like(filtered)
+
+    cross_axis_limit = max(deadzone, 0.35 * dominant_mag)
+    filtered[magnitudes < cross_axis_limit] = 0.0
+    return filtered
+
+
+def _rotation_mode_angular_velocity(
+    cmd_vel: np.ndarray,
+    max_angular_vel: float,
+    deadzone: float = 0.0,
+) -> np.ndarray:
+    """Map scaler arm input to tool-frame roll, tilt, and pan angular velocity."""
+    filtered_cmd = _dominant_rotation_input(cmd_vel, deadzone)
     return max_angular_vel * np.array(
         [
-            cmd_vel[0],  # roll around robot/tool-forward X
-            cmd_vel[2],  # tilt around robot Y
-            cmd_vel[1],  # pan/yaw around robot Z
+            filtered_cmd[0],  # forward/back stick rolls around tool X
+            filtered_cmd[2],  # Z control tilts around tool Y
+            filtered_cmd[1],  # left/right stick pans around tool Z
         ],
         dtype=float,
     )
@@ -439,6 +461,29 @@ def _remove_task_space_velocity(
     return dq - correction
 
 
+def _limit_task_space_velocity(
+    dq: np.ndarray,
+    task_jacobian: np.ndarray,
+    max_task_speed: float,
+    joint_weights: np.ndarray,
+    damping: float,
+) -> np.ndarray:
+    """Limit uncommanded task-space drift while preserving as much dq as possible."""
+    task_vel = task_jacobian @ dq
+    speed = float(np.linalg.norm(task_vel))
+    if speed <= max_task_speed or speed < 1e-9:
+        return dq
+
+    allowed_vel = task_vel * (max_task_speed / speed)
+    correction = _solve_weighted_dls_task_velocity(
+        task_jacobian=task_jacobian,
+        cart_vel=task_vel - allowed_vel,
+        joint_weights=joint_weights,
+        damping=damping,
+    )
+    return dq - correction
+
+
 def _joint_limit_hold_scale(
     current_q: np.ndarray,
     q_lo: np.ndarray,
@@ -498,13 +543,13 @@ def _linear_startup_escape_velocity(
         return escape
 
     strength = float(np.clip((margin - elbow_distance) / margin, 0.0, 1.0))
-    escape[0] = -0.35 * max_joint_vel * strength
-    escape[2] = 0.75 * max_joint_vel * strength
+    escape[0] = 0.20 * max_joint_vel * strength
+    escape[2] = 0.95 * max_joint_vel * strength
 
     wrist_room = float(current_q[4] - q_lo[4])
     if wrist_room > 0.0:
         wrist_scale = float(np.clip(wrist_room / wrist_margin, 0.0, 1.0))
-        escape[4] = -0.45 * max_joint_vel * strength * wrist_scale
+        escape[4] = -0.15 * max_joint_vel * strength * wrist_scale
     return escape
 
 
@@ -534,6 +579,41 @@ def _dominant_z_lift_velocity(
     if lifted[2] > 0.0:
         lifted[2] = min(max_cartesian_vel, max(lifted[2], min_z_speed))
     return lifted
+
+
+def _linear_lateral_forward_velocity(
+    cart_vel: np.ndarray,
+    cart_vel_cmd: np.ndarray,
+    max_cartesian_vel: float,
+    deadzone: float,
+    front_branch_gain: float,
+) -> np.ndarray:
+    """Bias pure left/right linear commands onto the forward arm branch."""
+    biased = np.array(cart_vel, dtype=float, copy=True)
+    lateral_cmd = abs(float(cart_vel_cmd[1]))
+    explicit_x_cmd = abs(float(cart_vel_cmd[0])) > deadzone
+    if (
+        explicit_x_cmd
+        or lateral_cmd <= deadzone
+        or _is_dominant_z_command(cart_vel_cmd, deadzone)
+    ):
+        return biased
+
+    forward_bias = max(
+        abs(front_branch_gain) * max_cartesian_vel,
+        0.25 * lateral_cmd,
+    )
+    forward_bias = min(forward_bias, 0.45 * max_cartesian_vel)
+    biased[0] = max(float(biased[0]), forward_bias)
+    return biased
+
+
+def _is_lateral_forward_bias_active(cart_vel_cmd: np.ndarray, deadzone: float) -> bool:
+    return (
+        abs(float(cart_vel_cmd[1])) > deadzone
+        and abs(float(cart_vel_cmd[0])) <= deadzone
+        and not _is_dominant_z_command(cart_vel_cmd, deadzone)
+    )
 
 
 def _is_dominant_positive_z_command(cart_vel_cmd: np.ndarray, deadzone: float) -> bool:
@@ -589,7 +669,7 @@ class CartesianArmController(Node):
     joint_weights          float[]  joint weighting for the IK solve
     robot_forward_rpy      float[] fixed tool orientation for "camera forward"
     orientation_hold_gain  float  proportional gain for forward orientation hold
-    orientation_task_weight float weight for linear-mode orientation hold
+    orientation_task_weight float nullspace weight for linear-mode orientation hold
     linear_posture_target  float[] nullspace posture target for linear mode
     linear_posture_weight  float  weight for linear-mode posture task
     linear_posture_gain    float  proportional gain for linear posture task
@@ -644,8 +724,8 @@ class CartesianArmController(Node):
         self.declare_parameter('idle_hold_tolerance', 0.01)
         self.declare_parameter('front_branch_gain', 0.05)
         self.declare_parameter('robot_forward_rpy', [0.0, 0.0, 0.0])
-        self.declare_parameter('orientation_hold_gain', 1.0)
-        self.declare_parameter('orientation_task_weight', 0.8)
+        self.declare_parameter('orientation_hold_gain', 2.0)
+        self.declare_parameter('orientation_task_weight', 1.4)
         self.declare_parameter('linear_posture_target', self.HOME_POSITION)
         self.declare_parameter('linear_posture_weight', 0.2)
         self.declare_parameter('linear_posture_gain', 0.25)
@@ -1161,6 +1241,7 @@ class CartesianArmController(Node):
         primary_jacobian = Jlin
         primary_vel = cart_vel
         mode_label = 'linear'
+        startup_unfold_primary = False
 
         if self._linear_mode:
             # Interpret the input in the configured command frame, then solve in base coordinates.
@@ -1172,6 +1253,13 @@ class CartesianArmController(Node):
                 max_cartesian_vel=max_cv,
                 cart_vel_cmd=cart_vel_cmd,
                 deadzone=deadzone,
+            )
+            cart_vel = _linear_lateral_forward_velocity(
+                cart_vel=cart_vel,
+                cart_vel_cmd=cart_vel_cmd,
+                max_cartesian_vel=max_cv,
+                deadzone=deadzone,
+                front_branch_gain=self._front_branch_gain,
             )
 
             # Hold the current height unless the user is explicitly commanding Z.
@@ -1194,7 +1282,8 @@ class CartesianArmController(Node):
             primary_jacobian = linear_task_jacobian
             primary_vel = linear_task_vel
             current_rotation = self._get_ee_rotation(solve_q)
-            if current_rotation is not None:
+            hold_orientation = not _is_dominant_z_command(cart_vel_cmd, deadzone)
+            if current_rotation is not None and hold_orientation:
                 hold_gain = (
                     self.get_parameter('orientation_hold_gain').get_parameter_value().double_value
                 )
@@ -1233,7 +1322,7 @@ class CartesianArmController(Node):
                     secondary_vel=secondary_vel,
                     task_jacobian=np.eye(active_dofs),
                     task_vel=startup_escape_vel,
-                    weight=1.0,
+                    weight=0.8,
                 )
 
             posture_weight = (
@@ -1264,7 +1353,16 @@ class CartesianArmController(Node):
                 return
 
             cart_vel = np.zeros(3)
-            angular_vel = _rotation_mode_angular_velocity(self._cmd_vel, max_av)
+            tool_angular_vel = _rotation_mode_angular_velocity(
+                self._cmd_vel,
+                max_av,
+                deadzone=deadzone,
+            )
+            current_rotation = self._get_ee_rotation(solve_q)
+            if current_rotation is None:
+                angular_vel = tool_angular_vel
+            else:
+                angular_vel = current_rotation @ tool_angular_vel
             primary_jacobian = Jlin
             primary_vel = cart_vel
             secondary_jacobian, secondary_vel = _append_secondary_task(
@@ -1341,7 +1439,32 @@ class CartesianArmController(Node):
                 self._dt,
             )
 
-        if self._linear_mode and _is_dominant_z_command(cart_vel_cmd, deadzone):
+        if (
+            self._linear_mode
+            and not startup_unfold_primary
+            and _is_dominant_z_command(cart_vel_cmd, deadzone)
+        ):
+            max_xy_leak = max(0.04, 0.15 * abs(float(cart_vel[2])))
+            dq = _limit_task_space_velocity(
+                dq=dq[:active_dofs],
+                task_jacobian=Jlin[0:2, :],
+                max_task_speed=max_xy_leak,
+                joint_weights=joint_weights,
+                damping=min(lam, 1e-4),
+            )
+            dq = _clamp_joint_velocity_to_limits(
+                solve_q[:active_dofs],
+                dq,
+                self._q_lo[:active_dofs],
+                self._q_hi[:active_dofs],
+                self._dt,
+            )
+
+        if (
+            self._linear_mode
+            and not startup_unfold_primary
+            and _is_dominant_z_command(cart_vel_cmd, deadzone)
+        ):
             z_jacobian = Jlin[2:3, :]
             desired_z_vel = float(cart_vel[2])
             achieved_z_vel = float((z_jacobian @ dq[:active_dofs])[0])
@@ -1386,7 +1509,57 @@ class CartesianArmController(Node):
                     dq = np.zeros_like(dq)
                     joints_clipped = [*joints_clipped, 'Z↕blocked']
 
-        if self._linear_mode and _is_dominant_positive_z_command(cart_vel_cmd, deadzone):
+        if (
+            self._linear_mode
+            and not startup_unfold_primary
+            and _is_lateral_forward_bias_active(cart_vel_cmd, deadzone)
+        ):
+            x_jacobian = Jlin[0:1, :]
+            desired_x_vel = max(float(cart_vel[0]), 0.0)
+            achieved_x_vel = float((x_jacobian @ dq[:active_dofs])[0])
+            x_error = achieved_x_vel - desired_x_vel
+            if x_error < -1e-4:
+                x_correction = _solve_weighted_dls_task_velocity(
+                    task_jacobian=x_jacobian,
+                    cart_vel=np.array([x_error]),
+                    joint_weights=joint_weights,
+                    damping=min(lam, 1e-4),
+                )
+                dq = _clamp_joint_velocity_to_limits(
+                    solve_q[:active_dofs],
+                    dq[:active_dofs] - x_correction,
+                    self._q_lo[:active_dofs],
+                    self._q_hi[:active_dofs],
+                    self._dt,
+                )
+                achieved_x_vel = float((x_jacobian @ dq[:active_dofs])[0])
+
+            if desired_x_vel > deadzone and achieved_x_vel <= 0.0:
+                x_only_dq, x_only_clipped, x_only_scale = _solve_task_velocity_with_limit_redistribution(
+                    current_q=solve_q[:active_dofs],
+                    task_jacobian=x_jacobian,
+                    cart_vel=np.array([desired_x_vel]),
+                    q_lo=self._q_lo[:active_dofs],
+                    q_hi=self._q_hi[:active_dofs],
+                    dt=self._dt,
+                    max_joint_vel=max_jv,
+                    damping=lam,
+                    joint_weights=joint_weights,
+                )
+                x_only_vel = float((x_jacobian @ x_only_dq[:active_dofs])[0])
+                if x_only_vel > 0.0:
+                    dq = x_only_dq
+                    joints_clipped = [*joints_clipped, *x_only_clipped, 'X→guard']
+                    vel_scale = min(vel_scale, x_only_scale)
+                else:
+                    dq = np.zeros_like(dq)
+                    joints_clipped = [*joints_clipped, 'X→blocked']
+
+        if (
+            self._linear_mode
+            and not startup_unfold_primary
+            and _is_dominant_positive_z_command(cart_vel_cmd, deadzone)
+        ):
             current_z = float(self._get_ee_pos(solve_q)[2])
             next_q = np.clip(solve_q + dq * self._dt, self._q_lo, self._q_hi)
             next_z = float(self._get_ee_pos(next_q)[2])

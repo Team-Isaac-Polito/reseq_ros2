@@ -314,17 +314,17 @@ def generate_launch_description():
             DeclareLaunchArgument('sim_mode', default_value='false'),
             DeclareLaunchArgument(
                 'arm_max_cartesian_vel',
-                default_value='0.4',
+                default_value='0.8',
                 description='Cartesian velocity scale for the arm controller',
             ),
             DeclareLaunchArgument(
                 'arm_max_angular_vel',
-                default_value='0.8',
+                default_value='2.4',
                 description='Angular velocity scale for arm rotation mode',
             ),
             DeclareLaunchArgument(
                 'arm_max_joint_vel',
-                default_value='0.8',
+                default_value='1.6',
                 description='Joint velocity clamp for the arm controller',
             ),
             DeclareLaunchArgument(
