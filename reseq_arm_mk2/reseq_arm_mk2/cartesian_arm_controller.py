@@ -222,6 +222,58 @@ def _forward_axis_error_vector(
     return np.cross(current_forward, desired_forward)
 
 
+def _forward_axis_alignment_error(
+    current_rotation: np.ndarray,
+    desired_rotation: np.ndarray,
+) -> float:
+    """Return the angular error between the current and desired forward axes."""
+    current_forward = current_rotation[:, 0]
+    desired_forward = desired_rotation[:, 0]
+    current_norm = np.linalg.norm(current_forward)
+    desired_norm = np.linalg.norm(desired_forward)
+    if current_norm < 1e-9 or desired_norm < 1e-9:
+        return 0.0
+    current_forward = current_forward / current_norm
+    desired_forward = desired_forward / desired_norm
+    cos_error = float(np.clip(np.dot(current_forward, desired_forward), -1.0, 1.0))
+    return float(np.arccos(cos_error))
+
+
+def _forward_progress_is_acceptable(
+    current_error: float,
+    next_error: float,
+    tolerance: float = 0.02,
+    epsilon: float = 1e-4,
+) -> bool:
+    """Return whether a predicted command preserves or recovers forward-look."""
+    if next_error <= tolerance:
+        return True
+    if next_error > current_error + epsilon:
+        return False
+    if current_error > tolerance and next_error >= current_error - epsilon:
+        return False
+    return True
+
+
+def _task_velocity_direction_is_acceptable(
+    desired_vel: np.ndarray,
+    achieved_vel: np.ndarray,
+    deadzone: float,
+) -> bool:
+    """Return whether the dominant commanded task axis still moves as requested."""
+    desired = np.asarray(desired_vel, dtype=float).reshape(-1)
+    achieved = np.asarray(achieved_vel, dtype=float).reshape(-1)
+    if desired.size == 0 or achieved.size != desired.size:
+        return True
+
+    axis = int(np.argmax(np.abs(desired)))
+    desired_axis = float(desired[axis])
+    if abs(desired_axis) <= deadzone:
+        return True
+    achieved_axis = float(achieved[axis])
+    return achieved_axis * desired_axis > 1e-6
+
+
 def _dominant_rotation_input(cmd_vel: np.ndarray, deadzone: float) -> np.ndarray:
     """Keep full-stick rotation commands on one tool axis."""
     filtered = np.array(cmd_vel, dtype=float, copy=True)
@@ -543,7 +595,7 @@ def _linear_startup_escape_velocity(
         return escape
 
     strength = float(np.clip((margin - elbow_distance) / margin, 0.0, 1.0))
-    escape[0] = 0.20 * max_joint_vel * strength
+    escape[0] = -0.20 * max_joint_vel * strength
     escape[2] = 0.95 * max_joint_vel * strength
 
     wrist_room = float(current_q[4] - q_lo[4])
@@ -551,6 +603,99 @@ def _linear_startup_escape_velocity(
         wrist_scale = float(np.clip(wrist_room / wrist_margin, 0.0, 1.0))
         escape[4] = -0.15 * max_joint_vel * strength * wrist_scale
     return escape
+
+
+def _is_lower_elbow_positive_z_recovery_active(
+    current_q: np.ndarray,
+    q_lo: np.ndarray,
+    cart_vel_cmd: np.ndarray,
+    deadzone: float,
+    margin: float = 0.03,
+) -> bool:
+    return (
+        len(current_q) > 4
+        and _is_dominant_positive_z_command(cart_vel_cmd, deadzone)
+        and float(current_q[2]) <= float(q_lo[2]) + margin
+    )
+
+
+def _lower_elbow_positive_z_escape_velocity(
+    current_q: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    max_joint_vel: float,
+    shoulder_reserve: float = 0.18,
+    wrist_reserve: float = 0.18,
+) -> np.ndarray:
+    """Lift from the folded lower-elbow stop without depending on elbow motion."""
+    escape = np.zeros_like(current_q)
+    if len(current_q) < 5:
+        return escape
+
+    if current_q[0] > q_lo[0] + shoulder_reserve:
+        escape[0] = -0.35 * max_joint_vel
+    if current_q[2] < q_hi[2] - 1e-4:
+        escape[2] = max_joint_vel
+    if current_q[4] > q_lo[4] + wrist_reserve:
+        escape[4] = -0.35 * max_joint_vel
+    return escape
+
+
+def _lower_elbow_corner_unstick_velocity(
+    current_q: np.ndarray,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    max_joint_vel: float,
+    shoulder_reserve: float = 0.18,
+    wrist_reserve: float = 0.18,
+) -> np.ndarray:
+    """Open a tucked lower-elbow corner before trying to optimize vertical FK."""
+    escape = np.zeros_like(current_q)
+    if len(current_q) < 5:
+        return escape
+
+    if current_q[0] <= q_lo[0] + shoulder_reserve:
+        escape[0] = 0.45 * max_joint_vel
+    if current_q[2] < q_hi[2] - 1e-4:
+        escape[2] = 0.75 * max_joint_vel
+    if current_q[4] <= q_lo[4] + wrist_reserve:
+        escape[4] = 0.45 * max_joint_vel
+    return escape
+
+
+def _lower_elbow_command_spends_stop_reserve(
+    current_q: np.ndarray,
+    dq: np.ndarray,
+    q_lo: np.ndarray,
+    shoulder_reserve: float = 0.18,
+    wrist_reserve: float = 0.18,
+) -> bool:
+    if len(current_q) < 5 or len(dq) < 5:
+        return False
+
+    shoulder_spends = (
+        current_q[0] <= q_lo[0] + shoulder_reserve
+        and dq[0] < -1e-6
+    )
+    wrist_spends = (
+        current_q[4] <= q_lo[4] + wrist_reserve
+        and dq[4] < -1e-6
+    )
+    return bool(shoulder_spends or wrist_spends)
+
+
+def _is_lower_elbow_hard_corner(
+    current_q: np.ndarray,
+    q_lo: np.ndarray,
+    shoulder_margin: float = 0.04,
+    wrist_margin: float = 0.08,
+) -> bool:
+    if len(current_q) < 5:
+        return False
+    return bool(
+        current_q[0] <= q_lo[0] + shoulder_margin
+        or current_q[4] <= q_lo[4] + wrist_margin
+    )
 
 
 def _dominant_z_lift_velocity(
@@ -581,6 +726,70 @@ def _dominant_z_lift_velocity(
     return lifted
 
 
+def _solve_directional_z_velocity(
+    current_q: np.ndarray,
+    z_jacobian: np.ndarray,
+    desired_z_vel: float,
+    q_lo: np.ndarray,
+    q_hi: np.ndarray,
+    dt: float,
+    max_joint_vel: float,
+    damping: float,
+    joint_weights: np.ndarray,
+) -> tuple[np.ndarray, list[str], float]:
+    """Solve Z using only joints whose instantaneous motion helps the requested direction."""
+    z_row = np.asarray(z_jacobian, dtype=float).reshape(-1)
+    helpful = np.abs(z_row) > 1e-9
+    if not np.any(helpful):
+        return np.zeros_like(current_q), ['Z↕no_helpful_joint'], 0.0
+
+    helpful_indices = np.flatnonzero(helpful)
+    dq_helpful, clipped, scale = _solve_task_velocity_with_limit_redistribution(
+        current_q=current_q[helpful_indices],
+        task_jacobian=z_jacobian[:, helpful_indices],
+        cart_vel=np.array([desired_z_vel]),
+        q_lo=q_lo[helpful_indices],
+        q_hi=q_hi[helpful_indices],
+        dt=dt,
+        max_joint_vel=max_joint_vel,
+        damping=damping,
+        joint_weights=joint_weights[helpful_indices],
+    )
+    dq = np.zeros_like(current_q)
+    dq[helpful_indices] = dq_helpful
+    mapped_clipped = []
+    for label in clipped:
+        if label.startswith('J') and len(label) >= 3:
+            try:
+                local_idx = int(label[1:-1])
+            except ValueError:
+                mapped_clipped.append(label)
+            else:
+                mapped_clipped.append(f'J{helpful_indices[local_idx]}{label[-1]}')
+        else:
+            mapped_clipped.append(label)
+    return dq, mapped_clipped, scale
+
+
+def _minimum_positive_z_progress(desired_z_vel: float) -> float:
+    return 0.25 * abs(float(desired_z_vel))
+
+
+def _linear_command_target_dt(
+    command_mode: str,
+    horizon: float,
+    control_dt: float,
+    cart_vel_cmd: np.ndarray,
+    deadzone: float,
+) -> float:
+    if (
+        command_mode == 'trajectory'
+        and _is_dominant_positive_z_command(cart_vel_cmd, deadzone)
+    ):
+        return control_dt
+    return horizon
+
+
 def _linear_lateral_forward_velocity(
     cart_vel: np.ndarray,
     cart_vel_cmd: np.ndarray,
@@ -588,32 +797,14 @@ def _linear_lateral_forward_velocity(
     deadzone: float,
     front_branch_gain: float,
 ) -> np.ndarray:
-    """Bias pure left/right linear commands onto the forward arm branch."""
-    biased = np.array(cart_vel, dtype=float, copy=True)
-    lateral_cmd = abs(float(cart_vel_cmd[1]))
-    explicit_x_cmd = abs(float(cart_vel_cmd[0])) > deadzone
-    if (
-        explicit_x_cmd
-        or lateral_cmd <= deadzone
-        or _is_dominant_z_command(cart_vel_cmd, deadzone)
-    ):
-        return biased
-
-    forward_bias = max(
-        abs(front_branch_gain) * max_cartesian_vel,
-        0.25 * lateral_cmd,
-    )
-    forward_bias = min(forward_bias, 0.45 * max_cartesian_vel)
-    biased[0] = max(float(biased[0]), forward_bias)
-    return biased
+    """Keep manual lateral commands literal; no artificial X branch bias."""
+    del cart_vel_cmd, max_cartesian_vel, deadzone, front_branch_gain
+    return np.array(cart_vel, dtype=float, copy=True)
 
 
 def _is_lateral_forward_bias_active(cart_vel_cmd: np.ndarray, deadzone: float) -> bool:
-    return (
-        abs(float(cart_vel_cmd[1])) > deadzone
-        and abs(float(cart_vel_cmd[0])) <= deadzone
-        and not _is_dominant_z_command(cart_vel_cmd, deadzone)
-    )
+    del cart_vel_cmd, deadzone
+    return False
 
 
 def _is_dominant_positive_z_command(cart_vel_cmd: np.ndarray, deadzone: float) -> bool:
@@ -1032,6 +1223,302 @@ class CartesianArmController(Node):
             return None
         return self._rotation_kdl_to_matrix(frame.M)
 
+    def _next_q_from_dq(
+        self,
+        current_q: np.ndarray,
+        dq: np.ndarray,
+        dt: float,
+        active_dofs: int,
+    ) -> np.ndarray:
+        next_q = np.array(current_q, dtype=float, copy=True)
+        next_q[:active_dofs] = np.clip(
+            current_q[:active_dofs] + dq[:active_dofs] * dt,
+            self._q_lo[:active_dofs],
+            self._q_hi[:active_dofs],
+        )
+        return next_q
+
+    def _forward_error_at_q(self, q: np.ndarray) -> float | None:
+        rotation = self._get_ee_rotation(q)
+        if rotation is None:
+            return None
+        return _forward_axis_alignment_error(rotation, self._forward_rotation)
+
+    def _enforce_linear_forward_progress(
+        self,
+        current_q: np.ndarray,
+        dq: np.ndarray,
+        angular_jacobian: np.ndarray,
+        angular_vel: np.ndarray,
+        linear_task_jacobian: np.ndarray,
+        linear_task_vel: np.ndarray,
+        joint_weights: np.ndarray,
+        max_joint_vel: float,
+        damping: float,
+        deadzone: float,
+        active_dofs: int,
+    ) -> tuple[np.ndarray, list[str], float, float | None, float | None]:
+        current_error = self._forward_error_at_q(current_q)
+        if current_error is None:
+            return dq, [], 1.0, None, None
+
+        next_error = self._forward_error_at_q(
+            self._next_q_from_dq(current_q, dq, self._dt, active_dofs)
+        )
+        achieved_task_vel = linear_task_jacobian @ dq[:active_dofs]
+        if (
+            next_error is None
+            or (
+                _forward_progress_is_acceptable(current_error, next_error)
+                and _task_velocity_direction_is_acceptable(
+                    linear_task_vel, achieved_task_vel, deadzone
+                )
+            )
+        ):
+            return dq, [], 1.0, current_error, next_error
+
+        best_dq = np.zeros_like(dq)
+        best_error = current_error
+        best_scale = 0.0
+        best_clipped: list[str] = []
+        best_preserves_direction = False
+        for translation_scale in (1.0, 0.75, 0.5, 0.25, 0.1, 0.0):
+            secondary_jacobian = None
+            secondary_vel = None
+            if translation_scale > 0.0:
+                secondary_jacobian, secondary_vel = _append_secondary_task(
+                    secondary_jacobian=secondary_jacobian,
+                    secondary_vel=secondary_vel,
+                    task_jacobian=linear_task_jacobian,
+                    task_vel=translation_scale * linear_task_vel,
+                    weight=1.0,
+                )
+
+            try:
+                candidate_dq, candidate_clipped, _ = _solve_prioritized_task_velocity(
+                    current_q=current_q,
+                    primary_jacobian=angular_jacobian,
+                    primary_vel=angular_vel,
+                    secondary_jacobian=secondary_jacobian,
+                    secondary_vel=secondary_vel,
+                    q_lo=self._q_lo[:active_dofs],
+                    q_hi=self._q_hi[:active_dofs],
+                    dt=self._dt,
+                    max_joint_vel=max_joint_vel,
+                    damping=damping,
+                    joint_weights=joint_weights,
+                    secondary_weight=1.0,
+                )
+            except np.linalg.LinAlgError:
+                continue
+
+            candidate_error = self._forward_error_at_q(
+                self._next_q_from_dq(current_q, candidate_dq, self._dt, active_dofs)
+            )
+            if candidate_error is None:
+                continue
+            candidate_task_vel = linear_task_jacobian @ candidate_dq[:active_dofs]
+            direction_ok = _task_velocity_direction_is_acceptable(
+                linear_task_vel, candidate_task_vel, deadzone
+            )
+            if (
+                direction_ok
+                and (
+                    not best_preserves_direction
+                    or candidate_error < best_error
+                )
+            ):
+                best_dq = candidate_dq
+                best_error = candidate_error
+                best_scale = translation_scale
+                best_clipped = candidate_clipped
+                best_preserves_direction = True
+            elif not best_preserves_direction and candidate_error < best_error:
+                best_dq = candidate_dq
+                best_error = candidate_error
+                best_scale = translation_scale
+                best_clipped = candidate_clipped
+            if (
+                direction_ok
+                and _forward_progress_is_acceptable(current_error, candidate_error)
+            ):
+                return (
+                    candidate_dq,
+                    [*candidate_clipped, f'forward_guard:{translation_scale:.2f}'],
+                    translation_scale,
+                    current_error,
+                    candidate_error,
+                )
+
+        if best_preserves_direction and best_error < current_error:
+            return (
+                best_dq,
+                [*best_clipped, f'forward_guard:{best_scale:.2f}'],
+                best_scale,
+                current_error,
+                best_error,
+            )
+        return np.zeros_like(dq), ['forward_hold'], 0.0, current_error, current_error
+
+    def _enforce_positive_z_fk_progress(
+        self,
+        current_q: np.ndarray,
+        dq: np.ndarray,
+        cart_vel_cmd: np.ndarray,
+        deadzone: float,
+        max_joint_vel: float,
+        active_dofs: int,
+    ) -> tuple[np.ndarray, list[str]]:
+        if not _is_dominant_positive_z_command(cart_vel_cmd, deadzone):
+            return dq, []
+
+        current_z = float(self._get_ee_pos(current_q)[2])
+        pin_lower_elbow = _is_lower_elbow_positive_z_recovery_active(
+            current_q=current_q[:active_dofs],
+            q_lo=self._q_lo[:active_dofs],
+            cart_vel_cmd=cart_vel_cmd,
+            deadzone=deadzone,
+        )
+
+        def next_q_for(candidate_dq: np.ndarray) -> np.ndarray:
+            candidate_next_q = self._next_q_from_dq(
+                current_q,
+                candidate_dq,
+                self._dt,
+                active_dofs,
+            )
+            if pin_lower_elbow:
+                candidate_next_q[2] = current_q[2]
+            return candidate_next_q
+
+        def z_delta_for(candidate_dq: np.ndarray) -> float:
+            return float(self._get_ee_pos(next_q_for(candidate_dq))[2]) - current_z
+
+        current_delta = z_delta_for(dq)
+        lower_elbow_hard_corner = pin_lower_elbow and _is_lower_elbow_hard_corner(
+            current_q=current_q[:active_dofs],
+            q_lo=self._q_lo[:active_dofs],
+        )
+        spends_stop_reserve = pin_lower_elbow and _lower_elbow_command_spends_stop_reserve(
+            current_q=current_q[:active_dofs],
+            dq=dq[:active_dofs],
+            q_lo=self._q_lo[:active_dofs],
+        )
+        if lower_elbow_hard_corner or spends_stop_reserve:
+            corner_unstick = _lower_elbow_corner_unstick_velocity(
+                current_q=current_q[:active_dofs],
+                q_lo=self._q_lo[:active_dofs],
+                q_hi=self._q_hi[:active_dofs],
+                max_joint_vel=max_joint_vel,
+            )
+            corner_unstick = _clamp_joint_velocity_to_limits(
+                current_q[:active_dofs],
+                corner_unstick,
+                self._q_lo[:active_dofs],
+                self._q_hi[:active_dofs],
+                self._dt,
+            )
+            if np.linalg.norm(corner_unstick) > 1e-9:
+                return corner_unstick, ['Z↑corner_unstick']
+        if current_delta > 2e-4:
+            return dq, []
+
+        candidates: list[tuple[str, np.ndarray]] = []
+        elbow_unstick = np.zeros(active_dofs)
+        if active_dofs > 2 and current_q[2] < self._q_hi[2] - 1e-4:
+            elbow_unstick[2] = max_joint_vel
+
+        if pin_lower_elbow:
+            lower_escape = _lower_elbow_positive_z_escape_velocity(
+                current_q=current_q[:active_dofs],
+                q_lo=self._q_lo[:active_dofs],
+                q_hi=self._q_hi[:active_dofs],
+                max_joint_vel=max_joint_vel,
+            )
+            candidates.append(('Z↑lower_escape', lower_escape))
+
+            corner_unstick = _lower_elbow_corner_unstick_velocity(
+                current_q=current_q[:active_dofs],
+                q_lo=self._q_lo[:active_dofs],
+                q_hi=self._q_hi[:active_dofs],
+                max_joint_vel=max_joint_vel,
+            )
+            if np.linalg.norm(corner_unstick) > 1e-9:
+                candidates.append(('Z↑corner_unstick', corner_unstick))
+
+            q4_lift = np.zeros(active_dofs)
+            if active_dofs > 4 and current_q[4] > self._q_lo[4] + 0.18:
+                q4_lift[4] = -max_joint_vel
+                candidates.append(('Z↑wrist_lift', q4_lift))
+
+            q0_lift = np.zeros(active_dofs)
+            if current_q[0] > self._q_lo[0] + 0.18:
+                q0_lift[0] = -max_joint_vel
+                candidates.append(('Z↑shoulder_lift', q0_lift))
+
+            combined_lift = q0_lift + q4_lift
+            if np.linalg.norm(combined_lift) > 1e-9:
+                candidates.append(('Z↑shoulder_wrist_lift', combined_lift))
+            if np.linalg.norm(elbow_unstick) > 1e-9:
+                candidates.append(('Z↑elbow_unstick', elbow_unstick))
+
+        startup_escape = _linear_startup_escape_velocity(
+            current_q=current_q[:active_dofs],
+            q_lo=self._q_lo[:active_dofs],
+            max_joint_vel=max_joint_vel,
+            cart_vel_cmd=cart_vel_cmd,
+            deadzone=deadzone,
+        )
+        if np.linalg.norm(startup_escape) > 1e-9:
+            candidates.append(('Z↑startup_escape', startup_escape))
+
+        best_dq = dq
+        best_label = 'Z↑blocked'
+        best_delta = current_delta
+        current_forward_error = self._forward_error_at_q(current_q)
+        best_forward_ok = False
+
+        for label, candidate in candidates:
+            candidate = _clamp_joint_velocity_to_limits(
+                current_q[:active_dofs],
+                candidate[:active_dofs],
+                self._q_lo[:active_dofs],
+                self._q_hi[:active_dofs],
+                self._dt,
+            )
+            candidate_delta = z_delta_for(candidate)
+            if candidate_delta <= best_delta + 1e-5:
+                continue
+
+            candidate_forward_error = self._forward_error_at_q(next_q_for(candidate))
+            forward_ok = (
+                current_forward_error is None
+                or candidate_forward_error is None
+                or _forward_progress_is_acceptable(
+                    current_forward_error,
+                    candidate_forward_error,
+                    tolerance=0.05,
+                )
+            )
+            if forward_ok or not best_forward_ok:
+                best_dq = candidate
+                best_label = label
+                best_delta = candidate_delta
+                best_forward_ok = forward_ok
+
+        if best_delta > 2e-4:
+            return best_dq, [best_label]
+        if pin_lower_elbow and np.linalg.norm(elbow_unstick) > 1e-9:
+            elbow_unstick = _clamp_joint_velocity_to_limits(
+                current_q[:active_dofs],
+                elbow_unstick,
+                self._q_lo[:active_dofs],
+                self._q_hi[:active_dofs],
+                self._dt,
+            )
+            return elbow_unstick, ['Z↑elbow_unstick']
+        return np.zeros_like(dq), ['Z↑blocked']
+
     def _fk_numerical(self, q: np.ndarray) -> np.ndarray:
         """
         Simple FK fallback for cases where KDL is not available.
@@ -1234,12 +1721,17 @@ class CartesianArmController(Node):
         active_dofs = J.shape[1]
         Jlin = J[:3, :active_dofs]
         cart_vel_cmd = self._cmd_vel * max_cv
+        command_target_dt = horizon
+        if abs(float(cart_vel_cmd[2])) >= deadzone:
+            self._ee_z_ref = float(self._get_ee_pos(solve_q)[2])
         cart_vel = np.zeros(3)
         angular_vel = np.zeros(3)
         secondary_jacobian = None
         secondary_vel = None
         primary_jacobian = Jlin
         primary_vel = cart_vel
+        forward_error_before = None
+        forward_error_after = None
         mode_label = 'linear'
         startup_unfold_primary = False
 
@@ -1260,6 +1752,13 @@ class CartesianArmController(Node):
                 max_cartesian_vel=max_cv,
                 deadzone=deadzone,
                 front_branch_gain=self._front_branch_gain,
+            )
+            command_target_dt = _linear_command_target_dt(
+                command_mode=self._command_mode,
+                horizon=horizon,
+                control_dt=self._dt,
+                cart_vel_cmd=cart_vel_cmd,
+                deadzone=deadzone,
             )
 
             # Hold the current height unless the user is explicitly commanding Z.
@@ -1282,7 +1781,7 @@ class CartesianArmController(Node):
             primary_jacobian = linear_task_jacobian
             primary_vel = linear_task_vel
             current_rotation = self._get_ee_rotation(solve_q)
-            hold_orientation = not _is_dominant_z_command(cart_vel_cmd, deadzone)
+            hold_orientation = True
             if current_rotation is not None and hold_orientation:
                 hold_gain = (
                     self.get_parameter('orientation_hold_gain').get_parameter_value().double_value
@@ -1468,6 +1967,9 @@ class CartesianArmController(Node):
             z_jacobian = Jlin[2:3, :]
             desired_z_vel = float(cart_vel[2])
             achieved_z_vel = float((z_jacobian @ dq[:active_dofs])[0])
+            min_z_progress = 0.0
+            if _is_dominant_positive_z_command(cart_vel_cmd, deadzone):
+                min_z_progress = _minimum_positive_z_progress(desired_z_vel)
             z_error = achieved_z_vel - desired_z_vel
             if abs(z_error) > 1e-4:
                 z_correction = _solve_weighted_dls_task_velocity(
@@ -1487,12 +1989,18 @@ class CartesianArmController(Node):
 
             if (
                 abs(desired_z_vel) > deadzone
-                and achieved_z_vel * desired_z_vel <= 0.0
+                and (
+                    achieved_z_vel * desired_z_vel <= 0.0
+                    or (
+                        _is_dominant_positive_z_command(cart_vel_cmd, deadzone)
+                        and achieved_z_vel < min_z_progress
+                    )
+                )
             ):
-                z_only_dq, z_only_clipped, z_only_scale = _solve_task_velocity_with_limit_redistribution(
+                z_only_dq, z_only_clipped, z_only_scale = _solve_directional_z_velocity(
                     current_q=solve_q[:active_dofs],
-                    task_jacobian=z_jacobian,
-                    cart_vel=np.array([desired_z_vel]),
+                    z_jacobian=z_jacobian,
+                    desired_z_vel=desired_z_vel,
                     q_lo=self._q_lo[:active_dofs],
                     q_hi=self._q_hi[:active_dofs],
                     dt=self._dt,
@@ -1501,7 +2009,9 @@ class CartesianArmController(Node):
                     joint_weights=joint_weights,
                 )
                 z_only_vel = float((z_jacobian @ z_only_dq[:active_dofs])[0])
-                if z_only_vel * desired_z_vel > 0.0:
+                if (
+                    z_only_vel * desired_z_vel > 0.0
+                ):
                     dq = z_only_dq
                     joints_clipped = [*joints_clipped, *z_only_clipped, 'Z↕guard']
                     vel_scale = min(vel_scale, z_only_scale)
@@ -1596,12 +2106,52 @@ class CartesianArmController(Node):
                     dq = np.zeros_like(dq)
                     joints_clipped = [*joints_clipped, 'Z↑blocked']
 
+        if self._linear_mode:
+            (
+                dq,
+                forward_guard_clipped,
+                forward_guard_scale,
+                forward_error_before,
+                forward_error_after,
+            ) = self._enforce_linear_forward_progress(
+                current_q=solve_q,
+                dq=dq[:active_dofs],
+                angular_jacobian=J[3:6, :active_dofs],
+                angular_vel=angular_vel,
+                linear_task_jacobian=linear_task_jacobian,
+                linear_task_vel=linear_task_vel,
+                joint_weights=joint_weights,
+                max_joint_vel=max_jv,
+                damping=lam,
+                deadzone=deadzone,
+                active_dofs=active_dofs,
+            )
+            if forward_guard_clipped:
+                joints_clipped = [*joints_clipped, *forward_guard_clipped]
+                vel_scale = min(vel_scale, forward_guard_scale)
+
+            (
+                dq,
+                positive_z_fk_clipped,
+            ) = self._enforce_positive_z_fk_progress(
+                current_q=solve_q,
+                dq=dq[:active_dofs],
+                cart_vel_cmd=cart_vel_cmd,
+                deadzone=deadzone,
+                max_joint_vel=max_jv,
+                active_dofs=active_dofs,
+            )
+            if positive_z_fk_clipped:
+                joints_clipped = [*joints_clipped, *positive_z_fk_clipped]
+                if positive_z_fk_clipped == ['Z↑blocked']:
+                    vel_scale = 0.0
+
         # In trajectory mode, generate the next target from the measured pose.
         # This keeps the published joint step consistent with the Jacobian
         # linearization and avoids accumulating backlog when hardware tracking
         # lags behind the previously commanded target.
         if self._command_mode == 'trajectory':
-            self._q_cmd = np.clip(solve_q + dq * horizon, self._q_lo, self._q_hi)
+            self._q_cmd = np.clip(solve_q + dq * command_target_dt, self._q_lo, self._q_hi)
         else:
             # Velocity mode should hold near the actual arm pose, not a
             # long-horizon prediction. Using the trajectory lookahead here
@@ -1619,6 +2169,11 @@ class CartesianArmController(Node):
         if self._diag_ctr % 33 == 0:
             ee = self._get_ee_pos(self._q_cmd if self._q_cmd is not None else self._q)
             achieved_task = Jlin @ dq[:active_dofs]
+            orientation_diag = ''
+            if forward_error_before is not None and forward_error_after is not None:
+                orientation_diag = (
+                    f'orientation_error={forward_error_before:.3f}->{forward_error_after:.3f} '
+                )
             self.get_logger().info(
                 f'mode={mode_label} '
                 f'cart_in={np.round(cart_vel, 3)} '
@@ -1626,6 +2181,7 @@ class CartesianArmController(Node):
                 f'dq={np.round(dq, 3)} '
                 f'linear_out={np.round(achieved_task, 3)} '
                 f'vel_scale={vel_scale:.2f} '
+                f'{orientation_diag}'
                 f'clipped={joints_clipped} '
                 f'vel_subs={self._vel_pub.get_subscription_count()} '
                 f'vel_legacy_subs={self._vel_pub_legacy.get_subscription_count()}\n'

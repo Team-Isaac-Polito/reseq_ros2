@@ -2,16 +2,29 @@ import numpy as np
 
 from reseq_arm_mk2.cartesian_arm_controller import (
     _dominant_z_lift_velocity,
+    _forward_axis_alignment_error,
     _forward_axis_error_vector,
+    _forward_progress_is_acceptable,
     _is_dominant_positive_z_command,
     _is_dominant_z_command,
+    _is_lateral_forward_bias_active,
+    _is_lower_elbow_positive_z_recovery_active,
+    _is_lower_elbow_hard_corner,
+    _linear_command_target_dt,
+    _linear_lateral_forward_velocity,
     _linear_startup_escape_velocity,
+    _lower_elbow_command_spends_stop_reserve,
+    _lower_elbow_corner_unstick_velocity,
+    _lower_elbow_positive_z_escape_velocity,
+    _minimum_positive_z_progress,
     _remove_task_space_velocity,
     _rotation_error_vector,
     _rotation_matrix_from_rpy,
     _rotation_mode_angular_velocity,
+    _solve_directional_z_velocity,
     _solve_prioritized_task_velocity,
     _solve_task_velocity_with_limit_redistribution,
+    _task_velocity_direction_is_acceptable,
 )
 
 
@@ -71,6 +84,39 @@ def test_forward_axis_error_corrects_sideways_tool_axis():
     assert error[2] < 0.0
 
 
+def test_forward_axis_alignment_error_measures_axis_angle():
+    current = _rotation_matrix_from_rpy(0.0, 0.0, 0.5)
+    desired = _rotation_matrix_from_rpy(0.0, 0.0, 0.0)
+
+    error = _forward_axis_alignment_error(current, desired)
+
+    assert np.isclose(error, 0.5)
+
+
+def test_forward_progress_requires_recovery_when_not_forward():
+    assert _forward_progress_is_acceptable(0.5, 0.49)
+    assert not _forward_progress_is_acceptable(0.5, 0.5)
+    assert not _forward_progress_is_acceptable(0.5, 0.51)
+
+
+def test_forward_progress_allows_small_error_growth_inside_tolerance():
+    assert _forward_progress_is_acceptable(0.003, 0.015)
+    assert not _forward_progress_is_acceptable(0.003, 0.03)
+
+
+def test_task_velocity_direction_rejects_reversed_dominant_axis():
+    assert _task_velocity_direction_is_acceptable(
+        desired_vel=np.array([0.0, -0.4, 0.0]),
+        achieved_vel=np.array([0.1, -0.02, 0.1]),
+        deadzone=0.02,
+    )
+    assert not _task_velocity_direction_is_acceptable(
+        desired_vel=np.array([0.0, -0.4, 0.0]),
+        achieved_vel=np.array([0.1, 0.02, 0.1]),
+        deadzone=0.02,
+    )
+
+
 def test_startup_z_escape_biases_folded_arm_out_of_lower_elbow_limit():
     escape = _linear_startup_escape_velocity(
         current_q=np.array([-0.03, 0.0, -0.1, 0.0, 0.0, 0.0]),
@@ -124,6 +170,93 @@ def test_startup_z_escape_is_inactive_after_unfolding():
     assert np.allclose(escape, np.zeros(6))
 
 
+def test_lower_elbow_positive_z_recovery_detects_folded_lift_trap():
+    assert _is_lower_elbow_positive_z_recovery_active(
+        current_q=np.array([0.3, 0.0, -0.1, 0.0, -0.08, 0.0]),
+        q_lo=np.array([-0.1, -3.14, -0.1, -3.14, -0.46, -3.14]),
+        cart_vel_cmd=np.array([0.0, 0.0, 0.6]),
+        deadzone=0.02,
+    )
+    assert not _is_lower_elbow_positive_z_recovery_active(
+        current_q=np.array([0.3, 0.0, 0.1, 0.0, -0.08, 0.0]),
+        q_lo=np.array([-0.1, -3.14, -0.1, -3.14, -0.46, -3.14]),
+        cart_vel_cmd=np.array([0.0, 0.0, 0.6]),
+        deadzone=0.02,
+    )
+
+
+def test_lower_elbow_positive_z_escape_uses_shoulder_wrist_and_elbow():
+    escape = _lower_elbow_positive_z_escape_velocity(
+        current_q=np.array([0.3, 0.0, -0.1, 0.0, -0.08, 0.0]),
+        q_lo=np.array([-0.1, -3.14, -0.1, -3.14, -0.46, -3.14]),
+        q_hi=np.array([2.8, 3.14, 2.88, 3.14, 1.57, 3.14]),
+        max_joint_vel=1.6,
+    )
+
+    assert escape[0] < 0.0
+    assert escape[2] > 0.0
+    assert escape[4] < 0.0
+
+
+def test_lower_elbow_positive_z_escape_preserves_stop_reserve():
+    escape = _lower_elbow_positive_z_escape_velocity(
+        current_q=np.array([0.04, 0.0, -0.1, 0.0, -0.35, 0.0]),
+        q_lo=np.array([-0.1, -3.14, -0.1, -3.14, -0.46, -3.14]),
+        q_hi=np.array([2.8, 3.14, 2.88, 3.14, 1.57, 3.14]),
+        max_joint_vel=1.6,
+    )
+
+    assert escape[0] == 0.0
+    assert escape[2] > 0.0
+    assert escape[4] == 0.0
+
+
+def test_lower_elbow_corner_unstick_opens_hard_stop_pose():
+    unstick = _lower_elbow_corner_unstick_velocity(
+        current_q=np.array([-0.1, 0.0, -0.1, 0.0, -0.447, 0.0]),
+        q_lo=np.array([-0.1, -3.14, -0.1, -3.14, -0.46, -3.14]),
+        q_hi=np.array([2.8, 3.14, 2.88, 3.14, 1.57, 3.14]),
+        max_joint_vel=1.6,
+    )
+
+    assert unstick[0] > 0.0
+    assert unstick[2] > 0.0
+    assert unstick[4] > 0.0
+
+
+def test_lower_elbow_command_spends_stop_reserve_detects_tighter_tuck():
+    q_lo = np.array([-0.1, -3.14, -0.1, -3.14, -0.46, -3.14])
+
+    assert _lower_elbow_command_spends_stop_reserve(
+        current_q=np.array([0.02, 0.0, -0.1, 0.0, -0.32, 0.0]),
+        dq=np.array([-0.2, 0.0, 1.0, 0.0, 0.0, 0.0]),
+        q_lo=q_lo,
+    )
+    assert _lower_elbow_command_spends_stop_reserve(
+        current_q=np.array([0.2, 0.0, -0.1, 0.0, -0.34, 0.0]),
+        dq=np.array([0.0, 0.0, 1.0, 0.0, -0.2, 0.0]),
+        q_lo=q_lo,
+    )
+    assert not _lower_elbow_command_spends_stop_reserve(
+        current_q=np.array([0.2, 0.0, -0.1, 0.0, -0.1, 0.0]),
+        dq=np.array([-0.2, 0.0, 1.0, 0.0, -0.2, 0.0]),
+        q_lo=q_lo,
+    )
+
+
+def test_lower_elbow_hard_corner_detects_exact_stuck_pose():
+    q_lo = np.array([-0.1, -3.14, -0.1, -3.14, -0.46, -3.14])
+
+    assert _is_lower_elbow_hard_corner(
+        current_q=np.array([-0.1, 0.0, -0.1, 0.0, -0.447, 0.0]),
+        q_lo=q_lo,
+    )
+    assert not _is_lower_elbow_hard_corner(
+        current_q=np.array([0.02, 0.0, -0.1, 0.0, -0.277, 0.0]),
+        q_lo=q_lo,
+    )
+
+
 def test_dominant_positive_z_command_filters_normal_xy_stick_motion():
     assert _is_dominant_positive_z_command(np.array([0.0, 0.0, 0.2]), 0.02)
     assert not _is_dominant_positive_z_command(np.array([0.2, 0.0, 0.05]), 0.02)
@@ -134,6 +267,39 @@ def test_dominant_z_command_accepts_up_and_down_vertical_commands():
     assert _is_dominant_z_command(np.array([0.0, 0.0, 0.2]), 0.02)
     assert _is_dominant_z_command(np.array([0.0, 0.0, -0.2]), 0.02)
     assert not _is_dominant_z_command(np.array([0.2, 0.0, 0.05]), 0.02)
+
+
+def test_positive_z_trajectory_target_uses_control_tick():
+    assert np.isclose(
+        _linear_command_target_dt(
+            command_mode='trajectory',
+            horizon=0.1,
+            control_dt=1.0 / 33.0,
+            cart_vel_cmd=np.array([0.0, 0.0, 0.6]),
+            deadzone=0.02,
+        ),
+        1.0 / 33.0,
+    )
+    assert np.isclose(
+        _linear_command_target_dt(
+            command_mode='trajectory',
+            horizon=0.1,
+            control_dt=1.0 / 33.0,
+            cart_vel_cmd=np.array([0.0, 0.0, -0.4]),
+            deadzone=0.02,
+        ),
+        0.1,
+    )
+    assert np.isclose(
+        _linear_command_target_dt(
+            command_mode='trajectory',
+            horizon=0.1,
+            control_dt=1.0 / 33.0,
+            cart_vel_cmd=np.array([0.3, 0.0, 0.05]),
+            deadzone=0.02,
+        ),
+        0.1,
+    )
 
 
 def test_dominant_z_lift_boosts_vertical_without_forward_escape():
@@ -161,6 +327,45 @@ def test_dominant_z_lift_ignores_xy_dominant_motion():
     )
 
     assert np.allclose(lifted, np.array([0.2, 0.0, 0.05]))
+
+
+def test_lateral_linear_command_does_not_inject_forward_bias():
+    cart_vel = _linear_lateral_forward_velocity(
+        cart_vel=np.array([0.0, -0.4, 0.0]),
+        cart_vel_cmd=np.array([0.0, -0.4, 0.0]),
+        max_cartesian_vel=0.6,
+        deadzone=0.02,
+        front_branch_gain=0.05,
+    )
+
+    assert np.allclose(cart_vel, np.array([0.0, -0.4, 0.0]))
+    assert not _is_lateral_forward_bias_active(np.array([0.0, -0.4, 0.0]), 0.02)
+
+
+def test_directional_z_solver_uses_only_joints_that_lift_up():
+    dq, clipped, scale = _solve_directional_z_velocity(
+        current_q=np.array([-0.1, -0.1, 0.0]),
+        z_jacobian=np.array([[-0.2, 0.35, -0.15]]),
+        desired_z_vel=0.3,
+        q_lo=np.array([-0.1, -0.1, -1.0]),
+        q_hi=np.array([1.0, 1.0, 1.0]),
+        dt=0.1,
+        max_joint_vel=1.6,
+        damping=1e-6,
+        joint_weights=np.ones(3),
+    )
+
+    assert clipped == ['J0↓']
+    assert scale == 1.0
+    assert dq[0] == 0.0
+    assert dq[1] > 0.0
+    assert dq[2] < 0.0
+    assert float((np.array([[-0.2, 0.35, -0.15]]) @ dq)[0]) > 0.25
+
+
+def test_positive_z_progress_threshold_scales_with_command_size():
+    assert _minimum_positive_z_progress(0.027) < 0.027
+    assert np.isclose(_minimum_positive_z_progress(0.6), 0.15)
 
 
 def test_linear_primary_translation_is_not_changed_by_secondary_task():
