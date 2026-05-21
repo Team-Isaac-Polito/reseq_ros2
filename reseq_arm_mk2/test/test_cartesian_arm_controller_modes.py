@@ -49,6 +49,19 @@ def test_rotation_error_uses_fixed_robot_forward_orientation():
     assert np.allclose(error, np.array([0.0, 0.0, -0.25]), atol=1e-6)
 
 
+def test_rotation_error_corrects_roll_about_forward_axis():
+    current = _rotation_matrix_from_rpy(0.4, 0.0, 0.0)
+    desired = _rotation_matrix_from_rpy(0.0, 0.0, 0.0)
+
+    error = _rotation_error_vector(
+        current_rotation=current,
+        desired_rotation=desired,
+    )
+
+    assert error[0] < 0.0
+    assert np.allclose(error[1:], np.zeros(2), atol=1e-6)
+
+
 def test_rotation_error_is_zero_when_camera_is_forward():
     forward = _rotation_matrix_from_rpy(0.0, 0.0, 0.0)
 

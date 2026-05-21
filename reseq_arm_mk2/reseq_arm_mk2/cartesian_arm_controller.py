@@ -1793,7 +1793,7 @@ class CartesianArmController(Node):
                 )
                 angular_vel = _clip_vector(
                     hold_gain
-                    * _forward_axis_error_vector(
+                    * _rotation_error_vector(
                         current_rotation=current_rotation,
                         desired_rotation=self._forward_rotation,
                     ),
