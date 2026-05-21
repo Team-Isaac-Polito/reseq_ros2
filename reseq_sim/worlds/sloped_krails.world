@@ -67,13 +67,8 @@
 
     <model name="sloped_krails_arena">
       <static>true</static>
-      <!-- STL exported from SolidWorks with Y-up convention.
-           Roll -90 deg converts SW frame to Gazebo Z-up:
-             SW-X  -> Gazebo-X  (corridor width,  0.27..2.69 m)
-             SW-Z  -> Gazebo-Y  (corridor length, -1.82..3.10 m)
-            -SW-Y  -> Gazebo-Z  (height,           0.00..1.21 m)
-           Robot spawn: x≈1.48 y≈-1.4 z≈0.2 yaw≈1.5708 -->
-      <pose>0 0 0 -1.5708 0 0</pose>
+      <!-- STL exported from SolidWorks -->
+      <pose>3.0 1.0 0 -1.5708 0 -1.5708</pose>
       <link name="base_link">
         <collision name="collision">
           <geometry>

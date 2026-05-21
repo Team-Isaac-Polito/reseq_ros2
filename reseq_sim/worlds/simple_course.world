@@ -73,7 +73,7 @@
 
     <model name="north_wall">
       <static>true</static>
-      <pose>2.5 4.75 0.5 0 0 0</pose>
+      <pose>-1.1 1.15 0.5 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -94,7 +94,7 @@
 
     <model name="south_wall">
       <static>true</static>
-      <pose>2.5 0.25 0.5 0 0 0</pose>
+      <pose>-1.1 -3.35 0.5 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -115,7 +115,7 @@
 
     <model name="west_wall">
       <static>true</static>
-      <pose>0.25 2.5 0.5 0 0 0</pose>
+      <pose>-3.35 -1.1 0.5 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -136,7 +136,7 @@
 
     <model name="east_wall">
       <static>true</static>
-      <pose>4.75 2.5 0.5 0 0 0</pose>
+      <pose>1.15 -1.1 0.5 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -157,7 +157,7 @@
 
     <model name="vertical_barrier">
       <static>true</static>
-      <pose>1.75 2.40 0.5 0 0 0</pose>
+      <pose>-1.85 -1.2 0.5 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -178,7 +178,7 @@
 
     <model name="upper_barrier">
       <static>true</static>
-      <pose>3.30 1.75 0.5 0 0 0</pose>
+      <pose>-0.30 -1.85 0.5 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
@@ -199,7 +199,7 @@
 
     <model name="lower_barrier">
       <static>true</static>
-      <pose>1.38 3.40 0.5 0 0 0</pose>
+      <pose>-2.2 -0.20 0.5 0 0 0</pose>
       <link name="link">
         <collision name="collision">
           <geometry>
