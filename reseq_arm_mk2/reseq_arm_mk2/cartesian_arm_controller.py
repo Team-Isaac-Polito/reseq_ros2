@@ -1878,7 +1878,7 @@ class CartesianArmController(Node):
                 # (cross(camera_forward, world_Z)) so that up/down commands tilt the
                 # camera up/down regardless of current arm pose.
                 world_z = np.array([0.0, 0.0, 1.0])
-                tilt_axis_raw = np.cross(roll_axis, world_z)
+                tilt_axis_raw = np.cross(world_z, roll_axis)
                 tilt_norm = np.linalg.norm(tilt_axis_raw)
                 tilt_axis = tilt_axis_raw / tilt_norm if tilt_norm > 0.1 else current_rotation[:, 1]
                 # Yaw/pan: always around base-frame vertical Z.
