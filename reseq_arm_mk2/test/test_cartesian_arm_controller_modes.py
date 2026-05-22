@@ -34,7 +34,7 @@ def test_rotation_mode_maps_scaler_xyz_to_roll_tilt_pan():
         max_angular_vel=0.8,
     )
 
-    assert np.allclose(angular, np.array([0.8, -0.2, 0.4]))
+    assert np.allclose(angular, np.array([0.8, 0.2, 0.4]))
 
 
 def test_rotation_mode_yaw_is_around_base_z_not_tool_z():

@@ -301,7 +301,7 @@ def _rotation_mode_angular_velocity(
     return max_angular_vel * np.array(
         [
             filtered_cmd[0],  # forward/back stick rolls around tool X
-            filtered_cmd[2],  # Z control tilts around tool Y
+            -filtered_cmd[2],  # Z control tilts around tool Y (negated for correct up/down direction)
             filtered_cmd[1],  # left/right stick pans around tool Z
         ],
         dtype=float,
