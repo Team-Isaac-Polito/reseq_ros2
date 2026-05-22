@@ -37,6 +37,25 @@ def test_rotation_mode_maps_scaler_xyz_to_roll_tilt_pan():
     assert np.allclose(angular, np.array([0.8, -0.2, 0.4]))
 
 
+def test_rotation_mode_yaw_is_around_base_z_not_tool_z():
+    # Tool pitched 90° about Y: tool Z now points along -base X.
+    # Before the fix, a left/right command would rotate around base X (wrong).
+    # With the fix it must produce rotation around base Z only.
+    tool_rotation = _rotation_matrix_from_rpy(0.0, np.pi / 2, 0.0)
+
+    # Pure left/right joystick: _rotation_mode_angular_velocity maps cmd_vel[1] -> tool_angular_vel[2]
+    max_av = 0.8
+    tool_angular_vel = np.array([0.0, 0.0, max_av])
+
+    roll_tilt_tool = np.array([tool_angular_vel[0], tool_angular_vel[1], 0.0])
+    yaw_base = np.array([0.0, 0.0, tool_angular_vel[2]])
+    angular_vel = tool_rotation @ roll_tilt_tool + yaw_base
+
+    assert np.isclose(angular_vel[2], max_av)
+    assert np.isclose(angular_vel[0], 0.0, atol=1e-9)
+    assert np.isclose(angular_vel[1], 0.0, atol=1e-9)
+
+
 def test_rotation_error_uses_fixed_robot_forward_orientation():
     current = _rotation_matrix_from_rpy(0.0, 0.0, 0.25)
     desired = _rotation_matrix_from_rpy(0.0, 0.0, 0.0)

@@ -1350,7 +1350,18 @@ class CartesianArmController(Node):
                     candidate_error,
                 )
 
-        if best_preserves_direction and best_error < current_error:
+        if best_preserves_direction and best_error <= current_error + 1e-3:
+            return (
+                best_dq,
+                [*best_clipped, f'forward_guard:{best_scale:.2f}'],
+                best_scale,
+                current_error,
+                best_error,
+            )
+        # No scale produced direction-preserving motion. If the orientation error
+        # is already small (below 2× tolerance), allow movement anyway — the arm
+        # is close enough to correct orientation that blocking wastes all motion.
+        if best_scale > 0.0 and current_error <= 2.0 * 0.02:
             return (
                 best_dq,
                 [*best_clipped, f'forward_guard:{best_scale:.2f}'],
@@ -1861,16 +1872,36 @@ class CartesianArmController(Node):
             if current_rotation is None:
                 angular_vel = tool_angular_vel
             else:
-                angular_vel = current_rotation @ tool_angular_vel
-            primary_jacobian = Jlin
-            primary_vel = cart_vel
-            secondary_jacobian, secondary_vel = _append_secondary_task(
-                secondary_jacobian=secondary_jacobian,
-                secondary_vel=secondary_vel,
-                task_jacobian=J[3:6, :active_dofs],
-                task_vel=angular_vel,
-                weight=1.0,
-            )
+                # Roll: always around the camera's own forward axis (tool X in base frame).
+                roll_axis = current_rotation[:, 0]
+                # Tilt: always around the horizontal axis perpendicular to camera forward
+                # (cross(camera_forward, world_Z)) so that up/down commands tilt the
+                # camera up/down regardless of current arm pose.
+                world_z = np.array([0.0, 0.0, 1.0])
+                tilt_axis_raw = np.cross(roll_axis, world_z)
+                tilt_norm = np.linalg.norm(tilt_axis_raw)
+                tilt_axis = tilt_axis_raw / tilt_norm if tilt_norm > 0.1 else current_rotation[:, 1]
+                # Yaw/pan: always around base-frame vertical Z.
+                angular_vel = (
+                    tool_angular_vel[0] * roll_axis
+                    + tool_angular_vel[1] * tilt_axis
+                    + np.array([0.0, 0.0, tool_angular_vel[2]])
+                )
+            # Angular velocity is the primary task.  The minimum-norm DLS solution
+            # naturally routes pan to q1 (base_roll), keeping the motion intuitive.
+            # Soft-stop pan when q1 approaches ±90° so the arm cannot swing to the rear.
+            q1 = float(solve_q[1]) if len(solve_q) > 1 else 0.0
+            pan_limit = np.pi / 2  # 90°
+            pan_margin = 0.15      # start fading 0.15 rad before the limit
+            pan_distance = pan_limit - abs(q1)
+            pan_scale = float(np.clip(pan_distance / pan_margin, 0.0, 1.0))
+            yaw_component = angular_vel[2]
+            if (q1 > 0 and yaw_component < 0) or (q1 < 0 and yaw_component > 0):
+                pan_scale = 1.0  # never suppress motion back toward centre
+            angular_vel = angular_vel.copy()
+            angular_vel[2] *= pan_scale
+            primary_jacobian = J[3:6, :active_dofs]
+            primary_vel = angular_vel
 
         limit_recovery = _joint_limit_recovery_velocity(
             current_q=solve_q,
@@ -1878,13 +1909,14 @@ class CartesianArmController(Node):
             q_hi=self._q_hi,
             max_joint_vel=max_jv,
         )
-        secondary_jacobian, secondary_vel = _append_secondary_task(
-            secondary_jacobian=secondary_jacobian,
-            secondary_vel=secondary_vel,
-            task_jacobian=np.eye(active_dofs),
-            task_vel=limit_recovery[:active_dofs],
-            weight=1.0,
-        )
+        if self._linear_mode:
+            secondary_jacobian, secondary_vel = _append_secondary_task(
+                secondary_jacobian=secondary_jacobian,
+                secondary_vel=secondary_vel,
+                task_jacobian=np.eye(active_dofs),
+                task_vel=limit_recovery[:active_dofs],
+                weight=1.0,
+            )
 
         # Damped least-squares IK on the active Cartesian task.
         try:
@@ -1892,51 +1924,51 @@ class CartesianArmController(Node):
             secondary_weight = (
                 self.get_parameter('secondary_task_weight').get_parameter_value().double_value
             )
-            dq, joints_clipped, vel_scale = _solve_prioritized_task_velocity(
-                current_q=solve_q,
-                primary_jacobian=primary_jacobian,
-                primary_vel=primary_vel,
-                secondary_jacobian=secondary_jacobian,
-                secondary_vel=secondary_vel,
-                q_lo=self._q_lo,
-                q_hi=self._q_hi,
-                dt=self._dt,
-                max_joint_vel=max_jv,
-                damping=lam,
-                joint_weights=joint_weights,
-                secondary_weight=secondary_weight,
-            )
+            if not self._linear_mode and active_dofs >= 6:
+                # Rotation mode: solve ONLY with the 3×3 wrist sub-Jacobian so
+                # that q0/q1/q2 (proximal joints) are structurally excluded from
+                # the solve and can never move.
+                wrist_jacobian = J[3:6, 3:6]
+                wrist_weights = self._joint_weights[3:6]
+                dq_wrist, joints_clipped, vel_scale = _solve_task_velocity_with_limit_redistribution(
+                    current_q=solve_q[3:6],
+                    task_jacobian=wrist_jacobian,
+                    cart_vel=primary_vel,
+                    q_lo=self._q_lo[3:6],
+                    q_hi=self._q_hi[3:6],
+                    dt=self._dt,
+                    max_joint_vel=max_jv,
+                    damping=lam,
+                    joint_weights=wrist_weights,
+                )
+                dq = np.zeros(active_dofs)
+                dq[3:6] = dq_wrist
+                # When joystick is idle, gently recenter wrist joints toward
+                # their midpoints so the next command in either direction has
+                # full range available.
+                if np.linalg.norm(primary_vel) < 0.05:
+                    wrist_mid = (self._q_lo[3:6] + self._q_hi[3:6]) / 2.0
+                    center_vel = 0.3 * (wrist_mid - solve_q[3:6])
+                    center_vel = np.clip(center_vel, -max_jv, max_jv)
+                    dq[3:6] = center_vel
+            else:
+                dq, joints_clipped, vel_scale = _solve_prioritized_task_velocity(
+                    current_q=solve_q,
+                    primary_jacobian=primary_jacobian,
+                    primary_vel=primary_vel,
+                    secondary_jacobian=secondary_jacobian,
+                    secondary_vel=secondary_vel,
+                    q_lo=self._q_lo,
+                    q_hi=self._q_hi,
+                    dt=self._dt,
+                    max_joint_vel=max_jv,
+                    damping=lam,
+                    joint_weights=joint_weights,
+                    secondary_weight=secondary_weight,
+                )
         except np.linalg.LinAlgError:
             self.get_logger().warn('DLS solve failed.')
             return
-
-        if not self._linear_mode:
-            dq = _remove_task_space_velocity(
-                dq=dq,
-                task_jacobian=Jlin,
-                joint_weights=joint_weights,
-                damping=min(lam, 1e-4),
-            )
-            dq = _clamp_joint_velocity_to_limits(
-                solve_q[:active_dofs],
-                dq,
-                self._q_lo[:active_dofs],
-                self._q_hi[:active_dofs],
-                self._dt,
-            )
-            dq = _remove_task_space_velocity(
-                dq=dq,
-                task_jacobian=Jlin,
-                joint_weights=joint_weights,
-                damping=min(lam, 1e-4),
-            )
-            dq = _clamp_joint_velocity_to_limits(
-                solve_q[:active_dofs],
-                dq,
-                self._q_lo[:active_dofs],
-                self._q_hi[:active_dofs],
-                self._dt,
-            )
 
         if (
             self._linear_mode
