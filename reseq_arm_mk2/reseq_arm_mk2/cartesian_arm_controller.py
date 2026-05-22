@@ -1925,54 +1925,59 @@ class CartesianArmController(Node):
                 self.get_parameter('secondary_task_weight').get_parameter_value().double_value
             )
             if not self._linear_mode and active_dofs >= 6:
-                # Rotation mode: solve ONLY with the 3×3 wrist sub-Jacobian so
-                # that q0/q1/q2 are structurally excluded and never move.
+                # Rotation mode: ONLY move wrist joints [q3, q4, q5].
+                # q0/q1/q2 are structurally excluded — the 3×3 wrist Jacobian
+                # has no column for them.
+                #
+                # Use the full 3×3 DLS so that pan commands correctly use q3+q5
+                # together (they cancel roll while adding yaw). Narrow q4's
+                # effective limits to stay away from the asymmetric lower bound
+                # (-0.46 rad) so the solver never redistributes q4 away during pan,
+                # which was what broke reversing in the previous attempt.
                 wrist_jacobian = J[3:6, 3:6]
                 wrist_weights = self._joint_weights[3:6]
                 wrist_mid = (self._q_lo[3:6] + self._q_hi[3:6]) / 2.0
                 cmd_norm = float(np.linalg.norm(primary_vel))
                 dq = np.zeros(active_dofs)
+
                 if cmd_norm < 0.05:
-                    # Joystick idle: recenter wrist joints toward their midpoints
-                    # so the next command in either direction has full range.
+                    # Joystick idle: recenter wrist joints.
                     center_vel = 0.3 * (wrist_mid - solve_q[3:6])
                     center_vel = np.clip(center_vel, -max_jv, max_jv)
                     dq[3:6] = center_vel
                     joints_clipped = []
                     vel_scale = 1.0
                 else:
-                    # Active rotation command: solve wrist-only.
-                    # Blend in a gentle centering bias on q3/q5 so they don't
-                    # accumulate at limits across repeated pan commands.
-                    # The centering bias scales down to zero near the midpoint.
-                    center_gain = 0.15
-                    center_bias = center_gain * (wrist_mid - solve_q[3:6])
-                    # Only apply centering on q3 and q5 (the ±π wrap joints).
-                    # q4 (wrist_pitch) is asymmetric and naturally stays bounded.
-                    center_vel_full = np.zeros(3)
-                    center_vel_full[0] = center_bias[0]  # q3
-                    center_vel_full[2] = center_bias[2]  # q5
-                    # Modified cart_vel = commanded + centering projected through J.
-                    # Instead of modifying cart_vel (which would corrupt the angular
-                    # command), inject centering directly into dq after the solve.
+                    # Give q4 a large weight so the DLS solver strongly avoids
+                    # using it for pan/roll commands. At any arm pose, q4's tilt
+                    # axis (angular-Y) contribution is dominant, but in non-home
+                    # configurations it also develops small angular-X/Z coupling.
+                    # The high weight routes that coupling away to q3/q5 instead.
+                    # q4 still moves freely for pure tilt commands — the DLS solution
+                    # for a singular axis is weight-independent.
+                    q4_weight = 30.0
+                    wrist_weights_rot = wrist_weights.copy()
+                    wrist_weights_rot[1] *= q4_weight
+
+                    # Buffer both q4 limits by 0.2 rad so the redistributor never
+                    # removes q4 during normal pan/tilt, only at true extremes.
+                    q4_buf = 0.2
+                    q_lo_rot = self._q_lo[3:6].copy()
+                    q_hi_rot = self._q_hi[3:6].copy()
+                    q_lo_rot[1] = self._q_lo[4] + q4_buf
+                    q_hi_rot[1] = self._q_hi[4] - q4_buf
+
                     dq_wrist, joints_clipped, vel_scale = _solve_task_velocity_with_limit_redistribution(
                         current_q=solve_q[3:6],
                         task_jacobian=wrist_jacobian,
                         cart_vel=primary_vel,
-                        q_lo=self._q_lo[3:6],
-                        q_hi=self._q_hi[3:6],
+                        q_lo=q_lo_rot,
+                        q_hi=q_hi_rot,
                         dt=self._dt,
                         max_joint_vel=max_jv,
                         damping=lam,
-                        joint_weights=wrist_weights,
+                        joint_weights=wrist_weights_rot,
                     )
-                    # Add centering bias in the nullspace of the 3×3 wrist Jacobian.
-                    # The 3×3 wrist Jacobian is square (no nullspace), so we use
-                    # a weighted addition that diminishes with command magnitude.
-                    # At full stick the bias is negligible; near zero it ramps up.
-                    bias_scale = float(np.clip(1.0 - cmd_norm / 0.8, 0.0, 1.0))
-                    dq_wrist = dq_wrist + bias_scale * center_vel_full
-                    dq_wrist = np.clip(dq_wrist, -max_jv, max_jv)
                     dq[3:6] = dq_wrist
             else:
                 dq, joints_clipped, vel_scale = _solve_prioritized_task_velocity(
