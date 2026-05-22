@@ -1926,31 +1926,54 @@ class CartesianArmController(Node):
             )
             if not self._linear_mode and active_dofs >= 6:
                 # Rotation mode: solve ONLY with the 3×3 wrist sub-Jacobian so
-                # that q0/q1/q2 (proximal joints) are structurally excluded from
-                # the solve and can never move.
+                # that q0/q1/q2 are structurally excluded and never move.
                 wrist_jacobian = J[3:6, 3:6]
                 wrist_weights = self._joint_weights[3:6]
-                dq_wrist, joints_clipped, vel_scale = _solve_task_velocity_with_limit_redistribution(
-                    current_q=solve_q[3:6],
-                    task_jacobian=wrist_jacobian,
-                    cart_vel=primary_vel,
-                    q_lo=self._q_lo[3:6],
-                    q_hi=self._q_hi[3:6],
-                    dt=self._dt,
-                    max_joint_vel=max_jv,
-                    damping=lam,
-                    joint_weights=wrist_weights,
-                )
+                wrist_mid = (self._q_lo[3:6] + self._q_hi[3:6]) / 2.0
+                cmd_norm = float(np.linalg.norm(primary_vel))
                 dq = np.zeros(active_dofs)
-                dq[3:6] = dq_wrist
-                # When joystick is idle, gently recenter wrist joints toward
-                # their midpoints so the next command in either direction has
-                # full range available.
-                if np.linalg.norm(primary_vel) < 0.05:
-                    wrist_mid = (self._q_lo[3:6] + self._q_hi[3:6]) / 2.0
+                if cmd_norm < 0.05:
+                    # Joystick idle: recenter wrist joints toward their midpoints
+                    # so the next command in either direction has full range.
                     center_vel = 0.3 * (wrist_mid - solve_q[3:6])
                     center_vel = np.clip(center_vel, -max_jv, max_jv)
                     dq[3:6] = center_vel
+                    joints_clipped = []
+                    vel_scale = 1.0
+                else:
+                    # Active rotation command: solve wrist-only.
+                    # Blend in a gentle centering bias on q3/q5 so they don't
+                    # accumulate at limits across repeated pan commands.
+                    # The centering bias scales down to zero near the midpoint.
+                    center_gain = 0.15
+                    center_bias = center_gain * (wrist_mid - solve_q[3:6])
+                    # Only apply centering on q3 and q5 (the ±π wrap joints).
+                    # q4 (wrist_pitch) is asymmetric and naturally stays bounded.
+                    center_vel_full = np.zeros(3)
+                    center_vel_full[0] = center_bias[0]  # q3
+                    center_vel_full[2] = center_bias[2]  # q5
+                    # Modified cart_vel = commanded + centering projected through J.
+                    # Instead of modifying cart_vel (which would corrupt the angular
+                    # command), inject centering directly into dq after the solve.
+                    dq_wrist, joints_clipped, vel_scale = _solve_task_velocity_with_limit_redistribution(
+                        current_q=solve_q[3:6],
+                        task_jacobian=wrist_jacobian,
+                        cart_vel=primary_vel,
+                        q_lo=self._q_lo[3:6],
+                        q_hi=self._q_hi[3:6],
+                        dt=self._dt,
+                        max_joint_vel=max_jv,
+                        damping=lam,
+                        joint_weights=wrist_weights,
+                    )
+                    # Add centering bias in the nullspace of the 3×3 wrist Jacobian.
+                    # The 3×3 wrist Jacobian is square (no nullspace), so we use
+                    # a weighted addition that diminishes with command magnitude.
+                    # At full stick the bias is negligible; near zero it ramps up.
+                    bias_scale = float(np.clip(1.0 - cmd_norm / 0.8, 0.0, 1.0))
+                    dq_wrist = dq_wrist + bias_scale * center_vel_full
+                    dq_wrist = np.clip(dq_wrist, -max_jv, max_jv)
+                    dq[3:6] = dq_wrist
             else:
                 dq, joints_clipped, vel_scale = _solve_prioritized_task_velocity(
                     current_q=solve_q,
