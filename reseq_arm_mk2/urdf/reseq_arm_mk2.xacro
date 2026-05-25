@@ -2,6 +2,12 @@
 
 <robot
   name="reseq_arm_mk2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property
+    name="arm_pitch_effort"
+    value="${60 if '$(arg sim_mode)' == 'true' else 6}" />
+  <xacro:property
+    name="arm_wrist_pitch_effort"
+    value="${30 if '$(arg sim_mode)' == 'true' else 3}" />
   <link
     name="arm_base_link">
     <inertial>
@@ -97,7 +103,7 @@
     <limit
       lower="-0.1"
       upper="2.8"
-      effort="6"
+      effort="${arm_pitch_effort}"
       velocity="2" />
     <dynamics damping="0.5" friction="0.1" />
   </joint>
@@ -215,7 +221,7 @@
     <limit
       lower="-0.1"
       upper="2.88"
-      effort="6"
+      effort="${arm_pitch_effort}"
       velocity="2" />
     <dynamics damping="0.5" friction="0.1" />
   </joint>
@@ -333,7 +339,7 @@
     <limit
       lower="-0.46"
       upper="1.57"
-      effort="3"
+      effort="${arm_wrist_pitch_effort}"
       velocity="1" />
     <dynamics damping="0.5" friction="0.1" />
   </joint>

@@ -57,6 +57,14 @@ class Scaler(Node):
             'condition': lambda b: not b[Scaler.buttons_enum.BBLUE],
         },
         {
+            'name': 'Switch MK2 Arm End-Effector Mode',
+            'button': buttons_enum.S4,
+            'service': '/cartesian_arm_controller/switch_vel',
+            # Switches read False in the upper position. The arm controller
+            # expects True=linear, False=rotation.
+            'inverted': True,
+        },
+        {
             'name': 'Switch type of velocity of mk2 arm',
             'button': buttons_enum.BGREEN,
             'service': '/moveit_controller/switch_vel',

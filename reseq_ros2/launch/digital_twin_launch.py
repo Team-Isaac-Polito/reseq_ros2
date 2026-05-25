@@ -78,7 +78,15 @@ def launch_setup(context, *args, **kwargs):
         LaunchConfiguration('launch_yaw_controllers').perform(context).lower() == 'true'
     )
     arm_max_cartesian_vel = float(LaunchConfiguration('arm_max_cartesian_vel').perform(context))
+    arm_max_angular_vel = float(LaunchConfiguration('arm_max_angular_vel').perform(context))
     arm_max_joint_vel = float(LaunchConfiguration('arm_max_joint_vel').perform(context))
+    arm_robot_forward_rpy = [
+        float(v)
+        for v in LaunchConfiguration('arm_robot_forward_rpy')
+        .perform(context)
+        .replace(',', ' ')
+        .split()
+    ]
 
     arm_arg = LaunchConfiguration('arm').perform(context=context)
     arm = arm_arg == 'true'
@@ -146,7 +154,8 @@ def launch_setup(context, *args, **kwargs):
         )
         launch_config.append(control_node)
 
-    body_spawners = [_spawner('joint_state_broadcaster', external_log_level)]
+    joint_state_spawner = _spawner('joint_state_broadcaster', external_log_level)
+    body_spawners = []
 
     num_modules = config.get('num_modules', 0)
     for i in range(num_modules):
@@ -156,8 +165,9 @@ def launch_setup(context, *args, **kwargs):
         for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
 
+    arm_velocity_spawner = None
     if arm:
-        body_spawners.append(_spawner('joint_group_velocity_controller', external_log_level))
+        arm_velocity_spawner = _spawner('joint_group_velocity_controller', external_log_level)
 
     for i in range(num_modules):
         body_spawners.append(_spawner(f'imu{i + 1}_broadcaster', external_log_level))
@@ -181,7 +191,24 @@ def launch_setup(context, *args, **kwargs):
     else:
         launch_config.append(controller_manager_ready)
 
-    _append_spawner_chain(launch_config, controller_manager_ready, body_spawners)
+    launch_config.append(
+        RegisterEventHandler(
+            OnProcessExit(
+                target_action=controller_manager_ready,
+                on_exit=[joint_state_spawner],
+            )
+        )
+    )
+    _append_spawner_chain(launch_config, joint_state_spawner, body_spawners)
+    if arm_velocity_spawner is not None:
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=joint_state_spawner,
+                    on_exit=[arm_velocity_spawner],
+                )
+            )
+        )
 
     ekf_config = os.path.join(share_folder, 'config', 'ekf.yaml')
     launch_config.append(
@@ -213,30 +240,39 @@ def launch_setup(context, *args, **kwargs):
         )
 
     if arm:
+        arm_chain_tip = 'cameras_holder_link' if sim_mode == 'true' else 'tcp'
         arm_state_topic = '/joint_states' if sim_mode == 'true' else '/arm_joint_states'
-        launch_config.append(
-            Node(
-                package='reseq_arm_mk2',
-                executable='cartesian_arm_controller.py',
-                name='cartesian_arm_controller',
-                parameters=[
-                    {
-                        'robot_description': robot_description,
-                        'use_sim_time': sim_branch_use_sim_time == 'true',
-                        'state_topic': arm_state_topic,
-                        'velocity_topic': '/mk2_arm_vel_scaled',
-                        'chain_tip': 'tcp',
-                        'command_frame': 'arm_base_link',
-                        'command_mode': 'velocity',
-                        'max_cartesian_vel': arm_max_cartesian_vel,
-                        'max_joint_vel': arm_max_joint_vel,
-                        'deadzone': 0.02,
-                        'trajectory_horizon_sec': 0.1,
-                    }
-                ],
-                output='screen',
-            )
+        cartesian_arm_node = Node(
+            package='reseq_arm_mk2',
+            executable='cartesian_arm_controller.py',
+            name='cartesian_arm_controller',
+            parameters=[
+                {
+                    'robot_description': robot_description,
+                    'use_sim_time': sim_branch_use_sim_time == 'true',
+                    'state_topic': arm_state_topic,
+                    'velocity_topic': '/mk2_arm_vel_scaled',
+                    'chain_tip': arm_chain_tip,
+                    'command_frame': 'arm_base_link',
+                    'command_mode': 'velocity',
+                    'max_cartesian_vel': arm_max_cartesian_vel,
+                    'max_angular_vel': arm_max_angular_vel,
+                    'max_joint_vel': arm_max_joint_vel,
+                    'robot_forward_rpy': arm_robot_forward_rpy,
+                    'deadzone': 0.02,
+                    'trajectory_horizon_sec': 0.1,
+                }
+            ],
+            output='screen',
         )
+        if arm_velocity_spawner is not None:
+            launch_config.append(
+                RegisterEventHandler(
+                    OnProcessExit(target_action=arm_velocity_spawner, on_exit=[cartesian_arm_node])
+                )
+            )
+        else:
+            launch_config.append(cartesian_arm_node)
 
     if sim_mode == 'false' and arm and use_moveit:
         launch_config.append(
@@ -278,13 +314,23 @@ def generate_launch_description():
             DeclareLaunchArgument('sim_mode', default_value='false'),
             DeclareLaunchArgument(
                 'arm_max_cartesian_vel',
-                default_value='0.4',
+                default_value='0.8',
                 description='Cartesian velocity scale for the arm controller',
             ),
             DeclareLaunchArgument(
+                'arm_max_angular_vel',
+                default_value='2.4',
+                description='Angular velocity scale for arm rotation mode',
+            ),
+            DeclareLaunchArgument(
                 'arm_max_joint_vel',
-                default_value='0.8',
+                default_value='1.6',
                 description='Joint velocity clamp for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_robot_forward_rpy',
+                default_value='0.0 0.0 0.0',
+                description='Fixed robot-forward tool orientation RPY relative to arm_base_link',
             ),
             DeclareLaunchArgument(
                 'use_moveit',

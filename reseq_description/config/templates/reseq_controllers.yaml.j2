@@ -28,9 +28,11 @@ controller_manager:
 {% endif %}
 
 {% if arm_controller %}
+{% if not use_sim_time %}
     mk2_arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
+{% endif %}
     joint_group_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
 {% endif %}
@@ -61,6 +63,7 @@ diff_controller{{ i + 1 }}:
 {% endif %}
 
 {% if arm_controller %}
+{% if not use_sim_time %}
 mk2_arm_controller:
   ros__parameters:
     joints:
@@ -82,6 +85,7 @@ mk2_arm_controller:
       goals: 0.1
       goal_state: 0.1
 
+{% endif %}
 joint_group_velocity_controller:
   ros__parameters:
     joints:
