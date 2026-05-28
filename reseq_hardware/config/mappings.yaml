@@ -164,3 +164,55 @@
     { name: "wrist_roll_arm_joint", mode: "velocity", },
   ]
 }
+- {
+  msg_id: 0x61, # Joint pitch/yaw command
+  modules: "skip_first",
+  length: 8,
+  is_command: true,
+  fields: [
+    { name: "yaw_joint", type: "command", mode: "position", },
+    { name: "pitch_joint", type: "command", mode: "position", offset: 4, }
+  ]
+}
+- {
+  msg_id: 0x34, # Joint pitch feedback (from IMU) — Float, radians
+  modules: "skip_first",
+  length: 4,
+  fields: [
+    { name: "pitch_joint", type: "state", mode: "position", scale: 1.0 },
+  ]
+}
+- {
+  msg_id: 0x36, # Joint roll feedback (from IMU) — Float, radians
+  modules: "skip_first",
+  length: 4,
+  fields: [
+    { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
+  ]
+}
+- {
+  msg_id: 0x62, # Joint differential pitch/yaw feedback — Float×2, rad (θ yaw, φ pitch)
+  modules: "skip_first",
+  length: 8,
+  fields: [
+    { name: "yaw_joint", type: "state", mode: "position", offset: 0, scale: 1.0 },
+    { name: "pitch_joint", type: "state", mode: "position", offset: 4, scale: 1.0 },
+  ]
+}
+- {
+  msg_id: 0x64, # Joint roll feedback (inter-module joint) — Float, radians
+  modules: "skip_first",
+  length: 4,
+  fields: [
+    { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
+  ]
+}
+- {
+  msg_id: 0x72, # Motor traction error status — uint8[2]: right, left
+  modules: "all",
+  length: 2,
+  fields: [
+    { name: "right_motor_error", type: "state", mode: "position", offset: 0, data_type: "float32", scale: 1.0 },
+    { name: "left_motor_error",  type: "state", mode: "position", offset: 1, data_type: "float32", scale: 1.0 },
+  ]
+}
