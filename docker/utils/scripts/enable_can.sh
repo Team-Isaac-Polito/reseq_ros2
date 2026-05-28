@@ -11,4 +11,6 @@ modprobe can_raw
 modprobe mttcan
 
 ip link set can0 down 2>/dev/null
-ip link set can0 up type can bitrate 125000
+
+# Configure CAN FD: 1 Mbps Arbitration (80% SP) / 2 Mbps Data (84% SP)
+ip link set can0 up type can bitrate 1000000 sample-point 0.80 dbitrate 2000000 dsample-point 0.84 berr-reporting on fd on

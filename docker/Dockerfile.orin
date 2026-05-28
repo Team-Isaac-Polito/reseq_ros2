@@ -386,6 +386,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-controller-manager \
     ros-humble-diff-drive-controller \
     ros-humble-joint-state-broadcaster \
+    ros-humble-joint-state-publisher \
     ros-humble-slam-toolbox \
     ros-humble-ros2-control-test-assets \
     ros-humble-geometry-msgs \
@@ -398,9 +399,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-ros2controlcli \
     ros-humble-forward-command-controller \
     ros-humble-velocity-controllers \
+    ros-humble-robot-localization \
+    ros-humble-nav2-bringup \
+    ros-humble-nav2-simple-commander \
+    ros-humble-imu-sensor-broadcaster \
+    ros-humble-robot-state-publisher \
+    ros-humble-teleop-twist-joy \
     iproute2 \
     usbutils \
     python3-libnvinfer-dev \
+    python3-serial \
+    python3-pip \
  && if [ "$INSTALL_DEV_TOOLS" = "true" ]; then \
         apt-get install -y --no-install-recommends \
             nano \
@@ -444,7 +453,8 @@ WORKDIR /ros2_ws
 
 RUN apt-get update && \
     git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src && \
-    cd src && git submodule update --recursive --remote && cd .. && \
+    cd src && git checkout origin/nav-test && \
+    git submodule update --recursive --remote && cd .. && \
     source /ros_entrypoint.sh && \
     rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys="librealsense2 realsense2_camera" -y -t exec -t build && \
     colcon build && \
