@@ -139,7 +139,7 @@ def generate_controllers_config(
     context = {
         'use_sim_time': use_sim_time,
         'body_controllers': not no_body_controllers,
-        'yaw_controllers': not no_body_controllers and use_sim_time,
+        'yaw_controllers': not no_body_controllers,
         'arm_controller': not no_arm_controllers and version == 'mk2',
         'num_modules': 0,
         'wheel_separation': 0.0,

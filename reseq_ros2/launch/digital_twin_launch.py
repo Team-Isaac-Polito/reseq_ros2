@@ -161,7 +161,7 @@ def launch_setup(context, *args, **kwargs):
     for i in range(num_modules):
         body_spawners.append(_spawner(f'diff_controller{i + 1}', external_log_level))
 
-    if sim_branch_use_sim_time == 'true' and launch_yaw_controllers:
+    if launch_yaw_controllers:
         for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
 
@@ -321,7 +321,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 'launch_yaw_controllers',
-                default_value='false',
+                default_value='true',
                 description='Launch yaw position controllers in simulation/hardware control stack',
             ),
             OpaqueFunction(function=launch_setup),
