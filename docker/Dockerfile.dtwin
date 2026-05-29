@@ -2,17 +2,17 @@
 # docker build -t reseq-dtwin -f src/docker/Dockerfile.dtwin src
 #
 # RUN WITH:
-# xhost +local:docker
+# xhost +local:root
 # docker run --rm --net=host --privileged \
-#   -e DISPLAY=$DISPLAY \
-#   -e QT_X11_NO_MITSHM=1 \
-#   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
-#   -e GAZEBO_WORLD=simple_course.world \
-#   -e LAUNCH_SIM=true \
-#   -e LAUNCH_RVIZ=false \
-#   -v /tmp/.X11-unix:/tmp/.X11-unix \
-#   -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \
-#   -it reseq-dtwin
+#    -e DISPLAY=$DISPLAY \
+#    -e QT_X11_NO_MITSHM=1 \
+#    -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+#    -e GAZEBO_WORLD=simple_course.world \
+#    -e LAUNCH_SIM=true \
+#    -e LAUNCH_RVIZ=false \
+#    -v /tmp/.X11-unix:/tmp/.X11-unix \
+#    -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \
+#    -it reseq-dtwin
 
 FROM ros:jazzy-ros-base
 
@@ -37,6 +37,9 @@ ARG LAUNCH_RVIZ=false
 ENV LAUNCH_RVIZ=${LAUNCH_RVIZ}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    imagemagick \
+    xdotool \
+    scrot \
     build-essential \
     git \
     python3-colcon-common-extensions \
@@ -62,6 +65,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     f3d \
     curl \
     unzip \
+    rsync \
+    # ── Dependencies required by FLUTTER LINUX BUILD ──
+    clang \
+    cmake \
+    ninja-build \
+    pkg-config \
+    libgtk-3-dev \
+    libblkid-dev \
+    liblzma-dev \
+    libgcrypt20-dev \
+    # ── Librerie di runtime grafico (Essenziali per l'esecuzione) ──
+    libgtk-3-0 \
+    libgl1-mesa-dri \
+    libegl1 \
+    libgl1 \
+    dbus-x11 \
+    # ── Dipendenze runtime aggiuntive per Flutter Linux ──
+    libglib2.0-0 \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libglu1-mesa \
     && rm -rf /var/lib/apt/lists/*
 
 RUN rosdep init || true
@@ -69,17 +96,18 @@ RUN rosdep init || true
 WORKDIR /ros2_ws
 RUN mkdir -p /ros2_ws/src
 
-# ── Flutter SDK (web only) ──────────────────────────────────────────────
+# ── Flutter SDK (Linux only) ──────────────────────────────────────────────
 ENV FLUTTER_HOME=/opt/flutter
 ENV PATH="$FLUTTER_HOME/bin:$PATH"
+ENV ALLOW_ROOT=yes
 RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git $FLUTTER_HOME \
-    && flutter config --enable-web --no-analytics \
-    && flutter precache --web
+    && flutter config --no-analytics \
+    && flutter precache --linux
 
-# ── Build Flutter web app ───────────────────────────────────────────────
-RUN git clone https://github.com/Team-Isaac-Polito/ros_app /ros2_ws/ros_app
-WORKDIR /ros2_ws/ros_app
-RUN flutter pub get && flutter build web --release
+# ── Build Flutter app ───────────────────────────────────────────────
+RUN git clone https://github.com/Team-Isaac-Polito/ros_app /ros2_ws/src/ros_app
+WORKDIR /ros2_ws/src/ros_app
+RUN flutter pub get && flutter build linux --release
 WORKDIR /ros2_ws
 
 COPY reseq_interfaces /ros2_ws/src/reseq_interfaces
@@ -97,19 +125,53 @@ RUN /bin/bash -lc 'source /opt/ros/$ROS_DISTRO/setup.bash \
     && rosdep install -iy --from-paths /ros2_ws/src --ignore-src --rosdistro $ROS_DISTRO --skip-keys "$SKIP_KEYS" -t exec -t build \
     && colcon build --packages-select reseq_interfaces reseq_description reseq_arm_mk2 reseq_ros2 reseq_sim 1_Flat_KRails 2_Sloped_KRails --event-handlers console_direct+'
 
-CMD ["/bin/bash", "-lc", "\
-  source /opt/ros/$ROS_DISTRO/setup.bash; \
+CMD /bin/bash -lc " \
+  export DISPLAY=\${DISPLAY:-:0}; \
+  source /opt/ros/\$ROS_DISTRO/setup.bash; \
   source /ros2_ws/install/setup.bash; \
   export GZ_SIM_RESOURCE_PATH=/ros2_ws/src:/ros2_ws/src/reseq_sim/arena:/ros2_ws/install/reseq_sim/share/reseq_sim/arena; \
-  python3 -m http.server 8080 --directory /ros2_ws/ros_app/build/web & \
-  if [ \"$LAUNCH_RVIZ\" = \"true\" ]; then \
-    rviz2 -d /ros2_ws/src/reseq_ros2/config/slam_rviz.yaml & \
+  \
+  echo 'Verifica display X11...'; \
+  for i in 1 2 3 4 5 6 7 8 9 10; do \
+    xdpyinfo -display \$DISPLAY > /dev/null 2>&1 && echo 'Display OK' && break; \
+    echo \"Attendo display... tentativo \$i/10\"; \
+    if [ \"\$i\" = \"10\" ]; then \
+      echo '>>> WARN: display non raggiungibile. Assicurati di aver eseguito: xhost +local:root'; \
+    fi; \
+    sleep 1; \
+  done; \
+  \
+  echo 'Avvio Flutter App...'; \
+  ARCH=\$(uname -m | sed 's/aarch64/arm64/;s/x86_64/x64/'); \
+  FLUTTER_BUNDLE=/ros2_ws/src/ros_app/build/linux/\$ARCH/release/bundle; \
+  echo \"Flutter bundle path: \$FLUTTER_BUNDLE\"; \
+  if [ ! -d \"\$FLUTTER_BUNDLE\" ]; then \
+    echo \">>> ERRORE: directory bundle non trovata: \$FLUTTER_BUNDLE\"; \
+  else \
+    cd \$FLUTTER_BUNDLE; \
+    APP_NAME=\$(grep 'name:' /ros2_ws/src/ros_app/pubspec.yaml | awk '{print \$2}'); \
+    echo \"Lancio eseguibile Flutter: \$APP_NAME\"; \
+    env DISPLAY=\$DISPLAY ./\$APP_NAME > /tmp/flutter_app.log 2>&1 & \
+    FLUTTER_PID=\$!; \
+    sleep 3; \
+    if kill -0 \$FLUTTER_PID 2>/dev/null; then \
+      echo 'Flutter avviato correttamente (PID '\$FLUTTER_PID')'; \
+    else \
+      echo '>>> ERRORE: Flutter non e partito. Log:'; \
+      cat /tmp/flutter_app.log; \
+    fi; \
   fi; \
+  cd /ros2_ws; \
+  \
+  if [ \"\$LAUNCH_RVIZ\" = \"true\" ]; then \
+    env DISPLAY=\$DISPLAY rviz2 -d /ros2_ws/src/reseq_ros2/config/slam_rviz.yaml & \
+  fi; \
+  \
   MAP_ARG=; \
-  if [ -n \"$GAZEBO_MAP_FILE\" ]; then MAP_ARG=\"map_file:=$GAZEBO_MAP_FILE\"; fi; \
-  if [ \"$LAUNCH_SIM\" = \"true\" ]; then \
-    ros2 launch reseq_sim ${GAZEBO_LAUNCH_FILE} autonomy:=true arm:=true world:=${GAZEBO_WORLD} spawn_x:=${GAZEBO_SPAWN_X} spawn_y:=${GAZEBO_SPAWN_Y} spawn_z:=${GAZEBO_SPAWN_Z} $MAP_ARG; \
+  if [ -n \"\$GAZEBO_MAP_FILE\" ]; then MAP_ARG=\"map_file:=\$GAZEBO_MAP_FILE\"; fi; \
+  if [ \"\$LAUNCH_SIM\" = \"true\" ]; then \
+    ros2 launch reseq_sim \${GAZEBO_LAUNCH_FILE} autonomy:=true arm:=true world:=\${GAZEBO_WORLD} spawn_x:=\${GAZEBO_SPAWN_X} spawn_y:=\${GAZEBO_SPAWN_Y} spawn_z:=\${GAZEBO_SPAWN_Z} \$MAP_ARG; \
   else \
     echo 'Sim launch skipped (LAUNCH_SIM=false). Container is running.'; \
     tail -f /dev/null; \
-  fi"]
+  fi"
