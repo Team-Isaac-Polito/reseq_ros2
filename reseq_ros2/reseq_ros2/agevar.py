@@ -5,7 +5,7 @@ from collections import deque
 from math import atan2, cos, pi, sin
 
 import rclpy
-from geometry_msgs.msg import Twist, TwistStamped
+from geometry_msgs.msg import Twist, TwistStamped, Vector3
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
@@ -30,8 +30,9 @@ The AGEVAR kinematic model computes per-module velocities using the
 joint angles to account for the geometric coupling between modules.
 """
 
-# Joint limits from URDF (±π/4 = ±0.785 rad)
+# Joint limits from URDF
 YAW_LIMIT = pi / 4
+PITCH_LIMIT = pi / 2
 
 
 class Agevar(Node):
@@ -107,6 +108,74 @@ class Agevar(Node):
             pub = self.create_publisher(Float64MultiArray, f'/yaw_controller{i + 2}/commands', 10)
             self.yaw_pubs.append(pub)
 
+        # create publishers for pitch joint controllers (ForwardCommandController)
+        self.pitch_pubs = []
+        for i in range(self.n_joints):
+            pub = self.create_publisher(
+                Float64MultiArray, f'/pitch_controller{i + 2}/commands', 10
+            )
+            self.pitch_pubs.append(pub)
+
+        # Joint lift integration: subscribe to lift commands from TOF-based obstacle detector
+        self._lift_commands = [0.0] * self.n_joints
+        self._manual_lift_commands = [0.0] * self.n_joints
+        self.create_subscription(
+            Float64MultiArray,
+            '/joint_lift/commands',
+            self._lift_cb,
+            10,
+        )
+        self.create_subscription(
+            Vector3,
+            '/inter_module_lift_vel',
+            self._manual_lift_cb,
+            10,
+        )
+
+    def _publish_pitch_commands(self):
+        for cmd_idx in range(self.n_joints):
+            pitch_cmd = self._lift_commands[cmd_idx] + self._manual_lift_commands[cmd_idx]
+            pitch_cmd = max(-PITCH_LIMIT, min(PITCH_LIMIT, pitch_cmd))
+
+            pitch_msg = Float64MultiArray()
+            pitch_msg.data = [pitch_cmd]
+            self.pitch_pubs[cmd_idx].publish(pitch_msg)
+
+    def _lift_cb(self, msg: Float64MultiArray):
+        """Receive joint lift commands from the TOF-based obstacle detector."""
+        data = msg.data
+        if len(data) >= 1:
+            # Distribute lift across joints: front joints get more lift
+            lift_val = data[0]
+            for j in range(self.n_joints):
+                # Front joint (j=0) gets full lift, rear joints get progressively less
+                if self.n_joints > 1:
+                    factor = 1.0 - (j / (self.n_joints - 1)) * 0.5
+                else:
+                    factor = 1.0
+                self._lift_commands[j] = lift_val * factor
+
+        self._publish_pitch_commands()
+
+    def _manual_lift_cb(self, msg: Vector3):
+        """Receive manual lift commands from the teleop scaler."""
+        lift_type = int(round(msg.z))
+        self._manual_lift_commands = [0.0] * self.n_joints
+
+        if lift_type == 1:  # Front joint lift
+            if self.n_joints > 0:
+                self._manual_lift_commands[0] = max(-PITCH_LIMIT, min(PITCH_LIMIT, msg.x))
+            else:
+                self.get_logger().warning('No joints available for front lift')
+
+        if lift_type == 2:
+            if self.n_joints > 1:
+                self._manual_lift_commands[1] = max(-PITCH_LIMIT, min(PITCH_LIMIT, msg.x))
+            else:
+                self.get_logger().warning('No joints available for middle lift')
+
+        self._publish_pitch_commands()
+
     def handle_enable(
         self, request: SetBool.Request, response: SetBool.Response
     ) -> SetBool.Response:
@@ -174,7 +243,7 @@ class Agevar(Node):
                     entries_bwd.append((-j * self.module_spacing, cumulative_bwd))
                     if j < self.n_joints:
                         cumulative_bwd += self.yaw_commands[self.n_joints - 1 - j]
-                
+
                 # Append in ascending distance order
                 for d, h in reversed(entries_bwd):
                     self._bwd_dist.append(d)
@@ -187,7 +256,7 @@ class Agevar(Node):
                     self.head_theta = self._interp_heading(
                         first_lag_dist, self._bwd_dist, self._bwd_heading
                     )
-                
+
                 # Reconstruct the forward path buffer from the current joint commands.
                 self._dist.clear()
                 self._heading.clear()
@@ -197,7 +266,7 @@ class Agevar(Node):
                     entries.append((self.head_distance - j * self.module_spacing, cumulative_h))
                     if j < self.n_joints:
                         cumulative_h += self.yaw_commands[j]
-                
+
                 # Append in ascending distance order
                 for d, h in reversed(entries):
                     self._dist.append(d)
@@ -226,7 +295,7 @@ class Agevar(Node):
                     # Pure rotation: virtual advance so the buffer fills.
                     virtual_v = abs_w * self.module_spacing * 2.0
                     self.head_distance += virtual_v * dt
-                
+
                 self._dist.append(self.head_distance)
                 self._heading.append(self.head_theta)
                 max_lookback = (self.n_joints + 1) * self.module_spacing + 0.5
@@ -243,7 +312,7 @@ class Agevar(Node):
                     # Pure rotation: virtual advance so the buffer fills.
                     virtual_v = abs_w * self.module_spacing * 2.0
                     self._bwd_distance += virtual_v * dt
-                
+
                 self._bwd_dist.append(self._bwd_distance)
                 self._bwd_heading.append(self._bwd_head_theta)
                 max_lookback = (self.n_joints + 1) * self.module_spacing + 0.5
@@ -299,12 +368,15 @@ class Agevar(Node):
                 # Apply smoothing using per‑joint alpha
                 alpha = self.adaptive_alpha[cmd_idx]
                 delta = raw_angle - self.yaw_commands[cmd_idx]
-                
+
                 self.yaw_commands[cmd_idx] += alpha * delta
 
                 yaw_msg = Float64MultiArray()
                 yaw_msg.data = [self.yaw_commands[cmd_idx]]
                 self.yaw_pubs[cmd_idx].publish(yaw_msg)
+
+        # Keep pitch command publishing available during drive updates too.
+        self._publish_pitch_commands()
 
         # Compute per-module velocities using AGEVAR kinematic model
         modules = list(range(self.n_mod))
@@ -411,16 +483,17 @@ class Agevar(Node):
             # Get expected heading from forward path buffer at current head distance
             expected_heading = self._interp_heading(self.head_distance)
             actual_heading = self.yaw_angles[0]
-            
+
             # Compute heading error (normalized to [-π, π])
-            heading_error = atan2(sin(actual_heading - expected_heading), 
-                                 cos(actual_heading - expected_heading))
-            
+            heading_error = atan2(
+                sin(actual_heading - expected_heading), cos(actual_heading - expected_heading)
+            )
+
             # Apply gentle correction to path buffer (K = 0.1 to 0.3)
             K_correction = 0.2  # Correction gain
             if abs(heading_error) > 0.01:
                 correction = K_correction * heading_error
-                
+
                 for i in range(len(self._heading)):
                     self._heading[i] += correction
                 self.head_theta += correction
@@ -436,10 +509,11 @@ class Agevar(Node):
             )
             # Last module is index n_mod-1 (physical leader in backward mode)
             actual_heading = self.yaw_angles[self.n_mod - 1]
-            
-            heading_error = atan2(sin(actual_heading - expected_heading),
-                                 cos(actual_heading - expected_heading))
-            
+
+            heading_error = atan2(
+                sin(actual_heading - expected_heading), cos(actual_heading - expected_heading)
+            )
+
             K_correction = 0.2
             if abs(heading_error) > 0.01:
                 correction = K_correction * heading_error

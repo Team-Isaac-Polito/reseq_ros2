@@ -164,3 +164,13 @@
     { name: "wrist_roll_arm_joint", mode: "velocity", },
   ]
 }
+- {
+  msg_id: 0x61, # Joint pitch/yaw command
+  modules: "skip_first",
+  length: 8,
+  is_command: true,
+  fields: [
+    { name: "yaw_joint", type: "command", mode: "position", },
+    { name: "pitch_joint", type: "command", mode: "position", offset: 4, }
+  ]
+}

@@ -139,6 +139,20 @@ def launch_setup(context, *args, **kwargs):
                     )
                 )
 
+                launch_config.append(
+                    Node(
+                        package='reseq_ros2',
+                        executable='joint_lift_controller',
+                        name='joint_lift_controller',
+                        parameters=[
+                            ParameterFile(f'{config_path}/{config["tof_config"]}'),
+                            {'use_sim_time': use_sim_time == 'true'},
+                        ],
+                        arguments=['--ros-args', '--log-level', external_log_level],
+                        output='screen',
+                    )
+                )
+
     return launch_config
 
 

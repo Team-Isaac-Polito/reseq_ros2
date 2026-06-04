@@ -121,6 +121,9 @@ class Scaler(Node):
 
         self.arm_vel_pub = self.create_publisher(Vector3, arm_vel_topic, 10)
 
+        # Joint lift velocity publisher
+        self.lift_pub = self.create_publisher(Vector3, '/inter_module_lift_vel', 10)
+
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel_teleop', 10)
         self.autonomy_pub = self.create_publisher(Bool, '/autonomy/enabled', 10)
 
@@ -172,6 +175,26 @@ class Scaler(Node):
                 z=self.scale_arm_input(data.left.z),
             )
         )
+
+        # LIFTING CONTROL: S2, S3 Switches + Right Joystick Z axis
+        # Right Z axis controls the pitch (lift amount)
+        s2 = data.buttons[self.buttons_enum.S2]
+        s3 = data.buttons[self.buttons_enum.S3]
+
+        if s2 or s3:
+            lift_msg = Vector3()
+            lift_msg.x = data.right.z  # Pitch of the lifting module (from right joystick Z)
+            lift_msg.y = 0.0
+
+            if s2:
+                # S2: Lift module 1
+                lift_msg.z = 1.0  # Front lift type
+                self.lift_pub.publish(lift_msg)
+
+            if s3:
+                # S3: Lift module 2
+                lift_msg.z = 2.0
+                self.lift_pub.publish(lift_msg)
 
         if self.control_mode == Scaler.control_mode_enum.AGEVAR:
             cmd_vel = self.agevarScaler(cmd_vel)

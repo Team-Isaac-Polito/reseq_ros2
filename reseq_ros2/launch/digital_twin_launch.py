@@ -161,9 +161,10 @@ def launch_setup(context, *args, **kwargs):
     for i in range(num_modules):
         body_spawners.append(_spawner(f'diff_controller{i + 1}', external_log_level))
 
-    if sim_branch_use_sim_time == 'true' and launch_yaw_controllers:
+    if launch_yaw_controllers:
         for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
+            body_spawners.append(_spawner(f'pitch_controller{i + 2}', external_log_level))
 
     arm_velocity_spawner = None
     if arm:
