@@ -1,0 +1,243 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="tof_h" value="${EquivalentWheelDiameter * 2/3}"/>
+  <xacro:property name="tof_d" value="0.06"/>
+  <xacro:property name="tof_wall" value="0.003"/>
+  
+  <xacro:property name="tof_L" value="0.05"/> 
+  <xacro:property name="tof_c" value="0.025"/> 
+
+  <xacro:macro name="tof_sensor_array" params="parent_link prefix='tof'">
+
+    <joint name="${prefix}_mount_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${prefix}_mount_link"/>
+      <origin xyz="${WheelBase/2 + 0.06} 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${prefix}_mount_link">
+      
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="${tof_wall} ${tof_d} ${tof_h}"/></geometry>
+        <material name="JointColor"/>
+      </visual>
+
+      <visual>
+        <origin xyz="${(tof_L - tof_c)/2} 0 ${tof_h/2}" rpy="0 0 0"/>
+        <geometry><box size="${tof_L - tof_c} ${tof_d} ${tof_wall}"/></geometry>
+        <material name="JointColor"/>
+      </visual>
+
+      <visual>
+        <origin xyz="${(tof_L - tof_c)/2} 0 ${-tof_h/2}" rpy="0 0 0"/>
+        <geometry><box size="${tof_L - tof_c} ${tof_d} ${tof_wall}"/></geometry>
+        <material name="JointColor"/>
+      </visual>
+
+      <visual>
+        <origin xyz="${tof_L} 0 0" rpy="0 0 0"/>
+        <geometry><box size="${tof_wall} ${tof_d} ${tof_h - 2*tof_c}"/></geometry>
+        <material name="JointColor"/>
+      </visual>
+
+      <visual>
+        <origin xyz="${tof_L - tof_c/2} 0 ${tof_h/2 - tof_c/2}" rpy="0 ${pi/4} 0"/>
+        <geometry><box size="${tof_c * 1.4142} ${tof_d} ${tof_wall}"/></geometry>
+        <material name="JointColor"/>
+      </visual>
+
+      <visual>
+        <origin xyz="${tof_L - tof_c/2} 0 ${-tof_h/2 + tof_c/2}" rpy="0 ${-pi/4} 0"/>
+        <geometry><box size="${tof_c * 1.4142} ${tof_d} ${tof_wall}"/></geometry>
+        <material name="JointColor"/>
+      </visual>
+
+      <collision>
+        <origin xyz="${tof_L/2} 0 0" rpy="0 0 0"/>
+        <geometry><box size="${tof_L + tof_wall} ${tof_d} ${tof_h + tof_wall}"/></geometry>
+      </collision>
+
+      <xacro:inertial_box mass="0.03" x="${tof_L}" y="${tof_d}" z="${tof_h}">
+        <origin xyz="${tof_L/2} 0 0" rpy="0 0 0"/>
+      </xacro:inertial_box>
+    </link>
+
+    <joint name="${prefix}_up45_joint" type="fixed">
+      <parent link="${prefix}_mount_link"/>
+      <child link="${prefix}_up45_link"/>
+      <origin xyz="${tof_L - tof_c/2} 0 ${tof_h/2 - tof_c/2}" rpy="0 ${-pi/4} 0"/>
+    </joint>
+    <link name="${prefix}_up45_link">
+      <visual>
+        <geometry><box size="0.005 0.022 0.022"/></geometry>
+        <material name="IMUColor"/>
+      </visual>
+      <xacro:inertial_box mass="0.005" x="0.005" y="0.022" z="0.022"><origin xyz="0 0 0" rpy="0 0 0"/></xacro:inertial_box>
+    </link>
+
+    <joint name="${prefix}_front_joint" type="fixed">
+      <parent link="${prefix}_mount_link"/>
+      <child link="${prefix}_front_link"/>
+      <origin xyz="${tof_L} 0 0" rpy="0 0 0"/>
+    </joint>
+    <link name="${prefix}_front_link">
+      <visual>
+        <geometry><box size="0.005 0.022 0.022"/></geometry>
+        <material name="IMUColor"/>
+      </visual>
+      <xacro:inertial_box mass="0.005" x="0.005" y="0.022" z="0.022"><origin xyz="0 0 0" rpy="0 0 0"/></xacro:inertial_box>
+    </link>
+
+    <joint name="${prefix}_down45_joint" type="fixed">
+      <parent link="${prefix}_mount_link"/>
+      <child link="${prefix}_down45_link"/>
+      <origin xyz="${tof_L - tof_c/2} 0 ${-tof_h/2 + tof_c/2}" rpy="0 ${pi/4} 0"/>
+    </joint>
+    <link name="${prefix}_down45_link">
+      <visual>
+        <geometry><box size="0.005 0.022 0.022"/></geometry>
+        <material name="IMUColor"/>
+      </visual>
+      <xacro:inertial_box mass="0.005" x="0.005" y="0.022" z="0.022"><origin xyz="0 0 0" rpy="0 0 0"/></xacro:inertial_box>
+    </link>
+
+    <joint name="${prefix}_down_joint" type="fixed">
+      <parent link="${prefix}_mount_link"/>
+      <child link="${prefix}_down_link"/>
+      <origin xyz="${(tof_L - tof_c)/2} 0 ${-tof_h/2}" rpy="0 ${pi/2} 0"/>
+    </joint>
+    <link name="${prefix}_down_link">
+      <visual>
+        <geometry><box size="0.005 0.022 0.022"/></geometry>
+        <material name="IMUColor"/>
+      </visual>
+      <xacro:inertial_box mass="0.005" x="0.005" y="0.022" z="0.022"><origin xyz="0 0 0" rpy="0 0 0"/></xacro:inertial_box>
+    </link>
+
+    <!-- Gazebo ray sensors for each TOF (simulates VL53L1X) -->
+    <!-- 4 sensors: up45 (+45°), front (0°), down45 (-45°), down (-90°) -->
+    <gazebo reference="${prefix}_up45_link">
+      <sensor name="${prefix}_up45" type="ray">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <update_rate>30</update_rate>
+        <topic>/tof/up45</topic>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>4</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.05</min_angle>
+              <max_angle>0.05</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.03</min>
+            <max>2.0</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}_front_link">
+      <sensor name="${prefix}_front" type="ray">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <update_rate>30</update_rate>
+        <topic>/tof/front</topic>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>4</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.05</min_angle>
+              <max_angle>0.05</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.03</min>
+            <max>2.0</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}_down45_link">
+      <sensor name="${prefix}_down45" type="ray">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <update_rate>30</update_rate>
+        <topic>/tof/down45</topic>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>4</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.05</min_angle>
+              <max_angle>0.05</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.03</min>
+            <max>2.0</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}_down_link">
+      <sensor name="${prefix}_down" type="ray">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <update_rate>30</update_rate>
+        <topic>/tof/down</topic>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>4</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.05</min_angle>
+              <max_angle>0.05</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.03</min>
+            <max>2.0</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

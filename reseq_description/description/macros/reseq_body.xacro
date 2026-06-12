@@ -9,6 +9,7 @@
   <xacro:include filename="$(find reseq_description)/description/sensors/lidar.xacro" />
   <xacro:include filename="$(find reseq_description)/description/sensors/imu.xacro" />
   <xacro:include filename="$(find reseq_description)/description/sensors/encoder.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/sensors/tof_sensor.xacro" />
   
   <link name="base_link" />
   <link name="base_footprint" />

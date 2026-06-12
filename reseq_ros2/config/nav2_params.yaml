@@ -84,12 +84,14 @@ local_costmap:
       height: 5
       resolution: 0.05
       robot_radius: 0.12
+      # Ensure local costmap can expand to cover sensor data
+      observation_sources: scan pointcloud pointcloud_dropoff tof_up45 tof_front tof_down45 tof_down
       footprint_topic: /robot_footprint_local
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
-        observation_sources: scan pointcloud pointcloud_dropoff
+        observation_sources: scan pointcloud pointcloud_dropoff tof_up45 tof_front tof_down45 tof_down
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -103,7 +105,7 @@ local_costmap:
           max_obstacle_height: 2.0
           # 0.05 m floor clearance prevents the ground plane from being
           # marked as an obstacle when the RealSense looks slightly downward.
-          min_obstacle_height: 0.05
+          min_obstacle_height: 0.03
           clearing: true
           marking: true
           data_type: PointCloud2
@@ -118,6 +120,42 @@ local_costmap:
           clearing: false
           marking: true
           data_type: PointCloud2
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
+        tof_up45:
+          topic: /tof/up45
+          max_obstacle_height: 0.5
+          min_obstacle_height: 0.03
+          clearing: true
+          marking: true
+          data_type: LaserScan
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
+        tof_front:
+          topic: /tof/front
+          max_obstacle_height: 0.5
+          min_obstacle_height: 0.03
+          clearing: true
+          marking: true
+          data_type: LaserScan
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
+        tof_down45:
+          topic: /tof/down45
+          max_obstacle_height: 0.5
+          min_obstacle_height: 0.03
+          clearing: true
+          marking: true
+          data_type: LaserScan
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
+        tof_down:
+          topic: /tof/down
+          max_obstacle_height: 0.5
+          min_obstacle_height: 0.03
+          clearing: true
+          marking: true
+          data_type: LaserScan
           raytrace_max_range: 2.0
           obstacle_max_range: 2.0
       inflation_layer:
@@ -144,7 +182,7 @@ global_costmap:
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
-        observation_sources: scan pointcloud pointcloud_dropoff
+        observation_sources: scan pointcloud pointcloud_dropoff tof_up45 tof_front tof_down45 tof_down
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -156,7 +194,7 @@ global_costmap:
         pointcloud:
           topic: /camera/depth/color/points
           max_obstacle_height: 2.0
-          min_obstacle_height: 0.05
+          min_obstacle_height: 0.03
           clearing: true
           marking: true
           data_type: PointCloud2
@@ -169,6 +207,33 @@ global_costmap:
           clearing: false
           marking: true
           data_type: PointCloud2
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
+        tof_down:
+          topic: /tof/down
+          max_obstacle_height: 0.5
+          min_obstacle_height: 0.03
+          clearing: true
+          marking: true
+          data_type: LaserScan
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
+        tof_down45:
+          topic: /tof/down45
+          max_obstacle_height: 0.5
+          min_obstacle_height: 0.03
+          clearing: true
+          marking: true
+          data_type: LaserScan
+          raytrace_max_range: 2.0
+          obstacle_max_range: 2.0
+        tof_up45:
+          topic: /tof/up45
+          max_obstacle_height: 0.5
+          min_obstacle_height: 0.03
+          clearing: true
+          marking: true
+          data_type: LaserScan
           raytrace_max_range: 2.0
           obstacle_max_range: 2.0
       inflation_layer:
@@ -258,7 +323,7 @@ collision_monitor:
       min_points: 6
       visualize: false
       enabled: true
-    observation_sources: ["scan", "pointcloud", "pointcloud_dropoff"]
+    observation_sources: ["scan", "pointcloud", "pointcloud_dropoff", "tof_up45", "tof_front", "tof_down45", "tof_down"]
     scan:
       type: scan
       topic: /scan
@@ -268,7 +333,7 @@ collision_monitor:
     pointcloud:
       type: pointcloud
       topic: /camera/depth/color/points
-      min_height: 0.05
+      min_height: 0.03
       max_height: 2.0
       enabled: true
     pointcloud_dropoff:
@@ -276,6 +341,34 @@ collision_monitor:
       topic: /camera/depth/color/points
       min_height: -0.5
       max_height: -0.03
+      enabled: true
+
+    tof_up45:
+      type: scan
+      topic: /tof/up45
+      min_height: 0.03
+      max_height: 0.5
+      enabled: true
+
+    tof_front:
+      type: scan
+      topic: /tof/front
+      min_height: 0.03
+      max_height: 0.5
+      enabled: true
+
+    tof_down45:
+      type: scan
+      topic: /tof/down45
+      min_height: 0.03
+      max_height: 0.5
+      enabled: true
+
+    tof_down:
+      type: scan
+      topic: /tof/down
+      min_height: 0.03
+      max_height: 0.5
       enabled: true
 
 docking_server:

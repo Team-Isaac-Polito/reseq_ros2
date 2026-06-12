@@ -138,6 +138,21 @@ def launch_setup(context, *args, **kwargs):
                         output='screen',
                     )
                 )
+            # Launch the joint lift controller alongside the TOF detector
+            if name == 'tof':
+                launch_config.append(
+                    Node(
+                        package='reseq_ros2',
+                        executable='tof_obstacle_detector',
+                        name='tof_obstacle_detector',
+                        parameters=[
+                            ParameterFile(f'{config_path}/{config["tof_config"]}'),
+                            {'use_sim_time': use_sim_time == 'true'},
+                        ],
+                        arguments=['--ros-args', '--log-level', external_log_level],
+                        output='screen',
+                    )
+                )
 
                 launch_config.append(
                     Node(

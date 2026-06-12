@@ -19,8 +19,10 @@ modules:
     hasEndEffector: false
 realsense_config: "realsense_rgb_motion.yaml"
 usb_camera_config: "usb_camera.yaml"
+tof_config: "tof_params.yaml"
 sensors:
   - realsense: true
   - lidar: true
   - usb_cameras: 2
   - thermal: true
+  - tof: true

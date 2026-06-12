@@ -1,0 +1,49 @@
+# TOF Obstacle Detector and Joint Lift Controller parameters
+
+tof_obstacle_detector:
+  ros__parameters:
+    # Number of TOF sensors: 4 sensors at -90, -45, 0, +45 degrees
+    num_sensors: 4
+
+    # Range limits (meters)
+    min_range: 0.03
+    max_range: 2.0
+
+    # Obstacle detection thresholds
+    height_threshold: 0.03       # Minimum height to consider as obstacle (m)
+    detection_distance: 0.5     # Distance ahead to start detecting (m)
+
+    # Sensor geometry
+    # 4 sensors at fixed angles: -90, -45, 0, +45 degrees (defined in code)
+    # Sensor mount height above ground (m) = r_eq = 0.0609
+    sensor_height: 0.0609
+
+    # Filtering
+    mean_filter_size: 5         # Moving average window size
+    body_exclusion_radius: 0.3  # Radius to exclude body detections (m)
+
+    # Topics
+    imu_topic: /imu1_broadcaster/imu
+    serial_port: /dev/ttyACM0
+
+joint_lift_controller:
+  ros__parameters:
+    # Climbing parameters
+    max_climbable_height: 0.04   # Maximum obstacle height the robot can climb (m)
+    lift_angle_per_meter: 2.0   # Pitch angle increase per meter of obstacle height (rad/m)
+
+    # Timing
+    approach_distance: 0.4      # Distance before obstacle to start lifting (m)
+    lift_duration: 2.0          # Time to complete lift maneuver (s)
+    smoothing_factor: 0.3       # Exponential smoothing (0..1, higher = smoother)
+
+    # Compensation
+    pitch_compensation_gain: 0.5  # IMU pitch compensation gain
+
+    # Body-ghost filtering
+    body_filter_enabled: true
+    min_obstacle_width: 0.1     # Minimum obstacle width to trigger lift (m)
+
+    # Topics
+    imu_topic: /imu1_broadcaster/imu
+    scan_topic: /scan
