@@ -76,10 +76,12 @@ class Agevar(Node):
         self._bwd_dist.append(0.0)
         self._bwd_heading.append(0.0)
 
-        # Smoothed yaw commands per joint (stores URDF joint angles)
+        # Commanded yaw angles per joint (stores URDF joint angles)
         self.yaw_commands = [0.0] * self.n_joints
-        self.adaptive_alpha = [1.0] * self.n_joints
-        self.smooth_alpha = 0.7
+        self.joint_vel_limit = self.declare_parameter('joint_vel_limit', 3.14).get_parameter_value().double_value
+
+        # Smoothness: per-joint blend between FTL angle and previous joint's command.
+        self.smoothness = self.declare_parameter('smoothness', 0.6).get_parameter_value().double_value
 
         # Track previous sign to detect direction changes and flush the path buffer
         self._prev_sign = 1
@@ -252,8 +254,9 @@ class Agevar(Node):
                     self._bwd_dist.popleft()
                     self._bwd_heading.popleft()
 
-            # Compute joint angles via follow-the-leader heading differences.
+            # Compute joint angles: FTL with per-joint cascade blending.
             for j in range(self.n_joints):
+                # Compute FTL angle from path buffer
                 if is_moving:
                     if sign == 1:
                         # Forward: followers lag behind (lower accumulated distance).
@@ -271,36 +274,38 @@ class Agevar(Node):
                         rear_heading = self._interp_heading(
                             rear_dist, self._bwd_dist, self._bwd_heading
                         )
-
-                    # Joint angle = heading difference (negative for left turns)
-                    raw_angle = rear_heading - front_heading
-
-                    # Normalize to [-π, π]
-                    raw_angle = atan2(sin(raw_angle), cos(raw_angle))
-
-                    # Clamp to joint limits
-                    raw_angle = max(-YAW_LIMIT, min(YAW_LIMIT, raw_angle))
+                    ftl_angle = atan2(sin(rear_heading - front_heading), cos(rear_heading - front_heading))
+                    ftl_angle = max(-YAW_LIMIT, min(YAW_LIMIT, ftl_angle))
                 else:
-                    # Pure rotation: saturate all joints to YAW_LIMIT in turn direction
-                    turn_dir = 1.0 if angular_vel > 0 else -1.0
-                    raw_angle = turn_dir * YAW_LIMIT
+                    ftl_angle = (1.0 if angular_vel > 0 else -1.0) * YAW_LIMIT
 
                 # In backward mode, joint j from the last module's perspective maps to
                 # physical joint in the yaw_commands array.
                 cmd_idx = j if sign == 1 else (self.n_joints - 1 - j)
 
-                # Compute tracking error using encoder feedback
-                error = self.yaw_commands[cmd_idx] - self.yaw_angles[cmd_idx]
-                error_mag = abs(error)
+                # Per-joint blend: front joint = pure FTL, rear joints blend with previous
+                if j == 0:
+                    target = ftl_angle
+                else:
+                    # blend_ratio increases with joint index
+                    if self.n_joints > 1:
+                        blend_ratio = self.smoothness * j / (self.n_joints - 1)
+                    else:
+                        blend_ratio = 0.0
+                    # Previous joint's command (already rate-limited)
+                    if sign == 1:
+                        prev_cmd = self.yaw_commands[cmd_idx - 1]
+                    else:
+                        prev_cmd = self.yaw_commands[cmd_idx + 1]
+                    target = (1.0 - blend_ratio) * ftl_angle + blend_ratio * prev_cmd
 
-                # Update per‑joint adaptive alpha
-                self.adaptive_alpha[cmd_idx] = self._compute_adaptive_alpha(error_mag)
+                target = max(-YAW_LIMIT, min(YAW_LIMIT, target))
 
-                # Apply smoothing using per‑joint alpha
-                alpha = self.adaptive_alpha[cmd_idx]
-                delta = raw_angle - self.yaw_commands[cmd_idx]
-                
-                self.yaw_commands[cmd_idx] += alpha * delta
+                # Rate-limit the command change to match physical joint velocity.
+                max_delta = self.joint_vel_limit * dt
+                delta = target - self.yaw_commands[cmd_idx]
+                delta = max(-max_delta, min(max_delta, delta))
+                self.yaw_commands[cmd_idx] += delta
 
                 yaw_msg = Float64MultiArray()
                 yaw_msg.data = [self.yaw_commands[cmd_idx]]
@@ -400,65 +405,6 @@ class Agevar(Node):
             if joint_name in self.latest_feedback.name:
                 idx = self.latest_feedback.name.index(joint_name)
                 self.yaw_angles[i] = self.latest_feedback.position[idx]
-
-        # Fuse encoder feedback into path buffer to correct dead-reckoning drift
-        if not hasattr(self, '_encoder_correction_applied'):
-            self._encoder_correction_applied = False
-
-        # Compute correction term: actual encoder angle - commanded angle
-        # For forward motion, compare first module's encoder vs path buffer
-        if self._prev_sign == 1 and len(self._dist) > 1:
-            # Get expected heading from forward path buffer at current head distance
-            expected_heading = self._interp_heading(self.head_distance)
-            actual_heading = self.yaw_angles[0]
-            
-            # Compute heading error (normalized to [-π, π])
-            heading_error = atan2(sin(actual_heading - expected_heading), 
-                                 cos(actual_heading - expected_heading))
-            
-            # Apply gentle correction to path buffer (K = 0.1 to 0.3)
-            K_correction = 0.2  # Correction gain
-            if abs(heading_error) > 0.01:
-                correction = K_correction * heading_error
-                
-                for i in range(len(self._heading)):
-                    self._heading[i] += correction
-                self.head_theta += correction
-                self.get_logger().debug(
-                    f'Encoder fusion: corrected path buffer by {correction:.4f} rad'
-                )
-
-        # For backward motion, compare last module's encoder vs backward path buffer
-        elif self._prev_sign == -1 and len(self._bwd_dist) > 1:
-            # Get expected heading from backward path buffer
-            expected_heading = self._interp_heading(
-                self._bwd_distance, self._bwd_dist, self._bwd_heading
-            )
-            # Last module is index n_mod-1 (physical leader in backward mode)
-            actual_heading = self.yaw_angles[self.n_mod - 1]
-            
-            heading_error = atan2(sin(actual_heading - expected_heading),
-                                 cos(actual_heading - expected_heading))
-            
-            K_correction = 0.2
-            if abs(heading_error) > 0.01:
-                correction = K_correction * heading_error
-                for i in range(len(self._bwd_heading)):
-                    self._bwd_heading[i] += correction
-                self._bwd_head_theta += correction
-                self.get_logger().debug(
-                    f'Encoder fusion (backward): corrected by {correction:.4f} rad'
-                )
-
-    def _compute_adaptive_alpha(self, error_mag):
-        # Tunable parameters
-        max_alpha = 1.0
-        min_alpha = 0.1
-        k = 3.0  # sensitivity
-
-        alpha = max_alpha / (1.0 + k * error_mag)
-        alpha = max(min_alpha, min(max_alpha, alpha))
-        return alpha
 
 
 def main(args=None):
