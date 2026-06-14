@@ -7,3 +7,8 @@
 	path = computer_vision
 	url = https://github.com/Team-Isaac-Polito/computer_vision.git
 	branch = main
+
+[submodule "ros_app"]
+	path = ros_app
+	url = https://github.com/Team-Isaac-Polito/ros_app
+	branch = main
