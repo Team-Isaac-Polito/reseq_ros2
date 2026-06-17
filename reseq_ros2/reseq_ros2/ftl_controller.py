@@ -1,15 +1,21 @@
+import csv
+import os
 import time as walltime
 import traceback
 from bisect import bisect_left
 from collections import deque
-from math import atan2, cos, pi, sin
+from datetime import datetime
+from math import atan2, cos, pi, sin, sqrt
 
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped, Vector3
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64MultiArray
-from std_srvs.srv import SetBool
+from std_msgs.msg import Bool, Float64MultiArray
+from std_srvs.srv import SetBool, Trigger
+
+from reseq_interfaces.msg import Detection
+from reseq_interfaces.srv import ComputeCoordinate
 
 """ROS node with follow-the-leader control for a snake-like modular robot.
 
@@ -127,6 +133,7 @@ class FtlController(Node):
             self._lift_cb,
             10,
         )
+
         self.create_subscription(
             Vector3,
             '/inter_module_lift_vel',
@@ -134,48 +141,80 @@ class FtlController(Node):
             10,
         )
 
+        # Hazmat Safety initialization
+        self.distance_threshold = 0.15
+        
+        # Resolve path to Home directory for log storage
+        base_path = os.path.expanduser('~/hazmat_logs')
+        
+        # timestamp string for unique log file naming
+        timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        self.csv_file_path = os.path.join(base_path, f'hazmat_log_{timestamp_str}.csv')
+        self.approved_hazmats = []
+        self.emergency_stop_active = False
+        
+        # Create publishers for E-stop and UI alert
+        self.estop_pub = self.create_publisher(Bool, '/safety/estop', 10)
+        self.ui_alert_pub = self.create_publisher(Bool, '/ui/hazmat_alert', 10)
+        
+        # Create service for E-stop confirmation
+        self.srv_clear_estop = self.create_service(
+            Trigger, '/safety/clear_estop', self.handle_clear_estop
+        )
+        
+        # Create client for coordinate computation service
+        self.compute_coord_cli = self.create_client(
+            ComputeCoordinate, '/detection/compute_coordinate'
+        )
+        
+        # Subscribe to hazmat detection topic
+        self.create_subscription(
+            Detection, '/object_detection/detections', self.detection_callback, 10
+        )
+        
+        # ROS2 Parameter to enable/disable the emergency stop for hazmats (True by default)
+        self.enable_hazmat_estop = (
+            self.declare_parameter('enable_hazmat_estop', True).get_parameter_value().bool_value
+        )
+        
+        self.create_timer(0.5, self.publish_ui_heartbeat)
+        self.get_logger().info(f'Hazmat Safety initialized. Logs at: {self.csv_file_path}')
+    
     def _publish_pitch_commands(self):
         for cmd_idx in range(self.n_joints):
             pitch_cmd = self._lift_commands[cmd_idx] + self._manual_lift_commands[cmd_idx]
             pitch_cmd = max(-PITCH_LIMIT, min(PITCH_LIMIT, pitch_cmd))
-
             pitch_msg = Float64MultiArray()
             pitch_msg.data = [pitch_cmd]
             self.pitch_pubs[cmd_idx].publish(pitch_msg)
-
+    
     def _lift_cb(self, msg: Float64MultiArray):
         """Receive joint lift commands from the TOF-based obstacle detector."""
         data = msg.data
         if len(data) >= 1:
-            # Distribute lift across joints: front joints get more lift
             lift_val = data[0]
             for j in range(self.n_joints):
-                # Front joint (j=0) gets full lift, rear joints get progressively less
                 if self.n_joints > 1:
                     factor = 1.0 - (j / (self.n_joints - 1)) * 0.5
                 else:
                     factor = 1.0
                 self._lift_commands[j] = lift_val * factor
-
         self._publish_pitch_commands()
-
+    
     def _manual_lift_cb(self, msg: Vector3):
         """Receive manual lift commands from the teleop scaler."""
         lift_type = int(round(msg.z))
         self._manual_lift_commands = [0.0] * self.n_joints
-
-        if lift_type == 1:  # Front joint lift
+        if lift_type == 1:
             if self.n_joints > 0:
                 self._manual_lift_commands[0] = max(-PITCH_LIMIT, min(PITCH_LIMIT, msg.x))
             else:
                 self.get_logger().warning('No joints available for front lift')
-
         if lift_type == 2:
             if self.n_joints > 1:
                 self._manual_lift_commands[1] = max(-PITCH_LIMIT, min(PITCH_LIMIT, msg.x))
             else:
                 self.get_logger().warning('No joints available for middle lift')
-
         self._publish_pitch_commands()
 
     def handle_enable(
@@ -491,6 +530,91 @@ class FtlController(Node):
                 idx = self.latest_feedback.name.index(joint_name)
                 self.yaw_angles[i] = self.latest_feedback.position[idx]
 
+    def publish_ui_heartbeat(self):
+        """Periodically broadcasts the safety state to keep the mobile application UI synchronized."""
+        alert_msg = Bool()
+        alert_msg.data = self.emergency_stop_active
+        self.ui_alert_pub.publish(alert_msg)
+
+    def save_hazmat_to_csv(self, x, y, z):
+        """Appends the newly approved hazmat coordinates to RAM list and permanent unique CSV file."""
+        self.approved_hazmats.append((x, y, z))
+        os.makedirs(os.path.dirname(self.csv_file_path), exist_ok=True)
+
+        with open(self.csv_file_path, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([datetime.now().isoformat(), x, y, z])
+
+    def detection_callback(self, msg):
+        """Processes incoming object detections."""
+        if msg.type == 'hazmat':
+            if not self.compute_coord_cli.wait_for_service(timeout_sec=0.5):
+                self.get_logger().warn('Coordinate service unavailable, skipping hazmat check.')
+                return
+
+            req = ComputeCoordinate.Request()
+            req.detection = msg
+            future = self.compute_coord_cli.call_async(req)
+            future.add_done_callback(self.handle_compute_response)
+
+    def handle_compute_response(self, future):
+        """Apply emergency brake if returned 3D coordinates are new"""
+        try:
+            response = future.result()
+
+            if response.success and response.point:
+                x = response.point.point.x
+                y = response.point.point.y
+                z = response.point.point.z
+
+                is_new = True
+                for saved_x, saved_y, saved_z in self.approved_hazmats:
+                    distance = sqrt((x - saved_x) ** 2 + (y - saved_y) ** 2 + (z - saved_z) ** 2)
+                    if distance < self.distance_threshold:
+                        is_new = False
+                        break
+
+                if is_new:
+                    if self.enable_hazmat_estop:
+                        self.get_logger().info(
+                            f'NEW HAZMAT DETECTED [X:{x:.2f}, Y:{y:.2f}]! Triggering emergency stop.'
+                        )
+
+                        self.emergency_stop_active = True
+                        self.publish_ui_heartbeat()
+
+                        stop_msg = Bool()
+                        stop_msg.data = True
+                        self.estop_pub.publish(stop_msg)
+
+                        for pub in self.controller_pubs:
+                            pub.publish(TwistStamped())
+
+                        self.save_hazmat_to_csv(x, y, z)
+                        self.get_logger().info(
+                            'Coordinates cached. Awaiting UI operator validation...'
+                        )
+                    else:
+                        self.get_logger().info(
+                            f'NEW HAZMAT DETECTED [X:{x:.2f}, Y:{y:.2f}] but E-STOP is disabled via parameter.'
+                        )
+                        self.save_hazmat_to_csv(x, y, z)
+
+        except Exception as e:
+            self.get_logger().error(f'Error computing 3D coordinate for hazmat: {e}')
+
+    def handle_clear_estop(self, request, response):
+        """It starts when the UI operator clicks 'Continue', allowing the robot to resume operation."""
+        self.emergency_stop_active = False
+        self.publish_ui_heartbeat()
+
+        release_msg = Bool()
+        release_msg.data = False
+        self.estop_pub.publish(release_msg)
+
+        response.success = True
+        response.message = 'Emergency stop released successfully. Robot ready to resume.'
+        return response
 
 def main(args=None):
     rclpy.init(args=args)

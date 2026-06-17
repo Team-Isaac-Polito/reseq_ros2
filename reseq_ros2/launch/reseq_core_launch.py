@@ -46,6 +46,7 @@ def launch_setup(context, *args, **kwargs):
                     'b': config['ftl_controller_consts']['b'],
                     'modules': addresses,
                     'use_sim_time': use_sim_time,
+                    'enable_hazmat_estop': LaunchConfiguration('enable_hazmat_estop'),
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
@@ -113,6 +114,11 @@ def generate_launch_description():
             DeclareLaunchArgument('version', default_value='mk1', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('log_level', default_value='info'),
+            DeclareLaunchArgument(
+                'enable_hazmat_estop',
+                default_value='true',
+                description='Enable automatic E-Stop on new Hazmat detection',
+            ),
             DeclareLaunchArgument(
                 'use_sim_time',
                 default_value='false',
