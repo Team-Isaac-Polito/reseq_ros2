@@ -1,15 +1,21 @@
+import csv
+import os
 import time as walltime
 import traceback
 from bisect import bisect_left
 from collections import deque
-from math import atan2, cos, pi, sin
+from datetime import datetime
+from math import atan2, cos, pi, sin, sqrt
 
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64MultiArray
-from std_srvs.srv import SetBool
+from std_msgs.msg import Bool, Float64MultiArray
+from std_srvs.srv import SetBool, Trigger
+
+from reseq_interfaces.msg import Detection
+from reseq_interfaces.srv import ComputeCoordinate
 
 """ROS node with follow-the-leader control for a snake-like modular robot.
 
@@ -107,6 +113,40 @@ class Agevar(Node):
             pub = self.create_publisher(Float64MultiArray, f'/yaw_controller{i + 2}/commands', 10)
             self.yaw_pubs.append(pub)
 
+        self.distance_threshold = 0.15
+
+        # Resolve path to Home directory for log storage
+        base_path = os.path.expanduser('~/hazmat_logs')
+
+        # timestamp string for unique log file naming
+        timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        self.csv_file_path = os.path.join(base_path, f'hazmat_log_{timestamp_str}.csv')
+        self.approved_hazmats = []
+        self.emergency_stop_active = False
+
+        # Create publishers for E-stop and UI alert
+        self.estop_pub = self.create_publisher(Bool, '/safety/estop', 10)
+        self.ui_alert_pub = self.create_publisher(Bool, '/ui/hazmat_alert', 10)
+        # Create service for E-stop confirmation
+        self.srv_clear_estop = self.create_service(
+            Trigger, '/safety/clear_estop', self.handle_clear_estop
+        )
+        # Create client for coordinate computation service
+        self.compute_coord_cli = self.create_client(
+            ComputeCoordinate, '/detection/compute_coordinate'
+        )
+        # Subscribe to hazmat detection topic
+        self.create_subscription(
+            Detection, '/object_detection/detections', self.detection_callback, 10
+        )
+        # ROS2 Parameter to enable/disable the emergency stop for hazmats (True by default)
+        self.enable_hazmat_estop = (
+            self.declare_parameter('enable_hazmat_estop', True).get_parameter_value().bool_value
+        )
+
+        self.create_timer(0.5, self.publish_ui_heartbeat)
+        self.get_logger().info(f'Hazmat Safety initialized. Logs at: {self.csv_file_path}')
+
     def handle_enable(
         self, request: SetBool.Request, response: SetBool.Response
     ) -> SetBool.Response:
@@ -174,7 +214,7 @@ class Agevar(Node):
                     entries_bwd.append((-j * self.module_spacing, cumulative_bwd))
                     if j < self.n_joints:
                         cumulative_bwd += self.yaw_commands[self.n_joints - 1 - j]
-                
+
                 # Append in ascending distance order
                 for d, h in reversed(entries_bwd):
                     self._bwd_dist.append(d)
@@ -187,7 +227,7 @@ class Agevar(Node):
                     self.head_theta = self._interp_heading(
                         first_lag_dist, self._bwd_dist, self._bwd_heading
                     )
-                
+
                 # Reconstruct the forward path buffer from the current joint commands.
                 self._dist.clear()
                 self._heading.clear()
@@ -197,7 +237,7 @@ class Agevar(Node):
                     entries.append((self.head_distance - j * self.module_spacing, cumulative_h))
                     if j < self.n_joints:
                         cumulative_h += self.yaw_commands[j]
-                
+
                 # Append in ascending distance order
                 for d, h in reversed(entries):
                     self._dist.append(d)
@@ -226,7 +266,7 @@ class Agevar(Node):
                     # Pure rotation: virtual advance so the buffer fills.
                     virtual_v = abs_w * self.module_spacing * 2.0
                     self.head_distance += virtual_v * dt
-                
+
                 self._dist.append(self.head_distance)
                 self._heading.append(self.head_theta)
                 max_lookback = (self.n_joints + 1) * self.module_spacing + 0.5
@@ -243,7 +283,7 @@ class Agevar(Node):
                     # Pure rotation: virtual advance so the buffer fills.
                     virtual_v = abs_w * self.module_spacing * 2.0
                     self._bwd_distance += virtual_v * dt
-                
+
                 self._bwd_dist.append(self._bwd_distance)
                 self._bwd_heading.append(self._bwd_head_theta)
                 max_lookback = (self.n_joints + 1) * self.module_spacing + 0.5
@@ -299,7 +339,7 @@ class Agevar(Node):
                 # Apply smoothing using per‑joint alpha
                 alpha = self.adaptive_alpha[cmd_idx]
                 delta = raw_angle - self.yaw_commands[cmd_idx]
-                
+
                 self.yaw_commands[cmd_idx] += alpha * delta
 
                 yaw_msg = Float64MultiArray()
@@ -411,16 +451,17 @@ class Agevar(Node):
             # Get expected heading from forward path buffer at current head distance
             expected_heading = self._interp_heading(self.head_distance)
             actual_heading = self.yaw_angles[0]
-            
+
             # Compute heading error (normalized to [-π, π])
-            heading_error = atan2(sin(actual_heading - expected_heading), 
-                                 cos(actual_heading - expected_heading))
-            
+            heading_error = atan2(
+                sin(actual_heading - expected_heading), cos(actual_heading - expected_heading)
+            )
+
             # Apply gentle correction to path buffer (K = 0.1 to 0.3)
             K_correction = 0.2  # Correction gain
             if abs(heading_error) > 0.01:
                 correction = K_correction * heading_error
-                
+
                 for i in range(len(self._heading)):
                     self._heading[i] += correction
                 self.head_theta += correction
@@ -436,10 +477,11 @@ class Agevar(Node):
             )
             # Last module is index n_mod-1 (physical leader in backward mode)
             actual_heading = self.yaw_angles[self.n_mod - 1]
-            
-            heading_error = atan2(sin(actual_heading - expected_heading),
-                                 cos(actual_heading - expected_heading))
-            
+
+            heading_error = atan2(
+                sin(actual_heading - expected_heading), cos(actual_heading - expected_heading)
+            )
+
             K_correction = 0.2
             if abs(heading_error) > 0.01:
                 correction = K_correction * heading_error
@@ -459,6 +501,105 @@ class Agevar(Node):
         alpha = max_alpha / (1.0 + k * error_mag)
         alpha = max(min_alpha, min(max_alpha, alpha))
         return alpha
+
+    def publish_ui_heartbeat(self):
+        """Periodically broadcasts the safety state to keep the mobile application UI synchronized."""
+        alert_msg = Bool()
+        alert_msg.data = self.emergency_stop_active
+        self.ui_alert_pub.publish(alert_msg)
+
+    def save_hazmat_to_csv(self, x, y, z):
+        """Appends the newly approved hazmat coordinates to RAM list and permanent unique CSV file."""
+        self.approved_hazmats.append((x, y, z))
+        # Ensure the directory exists before writing, otherwise creates it
+        os.makedirs(os.path.dirname(self.csv_file_path), exist_ok=True)
+
+        with open(self.csv_file_path, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            # writes a row with the current timestamp and the hazmat coordinates
+            writer.writerow([datetime.now().isoformat(), x, y, z])
+
+    def detection_callback(self, msg):
+        """Processes incoming object detections."""
+        if msg.type == 'hazmat':
+            # Check if the coordinate service is available before proceeding
+            if not self.compute_coord_cli.wait_for_service(timeout_sec=0.5):
+                self.get_logger().warn('Coordinate service unavailable, skipping hazmat check.')
+                return
+
+            # Prepares the request for the Detection Manager
+            req = ComputeCoordinate.Request()
+            req.detection = msg
+            # Leaving emptry the target_frame, the manager will use the default one
+            future = self.compute_coord_cli.call_async(req)
+            # When the manager responds with the computed 3D coordinate, handle_compute_response will be called to determine if it's a new hazmat and trigger the emergency stop if necessary.
+            future.add_done_callback(self.handle_compute_response)
+
+    def handle_compute_response(self, future):
+        """Apply emergency brake if returned 3D coordinates are new"""
+        try:
+            response = future.result()
+
+            # Check if the service call was successful and if a valid point was returned
+            if response.success and response.point:
+                x = response.point.point.x
+                y = response.point.point.y
+                z = response.point.point.z
+
+                # Determine if the detected hazmat is new by comparing its coordinates to previously approved ones within a certain distance threshold.
+                is_new = True
+                for saved_x, saved_y, saved_z in self.approved_hazmats:
+                    distance = sqrt((x - saved_x) ** 2 + (y - saved_y) ** 2 + (z - saved_z) ** 2)
+                    if distance < self.distance_threshold:
+                        is_new = False
+                        break
+
+                # If the hazmat is new, trigger the emergency stop, publish a UI alert, and save the coordinates for future reference.
+                # The system will then await validation from the UI operator before allowing movement again.
+                if is_new:
+                    if self.enable_hazmat_estop:
+                        self.get_logger().info(
+                            f'NEW HAZMAT DETECTED [X:{x:.2f}, Y:{y:.2f}]! Triggering emergency stop.'
+                        )
+
+                        self.emergency_stop_active = True
+                        self.publish_ui_heartbeat()
+
+                        stop_msg = Bool()
+                        stop_msg.data = True
+                        self.estop_pub.publish(stop_msg)
+
+                        for pub in self.controller_pubs:
+                            pub.publish(TwistStamped())
+
+                        self.save_hazmat_to_csv(x, y, z)
+                        self.get_logger().info(
+                            'Coordinates cached. Awaiting UI operator validation...'
+                        )
+                    else:
+                        # If disabled, we just log and save the coordinate without freezing the robot
+                        self.get_logger().info(
+                            f'NEW HAZMAT DETECTED [X:{x:.2f}, Y:{y:.2f}] but E-STOP is disabled via parameter.'
+                        )
+                        self.save_hazmat_to_csv(x, y, z)
+
+        except Exception as e:
+            self.get_logger().error(f'Error computing 3D coordinate for hazmat: {e}')
+
+    def handle_clear_estop(self, request, response):
+        """It starts when the UI operator clicks 'Continue', allowing the robot to resume operation."""
+
+        self.emergency_stop_active = False
+        self.publish_ui_heartbeat()  # It sends false to the UI to clear the alert state
+
+        # It sends false to the safety system to release the emergency stop and allow movement again
+        release_msg = Bool()
+        release_msg.data = False
+        self.estop_pub.publish(release_msg)
+
+        response.success = True
+        response.message = 'Emergency stop released successfully. Robot ready to resume.'
+        return response
 
 
 def main(args=None):
