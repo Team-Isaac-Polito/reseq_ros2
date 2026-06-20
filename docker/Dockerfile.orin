@@ -281,7 +281,7 @@ RUN python3 -m pip install -U \
 # Upgrade system packages for security patches
 RUN --mount=type=cache,target=/var/cache/apt \
 apt-get update && apt-get install -y \
-        nghttp2=1.43.0-1ubuntu0.2 \
+        nghttp2 \
 && rm -rf /var/lib/apt/lists/*
 
 # Store list of packages (must be last)
@@ -421,6 +421,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fi \
  && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update --allow-releaseinfo-change
+
 # Install Ultralytics and RESE.Q Python runtime extras.
 # Download PyTorch, TorchVision, and ONNX Runtime GPU wheels for JetPack 6.0 / CUDA 12.2.
 RUN pip install --no-cache-dir \
@@ -448,6 +450,8 @@ RUN pip install --no-cache-dir \
 # Final stage: build reseq_ros2
 FROM reseq-base AS reseq
 
+RUN apt-get update --allow-releaseinfo-change
+
 RUN mkdir -p /ros2_ws
 WORKDIR /ros2_ws
 
@@ -456,7 +460,9 @@ RUN apt-get update && \
     cd src && git checkout origin/nav-test && \
     git submodule update --recursive --remote && cd .. && \
     source /ros_entrypoint.sh && \
-    rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys="librealsense2 realsense2_camera" -y -t exec -t build && \
+    rosdep install -i --from-path src --rosdistro $ROS_DISTRO \
+      --skip-keys="librealsense2 realsense2_camera gz_ros2_control ros_gz" \
+      -y -t exec -t build && \
     colcon build && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh && \
     sed -i "\$i source /ros_entrypoint.sh \n" /root/.bashrc && \
