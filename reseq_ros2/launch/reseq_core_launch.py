@@ -11,6 +11,13 @@ from reseq_ros2.utils.launch_utils import (
     parse_config,
 )
 
+# Path to autonomy parameters (cmd_vel_mux config)
+import os
+from ament_index_python.packages import get_package_share_directory
+_autonomy_params = os.path.join(
+    get_package_share_directory('reseq_ros2'), 'config', 'autonomy_params.yaml'
+)
+
 
 # launch_setup is used through an OpaqueFunction because it is the only way to manipulate a
 # command line argument directly in the launch file
@@ -82,6 +89,19 @@ def launch_setup(context, *args, **kwargs):
             ],
             arguments=['--ros-args', '--log-level', log_level],
             on_exit=[EmitEvent(event=Shutdown())],
+        )
+    )
+
+    # cmd_vel_mux: bridges /cmd_vel_teleop (scaler) → /cmd_vel (agevar)
+    # Also handles nav arbitration when autonomy is enabled.
+    # Without this node, teleop velocity commands never reach agevar.
+    launch_config.append(
+        Node(
+            package='reseq_ros2',
+            executable='cmd_vel_mux',
+            name='cmd_vel_mux',
+            parameters=[_autonomy_params, {'use_sim_time': use_sim_time}],
+            arguments=['--ros-args', '--log-level', log_level],
         )
     )
 

@@ -159,8 +159,9 @@ class Scaler(Node):
 
         cmd_vel = Twist()
         cmd_vel.linear.x = data.right.y  # Linear velocity (-1:1)
-        # inverse of Radius of curvature (AGEVAR) or angular velocity (PIVOT) (-1:1)
-        cmd_vel.angular.z = -data.right.x
+        # Positive angular.z = counter-clockwise (left turn) per ROS convention.
+        # Joystick right (data.right.x > 0) → positive angular.z → left turn.
+        cmd_vel.angular.z = data.right.x
 
         # The app joystick is screen-oriented: X is right/left, Y is forward/back.
         # The arm controller expects Cartesian commands in arm_base_link:

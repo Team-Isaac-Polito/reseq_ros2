@@ -450,14 +450,13 @@ RUN pip install --no-cache-dir \
 # Final stage: build reseq_ros2
 FROM reseq-base AS reseq
 
-RUN apt-get update --allow-releaseinfo-change
-
 RUN mkdir -p /ros2_ws
 WORKDIR /ros2_ws
 
 RUN apt-get update && \
-    git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src && \
-    cd src && git checkout origin/nav-test && \
+    echo "Test10" && \
+    git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src && cd src && \
+    git checkout origin/nav-test && \
     git submodule update --recursive --remote && cd .. && \
     source /ros_entrypoint.sh && \
     rosdep install -i --from-path src --rosdistro $ROS_DISTRO \

@@ -49,7 +49,9 @@ struct JointBuffers
   std::vector<double> position;
   std::vector<double> velocity;
   std::vector<double> effort;
-  std::vector<double> command;
+  std::vector<double> command;        ///< Primary command (position for arm, velocity for wheels)
+  std::vector<double> command_velocity;  ///< Velocity command (for arm joints with both position+velocity interfaces)
+  std::vector<uint8_t> command_position_seeded;  ///< True when position command has been seeded from hardware feedback
 };
 
 /**
@@ -114,7 +116,7 @@ struct CanMessageMapping
 struct JointInfo
 {
   size_t index;                          ///< Index of the joint.
-  std::string cmd_mode;                  ///< Command mode for the joint.
+  std::vector<std::string> cmd_modes;    ///< Command modes for the joint (e.g. position, velocity).
   std::vector<std::string> state_modes;  ///< Supported state modes.
 };
 
