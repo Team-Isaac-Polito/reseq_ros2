@@ -222,26 +222,8 @@ def launch_setup(context, *args, **kwargs):
         )
     )
 
-    if sim_mode == 'false' and arm:
-        launch_config.append(
-            Node(
-                package='reseq_arm_mk2',
-                executable='arm_state_bridge',
-                name='arm_state_bridge',
-                parameters=[
-                    {
-                        'source_topic': '/joint_states',
-                        'output_mode': 'joint_state',
-                        'output_topic': '/arm_joint_states',
-                    }
-                ],
-                output='screen',
-            )
-        )
-
     if arm:
         arm_chain_tip = 'cameras_holder_link' if sim_mode == 'true' else 'tcp'
-        arm_state_topic = '/joint_states' if sim_mode == 'true' else '/arm_joint_states'
         cartesian_arm_node = Node(
             package='reseq_arm_mk2',
             executable='cartesian_arm_controller.py',
@@ -250,7 +232,7 @@ def launch_setup(context, *args, **kwargs):
                 {
                     'robot_description': robot_description,
                     'use_sim_time': sim_branch_use_sim_time == 'true',
-                    'state_topic': arm_state_topic,
+                    'state_topic': '/joint_states',
                     'velocity_topic': '/mk2_arm_vel_scaled',
                     'chain_tip': arm_chain_tip,
                     'command_frame': 'arm_base_link',
