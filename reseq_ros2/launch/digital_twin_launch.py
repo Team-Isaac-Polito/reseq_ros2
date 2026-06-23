@@ -166,7 +166,9 @@ def launch_setup(context, *args, **kwargs):
             body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
 
     arm_velocity_spawner = None
+    mk2_arm_spawner = None
     if arm:
+        mk2_arm_spawner = _spawner('mk2_arm_controller', external_log_level)
         arm_velocity_spawner = _spawner('joint_group_velocity_controller', external_log_level)
 
     for i in range(num_modules):
@@ -200,11 +202,20 @@ def launch_setup(context, *args, **kwargs):
         )
     )
     _append_spawner_chain(launch_config, joint_state_spawner, body_spawners)
-    if arm_velocity_spawner is not None:
+    if mk2_arm_spawner is not None:
         launch_config.append(
             RegisterEventHandler(
                 OnProcessExit(
                     target_action=joint_state_spawner,
+                    on_exit=[mk2_arm_spawner],
+                )
+            )
+        )
+    if arm_velocity_spawner is not None:
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=mk2_arm_spawner if mk2_arm_spawner is not None else joint_state_spawner,
                     on_exit=[arm_velocity_spawner],
                 )
             )

@@ -939,16 +939,13 @@ class CartesianArmController(Node):
         )
         linear_posture_target = list(self.get_parameter('linear_posture_target').value)
         if len(linear_posture_target) != self.N_JOINTS:
-            self.get_logger().warn(
-                'linear_posture_target must have 6 values; using HOME_POSITION.'
-            )
-            linear_posture_target = self.HOME_POSITION
-        self._linear_posture_target = np.array(linear_posture_target, dtype=float)
-        if not np.all(np.isfinite(self._linear_posture_target)):
-            self.get_logger().warn(
-                'linear_posture_target contains non-finite values; using HOME_POSITION.'
-            )
-            self._linear_posture_target = np.array(self.HOME_POSITION, dtype=float)
+            self._linear_posture_target = None
+        else:
+            target_array = np.array(linear_posture_target, dtype=float)
+            if np.all(np.isfinite(target_array)):
+                self._linear_posture_target = target_array
+            else:
+                self._linear_posture_target = None
         forward_rpy = list(self.get_parameter('robot_forward_rpy').value)
         if len(forward_rpy) != 3:
             self.get_logger().warn('robot_forward_rpy must have 3 values; using [0, 0, 0].')
@@ -1835,23 +1832,25 @@ class CartesianArmController(Node):
                     weight=0.8,
                 )
 
-            posture_weight = (
-                self.get_parameter('linear_posture_weight').get_parameter_value().double_value
-            )
-            posture_gain = (
-                self.get_parameter('linear_posture_gain').get_parameter_value().double_value
-            )
-            posture_vel = _clip_vector(
-                posture_gain * (self._linear_posture_target[:active_dofs] - solve_q[:active_dofs]),
-                0.35 * max_jv,
-            )
-            secondary_jacobian, secondary_vel = _append_secondary_task(
-                secondary_jacobian=secondary_jacobian,
-                secondary_vel=secondary_vel,
-                task_jacobian=np.eye(active_dofs),
-                task_vel=posture_vel,
-                weight=posture_weight,
-            )
+            # Only apply posture target if it's set (sim mode).
+            if self._linear_posture_target is not None:
+                posture_weight = (
+                    self.get_parameter('linear_posture_weight').get_parameter_value().double_value
+                )
+                posture_gain = (
+                    self.get_parameter('linear_posture_gain').get_parameter_value().double_value
+                )
+                posture_vel = _clip_vector(
+                    posture_gain * (self._linear_posture_target[:active_dofs] - solve_q[:active_dofs]),
+                    0.35 * max_jv,
+                )
+                secondary_jacobian, secondary_vel = _append_secondary_task(
+                    secondary_jacobian=secondary_jacobian,
+                    secondary_vel=secondary_vel,
+                    task_jacobian=np.eye(active_dofs),
+                    task_vel=posture_vel,
+                    weight=posture_weight,
+                )
         else:
             mode_label = 'rotation'
             if self._fk_solver is None:

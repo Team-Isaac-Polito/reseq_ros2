@@ -47,11 +47,13 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
   // Initialise the data structures
   size_t num_joints = info.joints.size();
 
-  // TThe double pointers required by ROS2 control are kept contiguous in memory
+  // The double pointers required by ROS2 control are kept contiguous in memory
   joint_buffers_.position.resize(num_joints, 0.0);
   joint_buffers_.velocity.resize(num_joints, 0.0);
   joint_buffers_.effort.resize(num_joints, 0.0);
   joint_buffers_.command.resize(num_joints, 0.0);
+  joint_buffers_.command_velocity.resize(num_joints, 0.0);
+  joint_buffers_.command_position_seeded.resize(num_joints, 0);
 
   joint_info_.clear();
 
@@ -59,18 +61,18 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
   // Available joints are obtained from the hardware info
   for (size_t i = 0; i < num_joints; i++) {
     const auto & joint = info.joints[i];
-    std::string cmd_if = "none";
 
-    if (!joint.command_interfaces.empty()) {
-      cmd_if = joint.command_interfaces[0].name; // We only support one command interface
-
+    std::vector<std::string> cmd_ifs;
+    for (const auto & cmd_if : joint.command_interfaces) {
+      cmd_ifs.push_back(cmd_if.name);
     }
+
     std::vector<std::string> state_ifs;
     for (const auto & state_if : joint.state_interfaces) {
       state_ifs.push_back(state_if.name);
     }
 
-    joint_info_[joint.name] = JointInfo{i, cmd_if, state_ifs};
+    joint_info_[joint.name] = JointInfo{i, cmd_ifs, state_ifs};
   }
 
   // Parse configuration file for CAN mappings
@@ -121,14 +123,32 @@ hardware_interface::CallbackReturn ReseqHardware::on_configure(
 
   // Handshake with all modules (expecting a response to HANDSHAKE_MSG_ID)
   for (int i = 1; i <= num_modules_; i++) {
-    uint8_t mod = idx_to_mod(i, mk_version_);
+    uint8_t can_mod_id = idx_to_mod(i, mk_version_);
+    bool responded = false;
 
-    if (!canbus_->wait_for_message({mod, HANDSHAKE_MSG_ID}, std::chrono::milliseconds(500))) {
+    // Retry handshake up to 3 times per module
+    for (int attempt = 1; attempt <= 3; attempt++) {
+      if (canbus_->wait_for_message({can_mod_id, HANDSHAKE_MSG_ID}, std::chrono::milliseconds(1000))) {
+        responded = true;
+        break;
+      }
+      RCLCPP_WARN(
+        rclcpp::get_logger("ReseqHardware"),
+        "Module %d (CAN ID 0x%02X) did not respond to handshake (attempt %d/3)",
+        i, can_mod_id, attempt);
+    }
+
+    if (!responded) {
       RCLCPP_ERROR(
-        rclcpp::get_logger(
-          "ReseqHardware"), "Module %d did not respond to handshake", mod);
+        rclcpp::get_logger("ReseqHardware"),
+        "Module %d (CAN ID 0x%02X) failed to respond to handshake after 3 attempts",
+        i, can_mod_id);
       return hardware_interface::CallbackReturn::ERROR;
     }
+
+    RCLCPP_INFO(
+      rclcpp::get_logger("ReseqHardware"),
+      "Module %d (CAN ID 0x%02X) handshake successful", i, can_mod_id);
   }
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -206,11 +226,14 @@ hardware_interface::return_type ReseqHardware::read(
   for (const auto & snap : recv_buffer_.get_all()) {
     // Stale messages are ignored, but we use them to detect communication issues
     if (now - snap.timestamp > std::chrono::milliseconds(500)) {
+      const uint8_t mod_idx = (snap.id.mod_id - static_cast<uint8_t>(mk_version_ * 0x10)) & 0x0F;
       RCLCPP_WARN_THROTTLE(
         rclcpp::get_logger("ReseqHardware"),
         *clock_,
         THROTTLE_WARN,
-        "Stale CAN message received: %02X%02X", snap.id.mod_id, snap.id.msg_id);
+        "Stale CAN message received: %02X%02X (module %d, msg 0x%02X)",
+        snap.id.mod_id, snap.id.msg_id,
+        mod_idx, snap.id.msg_id);
       continue;
     }
 
@@ -250,11 +273,14 @@ hardware_interface::return_type ReseqHardware::read(
     const auto & map_it = can_mappings_.find(snap.id);
 
     if (map_it == can_mappings_.end()) {
+      const uint8_t mod_idx = (snap.id.mod_id - static_cast<uint8_t>(mk_version_ * 0x10)) & 0x0F;
       RCLCPP_WARN_THROTTLE(
         rclcpp::get_logger("ReseqHardware"),
         *clock_,
         THROTTLE_WARN,
-        "Received unknown CAN message: %02X%02X", snap.id.mod_id, snap.id.msg_id);
+        "Received unknown CAN message: %02X%02X (module %d, msg 0x%02X) — no mapping in config",
+        snap.id.mod_id, snap.id.msg_id,
+        mod_idx, snap.id.msg_id);
       continue;
     }
 
@@ -266,7 +292,16 @@ hardware_interface::return_type ReseqHardware::read(
         continue;  // TODO: handle TOPICS (TELEMETRY)
 
       }
-      const auto & jinfo = joint_info_.at(field.name);
+      const auto jit = joint_info_.find(field.name);
+      if (jit == joint_info_.end()) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "CAN mapping references unknown joint: %s", field.name.c_str());
+        continue;
+      }
+      const auto & jinfo = jit->second;
 
       double * buffer_ptr = get_state_buffer_ptr(field.mode, jinfo.index);
 
@@ -283,7 +318,14 @@ hardware_interface::return_type ReseqHardware::read(
             "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
         continue;
       }
-      *buffer_ptr = value * field.scale + field.bias;
+      const double scaled_value = value * field.scale + field.bias;
+      *buffer_ptr = scaled_value;
+      // Seed the position command buffer from actual hardware feedback
+      // on first receive, so the arm doesn't jump to 0 on startup.
+      if (field.mode == "position" && !joint_buffers_.command_position_seeded[jinfo.index]) {
+        joint_buffers_.command[jinfo.index] = scaled_value;
+        joint_buffers_.command_position_seeded[jinfo.index] = 1;
+      }
     }
   }
 
@@ -314,6 +356,27 @@ hardware_interface::return_type ReseqHardware::write(
 
   last_write_time_ = now;
 
+  // For arm joints with velocity command interface, integrate velocity into position.
+  // The Dynamixel motors are position-controlled, so velocity commands are converted
+  // to position deltas: position += velocity * dt
+  const double dt = command_cycle_.count() / 1000.0;  // ms → s
+  for (const auto & [joint_name, jinfo] : joint_info_) {
+    bool has_velocity_cmd = false;
+    bool has_position_cmd = false;
+    for (const auto & cm : jinfo.cmd_modes) {
+      if (cm == "velocity") has_velocity_cmd = true;
+      if (cm == "position") has_position_cmd = true;
+    }
+    // If the joint has both position and velocity command interfaces,
+    // integrate the velocity command into the position command buffer.
+    if (has_velocity_cmd && has_position_cmd) {
+      const double vel_cmd = joint_buffers_.command_velocity[jinfo.index];
+      if (std::abs(vel_cmd) > 1e-6) {
+        joint_buffers_.command[jinfo.index] += vel_cmd * dt;
+      }
+    }
+  }
+
   for (const auto & [can_id, mapping] : can_mappings_) {
     if (!mapping.is_command) {
       continue;
@@ -321,13 +384,47 @@ hardware_interface::return_type ReseqHardware::write(
 
     // Build the message according to the mapping instructions
     uint8_t data[8] = {0};
+    bool send_message = true;
     for (const auto & field : mapping.fields) {
       if (field.mapping_type != MappingType::JOINT_COMMAND) {
         continue;
       }
 
-      const auto & jinfo = joint_info_.at(field.name);
-      double value = joint_buffers_.command[jinfo.index];
+      const auto jit = joint_info_.find(field.name);
+      if (jit == joint_info_.end()) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "CAN mapping references unknown joint: %s", field.name.c_str());
+        continue;
+      }
+      const auto & jinfo = jit->second;
+
+      // Skip sending position commands that haven't been seeded from
+      // hardware feedback yet. This prevents the arm from jumping to 0
+      // on startup before the first joint state message arrives.
+      if (field.mode != "velocity" && !joint_buffers_.command_position_seeded[jinfo.index]) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "Skipping unseeded position command for joint: %s", field.name.c_str());
+        send_message = false;
+        break;
+      }
+
+      // Read from the correct buffer based on the field's command mode.
+      // "velocity" commands come from command_velocity buffer (written by
+      // JointGroupVelocityController). All other modes (position, effort)
+      // come from the primary command buffer (written by JointTrajectoryController
+      // or other position controllers).
+      double value = 0.0;
+      if (field.mode == "velocity") {
+        value = joint_buffers_.command_velocity[jinfo.index];
+      } else {
+        value = joint_buffers_.command[jinfo.index];
+      }
       value = (value - field.bias) / field.scale;
 
       if (field.data_type == "float32") {
@@ -340,7 +437,9 @@ hardware_interface::return_type ReseqHardware::write(
       }
     }
 
-    canbus_->send(can_id, data, mapping.length);
+    if (send_message) {
+      canbus_->send(can_id, data, mapping.length);
+    }
   }
   return hardware_interface::return_type::OK;
 }
@@ -381,14 +480,22 @@ std::vector<hardware_interface::StateInterface> ReseqHardware::export_state_inte
 
 std::vector<hardware_interface::CommandInterface> ReseqHardware::export_command_interfaces()
 {
-  // Create command interfaces for each joint with a command mode
+  // Create command interfaces for each joint with command modes
   std::vector<hardware_interface::CommandInterface> cmd_ifs;
   for (const auto & [joint_name, jinfo] : joint_info_) {
-    if (jinfo.cmd_mode != "none") {
+    for (const auto & cmd_mode : jinfo.cmd_modes) {
+      double * buffer_ptr = nullptr;
+      if (cmd_mode == "velocity") {
+        // Arm joints expose both position and velocity command interfaces.
+        // Velocity commands go to the separate command_velocity buffer.
+        buffer_ptr = &joint_buffers_.command_velocity[jinfo.index];
+      } else {
+        // Position and other commands go to the primary command buffer.
+        buffer_ptr = &joint_buffers_.command[jinfo.index];
+      }
       cmd_ifs.emplace_back(
         hardware_interface::CommandInterface(
-          joint_name, jinfo.cmd_mode,
-          &joint_buffers_.command[jinfo.index]));
+          joint_name, cmd_mode, buffer_ptr));
     }
   }
   return cmd_ifs;

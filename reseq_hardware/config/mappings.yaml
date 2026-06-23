@@ -1,15 +1,23 @@
+# CAN message mappings
+#
+# modules: "all"       → every module (1..num_modules)
+# modules: "skip_first" → modules 2..num_modules (skips module 1)
+# modules: "only_first" → module 1 only
+
+# ── Traction (0x2X) ──────────────────────────────────────────────────────────
+
 - {
-  msg_id: 0x21, # Track velocity command
+  msg_id: 0x21, # Motor setpoint — 2×Float, RPM
   modules: "all",
   length: 8,
   is_command: true,
   fields: [
     { name: "left_back_wheel",  type: "command", mode: "velocity", data_type: "float32", offset: 0, scale: 0.104719, bias: 0.0 },
-    { name: "right_back_wheel", type: "command", mode: "velocity", offset: 4, scale: 0.104719 } # RPM to rad/s
+    { name: "right_back_wheel", type: "command", mode: "velocity", offset: 4, scale: 0.104719 }
   ]
 }
 - {
-  msg_id: 0x22, # Track velocity state
+  msg_id: 0x22, # Motor feedback — 2×Float, RPM
   length: 8,
   fields: [
     { name: "left_front_wheel",  mode: "velocity", type: "state", scale: 0.104719 },
@@ -18,26 +26,37 @@
     { name: "right_back_wheel",  mode: "velocity", offset: 4, scale: 0.104719 },
   ]
 }
+# ── Inter-module sensors (0x3X) ──────────────────────────────────────────────
+
 - {
-  msg_id: 0x27, # Track velocity state
-  length: 8,
-  fields: [
-    { name: "left_front_wheel" },
-    { name: "right_front_wheel", offset: 4 },
-    { name: "left_back_wheel" },
-    { name: "right_back_wheel", offset: 4 },
-  ]
-}
-- {
-  msg_id: 0x32, # Yaw joint feedback
+  msg_id: 0x32, # Joint yaw feedback — Float, degrees (AS5048B)
   modules: "skip_first",
   length: 4,
   fields: [
-    { name: "yaw_joint", scale: 0.017453 }, # degrees to radians
+    { name: "yaw_joint", scale: 0.017453 }, # degrees → radians
   ]
 }
 - {
-  msg_id: 0x51, # Arm base commands (P + R)
+  msg_id: 0x34, # Joint pitch feedback (IMU) — Float, radians
+  modules: "skip_first",
+  length: 4,
+  fields: [
+    { name: "pitch_joint", type: "state", mode: "position", scale: 1.0 },
+  ]
+}
+- {
+  msg_id: 0x36, # Joint roll feedback (IMU) — Float, radians
+  modules: "skip_first",
+  length: 4,
+  fields: [
+    { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
+  ]
+}
+
+# ── Robotic arm — MK2 MOD1 (0x5X) ───────────────────────────────────────────
+
+- {
+  msg_id: 0x51, # Arm J1a/J1b differential setpoint — Float×2, rad
   modules: "only_first",
   length: 8,
   is_command: true,
@@ -47,16 +66,16 @@
   ]
 }
 - {
-  msg_id: 0x52, # Arm base states (P + R)
+  msg_id: 0x52, # Arm J1a/J1b differential feedback — Float×2, rad
   modules: "only_first",
   length: 8,
   fields: [
-    { name: "base_pitch_arm_joint", },
-    { name: "base_roll_arm_joint",  offset: 4 },
+    { name: "base_pitch_arm_joint" },
+    { name: "base_roll_arm_joint", offset: 4 },
   ]
 }
 - {
-  msg_id: 0x53, # Arm elbow commands (P)
+  msg_id: 0x53, # Arm J2 pitch setpoint — Float, rad
   modules: "only_first",
   length: 4,
   is_command: true,
@@ -65,15 +84,15 @@
   ]
 }
 - {
-  msg_id: 0x54, # Arm elbow states (P)
+  msg_id: 0x54, # Arm J2 pitch feedback — Float, rad
   modules: "only_first",
   length: 4,
   fields: [
-    { name: "elbow_pitch_arm_joint", },
+    { name: "elbow_pitch_arm_joint" },
   ]
 }
 - {
-  msg_id: 0x55, # Arm forearm commands (R)
+  msg_id: 0x55, # Arm J3 roll setpoint — Float, rad
   modules: "only_first",
   length: 4,
   is_command: true,
@@ -82,15 +101,15 @@
   ]
 }
 - {
-  msg_id: 0x56, # Arm forearm states (R)
+  msg_id: 0x56, # Arm J3 roll feedback — Float, rad
   modules: "only_first",
   length: 4,
   fields: [
-    { name: "forearm_roll_arm_joint", },
+    { name: "forearm_roll_arm_joint" },
   ]
 }
 - {
-  msg_id: 0x57, # Arm wrist pitch command
+  msg_id: 0x57, # Arm J4 pitch setpoint — Float, rad
   modules: "only_first",
   length: 4,
   is_command: true,
@@ -99,15 +118,15 @@
   ]
 }
 - {
-  msg_id: 0x58, # Arm wrist pitch state
+  msg_id: 0x58, # Arm J4 pitch feedback — Float, rad
   modules: "only_first",
   length: 4,
   fields: [
-    { name: "wrist_pitch_arm_joint", },
+    { name: "wrist_pitch_arm_joint" },
   ]
 }
 - {
-  msg_id: 0x59, # Arm wrist roll command
+  msg_id: 0x59, # Arm J5 roll setpoint — Float, rad
   modules: "only_first",
   length: 4,
   is_command: true,
@@ -116,103 +135,133 @@
   ]
 }
 - {
-  msg_id: 0x5A, # Arm wrist roll state
+  msg_id: 0x5A, # Arm J5 roll feedback — Float, rad
   modules: "only_first",
   length: 4,
   fields: [
-    { name: "wrist_roll_arm_joint", },
+    { name: "wrist_roll_arm_joint" },
   ]
 }
 - {
-  msg_id: 0x80, # Arm base velocity states (P + R)
+  msg_id: 0x5B, # Arm J6 beak setpoint — Int32: 0=close, 1=open
   modules: "only_first",
-  length: 8,
+  length: 4,
+  is_command: true,
   fields: [
-    { name: "base_pitch_arm_joint",  mode: "velocity", },
-    { name: "base_roll_arm_joint", mode: "velocity", offset: 4 },
+    { name: "wrist_roll_arm_joint", type: "command", mode: "position", scale: 1.0 },
   ]
 }
 - {
-  msg_id: 0x81, # Arm elbow velocity state (P)
+  msg_id: 0x5C, # Arm J6 beak feedback — Float, rad (motor position)
   modules: "only_first",
   length: 4,
   fields: [
-    { name: "elbow_pitch_arm_joint", mode: "velocity", },
+    { name: "wrist_roll_arm_joint", type: "state", mode: "position", scale: 1.0 },
   ]
 }
+
+# ── Inter-module joint — MK2 MOD2/MOD3 (0x6X) ──────────────────────────────
+
 - {
-  msg_id: 0x82, # Arm forearm velocity state (R)
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "forearm_roll_arm_joint", mode: "velocity", },
-  ]
-}
-- {
-  msg_id: 0x83, # Arm wrist pitch velocity state
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "wrist_pitch_arm_joint", mode: "velocity", },
-  ]
-}
-- {
-  msg_id: 0x84, # Arm wrist roll velocity state
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "wrist_roll_arm_joint", mode: "velocity", },
-  ]
-}
-- {
-  msg_id: 0x61, # Joint pitch/yaw command
+  msg_id: 0x61, # Joint differential pitch/yaw setpoint — Float×2, rad
   modules: "skip_first",
   length: 8,
   is_command: true,
   fields: [
-    { name: "yaw_joint", type: "command", mode: "position", },
-    { name: "pitch_joint", type: "command", mode: "position", offset: 4, }
+    { name: "yaw_joint",   type: "command", mode: "position" },
+    { name: "pitch_joint", type: "command", mode: "position", offset: 4 },
   ]
 }
 - {
-  msg_id: 0x34, # Joint pitch feedback (from IMU) — Float, radians
-  modules: "skip_first",
-  length: 4,
-  fields: [
-    { name: "pitch_joint", type: "state", mode: "position", scale: 1.0 },
-  ]
-}
-- {
-  msg_id: 0x36, # Joint roll feedback (from IMU) — Float, radians
-  modules: "skip_first",
-  length: 4,
-  fields: [
-    { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
-  ]
-}
-- {
-  msg_id: 0x62, # Joint differential pitch/yaw feedback — Float×2, rad (θ yaw, φ pitch)
+  msg_id: 0x62, # Joint differential pitch/yaw feedback — Float×2, rad
   modules: "skip_first",
   length: 8,
   fields: [
-    { name: "yaw_joint", type: "state", mode: "position", offset: 0, scale: 1.0 },
+    { name: "yaw_joint",   type: "state", mode: "position", offset: 0, scale: 1.0 },
     { name: "pitch_joint", type: "state", mode: "position", offset: 4, scale: 1.0 },
   ]
 }
 - {
-  msg_id: 0x64, # Joint roll feedback (inter-module joint) — Float, radians
+  msg_id: 0x63, # Joint roll setpoint — Float, rad
+  modules: "skip_first",
+  length: 4,
+  is_command: true,
+  fields: [
+    { name: "roll_joint", type: "command", mode: "position", scale: 1.0 },
+  ]
+}
+- {
+  msg_id: 0x64, # Joint roll feedback — Float, rad
   modules: "skip_first",
   length: 4,
   fields: [
     { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
   ]
 }
+
+# ── Status / diagnostics (0x7X) ─────────────────────────────────────────────
+
 - {
-  msg_id: 0x72, # Motor traction error status — uint8[2]: right, left
+  msg_id: 0x72, # Motor traction error status — uint8[2]: right, left (read-only)
   modules: "all",
   length: 2,
+  fields: []
+}
+- {
+  msg_id: 0x73, # Motor arm error status — uint8[7]: J1a…J6 (read-only)
+  modules: "only_first",
+  length: 7,
+  fields: []
+}
+
+# ── Arm velocity states — MK2 MOD1 (0x8X) ───────────────────────────────────
+
+- {
+  msg_id: 0x80, # Arm J1a/J1b velocity — Float×2, rad/s
+  modules: "only_first",
+  length: 8,
   fields: [
-    { name: "right_motor_error", type: "state", mode: "position", offset: 0, data_type: "float32", scale: 1.0 },
-    { name: "left_motor_error",  type: "state", mode: "position", offset: 1, data_type: "float32", scale: 1.0 },
+    { name: "base_pitch_arm_joint", mode: "velocity" },
+    { name: "base_roll_arm_joint",  mode: "velocity", offset: 4 },
+  ]
+}
+- {
+  msg_id: 0x81, # Arm J2 velocity — Float, rad/s
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "elbow_pitch_arm_joint", mode: "velocity" },
+  ]
+}
+- {
+  msg_id: 0x82, # Arm J3 velocity — Float, rad/s
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "forearm_roll_arm_joint", mode: "velocity" },
+  ]
+}
+- {
+  msg_id: 0x83, # Arm J4 velocity — Float, rad/s
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "wrist_pitch_arm_joint", mode: "velocity" },
+  ]
+}
+- {
+  msg_id: 0x84, # Arm J5 velocity — Float, rad/s
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "wrist_roll_arm_joint", mode: "velocity" },
+  ]
+}
+- {
+  msg_id: 0x85, # Arm J6 velocity — Float, rad/s
+  modules: "only_first",
+  length: 4,
+  fields: [
+    { name: "wrist_roll_arm_joint", type: "state", mode: "velocity", scale: 1.0 },
   ]
 }
