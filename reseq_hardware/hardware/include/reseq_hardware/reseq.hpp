@@ -50,6 +50,8 @@ struct JointBuffers
   std::vector<double> velocity;
   std::vector<double> effort;
   std::vector<double> command;
+  std::vector<double> command_velocity;
+  std::vector<uint8_t> command_position_seeded;
 };
 
 /**
@@ -114,7 +116,7 @@ struct CanMessageMapping
 struct JointInfo
 {
   size_t index;                          ///< Index of the joint.
-  std::string cmd_mode;                  ///< Command mode for the joint.
+  std::vector<std::string> cmd_modes;    ///< Supported command modes.
   std::vector<std::string> state_modes;  ///< Supported state modes.
 };
 

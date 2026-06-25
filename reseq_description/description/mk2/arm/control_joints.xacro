@@ -4,6 +4,7 @@
     <joint name="mod1__base_pitch_arm_joint">
         <xacro:unless value="$(arg sim_mode)">
             <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:unless>
         <state_interface name="position">
             <param name="initial_value">0.0</param>
@@ -16,6 +17,7 @@
     <joint name="mod1__base_roll_arm_joint">
         <xacro:unless value="$(arg sim_mode)">
             <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:unless>
         <state_interface name="position">
             <param name="initial_value">0.0</param>
@@ -28,6 +30,7 @@
     <joint name="mod1__elbow_pitch_arm_joint">
         <xacro:unless value="$(arg sim_mode)">
             <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:unless>
         <state_interface name="position">
             <param name="initial_value">0.0</param>
@@ -40,6 +43,7 @@
     <joint name="mod1__forearm_roll_arm_joint">
         <xacro:unless value="$(arg sim_mode)">
             <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:unless>
         <state_interface name="position">
             <param name="initial_value">0.0</param>
@@ -52,6 +56,7 @@
     <joint name="mod1__wrist_pitch_arm_joint">
         <xacro:unless value="$(arg sim_mode)">
             <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:unless>
         <state_interface name="position">
             <param name="initial_value">0.0</param>
@@ -64,6 +69,7 @@
     <joint name="mod1__wrist_roll_arm_joint">
         <xacro:unless value="$(arg sim_mode)">
             <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:unless>
         <state_interface name="position">
             <param name="initial_value">0.0</param>

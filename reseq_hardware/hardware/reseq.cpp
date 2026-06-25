@@ -47,11 +47,13 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
   // Initialise the data structures
   size_t num_joints = info.joints.size();
 
-  // TThe double pointers required by ROS2 control are kept contiguous in memory
+  // The double pointers required by ROS2 control are kept contiguous in memory
   joint_buffers_.position.resize(num_joints, 0.0);
   joint_buffers_.velocity.resize(num_joints, 0.0);
   joint_buffers_.effort.resize(num_joints, 0.0);
   joint_buffers_.command.resize(num_joints, 0.0);
+  joint_buffers_.command_velocity.resize(num_joints, 0.0);
+  joint_buffers_.command_position_seeded.resize(num_joints, 0);
 
   joint_info_.clear();
 
@@ -59,18 +61,18 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
   // Available joints are obtained from the hardware info
   for (size_t i = 0; i < num_joints; i++) {
     const auto & joint = info.joints[i];
-    std::string cmd_if = "none";
 
-    if (!joint.command_interfaces.empty()) {
-      cmd_if = joint.command_interfaces[0].name; // We only support one command interface
-
+    std::vector<std::string> cmd_ifs;
+    for (const auto & cmd_if : joint.command_interfaces) {
+      cmd_ifs.push_back(cmd_if.name);
     }
+
     std::vector<std::string> state_ifs;
     for (const auto & state_if : joint.state_interfaces) {
       state_ifs.push_back(state_if.name);
     }
 
-    joint_info_[joint.name] = JointInfo{i, cmd_if, state_ifs};
+    joint_info_[joint.name] = JointInfo{i, cmd_ifs, state_ifs};
   }
 
   // Parse configuration file for CAN mappings
@@ -266,7 +268,16 @@ hardware_interface::return_type ReseqHardware::read(
         continue;  // TODO: handle TOPICS (TELEMETRY)
 
       }
-      const auto & jinfo = joint_info_.at(field.name);
+      const auto jit = joint_info_.find(field.name);
+      if (jit == joint_info_.end()) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "CAN mapping references unknown joint: %s", field.name.c_str());
+        continue;
+      }
+      const auto & jinfo = jit->second;
 
       double * buffer_ptr = get_state_buffer_ptr(field.mode, jinfo.index);
 
@@ -283,7 +294,12 @@ hardware_interface::return_type ReseqHardware::read(
             "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
         continue;
       }
-      *buffer_ptr = value * field.scale + field.bias;
+      const double scaled_value = value * field.scale + field.bias;
+      *buffer_ptr = scaled_value;
+      if (field.mode == "position" && !joint_buffers_.command_position_seeded[jinfo.index]) {
+        joint_buffers_.command[jinfo.index] = scaled_value;
+        joint_buffers_.command_position_seeded[jinfo.index] = 1;
+      }
     }
   }
 
@@ -305,14 +321,41 @@ hardware_interface::return_type ReseqHardware::write(
     return hardware_interface::return_type::OK;
   }
 
+  const auto elapsed = now - last_write_time_;
+
   // Detect if the control loop is running slower than expected
-  if (now - last_write_time_ > command_cycle_ * 1.2) {
+  if (elapsed > command_cycle_ * 1.2) {
     RCLCPP_WARN_SKIPFIRST(
       rclcpp::get_logger("ReseqHardware"),
       "Control loop slowdown detected");
   }
 
   last_write_time_ = now;
+  const double dt = std::chrono::duration<double>(command_cycle_).count();
+
+  for (const auto & [joint_name, jinfo] : joint_info_) {
+    (void)joint_name;
+    bool has_position_cmd = false;
+    bool has_velocity_cmd = false;
+    for (const auto & cmd_mode : jinfo.cmd_modes) {
+      if (cmd_mode == "position") {
+        has_position_cmd = true;
+      } else if (cmd_mode == "velocity") {
+        has_velocity_cmd = true;
+      }
+    }
+
+    if (has_position_cmd && has_velocity_cmd) {
+      if (!joint_buffers_.command_position_seeded[jinfo.index]) {
+        continue;
+      }
+
+      const double vel_cmd = joint_buffers_.command_velocity[jinfo.index];
+      if (std::abs(vel_cmd) > 1e-6) {
+        joint_buffers_.command[jinfo.index] += vel_cmd * dt;
+      }
+    }
+  }
 
   for (const auto & [can_id, mapping] : can_mappings_) {
     if (!mapping.is_command) {
@@ -321,13 +364,35 @@ hardware_interface::return_type ReseqHardware::write(
 
     // Build the message according to the mapping instructions
     uint8_t data[8] = {0};
+    bool send_message = true;
     for (const auto & field : mapping.fields) {
       if (field.mapping_type != MappingType::JOINT_COMMAND) {
         continue;
       }
 
-      const auto & jinfo = joint_info_.at(field.name);
-      double value = joint_buffers_.command[jinfo.index];
+      const auto jit = joint_info_.find(field.name);
+      if (jit == joint_info_.end()) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "CAN mapping references unknown joint: %s", field.name.c_str());
+        continue;
+      }
+      const auto & jinfo = jit->second;
+      if (field.mode != "velocity" && !joint_buffers_.command_position_seeded[jinfo.index]) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "Skipping unseeded position command for joint: %s", field.name.c_str());
+        send_message = false;
+        break;
+      }
+
+      double value = field.mode == "velocity" ?
+        joint_buffers_.command_velocity[jinfo.index] :
+        joint_buffers_.command[jinfo.index];
       value = (value - field.bias) / field.scale;
 
       if (field.data_type == "float32") {
@@ -340,7 +405,9 @@ hardware_interface::return_type ReseqHardware::write(
       }
     }
 
-    canbus_->send(can_id, data, mapping.length);
+    if (send_message) {
+      canbus_->send(can_id, data, mapping.length);
+    }
   }
   return hardware_interface::return_type::OK;
 }
@@ -384,11 +451,14 @@ std::vector<hardware_interface::CommandInterface> ReseqHardware::export_command_
   // Create command interfaces for each joint with a command mode
   std::vector<hardware_interface::CommandInterface> cmd_ifs;
   for (const auto & [joint_name, jinfo] : joint_info_) {
-    if (jinfo.cmd_mode != "none") {
+    for (const auto & cmd_mode : jinfo.cmd_modes) {
+      double * buffer_ptr = cmd_mode == "velocity" ?
+        &joint_buffers_.command_velocity[jinfo.index] :
+        &joint_buffers_.command[jinfo.index];
       cmd_ifs.emplace_back(
         hardware_interface::CommandInterface(
-          joint_name, jinfo.cmd_mode,
-          &joint_buffers_.command[jinfo.index]));
+          joint_name, cmd_mode,
+          buffer_ptr));
     }
   }
   return cmd_ifs;
