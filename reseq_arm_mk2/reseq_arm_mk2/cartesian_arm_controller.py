@@ -255,6 +255,31 @@ def _forward_progress_is_acceptable(
     return True
 
 
+def _linear_orientation_hold_weight(
+    current_error: float | None,
+    base_weight: float,
+    engage_error: float = 0.9,
+    full_weight_error: float = 0.35,
+) -> float:
+    """Fade the linear-mode orientation hold in only when the arm is close enough.
+
+    On hardware, starting from a heavily folded pose can make a strong orientation
+    secondary task fight the translation task and induce limit cycling. Keeping the
+    hold off until the tool is already roughly forward avoids burning the nullspace
+    budget before the arm has moved away from the startup configuration.
+    """
+    if current_error is None or base_weight <= 0.0:
+        return 0.0
+    if current_error >= engage_error:
+        return 0.0
+    if current_error <= full_weight_error:
+        return float(base_weight)
+
+    span = max(engage_error - full_weight_error, 1e-9)
+    scale = (engage_error - current_error) / span
+    return float(base_weight * np.clip(scale, 0.0, 1.0))
+
+
 def _task_velocity_direction_is_acceptable(
     desired_vel: np.ndarray,
     achieved_vel: np.ndarray,
@@ -1791,6 +1816,10 @@ class CartesianArmController(Node):
             current_rotation = self._get_ee_rotation(solve_q)
             hold_orientation = True
             if current_rotation is not None and hold_orientation:
+                forward_error = _forward_axis_alignment_error(
+                    current_rotation=current_rotation,
+                    desired_rotation=self._forward_rotation,
+                )
                 hold_gain = (
                     self.get_parameter('orientation_hold_gain').get_parameter_value().double_value
                 )
@@ -1807,13 +1836,17 @@ class CartesianArmController(Node):
                     ),
                     max_av,
                 )
-                if orientation_task_weight > 0.0:
+                effective_orientation_weight = _linear_orientation_hold_weight(
+                    current_error=forward_error,
+                    base_weight=orientation_task_weight,
+                )
+                if effective_orientation_weight > 0.0:
                     secondary_jacobian, secondary_vel = _append_secondary_task(
                         secondary_jacobian=secondary_jacobian,
                         secondary_vel=secondary_vel,
                         task_jacobian=J[3:6, :active_dofs],
                         task_vel=angular_vel,
-                        weight=orientation_task_weight,
+                        weight=effective_orientation_weight,
                     )
 
             startup_escape_vel = _linear_startup_escape_velocity(
