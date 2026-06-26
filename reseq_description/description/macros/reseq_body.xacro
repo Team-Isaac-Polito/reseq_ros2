@@ -7,6 +7,8 @@
   <xacro:include filename="$(find reseq_description)/description/macros/wheel.xacro" />
   <xacro:include filename="$(find reseq_description)/description/control/control_macros.xacro" />
   <xacro:include filename="$(find reseq_description)/description/sensors/lidar.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/sensors/imu.xacro" />
+  <xacro:include filename="$(find reseq_description)/description/sensors/encoder.xacro" />
   
   <link name="base_link" />
   <link name="base_footprint" />
@@ -28,13 +30,24 @@
   <xacro:macro name="loop" params="module n_modules">
     <xacro:if value="${module &lt; n_modules}">
       <!-- Create module and following joint -->
-      <xacro:chassis id="${module}"/>
+      <!-- Module 1 is fixed to base_link (merged). Modules 2+ live on joint_p_N_link (revolute, not merged). -->
+      <xacro:if value="${module == 1}">
+        <xacro:chassis id="${module}" physics_link="base_link"/>
+      </xacro:if>
+      <xacro:unless value="${module == 1}">
+        <xacro:chassis id="${module}" physics_link="joint_p_${module}_link"/>
+      </xacro:unless>
       <xacro:chassis_joint_factory id="${module + 1}"/>
       <xacro:loop module="${module + 1}" n_modules="${n_modules}"/>
     </xacro:if>
     <xacro:if value="${module == n_modules}">
       <!-- Create last module -->
-      <xacro:chassis id="${module}"/>
+      <xacro:if value="${module == 1}">
+        <xacro:chassis id="${module}" physics_link="base_link"/>
+      </xacro:if>
+      <xacro:unless value="${module == 1}">
+        <xacro:chassis id="${module}" physics_link="joint_p_${module}_link"/>
+      </xacro:unless>
     </xacro:if>
   </xacro:macro>
 

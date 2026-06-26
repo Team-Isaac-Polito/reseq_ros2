@@ -133,6 +133,31 @@ Visualization Manager:
         Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
+    - Class: rviz_default_plugins/PointCloud2
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: true
+      Name: Point Cloud Map
+      Position Transformer: XYZ
+      Size (m): 0.03
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /ply_map/points
+      Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Name: RGB Camera
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /camera/color/image_raw
+      Value: true
 
   Views:
     Current:

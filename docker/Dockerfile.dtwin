@@ -1,28 +1,115 @@
-# RUN WITH:
-# docker run --rm --net=host -it reseq-dtwin
 # BUILD WITH:
 # docker build -t reseq-dtwin -f src/docker/Dockerfile.dtwin src
+#
+# RUN WITH:
+# xhost +local:docker
+# docker run --rm --net=host --privileged \
+#   -e DISPLAY=$DISPLAY \
+#   -e QT_X11_NO_MITSHM=1 \
+#   -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+#   -e GAZEBO_WORLD=simple_course.world \
+#   -e LAUNCH_SIM=true \
+#   -e LAUNCH_RVIZ=false \
+#   -v /tmp/.X11-unix:/tmp/.X11-unix \
+#   -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \
+#   -it reseq-dtwin
 
-FROM ros:humble-ros-core
+FROM ros:jazzy-ros-base
 
-ARG CONFIG_FILE=reseq_mk2_can.yaml
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ROS_DISTRO=jazzy
 
-RUN apt update && \
-    apt install -y --no-install-recommends python3-rosdep gcc g++ make python3-colcon-common-extensions && \
-    rosdep init
+ARG GAZEBO_LAUNCH_FILE=mk2.launch.py
+ENV GAZEBO_LAUNCH_FILE=${GAZEBO_LAUNCH_FILE}
+ARG GAZEBO_WORLD=simple_course.world
+ENV GAZEBO_WORLD=${GAZEBO_WORLD}
+ARG GAZEBO_SPAWN_X=0.0
+ENV GAZEBO_SPAWN_X=${GAZEBO_SPAWN_X}
+ARG GAZEBO_SPAWN_Y=0.0
+ENV GAZEBO_SPAWN_Y=${GAZEBO_SPAWN_Y}
+ARG GAZEBO_SPAWN_Z=0.0
+ENV GAZEBO_SPAWN_Z=${GAZEBO_SPAWN_Z}
+ARG GAZEBO_MAP_FILE=
+ENV GAZEBO_MAP_FILE=${GAZEBO_MAP_FILE}
+ARG LAUNCH_SIM=true
+ENV LAUNCH_SIM=${LAUNCH_SIM}
+ARG LAUNCH_RVIZ=false
+ENV LAUNCH_RVIZ=${LAUNCH_RVIZ}
 
-RUN mkdir -p /ros2_ws/src/
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    python3-vcstool \
+    ros-jazzy-gz-ros2-control \
+    ros-jazzy-nav2-bringup \
+    ros-jazzy-ros-gz-bridge \
+    ros-jazzy-ros-gz-sim \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-slam-toolbox \
+    ros-jazzy-robot-localization \
+    ros-jazzy-controller-manager \
+    ros-jazzy-diff-drive-controller \
+    ros-jazzy-forward-command-controller \
+    ros-jazzy-joint-state-broadcaster \
+    ros-jazzy-imu-sensor-broadcaster \
+    ros-jazzy-python-orocos-kdl-vendor \
+    ros-jazzy-robot-state-publisher \
+    ros-jazzy-velocity-controllers \
+    ros-jazzy-xacro \
+    ros-jazzy-rqt-tf-tree \
+    f3d \
+    curl \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN rosdep init || true
+
 WORKDIR /ros2_ws
-COPY reseq_interfaces src/reseq_interfaces
-COPY reseq_ros2 src/reseq_ros2
+RUN mkdir -p /ros2_ws/src
 
-ENV SKIP_KEYS "realsense2_camera rplidar_ros image_transport_plugins"
+# ── Flutter SDK (web only) ──────────────────────────────────────────────
+ENV FLUTTER_HOME=/opt/flutter
+ENV PATH="$FLUTTER_HOME/bin:$PATH"
+RUN git clone --depth 1 --branch stable https://github.com/flutter/flutter.git $FLUTTER_HOME \
+    && flutter config --enable-web --no-analytics \
+    && flutter precache --web
 
+# ── Build Flutter web app ───────────────────────────────────────────────
+RUN git clone https://github.com/Team-Isaac-Polito/ros_app /ros2_ws/ros_app
+WORKDIR /ros2_ws/ros_app
+RUN flutter pub get && flutter build web --release
+WORKDIR /ros2_ws
 
-RUN apt update && \
-    rosdep update && \
-    rosdep install -iy --from-path src --rosdistro humble --skip-keys "$SKIP_KEYS" -t exec -t build
-RUN bash -c "source /opt/ros/humble/setup.bash && colcon build --event-handlers console_direct+"
+COPY reseq_interfaces /ros2_ws/src/reseq_interfaces
+COPY reseq_description /ros2_ws/src/reseq_description
+COPY reseq_ros2 /ros2_ws/src/reseq_ros2
+COPY reseq_sim /ros2_ws/src/reseq_sim
+COPY reseq_arm_mk2 /ros2_ws/src/reseq_arm_mk2
 
-ENV CONFIG_FILE=${CONFIG_FILE}
-CMD /bin/bash "-c" "source ./install/local_setup.bash && ros2 launch reseq_ros2 reseq_launch.py sensors:=false config_file:=$CONFIG_FILE"
+ENV GZ_SIM_RESOURCE_PATH=/ros2_ws/src:/ros2_ws/src/reseq_sim/arena
+ENV SKIP_KEYS="computer_vision realsense2_camera apriltag_ros apriltag_msgs rplidar_ros usb_cam v4l-utils reach_ros ros_gz"
+
+RUN /bin/bash -lc 'source /opt/ros/$ROS_DISTRO/setup.bash \
+    && apt-get update \
+    && rosdep update \
+    && rosdep install -iy --from-paths /ros2_ws/src --ignore-src --rosdistro $ROS_DISTRO --skip-keys "$SKIP_KEYS" -t exec -t build \
+    && colcon build --packages-select reseq_interfaces reseq_description reseq_arm_mk2 reseq_ros2 reseq_sim 1_Flat_KRails 2_Sloped_KRails --event-handlers console_direct+'
+
+CMD ["/bin/bash", "-lc", "\
+  source /opt/ros/$ROS_DISTRO/setup.bash; \
+  source /ros2_ws/install/setup.bash; \
+  export GZ_SIM_RESOURCE_PATH=/ros2_ws/src:/ros2_ws/src/reseq_sim/arena:/ros2_ws/install/reseq_sim/share/reseq_sim/arena; \
+  python3 -m http.server 8080 --directory /ros2_ws/ros_app/build/web & \
+  if [ \"$LAUNCH_RVIZ\" = \"true\" ]; then \
+    rviz2 -d /ros2_ws/src/reseq_ros2/config/slam_rviz.yaml & \
+  fi; \
+  MAP_ARG=; \
+  if [ -n \"$GAZEBO_MAP_FILE\" ]; then MAP_ARG=\"map_file:=$GAZEBO_MAP_FILE\"; fi; \
+  if [ \"$LAUNCH_SIM\" = \"true\" ]; then \
+    ros2 launch reseq_sim ${GAZEBO_LAUNCH_FILE} autonomy:=true arm:=true world:=${GAZEBO_WORLD} spawn_x:=${GAZEBO_SPAWN_X} spawn_y:=${GAZEBO_SPAWN_Y} spawn_z:=${GAZEBO_SPAWN_Z} $MAP_ARG; \
+  else \
+    echo 'Sim launch skipped (LAUNCH_SIM=false). Container is running.'; \
+    tail -f /dev/null; \
+  fi"]

@@ -16,7 +16,14 @@
   <exec_depend>reseq_interfaces</exec_depend>
   <exec_depend>computer_vision</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
 
   <exec_depend>realsense2_camera</exec_depend>
   <exec_depend>apriltag_ros</exec_depend>

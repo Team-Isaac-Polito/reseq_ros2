@@ -11,7 +11,7 @@ setup(
     data_files=[
         (f'share/{package_name}/launch', glob('launch/*launch.py')),
         (f'share/{package_name}/worlds', glob('worlds/*.world')),
-        (f'share/{package_name}/config', glob('config/*.yaml')),
+        (f'share/{package_name}/config', glob('config/*.yaml') + glob('config/*.xml')),
         (f'share/{package_name}/scripts', glob('scripts/*.py')),
         (f'share/{package_name}/description', glob('description/*.xacro')),
         (f'share/{package_name}/description/macros', glob('description/macros/*.xacro')),
@@ -29,6 +29,8 @@ setup(
     entry_points={
         'console_scripts': [
             'agevar = reseq_ros2.agevar:main',
+            'autonomy_coordinator = reseq_ros2.autonomy_coordinator:main',
+            'cmd_vel_mux = reseq_ros2.cmd_vel_mux:main',
             'scaler = reseq_ros2.scaler:main',
             'rcemu = reseq_ros2.rcemu:main',
             'detector = reseq_ros2.detector:main',
@@ -36,6 +38,9 @@ setup(
             'thermal_node = reseq_ros2.thermal_node:main',
             'app_gateway = reseq_ros2.app_gateway:main',
             'thermal_pointcloud_fusion = reseq_ros2.thermal_pointcloud_fusion:main',
+            'user_path_publisher = reseq_ros2.user_path_publisher:main',
+            'ply_saver = reseq_ros2.ply_saver:main',
+            'map_republisher = reseq_ros2.map_republisher:main',
         ],
     },
 )

@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, EmitEvent, OpaqueFunction
 from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -42,7 +42,7 @@ def launch_setup(context, *args, **kwargs):
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
         )
     )
     launch_config.append(
@@ -57,7 +57,7 @@ def launch_setup(context, *args, **kwargs):
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
         )
     )
 
@@ -71,12 +71,17 @@ def launch_setup(context, *args, **kwargs):
                     'r_linear_vel': config['scaler_consts']['r_linear_vel'],
                     'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
                     'r_angular_vel': config['scaler_consts']['r_angular_vel'],
+                    'arm_input_scale': config['scaler_consts'].get('arm_input_scale', 1.0),
+                    'arm_input_deadzone': config['scaler_consts'].get('arm_input_deadzone', 0.08),
+                    'arm_vel_topic': config['scaler_consts'].get(
+                        'arm_vel_topic', '/mk2_arm_vel_scaled'
+                    ),
                     'version': config['version'],
                     'use_sim_time': use_sim_time,
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
         )
     )
 

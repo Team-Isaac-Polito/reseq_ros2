@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!--
+    AMS AS5048B magnetic absolute encoder macro for each inter-module yaw joint.
+    Physical encoder: AMS AS5048B (14-bit, I2C, 16384 positions/revolution)
+    Resolution: 0.0219°/step (0.000383 rad/step)
+    Noise: ~0.05° RMS (0.000873 rad RMS)
+    Mounted at the yaw joint between consecutive modules.
+
+    TODO: Verify exact mounting position and orientation of the encoder body
+          and magnet relative to the yaw joint centre with the embedded/mechanics
+          area.
+          Current placement: centred at the yaw joint origin (joint_y_${id}_link).
+
+    @param id:           joint id (2-based: 2 = joint between mod1 and mod2, etc.)
+    @param physics_link: non-fixed Gazebo link to attach the sensor visual to.
+                         Should be joint_y_${id}_link for each inter-module joint.
+  -->
+  <xacro:macro name="absolute_encoder" params="id physics_link">
+
+    <joint name="encoder${id}_joint" type="fixed">
+      <parent link="${physics_link}"/>
+      <child link="encoder${id}_link"/>
+      <!-- TODO: Verify exact position relative to yaw joint centre.
+                 Placed at yaw joint origin for now; adjust once hardware is measured. -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="encoder${id}_link">
+      <visual>
+        <geometry>
+          <box size="0.007 0.007 0.001"/>
+        </geometry>
+        <material name="EncoderColor"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.007 0.007 0.001"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.002"/>
+        <inertia ixx="1e-8" ixy="0" ixz="0" iyy="1e-8" iyz="0" izz="1e-8"/>
+      </inertial>
+    </link>
+
+    <gazebo reference="${physics_link}">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+
+  </xacro:macro>
+
+  <!-- Rviz material colour for the encoder IC -->
+  <material name="EncoderColor">
+    <color rgba="0.0 0.2 0.6 1"/>
+  </material>
+
+</robot>

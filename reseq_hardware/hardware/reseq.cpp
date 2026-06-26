@@ -1,4 +1,5 @@
 #include "reseq_hardware/reseq.hpp"
+#include <cmath>                                 // for M_PI
 #include <stddef.h>                              // for size_t
 #include <ratio>                                 // for ratio
 #include <rclcpp/clock.hpp>                      // for Clock::SharedPtr
@@ -46,11 +47,13 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
   // Initialise the data structures
   size_t num_joints = info.joints.size();
 
-  // TThe double pointers required by ROS2 control are kept contiguous in memory
+  // The double pointers required by ROS2 control are kept contiguous in memory
   joint_buffers_.position.resize(num_joints, 0.0);
   joint_buffers_.velocity.resize(num_joints, 0.0);
   joint_buffers_.effort.resize(num_joints, 0.0);
   joint_buffers_.command.resize(num_joints, 0.0);
+  joint_buffers_.command_velocity.resize(num_joints, 0.0);
+  joint_buffers_.command_position_seeded.resize(num_joints, 0);
 
   joint_info_.clear();
 
@@ -58,22 +61,44 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
   // Available joints are obtained from the hardware info
   for (size_t i = 0; i < num_joints; i++) {
     const auto & joint = info.joints[i];
-    std::string cmd_if = "none";
 
-    if (!joint.command_interfaces.empty()) {
-      cmd_if = joint.command_interfaces[0].name; // We only support one command interface
-
+    std::vector<std::string> cmd_ifs;
+    for (const auto & cmd_if : joint.command_interfaces) {
+      cmd_ifs.push_back(cmd_if.name);
     }
+
     std::vector<std::string> state_ifs;
     for (const auto & state_if : joint.state_interfaces) {
       state_ifs.push_back(state_if.name);
     }
 
-    joint_info_[joint.name] = JointInfo{i, cmd_if, state_ifs};
+    joint_info_[joint.name] = JointInfo{i, cmd_ifs, state_ifs};
   }
 
   // Parse configuration file for CAN mappings
   parse_config_file(config_file_);
+
+  // Parse IMU sensors declared in the ros2_control URDF block
+  // Expected sensor names: "imu1", "imu2", etc. (1-based module index)
+  const size_t num_sensors = info.sensors.size();
+  sensor_buffers_.orientation.resize(num_sensors * 4, 0.0);
+  sensor_buffers_.angular_velocity.resize(num_sensors * 3, 0.0);
+  sensor_buffers_.linear_acceleration.resize(num_sensors * 3, 0.0);
+  // Initialise all orientations to identity quaternion (w = 1, x = y = z = 0)
+  for (size_t i = 0; i < num_sensors; i++) {
+    sensor_buffers_.orientation[i * 4 + 3] = 1.0;
+  }
+  sensor_info_.clear();
+  for (size_t i = 0; i < num_sensors; i++) {
+    const auto & sensor = info.sensors[i];
+    // Strip the "imu" prefix to get the 1-based module index
+    const uint8_t mod_idx = static_cast<uint8_t>(std::stoul(sensor.name.substr(3)));
+    const uint8_t mod_id = idx_to_mod(mod_idx, mk_version_);
+    sensor_info_[sensor.name] = ImuSensorInfo{i, mod_id};
+    RCLCPP_INFO(
+      rclcpp::get_logger("ReseqHardware"),
+      "Registered IMU sensor: %s (mod_id=0x%02X)", sensor.name.c_str(), mod_id);
+  }
 
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -191,6 +216,38 @@ hardware_interface::return_type ReseqHardware::read(
       continue;
     }
 
+    // Handle raw IMU CAN messages (0x92 accel, 0x93 gyro) from ISM330DLC / LSM6DSL
+    // Format: 6 bytes = 3 × int16_t little-endian (x, y, z)
+    // Sensitivity: accel 0.061 mg/LSB at ±2g; gyro 0.004375 dps/LSB at 125dps
+    if (snap.id.msg_id == IMU_RAW_ACCEL || snap.id.msg_id == IMU_RAW_GYRO) {
+      if (snap.size >= 6) {
+        const uint8_t mod_idx = (snap.id.mod_id - static_cast<uint8_t>(mk_version_ * 0x10)) & 0x0F;
+        const std::string sensor_name = "imu" + std::to_string(mod_idx);
+        const auto it = sensor_info_.find(sensor_name);
+        if (it != sensor_info_.end()) {
+          int16_t rx, ry, rz;
+          std::memcpy(&rx, snap.data + 0, sizeof(int16_t));
+          std::memcpy(&ry, snap.data + 2, sizeof(int16_t));
+          std::memcpy(&rz, snap.data + 4, sizeof(int16_t));
+          const size_t idx = it->second.index;
+          if (snap.id.msg_id == IMU_RAW_ACCEL) {
+            // 0.061 mg/LSB × 1e-3 g/mg × 9.80665 m/s²/g
+            constexpr double ACCEL_SCALE = 0.061e-3 * 9.80665;
+            sensor_buffers_.linear_acceleration[idx * 3 + 0] = rx * ACCEL_SCALE;
+            sensor_buffers_.linear_acceleration[idx * 3 + 1] = ry * ACCEL_SCALE;
+            sensor_buffers_.linear_acceleration[idx * 3 + 2] = rz * ACCEL_SCALE;
+          } else {
+            // 0.004375 dps/LSB × π/180 rad/dps
+            const double GYRO_SCALE = 0.004375 * M_PI / 180.0;
+            sensor_buffers_.angular_velocity[idx * 3 + 0] = rx * GYRO_SCALE;
+            sensor_buffers_.angular_velocity[idx * 3 + 1] = ry * GYRO_SCALE;
+            sensor_buffers_.angular_velocity[idx * 3 + 2] = rz * GYRO_SCALE;
+          }
+        }
+      }
+      continue;
+    }
+
     // We identify the mapping for this CAN ID to decode the payload
     const auto & map_it = can_mappings_.find(snap.id);
 
@@ -211,7 +268,16 @@ hardware_interface::return_type ReseqHardware::read(
         continue;  // TODO: handle TOPICS (TELEMETRY)
 
       }
-      const auto & jinfo = joint_info_.at(field.name);
+      const auto jit = joint_info_.find(field.name);
+      if (jit == joint_info_.end()) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "CAN mapping references unknown joint: %s", field.name.c_str());
+        continue;
+      }
+      const auto & jinfo = jit->second;
 
       double * buffer_ptr = get_state_buffer_ptr(field.mode, jinfo.index);
 
@@ -228,7 +294,12 @@ hardware_interface::return_type ReseqHardware::read(
             "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
         continue;
       }
-      *buffer_ptr = value * field.scale + field.bias;
+      const double scaled_value = value * field.scale + field.bias;
+      *buffer_ptr = scaled_value;
+      if (field.mode == "position" && !joint_buffers_.command_position_seeded[jinfo.index]) {
+        joint_buffers_.command[jinfo.index] = scaled_value;
+        joint_buffers_.command_position_seeded[jinfo.index] = 1;
+      }
     }
   }
 
@@ -250,14 +321,41 @@ hardware_interface::return_type ReseqHardware::write(
     return hardware_interface::return_type::OK;
   }
 
+  const auto elapsed = now - last_write_time_;
+
   // Detect if the control loop is running slower than expected
-  if (now - last_write_time_ > command_cycle_ * 1.2) {
+  if (elapsed > command_cycle_ * 1.2) {
     RCLCPP_WARN_SKIPFIRST(
       rclcpp::get_logger("ReseqHardware"),
       "Control loop slowdown detected");
   }
 
   last_write_time_ = now;
+  const double dt = std::chrono::duration<double>(command_cycle_).count();
+
+  for (const auto & [joint_name, jinfo] : joint_info_) {
+    (void)joint_name;
+    bool has_position_cmd = false;
+    bool has_velocity_cmd = false;
+    for (const auto & cmd_mode : jinfo.cmd_modes) {
+      if (cmd_mode == "position") {
+        has_position_cmd = true;
+      } else if (cmd_mode == "velocity") {
+        has_velocity_cmd = true;
+      }
+    }
+
+    if (has_position_cmd && has_velocity_cmd) {
+      if (!joint_buffers_.command_position_seeded[jinfo.index]) {
+        continue;
+      }
+
+      const double vel_cmd = joint_buffers_.command_velocity[jinfo.index];
+      if (std::abs(vel_cmd) > 1e-6) {
+        joint_buffers_.command[jinfo.index] += vel_cmd * dt;
+      }
+    }
+  }
 
   for (const auto & [can_id, mapping] : can_mappings_) {
     if (!mapping.is_command) {
@@ -266,13 +364,35 @@ hardware_interface::return_type ReseqHardware::write(
 
     // Build the message according to the mapping instructions
     uint8_t data[8] = {0};
+    bool send_message = true;
     for (const auto & field : mapping.fields) {
       if (field.mapping_type != MappingType::JOINT_COMMAND) {
         continue;
       }
 
-      const auto & jinfo = joint_info_.at(field.name);
-      double value = joint_buffers_.command[jinfo.index];
+      const auto jit = joint_info_.find(field.name);
+      if (jit == joint_info_.end()) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "CAN mapping references unknown joint: %s", field.name.c_str());
+        continue;
+      }
+      const auto & jinfo = jit->second;
+      if (field.mode != "velocity" && !joint_buffers_.command_position_seeded[jinfo.index]) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "Skipping unseeded position command for joint: %s", field.name.c_str());
+        send_message = false;
+        break;
+      }
+
+      double value = field.mode == "velocity" ?
+        joint_buffers_.command_velocity[jinfo.index] :
+        joint_buffers_.command[jinfo.index];
       value = (value - field.bias) / field.scale;
 
       if (field.data_type == "float32") {
@@ -285,7 +405,9 @@ hardware_interface::return_type ReseqHardware::write(
       }
     }
 
-    canbus_->send(can_id, data, mapping.length);
+    if (send_message) {
+      canbus_->send(can_id, data, mapping.length);
+    }
   }
   return hardware_interface::return_type::OK;
 }
@@ -307,6 +429,20 @@ std::vector<hardware_interface::StateInterface> ReseqHardware::export_state_inte
           buffer_ptr));
     }
   }
+  // Add IMU sensor state interfaces (10 interfaces per sensor)
+  for (const auto & [sensor_name, sinfo] : sensor_info_) {
+    const size_t idx = sinfo.index;
+    state_ifs.emplace_back(sensor_name, "orientation.x",         &sensor_buffers_.orientation[idx * 4 + 0]);
+    state_ifs.emplace_back(sensor_name, "orientation.y",         &sensor_buffers_.orientation[idx * 4 + 1]);
+    state_ifs.emplace_back(sensor_name, "orientation.z",         &sensor_buffers_.orientation[idx * 4 + 2]);
+    state_ifs.emplace_back(sensor_name, "orientation.w",         &sensor_buffers_.orientation[idx * 4 + 3]);
+    state_ifs.emplace_back(sensor_name, "angular_velocity.x",    &sensor_buffers_.angular_velocity[idx * 3 + 0]);
+    state_ifs.emplace_back(sensor_name, "angular_velocity.y",    &sensor_buffers_.angular_velocity[idx * 3 + 1]);
+    state_ifs.emplace_back(sensor_name, "angular_velocity.z",    &sensor_buffers_.angular_velocity[idx * 3 + 2]);
+    state_ifs.emplace_back(sensor_name, "linear_acceleration.x", &sensor_buffers_.linear_acceleration[idx * 3 + 0]);
+    state_ifs.emplace_back(sensor_name, "linear_acceleration.y", &sensor_buffers_.linear_acceleration[idx * 3 + 1]);
+    state_ifs.emplace_back(sensor_name, "linear_acceleration.z", &sensor_buffers_.linear_acceleration[idx * 3 + 2]);
+  }
   return state_ifs;
 }
 
@@ -315,11 +451,14 @@ std::vector<hardware_interface::CommandInterface> ReseqHardware::export_command_
   // Create command interfaces for each joint with a command mode
   std::vector<hardware_interface::CommandInterface> cmd_ifs;
   for (const auto & [joint_name, jinfo] : joint_info_) {
-    if (jinfo.cmd_mode != "none") {
+    for (const auto & cmd_mode : jinfo.cmd_modes) {
+      double * buffer_ptr = cmd_mode == "velocity" ?
+        &joint_buffers_.command_velocity[jinfo.index] :
+        &joint_buffers_.command[jinfo.index];
       cmd_ifs.emplace_back(
         hardware_interface::CommandInterface(
-          joint_name, jinfo.cmd_mode,
-          &joint_buffers_.command[jinfo.index]));
+          joint_name, cmd_mode,
+          buffer_ptr));
     }
   }
   return cmd_ifs;

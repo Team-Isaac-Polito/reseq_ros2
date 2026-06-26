@@ -2,15 +2,9 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    EmitEvent,
-    ExecuteProcess,
-    IncludeLaunchDescription,
-    LogInfo,
-    OpaqueFunction,
-    RegisterEventHandler,
-)
+from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
+                            IncludeLaunchDescription, LogInfo, OpaqueFunction,
+                            RegisterEventHandler)
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.launch_description_sources import (
@@ -38,11 +32,21 @@ def launch_setup(context, *args, **kwargs):
     # add optional nodes for sensors
     sensors_enabled = LaunchConfiguration('sensors').perform(context)
     digital_twin_enabled = LaunchConfiguration('d_twin').perform(context)
+    autonomy_enabled = LaunchConfiguration('autonomy').perform(context)
+    map_file = LaunchConfiguration('map_file').perform(context).strip()
+    use_static_map = bool(map_file)
+    spawn_x = LaunchConfiguration('spawn_x').perform(context)
+    spawn_y = LaunchConfiguration('spawn_y').perform(context)
 
     # use simulation time: should only be used with gazebo that's why default value is 'false'
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     sim_mode = LaunchConfiguration('sim_mode').perform(context)
-
+    use_moveit = LaunchConfiguration('use_moveit').perform(context)
+    launch_yaw_controllers = LaunchConfiguration('launch_yaw_controllers').perform(context)
+    arm_max_cartesian_vel = LaunchConfiguration('arm_max_cartesian_vel').perform(context)
+    arm_max_angular_vel = LaunchConfiguration('arm_max_angular_vel').perform(context)
+    arm_max_joint_vel = LaunchConfiguration('arm_max_joint_vel').perform(context)
+    arm_robot_forward_rpy = LaunchConfiguration('arm_robot_forward_rpy').perform(context)
     arm_arg = LaunchConfiguration('arm').perform(context=context)
     arm = True if arm_arg == 'true' else False
 
@@ -61,6 +65,8 @@ def launch_setup(context, *args, **kwargs):
             }.items(),
         )
     )
+
+    has_scan_pipeline = sensors_enabled == 'true' or use_sim_time == 'true'
 
     # Sensor launch file
     if sensors_enabled == 'true':
@@ -99,55 +105,69 @@ def launch_setup(context, *args, **kwargs):
                 print(f'Warning: computer_vision package not found: {e}')
                 pass
 
-        # SLAM launch (requires RPLIDAR from sensors)
-        slam_enabled = LaunchConfiguration('slam').perform(context)
-        if slam_enabled == 'true':
-            slam_mode = LaunchConfiguration('slam_mode').perform(context)
-            slam_launch_file = os.path.join(
-                get_package_share_directory('reseq_ros2'), 'launch', 'slam_launch.py'
-            )
-            launch_config.append(
-                IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(slam_launch_file),
-                    launch_arguments={
-                        'slam_mode': slam_mode,
-                        'use_sim_time': use_sim_time,
-                    }.items(),
-                )
-            )
-
-    if digital_twin_enabled == 'true':
-        # Digital twin launch file
-        digital_twin_launch_file = os.path.join(
-            get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py'
+    slam_enabled = LaunchConfiguration('slam').perform(context)
+    if (
+        has_scan_pipeline
+        and not use_static_map
+        and (slam_enabled == 'true' or autonomy_enabled == 'true')
+    ):
+        slam_mode = LaunchConfiguration('slam_mode').perform(context)
+        slam_launch_file = os.path.join(
+            get_package_share_directory('reseq_ros2'), 'launch', 'slam_launch.py'
         )
         launch_config.append(
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(digital_twin_launch_file),
+                PythonLaunchDescriptionSource(slam_launch_file),
                 launch_arguments={
-                    'version': version,
-                    'config_file': config_filename,
-                    'arm': arm_arg,
-                    'log_level': log_level,
-                    'external_log_level': external_log_level,
-                    'use_sim_time': use_sim_time,
-                    'sim_mode': sim_mode,
-                }.items(),
-            )
-        )
-
-    if arm:
-        arm_launch_file = os.path.join(
-            get_package_share_directory('reseq_arm_mk2'), 'launch', 'arm.launch.py'
-        )
-        launch_config.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(arm_launch_file),
-                launch_arguments={
+                    'slam_mode': slam_mode,
                     'use_sim_time': use_sim_time,
                 }.items(),
             )
         )
+
+    if has_scan_pipeline and autonomy_enabled == 'true':
+        autonomy_launch_file = os.path.join(
+            get_package_share_directory('reseq_ros2'), 'launch', 'autonomy_launch.py'
+        )
+        launch_config.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(autonomy_launch_file),
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
+                    'map_file': map_file,
+                    'spawn_x': spawn_x,
+                    'spawn_y': spawn_y,
+                    'wait_for_odom': 'true' if sim_mode == 'true' else 'false',
+                }.items(),
+            )
+        )
+
+    # The digital_twin launch owns robot_description and ros2_control setup.
+    # In Gazebo it publishes the full MK2 model and lets gz_ros2_control provide
+    # /controller_manager; on hardware it starts ros2_control_node directly.
+    digital_twin_launch_file = os.path.join(
+        get_package_share_directory('reseq_ros2'), 'launch', 'digital_twin_launch.py'
+    )
+    launch_config.append(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(digital_twin_launch_file),
+            launch_arguments={
+                'version': version,
+                'config_file': config_filename,
+                'arm': arm_arg,
+                'log_level': log_level,
+                'external_log_level': external_log_level,
+                'use_sim_time': use_sim_time,
+                'sim_mode': sim_mode,
+                'arm_max_cartesian_vel': arm_max_cartesian_vel,
+                'arm_max_angular_vel': arm_max_angular_vel,
+                'arm_max_joint_vel': arm_max_joint_vel,
+                'arm_robot_forward_rpy': arm_robot_forward_rpy,
+                'use_moveit': use_moveit,
+                'launch_yaw_controllers': launch_yaw_controllers,
+            }.items(),
+        )
+    )
 
     # App launch file
     app_enabled = LaunchConfiguration('app').perform(context)
@@ -181,6 +201,10 @@ def generate_config_setup(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
     no_body_controllers = LaunchConfiguration('no_body_controllers').perform(context)
     no_arm_controllers = LaunchConfiguration('no_arm_controllers').perform(context)
+    arm_arg = LaunchConfiguration('arm').perform(context)
+
+    if arm_arg == 'false':
+        no_arm_controllers = 'true'
 
     cmd = [
         'python3',
@@ -257,6 +281,26 @@ def generate_launch_description():
                 description='SLAM mode: mapping (new map) or localization (existing map)',
             ),
             DeclareLaunchArgument(
+                'autonomy',
+                default_value='false',
+                description='Enable autonomous navigation and frontier exploration',
+            ),
+            DeclareLaunchArgument(
+                'map_file',
+                default_value='',
+                description='Optional static map yaml file for navigation without SLAM',
+            ),
+            DeclareLaunchArgument(
+                'spawn_x',
+                default_value='0.0',
+                description='Robot spawn x position used to align simulated static maps',
+            ),
+            DeclareLaunchArgument(
+                'spawn_y',
+                default_value='0.0',
+                description='Robot spawn y position used to align simulated static maps',
+            ),
+            DeclareLaunchArgument(
                 'log_level', default_value='info', description='Set log level for reseq nodes'
             ),
             DeclareLaunchArgument(
@@ -272,6 +316,28 @@ def generate_launch_description():
             # this argument is passed as 'true' by sim_launch.py file
             DeclareLaunchArgument('use_sim_time', default_value='false'),
             DeclareLaunchArgument('sim_mode', default_value='false'),
+            DeclareLaunchArgument(
+                'arm_max_cartesian_vel',
+                default_value='0.8',
+                description='Cartesian velocity scale for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_max_angular_vel',
+                default_value='2.4',
+                description='Angular velocity scale for arm rotation mode',
+            ),
+            DeclareLaunchArgument(
+                'arm_max_joint_vel',
+                default_value='1.6',
+                description='Joint velocity clamp for the arm controller',
+            ),
+            DeclareLaunchArgument(
+                'arm_robot_forward_rpy',
+                default_value='0.0 0.0 0.0',
+                description='Fixed robot-forward tool orientation RPY relative to arm_base_link',
+            ),
+            DeclareLaunchArgument('use_moveit', default_value='false'),
+            DeclareLaunchArgument('launch_yaw_controllers', default_value='false'),
             DeclareLaunchArgument('no_body_controllers', default_value='false'),
             DeclareLaunchArgument('no_arm_controllers', default_value='false'),
             OpaqueFunction(function=generate_config_setup),

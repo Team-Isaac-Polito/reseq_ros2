@@ -16,19 +16,25 @@
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
 
-- ros_topic_name: "rgbd_camera/points"
+- ros_topic_name: "/camera/depth/color/points"
   gz_topic_name: "rgbd_camera/points"
   ros_type_name: "sensor_msgs/msg/PointCloud2"
   gz_type_name: "gz.msgs.PointCloudPacked"
   direction: GZ_TO_ROS
 
-- ros_topic_name: "rgbd_camera/image"
+- ros_topic_name: "/camera/color/image_raw"
   gz_topic_name: "rgbd_camera/image"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
 
-- ros_topic_name: "thermal_camera"
+- ros_topic_name: "/camera/aligned_depth_to_color/image_raw"
+  gz_topic_name: "rgbd_camera/depth_image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/thermal/image_raw"
   gz_topic_name: "thermal_camera"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"

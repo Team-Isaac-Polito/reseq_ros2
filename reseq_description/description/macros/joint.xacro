@@ -14,9 +14,10 @@
       <parent link="chassis${id-1}_link" />
       <child link="joint_r_${id}_link" />
       <!-- Effort in Nm -->
-      <limit effort="2.0" lower="${-roll}" upper="${roll}" velocity="0.5" />
+      <limit effort="7.0" lower="${-roll}" upper="${roll}" velocity="3.14" />
       <origin xyz="-${WheelBase/2} 0 0" rpy="0 0 0" />
       <axis xyz="1 0 0" />
+      <dynamics damping="0.5" friction="0.1" />
     </joint>
 
     <link name="joint_r_${id}_link">
@@ -47,9 +48,10 @@
       <parent link="joint_r_${id}_link" />
       <child link="joint_y_${id}_link" />
       <!-- Effort in Nm -->
-      <limit effort="20.0" lower="${-yaw}" upper="${yaw}" velocity="0.5" />
+      <limit effort="7.0" lower="${-yaw}" upper="${yaw}" velocity="3.14" />
       <origin xyz="-${JointB} 0 0" rpy="0 0 0" />
       <axis xyz="0 0 1" />
+      <dynamics damping="0.5" friction="0.1" />
     </joint>
 
     <link name="joint_y_${id}_link">
@@ -91,9 +93,10 @@
       <parent link="joint_y_${id}_link" />
       <child link="joint_p_${id}_link" />
       <!-- Effort in Nm -->
-      <limit effort="20.0" lower="${-pitch}" upper="${pitch}" velocity="0.5" />
+      <limit effort="7.0" lower="${-pitch}" upper="${pitch}" velocity="3.14" />
       <origin xyz="${-JointA} 0 0" rpy="0 0 0" />
       <axis xyz="0 1 0" />
+      <dynamics damping="0.5" friction="0.1" />
     </joint>
 
     <link name="joint_p_${id}_link">
@@ -118,6 +121,9 @@
       <child link="chassis${id}_link" />
       <origin xyz="${-WheelBase/2} 0 0" rpy="0 0 0" />
     </joint>
+
+    <!-- AMS AS5048B encoder measuring the yaw angle of this inter-module joint.-->
+    <xacro:absolute_encoder id="${id}" physics_link="joint_y_${id}_link" />
 
   </xacro:macro>
 

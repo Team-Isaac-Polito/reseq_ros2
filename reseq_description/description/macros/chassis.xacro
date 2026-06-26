@@ -5,7 +5,7 @@
 
     @param id: the id of the chassis (starting from 1)
   -->
-  <xacro:macro name="chassis" params="id">
+  <xacro:macro name="chassis" params="id physics_link">
 
     <link name="chassis${id}_link">
       <xacro:replicate_collision>
@@ -38,6 +38,9 @@
     <xacro:wheel_factory id="${id}" pos="front" side="right" />
     <xacro:wheel_factory id="${id}" pos="back" side="left" />
     <xacro:wheel_factory id="${id}" pos="back" side="right" />
+
+    <!-- IMU (STEVAL-MKI178V2 / ISM330DLC) on each chassis module -->
+    <xacro:imu_sensor id="${id}" physics_link="${physics_link}" />
 
   </xacro:macro>
 

@@ -1,0 +1,32 @@
+cmd_vel_mux:
+  ros__parameters:
+    use_sim_time: true
+    output_topic: /cmd_vel
+    teleop_topic: /cmd_vel_teleop
+    nav_topic: /cmd_vel_nav
+    autonomy_topic: /autonomy/enabled
+    status_topic: /autonomy/cmd_source
+    health_topic: /autonomy/health
+    teleop_override_timeout: 0.8
+    nav_timeout: 0.8
+    publish_rate: 20.0
+    manual_override_deadband: 0.15
+    require_scan_for_autonomy: true
+    require_map_for_autonomy: true
+    scan_timeout: 1.5
+    map_timeout: 3.0
+
+autonomy_coordinator:
+  ros__parameters:
+    use_sim_time: true
+    enabled_topic: /autonomy/enabled
+    status_topic: /autonomy/explorer_status
+    planned_path_topic: /autonomy/planned_path
+    user_path_topic: /autonomy/user_path
+    detection_service: /detection/set_mode
+    target_frame: map
+    robot_frame: base_link
+    loop_period: 2.0
+    goal_tolerance: 0.15
+    goal_timeout: 90.0
+    pause_on_detection: false

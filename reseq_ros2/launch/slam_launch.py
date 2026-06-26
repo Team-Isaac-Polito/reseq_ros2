@@ -2,6 +2,9 @@
 
 Uses online async mode by default. Pass ``slam_mode:=localization`` to
 localise on an existing map instead of building a new one.
+
+In mapping mode, also launches the ply_saver node which accumulates
+colored PointCloud2 frames from the RGBD camera into reseq_map_3d.ply.
 """
 
 import os
@@ -9,8 +12,8 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import LaunchConfigurationEquals
-from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
 
@@ -22,7 +25,9 @@ def generate_launch_description():
         'slam_mode',
         default_value='mapping',
         choices=['mapping', 'localization'],
-        description='SLAM mode: mapping (build new map) or localization (localise on existing map)',
+        description=(
+            'SLAM mode: mapping (build new map) or localization (localise on an existing map)'
+        ),
     )
 
     params_arg = DeclareLaunchArgument(
@@ -32,12 +37,21 @@ def generate_launch_description():
     )
 
     use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='false')
+    ply_save_path_arg = DeclareLaunchArgument(
+        'ply_save_path',
+        default_value=os.environ.get('RESEQ_PLY_SAVE_PATH', '/ros2_ws/maps'),
+        description='Directory where ply_saver writes the 3D map',
+    )
 
     slam_node = Node(
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
         output='screen',
+        remappings=[
+            ('/map', '/slam_map'),
+            ('/map_metadata', '/slam_map_metadata'),
+        ],
         parameters=[
             LaunchConfiguration('slam_params_file'),
             {
@@ -47,11 +61,72 @@ def generate_launch_description():
         ],
     )
 
+    map_republisher_node = Node(
+        package='reseq_ros2',
+        executable='map_republisher',
+        name='map_republisher',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'input_topic': '/slam_map',
+                'output_topic': '/map',
+                'metadata_topic': '/map_metadata',
+                'publish_rate': 1.0,
+            }
+        ],
+    )
+
+    lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_slam',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'autostart': True,
+                'bond_timeout': 0.0,
+                'node_names': ['slam_toolbox'],
+            }
+        ],
+    )
+
+    # ply_saver: accumulates colored PointCloud2 frames into a PLY map.
+    ply_saver_node = Node(
+        package='reseq_ros2',
+        executable='ply_saver',
+        name='ply_saver',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'pointcloud_topic': '/camera/depth/color/points',
+                'save_path': LaunchConfiguration('ply_save_path'),
+                'save_interval': 60.0,
+                'voxel_size': 0.05,
+                'frame_skip': 5,
+                'max_range': 10.0,
+                'scan_topic': '/scan',
+                'scan_frame_skip': 2,
+                'scan_max_range': 12.0,
+                'scan_color_rgb': [255, 210, 0],
+            }
+        ],
+        condition=IfCondition(
+            PythonExpression(["'", LaunchConfiguration('slam_mode'), "' == 'mapping'"])
+        ),
+    )
+
     return LaunchDescription(
         [
             slam_mode_arg,
             params_arg,
             use_sim_time_arg,
+            ply_save_path_arg,
             slam_node,
+            map_republisher_node,
+            lifecycle_manager,
+            ply_saver_node,
         ]
     )
