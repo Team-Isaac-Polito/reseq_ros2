@@ -370,6 +370,10 @@ hardware_interface::return_type ReseqHardware::write(
     // If the joint has both position and velocity command interfaces,
     // integrate the velocity command into the position command buffer.
     if (has_velocity_cmd && has_position_cmd) {
+      if (!joint_buffers_.command_position_seeded[jinfo.index]) {
+        continue;
+      }
+
       const double vel_cmd = joint_buffers_.command_velocity[jinfo.index];
       if (std::abs(vel_cmd) > 1e-6) {
         joint_buffers_.command[jinfo.index] += vel_cmd * dt;

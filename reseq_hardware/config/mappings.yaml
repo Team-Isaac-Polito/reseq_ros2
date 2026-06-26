@@ -142,23 +142,6 @@
     { name: "wrist_roll_arm_joint" },
   ]
 }
-- {
-  msg_id: 0x5B, # Arm J6 beak setpoint — Int32: 0=close, 1=open
-  modules: "only_first",
-  length: 4,
-  is_command: true,
-  fields: [
-    { name: "wrist_roll_arm_joint", type: "command", mode: "position", scale: 1.0 },
-  ]
-}
-- {
-  msg_id: 0x5C, # Arm J6 beak feedback — Float, rad (motor position)
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "wrist_roll_arm_joint", type: "state", mode: "position", scale: 1.0 },
-  ]
-}
 
 # ── Inter-module joint — MK2 MOD2/MOD3 (0x6X) ──────────────────────────────
 
@@ -255,13 +238,5 @@
   length: 4,
   fields: [
     { name: "wrist_roll_arm_joint", mode: "velocity" },
-  ]
-}
-- {
-  msg_id: 0x85, # Arm J6 velocity — Float, rad/s
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "wrist_roll_arm_joint", type: "state", mode: "velocity", scale: 1.0 },
   ]
 }
