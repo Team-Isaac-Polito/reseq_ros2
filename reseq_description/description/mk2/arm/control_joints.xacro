@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <!-- Arm joints: position + velocity command interfaces on real hardware -->
-    <!-- In sim, only position command is used (Gazebo provides velocity control) -->
+    <!-- Arm joints use velocity control in sim and position+velocity on hardware. -->
     <joint name="mod1__base_pitch_arm_joint">
         <xacro:unless value="$(arg sim_mode)">
             <command_interface name="position" />
@@ -13,7 +12,7 @@
         </state_interface>
         <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)">
-            <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__base_roll_arm_joint">
@@ -26,7 +25,7 @@
         </state_interface>
         <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)">
-            <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__elbow_pitch_arm_joint">
@@ -39,7 +38,7 @@
         </state_interface>
         <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)">
-            <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__forearm_roll_arm_joint">
@@ -52,7 +51,7 @@
         </state_interface>
         <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)">
-            <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__wrist_pitch_arm_joint">
@@ -65,7 +64,7 @@
         </state_interface>
         <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)">
-            <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:if>
     </joint>
     <joint name="mod1__wrist_roll_arm_joint">
@@ -78,7 +77,7 @@
         </state_interface>
         <state_interface name="velocity" />
         <xacro:if value="$(arg sim_mode)">
-            <command_interface name="position" />
+            <command_interface name="velocity" />
         </xacro:if>
     </joint>
 </robot>
