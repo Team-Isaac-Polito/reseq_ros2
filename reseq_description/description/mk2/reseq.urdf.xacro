@@ -20,6 +20,16 @@
     <origin xyz="${WheelBase/2} 0 0" />
   </joint>
 
+  <!-- Real robot TCP frame matching the simulated camera holder frame. -->
+  <xacro:unless value="$(arg sim_mode)">
+    <joint name="tcp_joint" type="fixed">
+      <origin xyz="0 -0.03 0.15" rpy="1.57 -1.57 0"/>
+      <parent link="arm_roll_wrist_link"/>
+      <child link="tcp"/>
+    </joint>
+    <link name="tcp"/>
+  </xacro:unless>
+
   <xacro:include filename="$(find reseq_description)/description/control/ros2_control.xacro" />
 
   <!-- Cameras holder (RGBD + thermal) on the arm end-effector — Gazebo sim only -->
