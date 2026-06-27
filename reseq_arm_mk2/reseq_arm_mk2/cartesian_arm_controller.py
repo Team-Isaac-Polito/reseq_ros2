@@ -75,40 +75,10 @@ def _compute_joint_hold_velocity(
     return _clamp_joint_velocity_to_limits(current_q, dq, q_lo, q_hi, dt)
 
 
-def _idle_hold_command(
-    current_q: np.ndarray,
-    hold_target: np.ndarray,
-    q_lo: np.ndarray,
-    q_hi: np.ndarray,
-    dt: float,
-    gain: float,
-    max_joint_vel: float,
-    tolerance: float,
-    hold_armed: bool,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Return the idle hold target and velocity command.
-
-    Before the operator has moved the arm, a captured startup pose is only an
-    observation. On real hardware the first joint state can briefly contain the
-    hardware interface's zero-initialized buffers, so an unarmed hold must never
-    drive back toward that value.
-    """
-    if not hold_armed:
-        passive_target = np.array(current_q, dtype=float, copy=True)
-        return passive_target, np.zeros_like(current_q)
-
-    target = np.array(hold_target, dtype=float, copy=True)
-    dq = _compute_joint_hold_velocity(
-        current_q=current_q,
-        target_q=target,
-        q_lo=q_lo,
-        q_hi=q_hi,
-        dt=dt,
-        gain=gain,
-        max_joint_vel=max_joint_vel,
-        tolerance=tolerance,
-    )
-    return target, dq
+def _velocity_idle_command(current_q: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Idle velocity mode should stop, not chase a stale joint target."""
+    passive_target = np.array(current_q, dtype=float, copy=True)
+    return passive_target, np.zeros_like(passive_target)
 
 
 def _advance_velocity_hold_target(
@@ -253,6 +223,31 @@ def _forward_progress_is_acceptable(
     if current_error > tolerance and next_error >= current_error - epsilon:
         return False
     return True
+
+
+def _linear_orientation_hold_weight(
+    current_error: float | None,
+    base_weight: float,
+    engage_error: float = 0.9,
+    full_weight_error: float = 0.35,
+) -> float:
+    """Fade the linear-mode orientation hold in only when the arm is close enough.
+
+    On hardware, starting from a heavily folded pose can make a strong orientation
+    secondary task fight the translation task and induce limit cycling. Keeping the
+    hold off until the tool is already roughly forward avoids burning the nullspace
+    budget before the arm has moved away from the startup configuration.
+    """
+    if current_error is None or base_weight <= 0.0:
+        return 0.0
+    if current_error >= engage_error:
+        return 0.0
+    if current_error <= full_weight_error:
+        return float(base_weight)
+
+    span = max(engage_error - full_weight_error, 1e-9)
+    scale = (engage_error - current_error) / span
+    return float(base_weight * np.clip(scale, 0.0, 1.0))
 
 
 def _task_velocity_direction_is_acceptable(
@@ -1670,28 +1665,8 @@ class CartesianArmController(Node):
         # Ignore tiny inputs.
         if cmd_norm <= idle_threshold:
             if self._command_mode == 'velocity':
-                max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
-                hold_gain = self.get_parameter('idle_hold_gain').get_parameter_value().double_value
-                hold_tolerance = (
-                    self.get_parameter('idle_hold_tolerance').get_parameter_value().double_value
-                )
-                hold_target = self._q_cmd.copy() if self._q_cmd is not None else self._q.copy()
-                if not self._startup_hold_complete and self._startup_hold_target is not None:
-                    startup_target = np.clip(self._startup_hold_target, self._q_lo, self._q_hi)
-                    hold_target = startup_target
-                    if float(np.max(np.abs(startup_target - self._q))) <= hold_tolerance:
-                        self._startup_hold_complete = True
-                hold_target, hold_dq = _idle_hold_command(
-                    current_q=self._q,
-                    hold_target=hold_target,
-                    q_lo=self._q_lo,
-                    q_hi=self._q_hi,
-                    dt=self._dt,
-                    gain=hold_gain,
-                    max_joint_vel=max_jv,
-                    tolerance=hold_tolerance,
-                    hold_armed=self._idle_hold_armed,
-                )
+                current_q = self._q_continuous if self._q_continuous is not None else self._q
+                hold_target, hold_dq = _velocity_idle_command(current_q)
                 self._q_cmd = hold_target.copy()
                 self._publish_velocity(hold_dq.tolist())
             else:
@@ -1791,6 +1766,10 @@ class CartesianArmController(Node):
             current_rotation = self._get_ee_rotation(solve_q)
             hold_orientation = True
             if current_rotation is not None and hold_orientation:
+                forward_error = _forward_axis_alignment_error(
+                    current_rotation=current_rotation,
+                    desired_rotation=self._forward_rotation,
+                )
                 hold_gain = (
                     self.get_parameter('orientation_hold_gain').get_parameter_value().double_value
                 )
@@ -1807,13 +1786,17 @@ class CartesianArmController(Node):
                     ),
                     max_av,
                 )
-                if orientation_task_weight > 0.0:
+                effective_orientation_weight = _linear_orientation_hold_weight(
+                    current_error=forward_error,
+                    base_weight=orientation_task_weight,
+                )
+                if effective_orientation_weight > 0.0:
                     secondary_jacobian, secondary_vel = _append_secondary_task(
                         secondary_jacobian=secondary_jacobian,
                         secondary_vel=secondary_vel,
                         task_jacobian=J[3:6, :active_dofs],
                         task_vel=angular_vel,
-                        weight=orientation_task_weight,
+                        weight=effective_orientation_weight,
                     )
 
             startup_escape_vel = _linear_startup_escape_velocity(
