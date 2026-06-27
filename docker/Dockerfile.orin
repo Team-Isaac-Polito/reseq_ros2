@@ -464,7 +464,7 @@ RUN apt-get update && \
 
 RUN cd src && git fetch; git reset --hard origin/nav-test && \
     git submodule update --recursive --remote && cd .. && \
-    echo "Test3" && \
+    echo "Test4" && \
     source /ros_entrypoint.sh && \
     colcon build --packages-skip is_geotiff_plugins && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh && \

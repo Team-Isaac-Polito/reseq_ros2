@@ -11,6 +11,7 @@ from reseq_arm_mk2.cartesian_arm_controller import (
     _is_lower_elbow_positive_z_recovery_active,
     _is_lower_elbow_hard_corner,
     _linear_command_target_dt,
+    _linear_orientation_hold_weight,
     _linear_lateral_forward_velocity,
     _linear_startup_escape_velocity,
     _lower_elbow_command_spends_stop_reserve,
@@ -25,6 +26,7 @@ from reseq_arm_mk2.cartesian_arm_controller import (
     _solve_prioritized_task_velocity,
     _solve_task_velocity_with_limit_redistribution,
     _task_velocity_direction_is_acceptable,
+    _velocity_idle_command,
 )
 
 
@@ -134,6 +136,23 @@ def test_forward_progress_requires_recovery_when_not_forward():
 def test_forward_progress_allows_small_error_growth_inside_tolerance():
     assert _forward_progress_is_acceptable(0.003, 0.015)
     assert not _forward_progress_is_acceptable(0.003, 0.03)
+
+
+def test_linear_orientation_hold_weight_is_disabled_when_far_from_forward():
+    assert _linear_orientation_hold_weight(None, 1.4) == 0.0
+    assert _linear_orientation_hold_weight(1.2, 1.4) == 0.0
+    assert np.isclose(_linear_orientation_hold_weight(0.35, 1.4), 1.4)
+    mid_weight = _linear_orientation_hold_weight(0.625, 1.4)
+    assert 0.0 < mid_weight < 1.4
+
+
+def test_velocity_idle_stops_without_chasing_a_previous_target():
+    current_q = np.array([0.8, -0.2, 0.4, 0.1, -0.1, 0.05])
+
+    hold_target, hold_dq = _velocity_idle_command(current_q)
+
+    assert np.allclose(hold_target, current_q)
+    assert np.allclose(hold_dq, np.zeros_like(current_q))
 
 
 def test_task_velocity_direction_rejects_reversed_dominant_axis():
