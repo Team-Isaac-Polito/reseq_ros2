@@ -127,10 +127,16 @@ def test_forward_axis_alignment_error_measures_axis_angle():
     assert np.isclose(error, 0.5)
 
 
-def test_forward_progress_requires_recovery_when_not_forward():
+def test_forward_progress_requires_recovery_when_far_from_forward():
     assert _forward_progress_is_acceptable(0.5, 0.49)
     assert not _forward_progress_is_acceptable(0.5, 0.5)
     assert not _forward_progress_is_acceptable(0.5, 0.51)
+
+
+def test_forward_progress_allows_neutral_motion_when_nearly_forward():
+    assert _forward_progress_is_acceptable(0.12, 0.12)
+    assert _forward_progress_is_acceptable(0.12, 0.12005)
+    assert not _forward_progress_is_acceptable(0.12, 0.121)
 
 
 def test_forward_progress_allows_small_error_growth_inside_tolerance():

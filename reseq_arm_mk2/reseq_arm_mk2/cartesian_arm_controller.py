@@ -37,6 +37,9 @@ else:
     else:
         _HAS_KDL = True
 
+_LINEAR_FORWARD_FULL_HOLD_ERROR = 0.35
+_LINEAR_FORWARD_ORIENTATION_ENGAGE_ERROR = 0.9
+
 
 def _clamp_joint_velocity_to_limits(
     current_q: np.ndarray,
@@ -214,13 +217,17 @@ def _forward_progress_is_acceptable(
     next_error: float,
     tolerance: float = 0.02,
     epsilon: float = 1e-4,
+    recovery_required_error: float = _LINEAR_FORWARD_FULL_HOLD_ERROR,
 ) -> bool:
     """Return whether a predicted command preserves or recovers forward-look."""
     if next_error <= tolerance:
         return True
     if next_error > current_error + epsilon:
         return False
-    if current_error > tolerance and next_error >= current_error - epsilon:
+    if (
+        current_error > recovery_required_error
+        and next_error >= current_error - epsilon
+    ):
         return False
     return True
 
@@ -228,8 +235,8 @@ def _forward_progress_is_acceptable(
 def _linear_orientation_hold_weight(
     current_error: float | None,
     base_weight: float,
-    engage_error: float = 0.9,
-    full_weight_error: float = 0.35,
+    engage_error: float = _LINEAR_FORWARD_ORIENTATION_ENGAGE_ERROR,
+    full_weight_error: float = _LINEAR_FORWARD_FULL_HOLD_ERROR,
 ) -> float:
     """Fade the linear-mode orientation hold in only when the arm is close enough.
 
