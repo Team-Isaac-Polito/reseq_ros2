@@ -337,7 +337,7 @@ def generate_launch_description():
                 description='Fixed robot-forward tool orientation RPY relative to arm_base_link',
             ),
             DeclareLaunchArgument('use_moveit', default_value='false'),
-            DeclareLaunchArgument('launch_yaw_controllers', default_value='false'),
+            DeclareLaunchArgument('launch_yaw_controllers', default_value='true'),
             DeclareLaunchArgument('no_body_controllers', default_value='false'),
             DeclareLaunchArgument('no_arm_controllers', default_value='false'),
             OpaqueFunction(function=generate_config_setup),
