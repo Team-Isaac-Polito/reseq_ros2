@@ -8,9 +8,22 @@ from geometry_msgs.msg import Twist, Vector3
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Bool
-from std_srvs.srv import SetBool
+from std_srvs.srv import SetBool, Trigger
 
 from reseq_interfaces.msg import Remote
+
+import can
+import struct
+import os
+import sys
+
+# Add STM32LowLevel tools to path for CanSender
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'STM32LowLevel', 'tools', 'can_tester'))
+try:
+    from sender import CanSender
+    from protocol import MsgType, ModuleAddress
+except ImportError:
+    CanSender = None
 
 """
 ROS node that handles scaling of the remote controller data into physical variables used
@@ -65,16 +78,23 @@ class Scaler(Node):
             'inverted': True,
         },
         {
-            'name': 'Switch type of velocity of mk2 arm',
+            'name': 'Home MK2 Arm',
             'button': buttons_enum.BGREEN,
-            'service': '/moveit_controller/switch_vel',
+            'service': '/cartesian_arm_controller/go_home',
             'inverted': False,
+            'type': 'trigger',
         },
         {
             'name': 'Open/Close MK2 Arm Beak',
             'button': buttons_enum.S1,
             'service': '/moveit_controller/close_beak',
             'inverted': False,
+        },
+        {
+            'name': 'Toggle Module 1 LED',
+            'button': buttons_enum.BWHITE,
+            'inverted': False,
+            'type': 'led',
         },
     ]
 
@@ -115,11 +135,26 @@ class Scaler(Node):
         arm_vel_topic = self.declare_parameter('arm_vel_topic', '/mk2_arm_vel').value
 
         for h in self.handlers:
-            h['service'] = self.create_client(SetBool, h['service'])
+            if h.get('type') == 'trigger':
+                h['service'] = self.create_client(Trigger, h['service'])
+            else:
+                h['service'] = self.create_client(SetBool, h['service'])
 
         self.create_subscription(Remote, '/remote', self.remote_callback, self.qos)
 
         self.arm_vel_pub = self.create_publisher(Vector3, arm_vel_topic, 10)
+
+        # CAN sender for LED control
+        self.can_sender = None
+        can_channel = self.declare_parameter('can_channel', 'can0').value
+        can_interface = self.declare_parameter('can_interface', 'socketcan').value
+        if CanSender is not None:
+            try:
+                canbus = can.interface.Bus(channel=can_channel, bustype=can_interface)
+                self.can_sender = CanSender(canbus)
+                self.get_logger().info(f'CAN sender initialized on {can_channel}')
+            except Exception as e:
+                self.get_logger().warn(f'Failed to initialize CAN sender: {e}')
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel_teleop', 10)
         self.autonomy_pub = self.create_publisher(Bool, '/autonomy/enabled', 10)
@@ -145,13 +180,25 @@ class Scaler(Node):
             self.get_logger().debug(str(handler['button']))
             if buttons[handler['button']] != self.previous_buttons[handler['button']]:
                 if 'condition' not in handler or handler['condition'](buttons):
-                    data = handler['inverted'] ^ buttons[handler['button']]
-                    handler['service'].call_async(SetBool.Request(data=data))
-                    if 'hook' in handler and data:
-                        handler['hook'](self)
-                    self.get_logger().debug(
-                        f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}, value={data}"  # noqa
-                    )
+                    if handler.get('type') == 'trigger':
+                        handler['service'].call_async(Trigger.Request())
+                        self.get_logger().debug(
+                            f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}"  # noqa
+                        )
+                    elif handler.get('type') == 'led':
+                        data = handler['inverted'] ^ buttons[handler['button']]
+                        if self.can_sender is not None:
+                            brightness = 125 if data else 0
+                            self.can_sender.led_hp_brightness(brightness)
+                            self.get_logger().debug(f'LED brightness set to {brightness}')
+                    else:
+                        data = handler['inverted'] ^ buttons[handler['button']]
+                        handler['service'].call_async(SetBool.Request(data=data))
+                        if 'hook' in handler and data:
+                            handler['hook'](self)
+                        self.get_logger().debug(
+                            f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}, value={data}"  # noqa
+                        )
         self.previous_buttons = buttons
 
     def remote_callback(self, data: Remote):
