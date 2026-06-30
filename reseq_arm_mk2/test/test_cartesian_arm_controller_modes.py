@@ -174,6 +174,22 @@ def test_task_velocity_direction_rejects_reversed_dominant_axis():
     )
 
 
+def test_task_velocity_direction_accepts_diagonal_projection_progress():
+    assert _task_velocity_direction_is_acceptable(
+        desired_vel=np.array([-0.4, 0.4, 0.0]),
+        achieved_vel=np.array([0.02, 0.08, 0.0]),
+        deadzone=0.02,
+    )
+
+
+def test_task_velocity_direction_rejects_diagonal_projection_reversal():
+    assert not _task_velocity_direction_is_acceptable(
+        desired_vel=np.array([-0.4, 0.4, 0.0]),
+        achieved_vel=np.array([0.08, -0.02, 0.0]),
+        deadzone=0.02,
+    )
+
+
 def test_startup_z_escape_biases_folded_arm_out_of_lower_elbow_limit():
     escape = _linear_startup_escape_velocity(
         current_q=np.array([-0.03, 0.0, -0.1, 0.0, 0.0, 0.0]),

@@ -262,18 +262,25 @@ def _task_velocity_direction_is_acceptable(
     achieved_vel: np.ndarray,
     deadzone: float,
 ) -> bool:
-    """Return whether the dominant commanded task axis still moves as requested."""
+    """Return whether achieved motion makes progress along the requested direction."""
     desired = np.asarray(desired_vel, dtype=float).reshape(-1)
     achieved = np.asarray(achieved_vel, dtype=float).reshape(-1)
     if desired.size == 0 or achieved.size != desired.size:
         return True
 
-    axis = int(np.argmax(np.abs(desired)))
-    desired_axis = float(desired[axis])
-    if abs(desired_axis) <= deadzone:
+    active = np.abs(desired) > deadzone
+    if not np.any(active):
         return True
-    achieved_axis = float(achieved[axis])
-    return achieved_axis * desired_axis > 1e-6
+
+    desired_active = desired[active]
+    achieved_active = achieved[active]
+    desired_norm = float(np.linalg.norm(desired_active))
+    if desired_norm < 1e-9:
+        return True
+
+    achieved_along_command = float(np.dot(desired_active, achieved_active) / desired_norm)
+    minimum_progress = max(1e-6, 0.25 * deadzone)
+    return achieved_along_command >= minimum_progress
 
 
 def _dominant_rotation_input(cmd_vel: np.ndarray, deadzone: float) -> np.ndarray:
