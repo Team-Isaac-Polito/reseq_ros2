@@ -30,7 +30,7 @@
 
 - {
   msg_id: 0x32, # Joint yaw feedback — Float, degrees (AS5048B)
-  modules: "all",
+  modules: "skip_first",
   length: 4,
   fields: [
     { name: "yaw_joint", scale: 0.017453 }, # degrees → radians
@@ -38,7 +38,7 @@
 }
 - {
   msg_id: 0x34, # Joint pitch feedback (IMU) — Float, radians
-  modules: "all",
+  modules: "skip_first",
   length: 4,
   fields: [
     { name: "pitch_joint", type: "state", mode: "position", scale: 1.0 },
@@ -46,7 +46,7 @@
 }
 - {
   msg_id: 0x36, # Joint roll feedback (IMU) — Float, radians
-  modules: "all",
+  modules: "skip_first",
   length: 4,
   fields: [
     { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },

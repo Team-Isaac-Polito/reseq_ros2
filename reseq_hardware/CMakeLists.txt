@@ -63,8 +63,10 @@ install(TARGETS reseq_hardware
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
   find_package(ros2_control_test_assets REQUIRED)
   ament_add_gmock(test_reseq_hardware test/test_reseq_hardware.cpp)
+  ament_add_pytest_test(test_mappings_config test/test_mappings_config.py)
   target_link_libraries(test_reseq_hardware reseq_hardware)
   ament_target_dependencies(test_reseq_hardware
     pluginlib

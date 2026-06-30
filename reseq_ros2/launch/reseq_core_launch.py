@@ -80,6 +80,10 @@ def launch_setup(context, *args, **kwargs):
                     'r_angular_vel': config['scaler_consts']['r_angular_vel'],
                     'arm_input_scale': config['scaler_consts'].get('arm_input_scale', 1.0),
                     'arm_input_deadzone': config['scaler_consts'].get('arm_input_deadzone', 0.08),
+                    'arm_z_isolation_ratio': config['scaler_consts'].get(
+                        'arm_z_isolation_ratio', 0.0
+                    ),
+                    'arm_debug_log': config['scaler_consts'].get('arm_debug_log', False),
                     'arm_vel_topic': config['scaler_consts'].get(
                         'arm_vel_topic', '/mk2_arm_vel_scaled'
                     ),

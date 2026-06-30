@@ -5,6 +5,8 @@ include:
   agevar_consts: agevar_consts.yaml
 scaler_consts:
   arm_axis_z: "-left.z"
+  arm_z_isolation_ratio: 0.45
+  arm_debug_log: true
 version: "mk2"
 canbus:
   channel: "can0"

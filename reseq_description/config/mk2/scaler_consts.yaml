@@ -11,6 +11,8 @@ scaler_consts:
   arm_vel_topic: /mk2_arm_vel_scaled # Scaler-only arm command topic consumed by the Cartesian controller
   arm_input_scale: 0.5 # [-] Scale applied to left-stick arm commands before arm_vel_topic
   arm_input_deadzone: 0.08 # [-] Deadzone applied to arm stick inputs before scaling
+  arm_z_isolation_ratio: 0.0 # [-] 0 disables; nonzero suppresses XY when Z is this fraction of lateral input
+  arm_debug_log: false # [-] Log raw/mapped arm joystick inputs for diagnosis
   arm_axis_x: "left.y"
   arm_axis_y: "-left.x"
   arm_axis_z: "left.z"

@@ -53,6 +53,27 @@ def _remote_axis_value(remote: Remote, axis_spec: str) -> float:
     return sign * float(getattr(getattr(remote, side_name), axis_name))
 
 
+def _isolate_vertical_arm_command(
+    x: float,
+    y: float,
+    z: float,
+    z_isolation_ratio: float,
+) -> tuple[float, float, float]:
+    """Suppress lateral stick bleed when the operator is clearly asking for Z."""
+    ratio = float(z_isolation_ratio)
+    if ratio <= 0.0:
+        return x, y, z
+
+    z_mag = abs(float(z))
+    lateral_mag = max(abs(float(x)), abs(float(y)))
+    if z_mag <= 0.0 or lateral_mag <= 0.0:
+        return x, y, z
+
+    if z_mag >= ratio * lateral_mag:
+        return 0.0, 0.0, z
+    return x, y, z
+
+
 class Scaler(Node):
     control_mode_enum: Enum = Enum('ControlMode', 'AGEVAR, PIVOT')
     buttons_enum: IntEnum = IntEnum(
@@ -90,6 +111,7 @@ class Scaler(Node):
             # Switches read False in the upper position. The arm controller
             # expects True=linear, False=rotation.
             'inverted': True,
+            'local_state_attr': 'arm_linear_mode',
         },
         {
             'name': 'Home MK2 Arm',
@@ -123,6 +145,7 @@ class Scaler(Node):
         # initialize the button/switch handlers
         self.previous_buttons = [False, False, False, False, False, True, True, True, True, True]
         self.control_mode = Scaler.control_mode_enum.AGEVAR
+        self.arm_linear_mode = True
         self.autonomy_enabled = False
 
         self.r_linear_vel = (
@@ -150,6 +173,14 @@ class Scaler(Node):
         self.arm_axis_x = self.declare_parameter('arm_axis_x', 'left.y').value
         self.arm_axis_y = self.declare_parameter('arm_axis_y', '-left.x').value
         self.arm_axis_z = self.declare_parameter('arm_axis_z', 'left.z').value
+        self.arm_z_isolation_ratio = (
+            self.declare_parameter('arm_z_isolation_ratio', 0.0)
+            .get_parameter_value()
+            .double_value
+        )
+        self.arm_debug_log = (
+            self.declare_parameter('arm_debug_log', False).get_parameter_value().bool_value
+        )
         self.module_lift_axis = self.declare_parameter('module_lift_axis', 'right.z').value
         self.pending_setbool_handlers = {}
         self.create_timer(0.5, self.retry_pending_setbool_handlers)
@@ -218,6 +249,8 @@ class Scaler(Node):
                             self.get_logger().debug(f'LED brightness set to {brightness}')
                     else:
                         data = handler['inverted'] ^ buttons[handler['button']]
+                        if 'local_state_attr' in handler:
+                            setattr(self, handler['local_state_attr'], data)
                         self.call_setbool_handler(handler, data)
                         if 'hook' in handler and data:
                             handler['hook'](self)
@@ -266,13 +299,32 @@ class Scaler(Node):
         # The app joystick is screen-oriented: X is right/left, Y is forward/back.
         # The arm controller expects Cartesian commands in arm_base_link:
         # +X forward, +Y left, +Z up. Invert screen X so pushing right moves right.
-        self.arm_vel_pub.publish(
-            Vector3(
-                x=self.scale_arm_input(self.remote_axis_value(data, self.arm_axis_x)),
-                y=self.scale_arm_input(self.remote_axis_value(data, self.arm_axis_y)),
-                z=self.scale_arm_input(self.remote_axis_value(data, self.arm_axis_z)),
+        raw_arm_x = self.remote_axis_value(data, self.arm_axis_x)
+        raw_arm_y = self.remote_axis_value(data, self.arm_axis_y)
+        raw_arm_z = self.remote_axis_value(data, self.arm_axis_z)
+        scaled_arm_x = self.scale_arm_input(raw_arm_x)
+        scaled_arm_y = self.scale_arm_input(raw_arm_y)
+        scaled_arm_z = self.scale_arm_input(raw_arm_z)
+        arm_x, arm_y, arm_z = scaled_arm_x, scaled_arm_y, scaled_arm_z
+        isolated_vertical = False
+        if self.arm_linear_mode:
+            arm_x, arm_y, arm_z = _isolate_vertical_arm_command(
+                arm_x,
+                arm_y,
+                arm_z,
+                self.arm_z_isolation_ratio,
             )
+            isolated_vertical = (
+                arm_x != scaled_arm_x or arm_y != scaled_arm_y or arm_z != scaled_arm_z
+            )
+        self.log_arm_debug(
+            data,
+            (raw_arm_x, raw_arm_y, raw_arm_z),
+            (scaled_arm_x, scaled_arm_y, scaled_arm_z),
+            (arm_x, arm_y, arm_z),
+            isolated_vertical,
         )
+        self.arm_vel_pub.publish(Vector3(x=arm_x, y=arm_y, z=arm_z))
 
         # LIFTING CONTROL: S2, S3 Switches + Right Joystick Z axis
         # Right Z axis controls the pitch (lift amount)
@@ -331,6 +383,34 @@ class Scaler(Node):
         scaled = ((magnitude - self.arm_input_deadzone) / span) * self.arm_input_scale
         scaled = max(-1.0, min(1.0, scaled))
         return scaled if value >= 0.0 else -scaled
+
+    def log_arm_debug(
+        self,
+        data: Remote,
+        raw: tuple[float, float, float],
+        scaled: tuple[float, float, float],
+        output: tuple[float, float, float],
+        isolated_vertical: bool,
+    ) -> None:
+        if not self.arm_debug_log:
+            return
+
+        if max(*(abs(v) for v in raw), *(abs(v) for v in output)) <= 1e-3:
+            return
+
+        mode = 'linear' if self.arm_linear_mode else 'rotation'
+        self.get_logger().info(
+            'arm_input_trace '
+            f'mode={mode} s4={data.buttons[self.buttons_enum.S4]} '
+            f'axes=({self.arm_axis_x},{self.arm_axis_y},{self.arm_axis_z}) '
+            f'left_raw=[{data.left.x:.3f},{data.left.y:.3f},{data.left.z:.3f}] '
+            f'mapped_raw=[{raw[0]:.3f},{raw[1]:.3f},{raw[2]:.3f}] '
+            f'scaled=[{scaled[0]:.3f},{scaled[1]:.3f},{scaled[2]:.3f}] '
+            f'out=[{output[0]:.3f},{output[1]:.3f},{output[2]:.3f}] '
+            f'z_iso_ratio={self.arm_z_isolation_ratio:.2f} '
+            f'isolated={isolated_vertical}',
+            throttle_duration_sec=0.5,
+        )
 
 
 def main(args=None):
