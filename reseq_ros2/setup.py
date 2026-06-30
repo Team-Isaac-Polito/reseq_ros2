@@ -41,6 +41,7 @@ setup(
             'user_path_publisher = reseq_ros2.user_path_publisher:main',
             'ply_saver = reseq_ros2.ply_saver:main',
             'map_republisher = reseq_ros2.map_republisher:main',
+            'joint_lift_controller = reseq_ros2.joint_lift_controller:main',
         ],
     },
 )

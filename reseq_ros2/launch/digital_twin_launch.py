@@ -164,6 +164,7 @@ def launch_setup(context, *args, **kwargs):
     if launch_yaw_controllers:
         for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
+            body_spawners.append(_spawner(f'pitch_controller{i + 2}', external_log_level))
 
     arm_velocity_spawner = None
     if arm:
@@ -321,7 +322,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 'launch_yaw_controllers',
-                default_value='true',
+                default_value='false',
                 description='Launch yaw position controllers in simulation/hardware control stack',
             ),
             OpaqueFunction(function=launch_setup),
