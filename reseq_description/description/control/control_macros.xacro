@@ -31,6 +31,8 @@
         </joint>
         <joint name="mod${id}__pitch_joint">
             <state_interface name="position" />
+            <command_interface name="position" />
+            <state_interface name="velocity" />
         </joint>
         <joint name="mod${id}__yaw_joint">
             <command_interface name="position" />
