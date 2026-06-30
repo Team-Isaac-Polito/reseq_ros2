@@ -30,7 +30,7 @@
 
 - {
   msg_id: 0x32, # Joint yaw feedback — Float, degrees (AS5048B)
-  modules: "skip_first",
+  modules: "all",
   length: 4,
   fields: [
     { name: "yaw_joint", scale: 0.017453 }, # degrees → radians
@@ -38,7 +38,7 @@
 }
 - {
   msg_id: 0x34, # Joint pitch feedback (IMU) — Float, radians
-  modules: "skip_first",
+  modules: "all",
   length: 4,
   fields: [
     { name: "pitch_joint", type: "state", mode: "position", scale: 1.0 },
@@ -46,7 +46,7 @@
 }
 - {
   msg_id: 0x36, # Joint roll feedback (IMU) — Float, radians
-  modules: "skip_first",
+  modules: "all",
   length: 4,
   fields: [
     { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
@@ -61,8 +61,8 @@
   length: 8,
   is_command: true,
   fields: [
-    { name: "base_pitch_arm_joint", type: "command" },
-    { name: "base_roll_arm_joint",  type: "command", offset: 4 },
+    { name: "base_roll_arm_joint",  type: "command", mode: "position" },
+    { name: "base_pitch_arm_joint", type: "command", mode: "position", offset: 4 },
   ]
 }
 - {
@@ -70,8 +70,8 @@
   modules: "only_first",
   length: 8,
   fields: [
-    { name: "base_pitch_arm_joint" },
-    { name: "base_roll_arm_joint", offset: 4 },
+    { name: "base_roll_arm_joint" },
+    { name: "base_pitch_arm_joint", offset: 4 },
   ]
 }
 - {
@@ -80,7 +80,7 @@
   length: 4,
   is_command: true,
   fields: [
-    { name: "elbow_pitch_arm_joint", type: "command" },
+    { name: "elbow_pitch_arm_joint", type: "command", mode: "position" },
   ]
 }
 - {
@@ -97,7 +97,7 @@
   length: 4,
   is_command: true,
   fields: [
-    { name: "forearm_roll_arm_joint", type: "command" },
+    { name: "forearm_roll_arm_joint", type: "command", mode: "position" },
   ]
 }
 - {
@@ -114,7 +114,7 @@
   length: 4,
   is_command: true,
   fields: [
-    { name: "wrist_pitch_arm_joint", type: "command" },
+    { name: "wrist_pitch_arm_joint", type: "command", mode: "position" },
   ]
 }
 - {
@@ -131,7 +131,7 @@
   length: 4,
   is_command: true,
   fields: [
-    { name: "wrist_roll_arm_joint", type: "command" },
+    { name: "wrist_roll_arm_joint", type: "command", mode: "position" },
   ]
 }
 - {

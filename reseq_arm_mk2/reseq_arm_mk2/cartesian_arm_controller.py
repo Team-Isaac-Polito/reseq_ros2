@@ -883,7 +883,7 @@ class CartesianArmController(Node):
     N_JOINTS = len(JOINT_NAMES)
 
     # Fallback home pose used until the startup pose is captured from joint states.
-    HOME_POSITION = [0.8, 0.0, 0.8, 0.0, 0.0, 0.0]
+    HOME_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     HOME_TOLERANCE = 0.03
     JOINT_WEIGHTS = np.ones(6, dtype=float)
 
