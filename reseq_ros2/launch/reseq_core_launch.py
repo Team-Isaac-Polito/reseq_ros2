@@ -83,6 +83,12 @@ def launch_setup(context, *args, **kwargs):
                     'arm_vel_topic': config['scaler_consts'].get(
                         'arm_vel_topic', '/mk2_arm_vel_scaled'
                     ),
+                    'arm_axis_x': config['scaler_consts'].get('arm_axis_x', 'left.y'),
+                    'arm_axis_y': config['scaler_consts'].get('arm_axis_y', '-left.x'),
+                    'arm_axis_z': config['scaler_consts'].get('arm_axis_z', 'left.z'),
+                    'module_lift_axis': config['scaler_consts'].get(
+                        'module_lift_axis', 'right.z'
+                    ),
                     'version': config['version'],
                     'use_sim_time': use_sim_time,
                 }

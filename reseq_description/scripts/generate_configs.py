@@ -31,7 +31,9 @@ def create_configs(main_config, version: str, include_files):
         file_path = os.path.join(config_path, version, file)
         with open(file_path, 'r') as f:
             included_config = yaml.safe_load(f)
-            main_config.setdefault(key, {}).update(included_config[key])
+            explicit_config = main_config.get(key, {}) or {}
+            main_config[key] = included_config[key]
+            main_config[key].update(explicit_config)
     return main_config
 
 

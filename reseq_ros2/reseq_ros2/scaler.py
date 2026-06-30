@@ -13,7 +13,6 @@ from std_srvs.srv import SetBool, Trigger
 from reseq_interfaces.msg import Remote
 
 import can
-import struct
 import os
 import sys
 
@@ -21,7 +20,6 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'STM32LowLevel', 'tools', 'can_tester'))
 try:
     from sender import CanSender
-    from protocol import MsgType, ModuleAddress
 except ImportError:
     CanSender = None
 
@@ -37,6 +35,22 @@ It also handles the button presses and switches of the remote controller
 using a system of handlers that call the appropriate service, given an optional condition
 and an optional hook function to be executed after the service is called.
 """
+
+
+def _remote_axis_value(remote: Remote, axis_spec: str) -> float:
+    spec = str(axis_spec).strip()
+    sign = 1.0
+    if spec.startswith('-'):
+        sign = -1.0
+        spec = spec[1:].strip()
+    elif spec.startswith('+'):
+        spec = spec[1:].strip()
+
+    side_name, _, axis_name = spec.partition('.')
+    if side_name not in ('left', 'right') or axis_name not in ('x', 'y', 'z'):
+        raise ValueError(f"Invalid remote axis spec '{axis_spec}'")
+
+    return sign * float(getattr(getattr(remote, side_name), axis_name))
 
 
 class Scaler(Node):
@@ -133,6 +147,12 @@ class Scaler(Node):
             self.declare_parameter('arm_input_deadzone', 0.08).get_parameter_value().double_value
         )
         arm_vel_topic = self.declare_parameter('arm_vel_topic', '/mk2_arm_vel').value
+        self.arm_axis_x = self.declare_parameter('arm_axis_x', 'left.y').value
+        self.arm_axis_y = self.declare_parameter('arm_axis_y', '-left.x').value
+        self.arm_axis_z = self.declare_parameter('arm_axis_z', 'left.z').value
+        self.module_lift_axis = self.declare_parameter('module_lift_axis', 'right.z').value
+        self.pending_setbool_handlers = {}
+        self.create_timer(0.5, self.retry_pending_setbool_handlers)
 
         for h in self.handlers:
             if 'service' not in h:
@@ -198,13 +218,41 @@ class Scaler(Node):
                             self.get_logger().debug(f'LED brightness set to {brightness}')
                     else:
                         data = handler['inverted'] ^ buttons[handler['button']]
-                        handler['service'].call_async(SetBool.Request(data=data))
+                        self.call_setbool_handler(handler, data)
                         if 'hook' in handler and data:
                             handler['hook'](self)
                         self.get_logger().debug(
                             f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}, value={data}"  # noqa
                         )
         self.previous_buttons = buttons
+
+    def call_setbool_handler(self, handler: dict, data: bool):
+        client = handler['service']
+        if not client.service_is_ready():
+            self.pending_setbool_handlers[handler['name']] = (handler, data)
+            self.get_logger().warn(
+                f"Service for '{handler['name']}' is not ready; will retry value={data}"
+            )
+            return
+
+        client.call_async(SetBool.Request(data=data))
+        self.pending_setbool_handlers.pop(handler['name'], None)
+
+    def retry_pending_setbool_handlers(self):
+        for name, (handler, data) in list(self.pending_setbool_handlers.items()):
+            client = handler['service']
+            if not client.service_is_ready():
+                continue
+            client.call_async(SetBool.Request(data=data))
+            self.pending_setbool_handlers.pop(name, None)
+            self.get_logger().info(f"Retried service '{name}' with value={data}")
+
+    def remote_axis_value(self, data: Remote, axis_spec: str) -> float:
+        try:
+            return _remote_axis_value(data, axis_spec)
+        except ValueError as err:
+            self.get_logger().warn(str(err), throttle_duration_sec=5.0)
+            return 0.0
 
     def remote_callback(self, data: Remote):
         self.handle_buttons(data.buttons)
@@ -220,9 +268,9 @@ class Scaler(Node):
         # +X forward, +Y left, +Z up. Invert screen X so pushing right moves right.
         self.arm_vel_pub.publish(
             Vector3(
-                x=self.scale_arm_input(data.left.y),
-                y=self.scale_arm_input(-data.left.x),
-                z=self.scale_arm_input(data.left.z),
+                x=self.scale_arm_input(self.remote_axis_value(data, self.arm_axis_x)),
+                y=self.scale_arm_input(self.remote_axis_value(data, self.arm_axis_y)),
+                z=self.scale_arm_input(self.remote_axis_value(data, self.arm_axis_z)),
             )
         )
 
@@ -233,7 +281,7 @@ class Scaler(Node):
 
         if s2 or s3:
             lift_msg = Vector3()
-            lift_msg.x = data.right.z  # Pitch of the lifting module (from right joystick Z)
+            lift_msg.x = self.remote_axis_value(data, self.module_lift_axis)
             lift_msg.y = 0.0
 
             if s2:
