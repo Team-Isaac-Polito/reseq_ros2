@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import traceback
 from enum import Enum, IntEnum
+import struct
+import time
 
 import rclpy
 from geometry_msgs.msg import Twist, Vector3
@@ -17,18 +19,6 @@ import struct
 import os
 import sys
 
-# Add STM32LowLevel tools to path for CanSender
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'STM32LowLevel', 'tools', 'can_tester'))
-try:
-    from sender import CanSender
-    from protocol import MsgType, ModuleAddress
-except ImportError:
-    CanSender = None
-    # Fallback module addresses if protocol import fails
-class ModuleAddress:
-    MK2_MOD1 = 0x21
-    MK2_MOD2 = 0x22
-    MK2_MOD3 = 0x23
 
 """
 ROS node that handles scaling of the remote controller data into physical variables used
@@ -91,9 +81,9 @@ class Scaler(Node):
         },
         {
             'name': 'Open/Close MK2 Arm Beak',
-            'button': buttons_enum.S1,
-            'service': '/moveit_controller/close_beak',
+            'button': buttons_enum.BBLACK,
             'inverted': False,
+            'type': 'beak',
         },
         {
             'name': 'Toggle Module 1 LED',
@@ -151,26 +141,26 @@ class Scaler(Node):
 
         self.arm_vel_pub = self.create_publisher(Vector3, arm_vel_topic, 10)
 
-        # CAN sender for LED control
-        self.can_sender = None
+        # CAN sender for LED control and torque commands
+        self.can_bus = None
         can_channel = self.declare_parameter('can_channel', 'can0').value
         can_interface = self.declare_parameter('can_interface', 'socketcan').value
-        if CanSender is not None:
-            try:
-                canbus = can.interface.Bus(channel=can_channel, bustype=can_interface)
-                self.can_sender = CanSender(canbus)
-                self.get_logger().info(f'CAN sender initialized on {can_channel}')
-            except Exception as e:
-                self.get_logger().warn(f'Failed to initialize CAN sender: {e}')
-        else:
-            self.get_logger().warn('CanSender class not available - CAN torque control disabled')
+        try:
+            self.can_bus = can.interface.Bus(channel=can_channel, bustype=can_interface)
+            self.get_logger().info(f'CAN bus initialized on {can_channel}')
+        except Exception as e:
+            self.get_logger().error(f'Failed to initialize CAN bus on {can_channel}: {type(e).__name__}: {e}')
         
         # Joint lift velocity publisher
         self.lift_pub = self.create_publisher(Vector3, '/inter_module_lift_vel', 10)
 
         # Track previous S2/S3 switch states for torque control
-        self.prev_s2 = False
-        self.prev_s3 = False
+        self.prev_s2 = None
+        self.prev_s3 = None
+        # Track LED toggle state
+        self.led_state = False
+        # Track beak toggle state
+        self.beak_state = False
         self.get_logger().info('Torque control for S2/S3 switches initialized')
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel_teleop', 10)
@@ -203,11 +193,22 @@ class Scaler(Node):
                             f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}"  # noqa
                         )
                     elif handler.get('type') == 'led':
-                        data = handler['inverted'] ^ buttons[handler['button']]
-                        if self.can_sender is not None:
-                            brightness = 125 if data else 0
-                            self.can_sender.led_hp_brightness(brightness)
-                            self.get_logger().debug(f'LED brightness set to {brightness}')
+                        # Toggle on button press (momentary button: pressed = False)
+                        # Detect falling edge (True -> False)
+                        if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
+                            self.led_state = not self.led_state
+                            brightness = 125 if self.led_state else 0
+                            if self.can_bus is not None:
+                                self._send_led_brightness(brightness)
+                                self.get_logger().debug(f'LED brightness set to {brightness}')
+                    elif handler.get('type') == 'beak':
+                        # Toggle beak on button press (momentary button: pressed = False)
+                        # Detect falling edge (True -> False)
+                        if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
+                            self.beak_state = not self.beak_state
+                            if self.can_bus is not None:
+                                self._send_beak_command(self.beak_state)
+                                self.get_logger().debug(f'Beak command sent: {"open" if self.beak_state else "close"}')
                     else:
                         data = handler['inverted'] ^ buttons[handler['button']]
                         handler['service'].call_async(SetBool.Request(data=data))
@@ -246,7 +247,7 @@ class Scaler(Node):
         # Torque control for inter-module joints based on S2/S3 switch state
         # When switch is ON (down position, True), enable torque for the corresponding joint
         # When switch is OFF (up position, False), disable torque
-        self.get_logger().debug(f'S2={s2}, prev_s2={self.prev_s2}, S3={s3}, prev_s3={self.prev_s3}, can_sender={self.can_sender is not None}')
+        self.get_logger().debug(f'S2={s2}, prev_s2={self.prev_s2}, S3={s3}, prev_s3={self.prev_s3}, can_bus={self.can_bus is not None}')
         if s2 != self.prev_s2:
             # S2 controls module 2 (middle module) - joint motors are bits 2 and 3
             # Bit 2 = joint-left (yaw), Bit 3 = joint-right (pitch)
@@ -254,11 +255,11 @@ class Scaler(Node):
             if s2:
                 # Enable torque for both joint motors on module 2
                 torque_bitfield = (1 << 2) | (1 << 3)  # bits 2 and 3
-            if self.can_sender is not None:
-                self.can_sender.torque_enable(torque_bitfield, destination=ModuleAddress.MK2_MOD2)
+            if self.can_bus is not None:
+                self._send_torque_enable(torque_bitfield, module_id=0x22)  # MK2_MOD2
                 self.get_logger().info(f'S2 switch changed: torque {"enabled" if s2 else "disabled"} for module 2 joints (bitfield=0x{torque_bitfield:04X})')
             else:
-                self.get_logger().warn('CAN sender not available - cannot send torque command for S2')
+                self.get_logger().warn('CAN bus not available - cannot send torque command for S2')
             self.prev_s2 = s2
 
         if s3 != self.prev_s3:
@@ -267,11 +268,11 @@ class Scaler(Node):
             if s3:
                 # Enable torque for both joint motors on module 3
                 torque_bitfield = (1 << 2) | (1 << 3)  # bits 2 and 3
-            if self.can_sender is not None:
-                self.can_sender.torque_enable(torque_bitfield, destination=ModuleAddress.MK2_MOD3)
+            if self.can_bus is not None:
+                self._send_torque_enable(torque_bitfield, module_id=0x23)  # MK2_MOD3
                 self.get_logger().info(f'S3 switch changed: torque {"enabled" if s3 else "disabled"} for module 3 joints (bitfield=0x{torque_bitfield:04X})')
             else:
-                self.get_logger().warn('CAN sender not available - cannot send torque command for S3')
+                self.get_logger().warn('CAN bus not available - cannot send torque command for S3')
             self.prev_s3 = s3
 
         if s2 or s3:
@@ -326,6 +327,120 @@ class Scaler(Node):
         scaled = ((magnitude - self.arm_input_deadzone) / span) * self.arm_input_scale
         scaled = max(-1.0, min(1.0, scaled))
         return scaled if value >= 0.0 else -scaled
+
+    def _send_torque_enable(self, torque_bitfield: int, module_id: int) -> None:
+        """Send TORQUE_ENABLE_DISABLE (0x74) CAN message to a module.
+        
+        Args:
+            torque_bitfield: uint16 bitmask (1=enable, 0=disable per motor)
+            module_id: Target module CAN ID (0x22 for MOD2, 0x23 for MOD3)
+        """
+        try:
+            # CAN ID format: [msg_id:8][mod_id:8][unused:16] with EFF flag
+            # msg_id = 0x74 (TORQUE_ENABLE_DISABLE)
+            # mod_id = module_id (0x22 or 0x23)
+            arb_id = (0x74 << 16) | (module_id << 8) | 0x00
+            
+            # Pack torque_bitfield as little-endian uint16 (2 bytes)
+            data = struct.pack('<H', torque_bitfield)
+            
+            msg = can.Message(
+                arbitration_id=arb_id,
+                data=data,
+                is_extended_id=True,
+            )
+            self.can_bus.send(msg)
+            self.get_logger().debug(f'Sent TORQUE_ENABLE_DISABLE to module 0x{module_id:02X}: bitfield=0x{torque_bitfield:04X}')
+        except Exception as e:
+            self.get_logger().error(f'Failed to send torque enable command: {type(e).__name__}: {e}')
+
+    def _send_led_brightness(self, brightness: int) -> None:
+        """Send LED_HP_BRIGHTNESS (0x75) CAN message to module 1.
+        
+        Args:
+            brightness: 0-255 brightness value
+        """
+        try:
+            # CAN ID format: [msg_id:8][mod_id:8][unused:16] with EFF flag
+            # msg_id = 0x75 (LED_HP_BRIGHTNESS)
+            # mod_id = 0x21 (MK2_MOD1)
+            arb_id = (0x75 << 16) | (0x21 << 8) | 0x00
+            
+            # Pack brightness as uint8 (1 byte)
+            data = struct.pack('<B', brightness)
+            
+            msg = can.Message(
+                arbitration_id=arb_id,
+                data=data,
+                is_extended_id=True,
+            )
+            self.can_bus.send(msg)
+            self.get_logger().debug(f'Sent LED_HP_BRIGHTNESS to module 0x21: brightness={brightness}')
+        except Exception as e:
+            self.get_logger().error(f'Failed to send LED brightness command: {type(e).__name__}: {e}')
+
+    def _send_beak_command(self, open_beak: bool) -> None:
+        """Send ARM_ROLL_6_SETPOINT (0x5B) CAN message to module 1 for beak control.
+        
+        Args:
+            open_beak: True to open, False to close
+        """
+        try:
+            # CAN ID format: [msg_id:8][mod_id:8][unused:16] with EFF flag
+            # msg_id = 0x5B (ARM_ROLL_6_SETPOINT)
+            # mod_id = 0x21 (MK2_MOD1)
+            arb_id = (0x5B << 16) | (0x21 << 8) | 0x00
+            
+            # Pack as int32: 0=close, 1=open
+            value = 1 if open_beak else 0
+            data = struct.pack('<i', value)
+            
+            msg = can.Message(
+                arbitration_id=arb_id,
+                data=data,
+                is_extended_id=True,
+            )
+            # Retry up to 3 times for reliability
+            for attempt in range(3):
+                try:
+                    self.can_bus.send(msg)
+                    self.get_logger().debug(f'Sent ARM_ROLL_6_SETPOINT to module 0x21: {"open" if open_beak else "close"}')
+                    break
+                except can.CanError as e:
+                    if attempt == 2:
+                        raise
+                    self.get_logger().warn(f'Beak send attempt {attempt+1} failed, retrying: {e}')
+                    time.sleep(0.01)
+        except Exception as e:
+            self.get_logger().error(f'Failed to send beak command: {type(e).__name__}: {e}')
+
+    def log_arm_debug(
+        self,
+        data: Remote,
+        raw: tuple[float, float, float],
+        scaled: tuple[float, float, float],
+        output: tuple[float, float, float],
+        isolated_vertical: bool,
+    ) -> None:
+        if not self.arm_debug_log:
+            return
+
+        if max(*(abs(v) for v in raw), *(abs(v) for v in output)) <= 1e-3:
+            return
+
+        mode = 'linear' if self.arm_linear_mode else 'rotation'
+        self.get_logger().info(
+            'arm_input_trace '
+            f'mode={mode} s4={data.buttons[self.buttons_enum.S4]} '
+            f'axes=({self.arm_axis_x},{self.arm_axis_y},{self.arm_axis_z}) '
+            f'left_raw=[{data.left.x:.3f},{data.left.y:.3f},{data.left.z:.3f}] '
+            f'mapped_raw=[{raw[0]:.3f},{raw[1]:.3f},{raw[2]:.3f}] '
+            f'scaled=[{scaled[0]:.3f},{scaled[1]:.3f},{scaled[2]:.3f}] '
+            f'out=[{output[0]:.3f},{output[1]:.3f},{output[2]:.3f}] '
+            f'z_iso_ratio={self.arm_z_isolation_ratio:.2f} '
+            f'isolated={isolated_vertical}',
+            throttle_duration_sec=0.5,
+        )
 
 
 def main(args=None):
