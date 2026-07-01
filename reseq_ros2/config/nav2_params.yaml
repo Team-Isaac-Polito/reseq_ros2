@@ -4,7 +4,7 @@ amcl:
     update_min_d: 0.01
     update_min_a: 0.01
     laser_max_range: 12.0
-    laser_min_range: 0.1
+    laser_min_range: 0.2
     tf_broadcast: true
 
 bt_navigator:

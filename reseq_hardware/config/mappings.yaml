@@ -11,7 +11,7 @@
   modules: "all",
   length: 8,
   is_command: true,
-  fields: [
+  fields: [  # scale = 2π/60 = 0.104719 rad/s per RPM
     { name: "left_back_wheel",  type: "command", mode: "velocity", data_type: "float32", offset: 0, scale: 0.104719, bias: 0.0 },
     { name: "right_back_wheel", type: "command", mode: "velocity", offset: 4, scale: 0.104719 }
   ]
@@ -29,24 +29,24 @@
 # ── Inter-module sensors (0x3X) ──────────────────────────────────────────────
 
 - {
-  msg_id: 0x32, # Joint yaw feedback — Float, degrees (AS5048B)
-  modules: "all",
+  msg_id: 0x32, # Joint yaw feedback (IMU derived) — Float, degrees (AS5048B)
+  modules: "skip_first",
   length: 4,
   fields: [
     { name: "yaw_joint", scale: 0.017453 }, # degrees → radians
   ]
 }
 - {
-  msg_id: 0x34, # Joint pitch feedback (IMU) — Float, radians
-  modules: "all",
+  msg_id: 0x34, # Joint pitch feedback (IMU derived) — Float, radians
+  modules: "skip_first",
   length: 4,
   fields: [
     { name: "pitch_joint", type: "state", mode: "position", scale: 1.0 },
   ]
 }
 - {
-  msg_id: 0x36, # Joint roll feedback (IMU) — Float, radians
-  modules: "all",
+  msg_id: 0x36, # Joint roll feedback (IMU derived) — Float, radians
+  modules: "skip_first",
   length: 4,
   fields: [
     { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
@@ -196,6 +196,15 @@
   length: 7,
   fields: []
 }
+# - {
+#   msg_id: 0x74, # Torque enable/disable — uint16 bitfield (1=enable, 0=disable per motor)
+#   modules: "all",
+#   length: 2,
+#   is_command: true,
+#   fields: [
+#     { name: "torque_bitfield", type: "command", mode: "position", data_type: "uint16", offset: 0, scale: 1.0 },
+#   ]
+# }
 
 # ── Arm velocity states — MK2 MOD1 (0x8X) ───────────────────────────────────
 
@@ -252,14 +261,14 @@
 #     { name: "cable_roll_joint", type: "command", mode: "position" },
 #   ]
 # }
-- {
-  msg_id: 0xA1, # Cable roll position feedback — Float, rad
-  modules: "only_third",
-  length: 4,
-  fields: [
-    { name: "cable_roll_joint", type: "state", mode: "position" },
-  ]
-}
+# - {
+#   msg_id: 0xA1, # Cable roll position feedback — Float, rad
+#   modules: "only_third",
+#   length: 4,
+#   fields: [
+#     { name: "cable_roll_joint", type: "state", mode: "position" },
+#   ]
+# }
 # - {
 #   msg_id: 0xA2, # Cable roll compliance control — uint8 enable, int16 target_load
 #   modules: "only_third",
@@ -270,11 +279,11 @@
 #     { name: "cable_roll_target_load", type: "command", mode: "position", data_type: "int16", offset: 1, scale: 1.0 },
 #   ]
 # }
-- {
-  msg_id: 0xA3, # Cable roll present load feedback — int16 load
-  modules: "only_third",
-  length: 2,
-  fields: [
-    { name: "cable_roll_load", type: "state", mode: "effort", data_type: "int16", scale: 1.0 },
-  ]
-}
+# - {
+#   msg_id: 0xA3, # Cable roll present load feedback — int16 load
+#   modules: "only_third",
+#   length: 2,
+#   fields: [
+#     { name: "cable_roll_load", type: "state", mode: "effort", data_type: "int16", scale: 1.0 },
+#   ]
+# }

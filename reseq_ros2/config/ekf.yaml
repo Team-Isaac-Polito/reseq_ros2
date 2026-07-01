@@ -4,7 +4,7 @@
 
 ekf_filter_node:
   ros__parameters:
-    frequency: 20.0
+    frequency: 10.0
     sensor_timeout: 0.5
     two_d_mode: true          # Planar robot, suppress z/roll/pitch
     transform_time_offset: 0.0

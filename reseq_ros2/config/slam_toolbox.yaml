@@ -22,6 +22,7 @@ slam_toolbox:
     map_update_interval: 0.2
     resolution: 0.05
     max_laser_range: 12.0  # RPLIDAR A2M8 max range
+    minimum_laser_range: 0.2  # RPLIDAR A2M8 minimum range
     minimum_time_interval: 0.05
     transform_timeout: 0.5
     tf_buffer_duration: 30.0 
@@ -31,7 +32,7 @@ slam_toolbox:
     use_scan_barycenter: true
     minimum_travel_distance: 0.10
     minimum_travel_heading: 0.10
-    scan_buffer_size: 10
+    scan_buffer_size: 50
     scan_buffer_maximum_scan_distance: 5.0
     link_match_minimum_response_fine: 0.05  # Lower threshold for snake robot with moving scanner
     link_scan_maximum_distance: 2.0
