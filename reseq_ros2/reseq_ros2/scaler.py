@@ -24,6 +24,11 @@ try:
     from protocol import MsgType, ModuleAddress
 except ImportError:
     CanSender = None
+    # Fallback module addresses if protocol import fails
+class ModuleAddress:
+    MK2_MOD1 = 0x21
+    MK2_MOD2 = 0x22
+    MK2_MOD3 = 0x23
 
 """
 ROS node that handles scaling of the remote controller data into physical variables used
@@ -157,9 +162,16 @@ class Scaler(Node):
                 self.get_logger().info(f'CAN sender initialized on {can_channel}')
             except Exception as e:
                 self.get_logger().warn(f'Failed to initialize CAN sender: {e}')
+        else:
+            self.get_logger().warn('CanSender class not available - CAN torque control disabled')
         
         # Joint lift velocity publisher
         self.lift_pub = self.create_publisher(Vector3, '/inter_module_lift_vel', 10)
+
+        # Track previous S2/S3 switch states for torque control
+        self.prev_s2 = False
+        self.prev_s3 = False
+        self.get_logger().info('Torque control for S2/S3 switches initialized')
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel_teleop', 10)
         self.autonomy_pub = self.create_publisher(Bool, '/autonomy/enabled', 10)
@@ -230,6 +242,37 @@ class Scaler(Node):
         # Right Z axis controls the pitch (lift amount)
         s2 = data.buttons[self.buttons_enum.S2]
         s3 = data.buttons[self.buttons_enum.S3]
+
+        # Torque control for inter-module joints based on S2/S3 switch state
+        # When switch is ON (down position, True), enable torque for the corresponding joint
+        # When switch is OFF (up position, False), disable torque
+        self.get_logger().debug(f'S2={s2}, prev_s2={self.prev_s2}, S3={s3}, prev_s3={self.prev_s3}, can_sender={self.can_sender is not None}')
+        if s2 != self.prev_s2:
+            # S2 controls module 2 (middle module) - joint motors are bits 2 and 3
+            # Bit 2 = joint-left (yaw), Bit 3 = joint-right (pitch)
+            torque_bitfield = 0
+            if s2:
+                # Enable torque for both joint motors on module 2
+                torque_bitfield = (1 << 2) | (1 << 3)  # bits 2 and 3
+            if self.can_sender is not None:
+                self.can_sender.torque_enable(torque_bitfield, destination=ModuleAddress.MK2_MOD2)
+                self.get_logger().info(f'S2 switch changed: torque {"enabled" if s2 else "disabled"} for module 2 joints (bitfield=0x{torque_bitfield:04X})')
+            else:
+                self.get_logger().warn('CAN sender not available - cannot send torque command for S2')
+            self.prev_s2 = s2
+
+        if s3 != self.prev_s3:
+            # S3 controls module 3 (tail module) - joint motors are bits 2 and 3
+            torque_bitfield = 0
+            if s3:
+                # Enable torque for both joint motors on module 3
+                torque_bitfield = (1 << 2) | (1 << 3)  # bits 2 and 3
+            if self.can_sender is not None:
+                self.can_sender.torque_enable(torque_bitfield, destination=ModuleAddress.MK2_MOD3)
+                self.get_logger().info(f'S3 switch changed: torque {"enabled" if s3 else "disabled"} for module 3 joints (bitfield=0x{torque_bitfield:04X})')
+            else:
+                self.get_logger().warn('CAN sender not available - cannot send torque command for S3')
+            self.prev_s3 = s3
 
         if s2 or s3:
             lift_msg = Vector3()

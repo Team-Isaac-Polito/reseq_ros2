@@ -155,32 +155,32 @@
     { name: "pitch_joint", type: "command", mode: "position", offset: 4 },
   ]
 }
-- {
-  msg_id: 0x62, # Joint differential pitch/yaw feedback — Float×2, rad
-  modules: "skip_first",
-  length: 8,
-  fields: [
-    { name: "yaw_joint",   type: "state", mode: "position", offset: 0, scale: 1.0 },
-    { name: "pitch_joint", type: "state", mode: "position", offset: 4, scale: 1.0 },
-  ]
-}
-- {
-  msg_id: 0x63, # Joint roll setpoint — Float, rad
-  modules: "skip_first",
-  length: 4,
-  is_command: true,
-  fields: [
-    { name: "roll_joint", type: "command", mode: "position", scale: 1.0 },
-  ]
-}
-- {
-  msg_id: 0x64, # Joint roll feedback — Float, rad
-  modules: "skip_first",
-  length: 4,
-  fields: [
-    { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
-  ]
-}
+# - {
+#   msg_id: 0x62, # Joint differential pitch/yaw feedback — Float×2, rad
+#   modules: "skip_first",
+#   length: 8,
+#   fields: [
+#     { name: "yaw_joint",   type: "state", mode: "position", offset: 0, scale: 1.0 },
+#     { name: "pitch_joint", type: "state", mode: "position", offset: 4, scale: 1.0 },
+#   ]
+# }
+# - {
+#   msg_id: 0x63, # Joint roll setpoint — Float, rad
+#   modules: "skip_first",
+#   length: 4,
+#   is_command: true,
+#   fields: [
+#     { name: "roll_joint", type: "command", mode: "position", scale: 1.0 },
+#   ]
+# }
+# - {
+#   msg_id: 0x64, # Joint roll feedback — Float, rad
+#   modules: "skip_first",
+#   length: 4,
+#   fields: [
+#     { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
+#   ]
+# }
 
 # ── Status / diagnostics (0x7X) ─────────────────────────────────────────────
 
