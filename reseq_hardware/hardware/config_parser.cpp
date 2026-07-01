@@ -57,6 +57,9 @@ std::map<CanID, CanMessageMapping> parse_can_config_file(
       if (modules == "only_first" && i != 1) {
         continue;
       }
+      if (modules == "only_third" && i != 3) {
+        continue;
+      }
 
       // Parse Message mapping for this module
       CanMessageMapping msg_mapping;

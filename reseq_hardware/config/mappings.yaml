@@ -240,3 +240,41 @@
     { name: "wrist_roll_arm_joint", mode: "velocity", scale: -1.0 },
   ]
 }
+
+# ── Cable roll — MK2 MOD3 only (0xAX) ────────────────────────────────────────
+
+# - {
+#   msg_id: 0xA0, # Cable roll position setpoint — Float, rad
+#   modules: "only_third",
+#   length: 4,
+#   is_command: true,
+#   fields: [
+#     { name: "cable_roll_joint", type: "command", mode: "position" },
+#   ]
+# }
+- {
+  msg_id: 0xA1, # Cable roll position feedback — Float, rad
+  modules: "only_third",
+  length: 4,
+  fields: [
+    { name: "cable_roll_joint", type: "state", mode: "position" },
+  ]
+}
+# - {
+#   msg_id: 0xA2, # Cable roll compliance control — uint8 enable, int16 target_load
+#   modules: "only_third",
+#   length: 3,
+#   is_command: true,
+#   fields: [
+#     { name: "cable_roll_compliance_enable", type: "command", mode: "position", data_type: "uint8", offset: 0, scale: 1.0 },
+#     { name: "cable_roll_target_load", type: "command", mode: "position", data_type: "int16", offset: 1, scale: 1.0 },
+#   ]
+# }
+- {
+  msg_id: 0xA3, # Cable roll present load feedback — int16 load
+  modules: "only_third",
+  length: 2,
+  fields: [
+    { name: "cable_roll_load", type: "state", mode: "effort", data_type: "int16", scale: 1.0 },
+  ]
+}
