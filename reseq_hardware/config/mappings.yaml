@@ -56,13 +56,13 @@
 # ── Robotic arm — MK2 MOD1 (0x5X) ───────────────────────────────────────────
 
 - {
-  msg_id: 0x51, # Arm J1a/J1b differential setpoint — Float×2, rad
+  msg_id: 0x51, # Arm J1a/J1b differential velocity setpoint — Float×2, rad/s
   modules: "only_first",
   length: 8,
   is_command: true,
   fields: [
-    { name: "base_pitch_arm_joint",  type: "command", mode: "position" },
-    { name: "base_roll_arm_joint", type: "command", mode: "position", offset: 4 },
+    { name: "base_pitch_arm_joint",  type: "command", mode: "velocity" },
+    { name: "base_roll_arm_joint", type: "command", mode: "velocity", offset: 4 },
   ]
 }
 - {
@@ -75,12 +75,12 @@
   ]
 }
 - {
-  msg_id: 0x53, # Arm J2 pitch setpoint — Float, rad
+  msg_id: 0x53, # Arm J2 pitch velocity setpoint — Float, rad/s
   modules: "only_first",
   length: 4,
   is_command: true,
   fields: [
-    { name: "elbow_pitch_arm_joint", type: "command", mode: "position" },
+    { name: "elbow_pitch_arm_joint", type: "command", mode: "velocity" },
   ]
 }
 - {
@@ -92,12 +92,12 @@
   ]
 }
 - {
-  msg_id: 0x55, # Arm J3 roll setpoint — Float, rad
+  msg_id: 0x55, # Arm J3 roll velocity setpoint — Float, rad/s
   modules: "only_first",
   length: 4,
   is_command: true,
   fields: [
-    { name: "forearm_roll_arm_joint", type: "command", mode: "position" },
+    { name: "forearm_roll_arm_joint", type: "command", mode: "velocity" },
   ]
 }
 - {
@@ -109,12 +109,12 @@
   ]
 }
 - {
-  msg_id: 0x57, # Arm J4 pitch setpoint — Float, rad
+  msg_id: 0x57, # Arm J4 pitch velocity setpoint — Float, rad/s
   modules: "only_first",
   length: 4,
   is_command: true,
   fields: [
-    { name: "wrist_pitch_arm_joint", type: "command", mode: "position", scale: -1.0},
+    { name: "wrist_pitch_arm_joint", type: "command", mode: "velocity", scale: -1.0},
   ]
 }
 - {
@@ -126,12 +126,12 @@
   ]
 }
 - {
-  msg_id: 0x59, # Arm J5 roll setpoint — Float, rad
+  msg_id: 0x59, # Arm J5 roll velocity setpoint — Float, rad/s
   modules: "only_first",
   length: 4,
   is_command: true,
   fields: [
-    { name: "wrist_roll_arm_joint", type: "command", mode: "position", scale: -1.0 },
+    { name: "wrist_roll_arm_joint", type: "command", mode: "velocity", scale: -1.0 },
   ]
 }
 - {

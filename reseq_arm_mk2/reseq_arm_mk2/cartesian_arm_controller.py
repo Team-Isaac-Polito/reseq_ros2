@@ -848,7 +848,7 @@ class CartesianArmController(Node):
     velocity_topic         str    '/mk2_arm_vel'
     state_topic            str    '/arm_joint_states'
     trajectory_topic       str    '/mk2_arm_controller/joint_trajectory'
-    control_rate           float  33.0   Hz
+    control_rate           float  12.5   Hz
     max_cartesian_vel      float  0.3    m/s  (joystick [-1,1] scaled by this)
     max_joint_vel          float  1.0    rad/s per joint
     max_angular_vel        float  0.8    rad/s for camera pan/tilt/roll commands
@@ -900,7 +900,7 @@ class CartesianArmController(Node):
         self.declare_parameter('velocity_topic', '/mk2_arm_vel')
         self.declare_parameter('state_topic', '/arm_joint_states')
         self.declare_parameter('trajectory_topic', '/mk2_arm_controller/joint_trajectory')
-        self.declare_parameter('control_rate', 33.0)
+        self.declare_parameter('control_rate', 12.5)
         self.declare_parameter('max_cartesian_vel', 0.6)
         self.declare_parameter('max_angular_vel', 0.8)
         self.declare_parameter('max_joint_vel', 0.5)
@@ -1626,7 +1626,7 @@ class CartesianArmController(Node):
         )
         return self._jacobian_numerical(q)
 
-    # Main control loop (33 Hz).
+    # Main control loop (12.5 Hz).
 
     def _control_loop(self):
         if self._q is None:
@@ -2225,7 +2225,7 @@ class CartesianArmController(Node):
 
         # Print diagnostics at 1 Hz.
         self._diag_ctr += 1
-        if self._diag_ctr % 33 == 0:
+        if self._diag_ctr % 12.5 == 0:
             ee = self._get_ee_pos(self._q_cmd if self._q_cmd is not None else self._q)
             achieved_task = Jlin @ dq[:active_dofs]
             orientation_diag = ''

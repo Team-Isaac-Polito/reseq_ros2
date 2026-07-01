@@ -356,31 +356,6 @@ hardware_interface::return_type ReseqHardware::write(
 
   last_write_time_ = now;
 
-  // For arm joints with velocity command interface, integrate velocity into position.
-  // The Dynamixel motors are position-controlled, so velocity commands are converted
-  // to position deltas: position += velocity * dt
-  const double dt = command_cycle_.count() / 1000.0;  // ms → s
-  for (const auto & [joint_name, jinfo] : joint_info_) {
-    bool has_velocity_cmd = false;
-    bool has_position_cmd = false;
-    for (const auto & cm : jinfo.cmd_modes) {
-      if (cm == "velocity") has_velocity_cmd = true;
-      if (cm == "position") has_position_cmd = true;
-    }
-    // If the joint has both position and velocity command interfaces,
-    // integrate the velocity command into the position command buffer.
-    if (has_velocity_cmd && has_position_cmd) {
-      if (!joint_buffers_.command_position_seeded[jinfo.index]) {
-        continue;
-      }
-
-      const double vel_cmd = joint_buffers_.command_velocity[jinfo.index];
-      if (std::abs(vel_cmd) > 1e-6) {
-        joint_buffers_.command[jinfo.index] += vel_cmd * dt;
-      }
-    }
-  }
-
   for (const auto & [can_id, mapping] : can_mappings_) {
     if (!mapping.is_command) {
       continue;

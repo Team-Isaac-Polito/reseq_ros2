@@ -237,7 +237,7 @@ def launch_setup(context, *args, **kwargs):
                     'velocity_topic': '/mk2_arm_vel_scaled',
                     'chain_tip': arm_chain_tip,
                     'command_frame': 'arm_base_link',
-                    'command_mode': 'trajectory',
+                    'command_mode': 'velocity',
                     'max_cartesian_vel': arm_max_cartesian_vel,
                     'max_angular_vel': arm_max_angular_vel,
                     'max_joint_vel': arm_max_joint_vel,
