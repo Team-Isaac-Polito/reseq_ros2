@@ -251,10 +251,10 @@ class Scaler(Node):
         if s2 != self.prev_s2:
             # S2 controls module 2 (middle module) - joint motors are bits 2 and 3
             # Bit 2 = joint-left (yaw), Bit 3 = joint-right (pitch)
-            torque_bitfield = 0b0011
-            if s2:
+            torque_bitfield = 0xFFFF
+            if not s2:
                 # Enable torque for both joint motors on module 2
-                torque_bitfield = 0b1111  # bits 2 and 3
+                torque_bitfield ^= 0b1100
             if self.can_bus is not None:
                 self._send_torque_enable(torque_bitfield, module_id=0x22)  # MK2_MOD2
                 self.get_logger().info(f'S2 switch changed: torque {"enabled" if s2 else "disabled"} for module 2 joints (bitfield=0x{torque_bitfield:04X})')
@@ -264,10 +264,10 @@ class Scaler(Node):
 
         if s3 != self.prev_s3:
             # S3 controls module 3 (tail module) - joint motors are bits 2 and 3
-            torque_bitfield = 0b0011
-            if s3:
+            torque_bitfield = 0xFFFF
+            if not s3:
                 # Enable torque for both joint motors on module 3
-                torque_bitfield = 0b1111  # bits 2 and 3
+                torque_bitfield ^= 0b1100
             if self.can_bus is not None:
                 self._send_torque_enable(torque_bitfield, module_id=0x23)  # MK2_MOD3
                 self.get_logger().info(f'S3 switch changed: torque {"enabled" if s3 else "disabled"} for module 3 joints (bitfield=0x{torque_bitfield:04X})')
