@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   reseq:
     build:
@@ -16,8 +14,6 @@ services:
     stdin_open: true
     tty: true
     restart: "no"
-    environment:
-      - DISPLAY=$DISPLAY
     volumes:
       - ../output:/output
       - /home/isaac/maps:/ros2_ws/maps

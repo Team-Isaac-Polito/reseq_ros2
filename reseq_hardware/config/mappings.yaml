@@ -33,7 +33,7 @@
   modules: "skip_first",
   length: 4,
   fields: [
-    { name: "yaw_joint", scale: 0.017453 }, # degrees → radians
+    { name: "yaw_joint", scale: -0.017453 }, # degrees → radians
   ]
 }
 - {
@@ -41,7 +41,7 @@
   modules: "skip_first",
   length: 4,
   fields: [
-    { name: "pitch_joint", type: "state", mode: "position", scale: 1.0 },
+    { name: "pitch_joint", type: "state", mode: "position", scale: -1.0 },
   ]
 }
 - {
@@ -49,7 +49,7 @@
   modules: "skip_first",
   length: 4,
   fields: [
-    { name: "roll_joint", type: "state", mode: "position", scale: 1.0 },
+    { name: "roll_joint", type: "state", mode: "position", scale: -1.0 },
   ]
 }
 
@@ -61,87 +61,87 @@
   length: 8,
   is_command: true,
   fields: [
-    { name: "base_pitch_arm_joint",  type: "command", mode: "velocity" },
-    { name: "base_roll_arm_joint", type: "command", mode: "velocity", offset: 4 },
+    { name: "base_pitch_arm_joint",  type: "command", mode: "velocity", scale: 0.01 },
+    { name: "base_roll_arm_joint", type: "command", mode: "velocity", offset: 4, scale: 0.01 },
   ]
 }
-- {
-  msg_id: 0x52, # Arm J1a/J1b differential feedback — Float×2, rad
-  modules: "only_first",
-  length: 8,
-  fields: [
-    { name: "base_pitch_arm_joint" },
-    { name: "base_roll_arm_joint", offset: 4 },
-  ]
-}
+# - {
+#   msg_id: 0x52, # Arm J1a/J1b differential feedback — Float×2, rad
+#   modules: "only_first",
+#   length: 8,
+#   fields: [
+#     { name: "base_pitch_arm_joint" },
+#     { name: "base_roll_arm_joint", offset: 4 },
+#   ]
+# }
 - {
   msg_id: 0x53, # Arm J2 pitch velocity setpoint — Float, rad/s
   modules: "only_first",
   length: 4,
   is_command: true,
   fields: [
-    { name: "elbow_pitch_arm_joint", type: "command", mode: "velocity" },
+    { name: "elbow_pitch_arm_joint", type: "command", mode: "velocity", scale: 0.01 },
   ]
 }
-- {
-  msg_id: 0x54, # Arm J2 pitch feedback — Float, rad
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "elbow_pitch_arm_joint" },
-  ]
-}
+# - {
+#   msg_id: 0x54, # Arm J2 pitch feedback — Float, rad
+#   modules: "only_first",
+#   length: 4,
+#   fields: [
+#     { name: "elbow_pitch_arm_joint" },
+#   ]
+# }
 - {
   msg_id: 0x55, # Arm J3 roll velocity setpoint — Float, rad/s
   modules: "only_first",
   length: 4,
   is_command: true,
   fields: [
-    { name: "forearm_roll_arm_joint", type: "command", mode: "velocity" },
+    { name: "forearm_roll_arm_joint", type: "command", mode: "velocity", scale: 0.01 },
   ]
 }
-- {
-  msg_id: 0x56, # Arm J3 roll feedback — Float, rad
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "forearm_roll_arm_joint" },
-  ]
-}
+# - {
+#   msg_id: 0x56, # Arm J3 roll feedback — Float, rad
+#   modules: "only_first",
+#   length: 4,
+#   fields: [
+#     { name: "forearm_roll_arm_joint" },
+#   ]
+# }
 - {
   msg_id: 0x57, # Arm J4 pitch velocity setpoint — Float, rad/s
   modules: "only_first",
   length: 4,
   is_command: true,
   fields: [
-    { name: "wrist_pitch_arm_joint", type: "command", mode: "velocity", scale: -1.0},
+    { name: "wrist_pitch_arm_joint", type: "command", mode: "velocity", scale: -0.01 },
   ]
 }
-- {
-  msg_id: 0x58, # Arm J4 pitch feedback — Float, rad
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "wrist_pitch_arm_joint", scale: -1.0},
-  ]
-}
+# - {
+#   msg_id: 0x58, # Arm J4 pitch feedback — Float, rad
+#   modules: "only_first",
+#   length: 4,
+#   fields: [
+#     { name: "wrist_pitch_arm_joint", scale: -1.0},
+#   ]
+# }
 - {
   msg_id: 0x59, # Arm J5 roll velocity setpoint — Float, rad/s
   modules: "only_first",
   length: 4,
   is_command: true,
   fields: [
-    { name: "wrist_roll_arm_joint", type: "command", mode: "velocity", scale: -1.0 },
+    { name: "wrist_roll_arm_joint", type: "command", mode: "velocity", scale: -0.01 },
   ]
 }
-- {
-  msg_id: 0x5A, # Arm J5 roll feedback — Float, rad
-  modules: "only_first",
-  length: 4,
-  fields: [
-    { name: "wrist_roll_arm_joint", scale: -1.0 },
-  ]
-}
+# - {
+#   msg_id: 0x5A, # Arm J5 roll feedback — Float, rad
+#   modules: "only_first",
+#   length: 4,
+#   fields: [
+#     { name: "wrist_roll_arm_joint", scale: -1.0 },
+#   ]
+# }
 
 # ── Inter-module joint — MK2 MOD2/MOD3 (0x6X) ──────────────────────────────
 
