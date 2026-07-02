@@ -43,6 +43,7 @@ setup(
             'map_republisher = reseq_ros2.map_republisher:main',
             'tof_obstacle_detector = reseq_ros2.tof_obstacle_detector:main',
             'joint_lift_controller = reseq_ros2.joint_lift_controller:main',
+            'geotiff_shutdown_saver = reseq_ros2.geotiff_shutdown_saver:main',
         ],
     },
 )

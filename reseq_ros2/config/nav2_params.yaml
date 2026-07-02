@@ -101,7 +101,7 @@ local_costmap:
           raytrace_max_range: 8.0
           obstacle_max_range: 6.0
         pointcloud:
-          topic: /camera/depth/color/points
+          topic: /realsense/depth/color/points
           max_obstacle_height: 2.0
           # 0.05 m floor clearance prevents the ground plane from being
           # marked as an obstacle when the RealSense looks slightly downward.
@@ -112,7 +112,7 @@ local_costmap:
           raytrace_max_range: 4.0
           obstacle_max_range: 3.5
         pointcloud_dropoff:
-          topic: /camera/depth/color/points
+          topic: /realsense/depth/color/points
           # Detect drop-offs: only mark points that are well below floor level
           # (e.g., ramp edges, platform ledges on the KRails arena).
           min_obstacle_height: -0.5
@@ -192,7 +192,7 @@ global_costmap:
           raytrace_max_range: 8.0
           obstacle_max_range: 6.0
         pointcloud:
-          topic: /camera/depth/color/points
+          topic: /realsense/depth/color/points
           max_obstacle_height: 2.0
           min_obstacle_height: 0.03
           clearing: true
@@ -201,7 +201,7 @@ global_costmap:
           raytrace_max_range: 4.0
           obstacle_max_range: 3.5
         pointcloud_dropoff:
-          topic: /camera/depth/color/points
+          topic: /realsense/depth/color/points
           min_obstacle_height: -0.5
           max_obstacle_height: -0.03
           clearing: false
@@ -332,13 +332,13 @@ collision_monitor:
       enabled: true
     pointcloud:
       type: pointcloud
-      topic: /camera/depth/color/points
+      topic: /realsense/depth/color/points
       min_height: 0.03
       max_height: 2.0
       enabled: true
     pointcloud_dropoff:
       type: pointcloud
-      topic: /camera/depth/color/points
+      topic: /realsense/depth/color/points
       min_height: -0.5
       max_height: -0.03
       enabled: true

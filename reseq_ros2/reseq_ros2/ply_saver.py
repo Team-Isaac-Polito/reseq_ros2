@@ -6,7 +6,7 @@ transforms each frame into the map frame via TF2, accumulates points in a
 voxel grid (latest colour per voxel), and periodically writes reseq_map_3d.ply.
 
 Works on both real robot and Gazebo simulation with the same topic names.
-The Gazebo bridge (gz_bridge.yaml) publishes to the same /camera/... topics
+The Gazebo bridge (gz_bridge.yaml) publishes to the same camera topics
 that the physical RealSense driver produces.
 
 QoS: uses RELIABLE to match the ros_gz_bridge publisher. The RealSense driver
@@ -95,7 +95,7 @@ class PlySaver(Node):
     def __init__(self) -> None:
         super().__init__('ply_saver')
 
-        self.declare_parameter('pointcloud_topic', '/camera/depth/color/points')
+        self.declare_parameter('pointcloud_topic', '/realsense/depth/color/points')
         self.declare_parameter('save_path', '/ros2_ws/maps')
         self.declare_parameter('save_interval', 60.0)
         self.declare_parameter('publish_interval', 5.0)

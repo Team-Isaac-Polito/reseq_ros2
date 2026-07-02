@@ -3,16 +3,18 @@
 Uses online async mode by default. Pass ``slam_mode:=localization`` to
 localise on an existing map instead of building a new one.
 
-In mapping mode, also launches the ply_saver node which accumulates
-colored PointCloud2 frames from the RGBD camera into reseq_map_3d.ply.
+In mapping mode, also launches:
+- ply_saver node which accumulates colored PointCloud2 frames from the RGBD camera into reseq_map_3d.ply
+- geotiff_node which periodically saves the 2D occupancy grid map as GeoTIFF (every 60s and on shutdown)
 """
 
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler
 from launch.conditions import IfCondition
+from launch.event_handlers import OnShutdown
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
@@ -41,6 +43,12 @@ def generate_launch_description():
         'ply_save_path',
         default_value=os.environ.get('RESEQ_PLY_SAVE_PATH', '/ros2_ws/maps'),
         description='Directory where ply_saver writes the 3D map',
+    )
+
+    geotiff_save_path_arg = DeclareLaunchArgument(
+        'geotiff_save_path',
+        default_value=os.environ.get('RESEQ_GEOTIFF_SAVE_PATH', '/ros2_ws/maps'),
+        description='Directory where geotiff_node writes the 2D GeoTIFF map',
     )
 
     slam_node = Node(
@@ -101,7 +109,7 @@ def generate_launch_description():
         parameters=[
             {
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'pointcloud_topic': '/camera/depth/color/points',
+                'pointcloud_topic': '/realsense/depth/color/points',
                 'save_path': LaunchConfiguration('ply_save_path'),
                 'save_interval': 60.0,
                 'voxel_size': 0.05,
@@ -118,15 +126,56 @@ def generate_launch_description():
         ),
     )
 
+    # geotiff_node: periodically saves the 2D occupancy grid map as GeoTIFF
+    # Saves every 60 seconds and on shutdown via syscommand topic
+    geotiff_node = Node(
+        package='is_geotiff',
+        executable='geotiff_node',
+        name='geotiff_node',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'map_file_path': LaunchConfiguration('geotiff_save_path'),
+                'map_file_base_name': 'reseq_map_2d',
+                'geotiff_save_period': 60.0,
+                'draw_background_checkerboard': True,
+                'draw_free_space_grid': True,
+                'use_map_topic': True,
+            }
+        ],
+        condition=IfCondition(
+            PythonExpression(["'", LaunchConfiguration('slam_mode'), "' == 'mapping'"])
+        ),
+    )
+
+    # Register shutdown handler to trigger geotiff save on shutdown
+    shutdown_geotiff = RegisterEventHandler(
+        OnShutdown(
+            on_shutdown=[
+                Node(
+                    package='reseq_ros2',
+                    executable='geotiff_shutdown_saver',
+                    name='geotiff_shutdown_saver',
+                    output='screen',
+                    parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
+                )
+            ]
+        )
+    )
+
     return LaunchDescription(
         [
             slam_mode_arg,
             params_arg,
             use_sim_time_arg,
             ply_save_path_arg,
+            geotiff_save_path_arg,
             slam_node,
             map_republisher_node,
             lifecycle_manager,
             ply_saver_node,
+            geotiff_node,
+            shutdown_geotiff,
         ]
     )

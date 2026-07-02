@@ -37,7 +37,7 @@ class ThermalPointcloudFusion(Node):
         super().__init__('thermal_pointcloud_fusion')
 
         # ── Parameters ──────────────────────────────────────────────
-        self.declare_parameter('pointcloud_topic', '/camera/depth/color/points')
+        self.declare_parameter('pointcloud_topic', '/realsense/depth/color/points')
         self.declare_parameter('thermal_image_topic', '/thermal/image_raw')
         self.declare_parameter('thermal_camera_info', '/thermal/camera_info')
         self.declare_parameter('camera_frame', 'thermal_frame')

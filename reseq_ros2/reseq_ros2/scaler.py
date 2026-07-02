@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import traceback
+import warnings
 from enum import Enum, IntEnum
 import struct
 import time
@@ -18,6 +19,9 @@ import can
 import struct
 import os
 import sys
+
+# Suppress pkg_resources deprecation warning from python-can library
+warnings.filterwarnings("ignore", category=UserWarning, module="can.interfaces")
 
 
 """

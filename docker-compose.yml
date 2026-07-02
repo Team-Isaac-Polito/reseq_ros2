@@ -3,8 +3,8 @@ version: '3.8'
 services:
   reseq:
     build:
-      dockerfile: docker/Dockerfile.full
-    image: reseq:full
+      dockerfile: docker/Dockerfile.orin
+    image: reseq:orin
     privileged: true
     network_mode: host
     deploy:
@@ -16,5 +16,11 @@ services:
     stdin_open: true
     tty: true
     restart: "no"
+    environment:
+      - DISPLAY=$DISPLAY
     volumes:
       - ../output:/output
+      - /home/isaac/maps:/ros2_ws/maps
+      - /lib/modules:/lib/modules:ro
+      - /usr/src:/usr/src:ro
+    entrypoint: /bin/bash
