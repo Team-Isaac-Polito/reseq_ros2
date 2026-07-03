@@ -77,7 +77,7 @@
 - {
   msg_id: 0x53, # Arm J2 pitch velocity setpoint — Float, rad/s
   modules: "only_first",
-  length: 4,
+  length: 8,
   is_command: true,
   fields: [
     { name: "elbow_pitch_arm_joint", type: "command", mode: "velocity", scale: 1.0 },
@@ -94,7 +94,7 @@
 - {
   msg_id: 0x55, # Arm J3 roll velocity setpoint — Float, rad/s
   modules: "only_first",
-  length: 4,
+  length: 8,
   is_command: true,
   fields: [
     { name: "forearm_roll_arm_joint", type: "command", mode: "velocity", scale: 1.0 },
@@ -111,7 +111,7 @@
 - {
   msg_id: 0x57, # Arm J4 pitch velocity setpoint — Float, rad/s
   modules: "only_first",
-  length: 4,
+  length: 8,
   is_command: true,
   fields: [
     { name: "wrist_pitch_arm_joint", type: "command", mode: "velocity", scale: -1.0 },
@@ -128,7 +128,7 @@
 - {
   msg_id: 0x59, # Arm J5 roll velocity setpoint — Float, rad/s
   modules: "only_first",
-  length: 4,
+  length: 8,
   is_command: true,
   fields: [
     { name: "wrist_roll_arm_joint", type: "command", mode: "velocity", scale: -1.0 },

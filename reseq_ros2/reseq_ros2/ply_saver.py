@@ -144,7 +144,7 @@ class PlySaver(Node):
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer, self)
 
         pc_qos = QoSProfile(
-            reliability=QoSReliabilityPolicy.RELIABLE,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1,
