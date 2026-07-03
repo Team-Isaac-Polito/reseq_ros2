@@ -103,6 +103,31 @@ def launch_setup(context, *args, **kwargs):
                         arguments=['--ros-args', '--log-level', external_log_level],
                     )
                 )
+                # Static transform from realsense_link to its optical frames
+                # RealSense publishes point clouds in realsense_link_depth_optical_frame
+                # and color images in realsense_link_color_optical_frame
+                launch_config.append(
+                    Node(
+                        package='tf2_ros',
+                        executable='static_transform_publisher',
+                        name='realsense_depth_optical_transform',
+                        arguments=[
+                            '0', '0', '0', '0', '0', '0',
+                            'realsense_link', 'realsense_link_depth_optical_frame',
+                        ],
+                    )
+                )
+                launch_config.append(
+                    Node(
+                        package='tf2_ros',
+                        executable='static_transform_publisher',
+                        name='realsense_color_optical_transform',
+                        arguments=[
+                            '0', '0', '0', '0', '0', '0',
+                            'realsense_link', 'realsense_link_color_optical_frame',
+                        ],
+                    )
+                )
             # Launch a usb_cam node for each usb_camera present
             if name == 'usb_cameras':
                 num_usb_cam = sensor[name]

@@ -106,6 +106,8 @@ class PlySaver(Node):
         self.declare_parameter('scan_frame_skip', 2)
         self.declare_parameter('scan_max_range', 12.0)
         self.declare_parameter('scan_color_rgb', [255, 210, 0])
+        self.declare_parameter('wait_for_map', True)
+        self.declare_parameter('map_timeout_sec', 30.0)
 
         self._pc_topic = self.get_parameter('pointcloud_topic').get_parameter_value().string_value
         save_dir = Path(self.get_parameter('save_path').get_parameter_value().string_value)
@@ -131,6 +133,12 @@ class PlySaver(Node):
         self._voxel_map = {}
         self._frame_idx: int = 0
         self._scan_frame_idx: int = 0
+
+        # Wait for map frame to exist before processing
+        self._wait_for_map = self.get_parameter('wait_for_map').get_parameter_value().bool_value
+        self._map_timeout_sec = self.get_parameter('map_timeout_sec').get_parameter_value().double_value
+        self._map_frame_exists = False
+        self._map_wait_timer = None
 
         self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer, self)
@@ -164,10 +172,37 @@ class PlySaver(Node):
 
         self.create_timer(interval, self._save)
         self.create_timer(publish_interval, self._publish_map_cloud)
+
+        # Start timer to wait for map frame if needed
+        if self._wait_for_map:
+            self._map_wait_timer = self.create_timer(0.5, self._check_map_frame)
+
         self.get_logger().info(
             f'PlySaver listening on [{self._pc_topic}] and [{self._scan_topic}], '
             f'save every {interval:.0f}s -> {self._ply_path}'
         )
+
+    def _check_map_frame(self) -> None:
+        """Check if the 'map' frame exists in TF. Called periodically until timeout."""
+        if self._map_frame_exists:
+            return
+
+        try:
+            # Check if 'map' frame exists by looking up a transform from it
+            self._tf_buffer.lookup_transform(
+                'map',
+                'map',
+                rclpy.time.Time(),
+                rclpy.duration.Duration(seconds=0.1),
+            )
+            self._map_frame_exists = True
+            if self._map_wait_timer is not None:
+                self._map_wait_timer.cancel()
+                self._map_wait_timer = None
+            self.get_logger().info('PlySaver: map frame is now available')
+        except Exception:
+            # Map frame not yet available, keep waiting
+            pass
 
     def _accumulate_pts(self, pts_map: np.ndarray, rgb: np.ndarray) -> None:
         if len(pts_map) == 0:
@@ -217,6 +252,10 @@ class PlySaver(Node):
         if self._frame_idx % self._frame_skip != 0:
             return
 
+        # Wait for map frame if configured
+        if self._wait_for_map and not self._map_frame_exists:
+            return
+
         pts, rgb = _parse_xyz_rgb(msg)
         if pts is None or len(pts) == 0:
             return
@@ -245,6 +284,10 @@ class PlySaver(Node):
     def _scan_cb(self, msg: LaserScan) -> None:
         self._scan_frame_idx += 1
         if self._scan_frame_idx % max(1, self._scan_frame_skip) != 0:
+            return
+
+        # Wait for map frame if configured
+        if self._wait_for_map and not self._map_frame_exists:
             return
 
         ranges = np.asarray(msg.ranges, dtype=np.float64)

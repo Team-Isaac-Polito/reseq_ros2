@@ -21,4 +21,7 @@ realsense:
       ".realsense2_camera_node.depth.image_rect_raw.format": png
       ".realsense2_camera_node.depth.image_rect_raw.png_level": 9
       
-      wait_for_device_timeout: 10.0 
+      wait_for_device_timeout: 10.0
+      
+      # Set base frame to the RealSense mounting link
+      base_frame: realsense_link

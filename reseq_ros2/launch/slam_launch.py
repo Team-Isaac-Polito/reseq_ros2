@@ -119,6 +119,8 @@ def generate_launch_description():
                 'scan_frame_skip': 2,
                 'scan_max_range': 12.0,
                 'scan_color_rgb': [255, 210, 0],
+                'wait_for_map': True,
+                'map_timeout_sec': 60.0,
             }
         ],
         condition=IfCondition(
@@ -137,7 +139,7 @@ def generate_launch_description():
             {
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'map_file_path': LaunchConfiguration('geotiff_save_path'),
-                'map_file_base_name': 'reseq_map_2d',
+                'map_file_base_name': 'RoboCup2026-ISAAC-P2',
                 'geotiff_save_period': 60.0,
                 'draw_background_checkerboard': True,
                 'draw_free_space_grid': True,

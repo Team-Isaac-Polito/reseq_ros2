@@ -454,15 +454,19 @@ RUN mkdir -p /ros2_ws
 WORKDIR /ros2_ws
 
 RUN apt-get update && \
-    echo "Test52" && \
     git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src && cd src && \
     git checkout origin/nav-test && \
     git submodule update --recursive --remote && cd .. && \
     source /ros_entrypoint.sh && \
     rosdep install -i --from-path src --rosdistro $ROS_DISTRO \
       --skip-keys="librealsense2 realsense2_camera gz_ros2_control ros_gz" \
-      -y -t exec -t build && \
-    colcon build && \
+      -y -t exec -t build
+
+RUN cd src && git fetch; git reset --hard origin/nav-test && \
+    git submodule update --recursive --remote && cd .. && \
+    echo "Test3" && \
+    source /ros_entrypoint.sh && \
+    colcon build --packages-skip is_geotiff_plugins && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh && \
     sed -i "\$i source /ros_entrypoint.sh \n" /root/.bashrc && \
     rm -rf /var/lib/apt/lists/*
