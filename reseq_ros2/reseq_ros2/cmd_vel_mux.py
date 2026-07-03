@@ -46,6 +46,7 @@ class CmdVelMux(Node):
         self.map_timeout = self.declare_parameter('map_timeout', 3.0).value
 
         self.autonomy_enabled = False
+        self.emergency_stop_active = False
         self.latest_teleop = Twist()
         self.latest_nav = Twist()
         self.last_teleop_time = None
@@ -60,6 +61,7 @@ class CmdVelMux(Node):
         self.create_subscription(Twist, self.teleop_topic, self.teleop_callback, 10)
         self.create_subscription(Twist, self.nav_topic, self.nav_callback, 10)
         self.create_subscription(Bool, self.autonomy_topic, self.autonomy_callback, 10)
+        self.create_subscription(Bool, '/safety/estop', self.estop_callback, 10)
         self.create_subscription(LaserScan, '/scan', self.scan_callback, _SENSOR_QOS)
         self.create_subscription(
             OccupancyGrid,
@@ -85,6 +87,9 @@ class CmdVelMux(Node):
 
     def autonomy_callback(self, msg: Bool) -> None:
         self.autonomy_enabled = msg.data
+
+    def estop_callback(self, msg: Bool) -> None:
+        self.emergency_stop_active = msg.data
 
     def scan_callback(self, _msg: LaserScan) -> None:
         self.last_scan_time = self.get_clock().now()
@@ -126,7 +131,11 @@ class CmdVelMux(Node):
         teleop_override = self.is_recent(self.last_teleop_time, self.teleop_override_timeout)
         autonomy_ok, autonomy_health = self.autonomy_healthy()
 
-        if not self.autonomy_enabled:
+        if self.emergency_stop_active:
+            selected = Twist()
+            source = 'safety_node'
+            health = 'emergency_stop'
+        elif not self.autonomy_enabled:
             selected = self.latest_teleop
         elif teleop_override:
             selected = self.latest_teleop

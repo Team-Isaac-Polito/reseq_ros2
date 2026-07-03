@@ -2,9 +2,15 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
-                            IncludeLaunchDescription, LogInfo, OpaqueFunction,
-                            RegisterEventHandler)
+from launch.actions import (
+    DeclareLaunchArgument,
+    EmitEvent,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    LogInfo,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.launch_description_sources import (
@@ -62,6 +68,7 @@ def launch_setup(context, *args, **kwargs):
                 'config_file': config_filename,
                 'log_level': log_level,
                 'use_sim_time': use_sim_time,
+                'enable_hazmat_estop': LaunchConfiguration('enable_hazmat_estop'),
             }.items(),
         )
     )
@@ -340,6 +347,11 @@ def generate_launch_description():
             DeclareLaunchArgument('launch_yaw_controllers', default_value='false'),
             DeclareLaunchArgument('no_body_controllers', default_value='false'),
             DeclareLaunchArgument('no_arm_controllers', default_value='false'),
+            DeclareLaunchArgument(
+                'enable_hazmat_estop',
+                default_value='true',
+                description='Enable automatic E-Stop on new Hazmat detection',
+            ),
             OpaqueFunction(function=generate_config_setup),
         ]
     )
