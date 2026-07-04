@@ -418,34 +418,6 @@ class Scaler(Node):
         except Exception as e:
             self.get_logger().error(f'Failed to send beak command: {type(e).__name__}: {e}')
 
-    def log_arm_debug(
-        self,
-        data: Remote,
-        raw: tuple[float, float, float],
-        scaled: tuple[float, float, float],
-        output: tuple[float, float, float],
-        isolated_vertical: bool,
-    ) -> None:
-        if not self.arm_debug_log:
-            return
-
-        if max(*(abs(v) for v in raw), *(abs(v) for v in output)) <= 1e-3:
-            return
-
-        mode = 'linear' if self.arm_linear_mode else 'rotation'
-        self.get_logger().info(
-            'arm_input_trace '
-            f'mode={mode} s4={data.buttons[self.buttons_enum.S4]} '
-            f'axes=({self.arm_axis_x},{self.arm_axis_y},{self.arm_axis_z}) '
-            f'left_raw=[{data.left.x:.3f},{data.left.y:.3f},{data.left.z:.3f}] '
-            f'mapped_raw=[{raw[0]:.3f},{raw[1]:.3f},{raw[2]:.3f}] '
-            f'scaled=[{scaled[0]:.3f},{scaled[1]:.3f},{scaled[2]:.3f}] '
-            f'out=[{output[0]:.3f},{output[1]:.3f},{output[2]:.3f}] '
-            f'z_iso_ratio={self.arm_z_isolation_ratio:.2f} '
-            f'isolated={isolated_vertical}',
-            throttle_duration_sec=0.5,
-        )
-
 
 def main(args=None):
     rclpy.init(args=args)

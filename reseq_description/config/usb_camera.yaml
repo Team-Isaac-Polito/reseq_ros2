@@ -5,7 +5,7 @@
       framerate: 30.0
       image_width: 640
       image_height: 480
-      pixel_format: "yuyv2rgb"
+      pixel_format: "yuyv"
 
       # Following parameters should be set on launch:
       # device_id, camera_name, frame_id

@@ -12,9 +12,9 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, TimerAction
 from launch.conditions import IfCondition
-from launch.event_handlers import OnShutdown
+from launch.event_handlers import OnProcessStart, OnShutdown
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
@@ -69,6 +69,34 @@ def generate_launch_description():
         ],
     )
 
+    # Lifecycle manager for SLAM Toolbox - delayed to ensure SLAM node is ready
+    lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_slam',
+        output='screen',
+        parameters=[{
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'autostart': True,
+            'node_names': ['slam_toolbox'],
+            'bond_timeout': 10.0,
+        }],
+    )
+
+    # Start lifecycle manager after SLAM Toolbox process starts (with delay for ROS node initialization)
+    # Jetson Orin needs more time for SLAM Toolbox to advertise lifecycle services
+    lifecycle_manager_delayed = TimerAction(
+        period=10.0,
+        actions=[lifecycle_manager],
+    )
+
+    lifecycle_manager_event = RegisterEventHandler(
+        OnProcessStart(
+            target_action=slam_node,
+            on_start=[lifecycle_manager_delayed],
+        )
+    )
+
     map_republisher_node = Node(
         package='reseq_ros2',
         executable='map_republisher',
@@ -81,21 +109,6 @@ def generate_launch_description():
                 'output_topic': '/map',
                 'metadata_topic': '/map_metadata',
                 'publish_rate': 1.0,
-            }
-        ],
-    )
-
-    lifecycle_manager = Node(
-        package='nav2_lifecycle_manager',
-        executable='lifecycle_manager',
-        name='lifecycle_manager_slam',
-        output='screen',
-        parameters=[
-            {
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'autostart': True,
-                'bond_timeout': 0.0,
-                'node_names': ['slam_toolbox'],
             }
         ],
     )
@@ -120,7 +133,7 @@ def generate_launch_description():
                 'scan_max_range': 12.0,
                 'scan_color_rgb': [255, 210, 0],
                 'wait_for_map': True,
-                'map_timeout_sec': 60.0,
+                'map_timeout_sec': 30.0,
             }
         ],
         condition=IfCondition(
@@ -175,7 +188,7 @@ def generate_launch_description():
             geotiff_save_path_arg,
             slam_node,
             map_republisher_node,
-            lifecycle_manager,
+            lifecycle_manager_event,
             ply_saver_node,
             geotiff_node,
             shutdown_geotiff,

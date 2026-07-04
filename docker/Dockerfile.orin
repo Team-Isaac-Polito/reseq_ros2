@@ -464,7 +464,7 @@ RUN apt-get update && \
 
 RUN cd src && git fetch; git reset --hard origin/nav-test && \
     git submodule update --recursive --remote && cd .. && \
-    echo "Test10" && \
+    echo "Test27" && \
     source /ros_entrypoint.sh && \
     colcon build && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh && \

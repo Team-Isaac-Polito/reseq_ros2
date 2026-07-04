@@ -45,6 +45,16 @@ def copy_realsense_config(realsense_config):
             f_dst.write(f_src.read())
 
 
+# Function to copy the TOF config file to the temp directory
+def copy_tof_config(tof_config):
+    src = os.path.join(config_path, tof_config)
+    dst = os.path.join(temp_path, tof_config)
+    if os.path.exists(src):
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        with open(src, 'r') as f_src, open(dst, 'w') as f_dst:
+            f_dst.write(f_src.read())
+
+
 # Function to find the '/dev/video' device corresponding to each usb camera
 def find_video_devices(num_cam):
     try:
@@ -93,6 +103,10 @@ def generate_final_config(version: str, include_file):
         # Copy the RealSense config file to the temp directory
         if 'realsense_config' in main_config:
             copy_realsense_config(main_config['realsense_config'])
+
+        # Copy the TOF config file to the temp directory
+        if 'tof_config' in main_config:
+            copy_tof_config(main_config['tof_config'])
 
         # Genearate a config file for each usb camera, then copy all of them in the temp directory
         if 'usb_camera_config' in main_config:

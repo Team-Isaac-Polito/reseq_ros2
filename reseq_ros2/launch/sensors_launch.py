@@ -104,8 +104,6 @@ def launch_setup(context, *args, **kwargs):
                     )
                 )
                 # Static transform from realsense_link to its optical frames
-                # RealSense publishes point clouds in realsense_link_depth_optical_frame
-                # and color images in realsense_link_color_optical_frame
                 launch_config.append(
                     Node(
                         package='tf2_ros',
@@ -135,9 +133,6 @@ def launch_setup(context, *args, **kwargs):
                     usb_cam_config = f'usb_camera_config_{i}'
                     if os.path.exists(f'{config_path}/{usb_cam_config}') is False:
                         break
-                    # Calibration file expected at ~/.ros/camera_info/<camera_name>.yaml
-                    # The usb_cam_node uses camera_name to construct the path
-                    camera_info_path = f'file:///root/.ros/camera_info/usb_cam_{i}.yaml'
                     launch_config.append(
                         Node(
                             package='usb_cam',
@@ -147,8 +142,6 @@ def launch_setup(context, *args, **kwargs):
                             parameters=[
                                 ParameterFile(f'{config_path}/{usb_cam_config}'),
                                 {
-                                    'camera_name': f'usb_cam_{i}',
-                                    'camera_info_url': camera_info_path,
                                     '.image_raw.jpeg_quality': 30,
                                     '.image_raw.png_level': 3,
                                 },
