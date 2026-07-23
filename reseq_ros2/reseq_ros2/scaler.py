@@ -139,6 +139,10 @@ class Scaler(Node):
             self.declare_parameter('arm_input_deadzone', 0.08).get_parameter_value().double_value
         )
         arm_vel_topic = self.declare_parameter('arm_vel_topic', '/mk2_arm_vel').value
+        # In simulation, the Gazebo diff_drive_controller interprets angular.z
+        # with opposite sign compared to the real hardware CAN motor controllers.
+        self.sim_mode = self.get_parameter('use_sim_time').get_parameter_value().bool_value
+        self.angular_sign = -1.0 if self.sim_mode else 1.0
 
         for h in self.handlers:
             if 'service' not in h:
@@ -238,9 +242,7 @@ class Scaler(Node):
 
         cmd_vel = Twist()
         cmd_vel.linear.x = data.right.y  # Linear velocity (-1:1)
-        # Positive angular.z = counter-clockwise (left turn) per ROS convention.
-        # Joystick right (data.right.x > 0) → positive angular.z → left turn.
-        cmd_vel.angular.z = data.right.x
+        cmd_vel.angular.z = self.angular_sign * data.right.x
 
         # The app joystick is screen-oriented: X is right/left, Y is forward/back.
         # The arm controller expects Cartesian commands in arm_base_link:
