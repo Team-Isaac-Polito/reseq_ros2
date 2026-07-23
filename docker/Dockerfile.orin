@@ -453,6 +453,7 @@ FROM reseq-base AS reseq
 RUN mkdir -p /ros2_ws
 WORKDIR /ros2_ws
 
+# Remove checkout line when it's merged to main branch
 RUN apt-get update && \
     git clone --recursive https://github.com/Team-Isaac-Polito/reseq_ros2.git src && cd src && \
     git checkout origin/nav-test && \
@@ -462,9 +463,9 @@ RUN apt-get update && \
       --skip-keys="librealsense2 realsense2_camera gz_ros2_control ros_gz" \
       -y -t exec -t build
 
+# Docker only runs this when building the image after code change in reseq_ros2
 RUN cd src && git fetch; git reset --hard origin/nav-test && \
     git submodule update --recursive --remote && cd .. && \
-    echo "Test27" && \
     source /ros_entrypoint.sh && \
     colcon build && \
     sed -i "\$i ros_source_env /ros2_ws/install/setup.bash \n" /ros_entrypoint.sh && \

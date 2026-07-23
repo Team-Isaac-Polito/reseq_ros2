@@ -211,17 +211,29 @@ def launch_setup(context, *args, **kwargs):
             )
         )
 
+    # EKF node - delayed until after diff controllers are active (they provide odometry)
     ekf_config = os.path.join(share_folder, 'config', 'ekf.yaml')
-    launch_config.append(
-        Node(
-            package='robot_localization',
-            executable='ekf_node',
-            name='ekf_filter_node',
-            output='screen',
-            parameters=[ekf_config, {'use_sim_time': sim_branch_use_sim_time == 'true'}],
-            arguments=['--ros-args', '--log-level', external_log_level],
-        )
+    ekf_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[ekf_config, {'use_sim_time': sim_branch_use_sim_time == 'true'}],
+        arguments=['--ros-args', '--log-level', external_log_level],
     )
+
+    # Start EKF after the last body spawner (diff_controller) completes
+    if body_spawners:
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=body_spawners[-1],
+                    on_exit=[ekf_node],
+                )
+            )
+        )
+    else:
+        launch_config.append(ekf_node)
 
     if arm:
         arm_chain_tip = 'cameras_holder_link' if sim_mode == 'true' else 'tcp'

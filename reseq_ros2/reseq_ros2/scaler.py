@@ -95,6 +95,13 @@ class Scaler(Node):
             'inverted': False,
             'type': 'led',
         },
+        {
+            'name': 'Autonomy Enable/Disable',
+            'button': buttons_enum.BRED,
+            'service': '/autonomy/enable',
+            'inverted': False,
+            'type': 'autonomy',
+        },
     ]
 
     qos = QoSProfile(
@@ -206,13 +213,16 @@ class Scaler(Node):
                                 self._send_led_brightness(brightness)
                                 self.get_logger().debug(f'LED brightness set to {brightness}')
                     elif handler.get('type') == 'beak':
-                        # Toggle beak on button press (momentary button: pressed = False)
-                        # Detect falling edge (True -> False)
                         if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
                             self.beak_state = not self.beak_state
                             if self.can_bus is not None:
                                 self._send_beak_command(self.beak_state)
                                 self.get_logger().debug(f'Beak command sent: {"open" if self.beak_state else "close"}')
+                    elif handler.get('type') == 'autonomy':
+                        if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
+                            next_state = not self.autonomy_enabled
+                            handler['service'].call_async(SetBool.Request(data=next_state))
+                            self.get_logger().debug(f"Autonomy {'enabled' if next_state else 'disabled'} via button press")
                     else:
                         data = handler['inverted'] ^ buttons[handler['button']]
                         handler['service'].call_async(SetBool.Request(data=data))

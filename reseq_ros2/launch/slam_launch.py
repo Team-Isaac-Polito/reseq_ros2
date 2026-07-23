@@ -12,11 +12,15 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler, TimerAction
+from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler
 from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessStart, OnShutdown
+from launch.event_handlers import OnShutdown
+from launch.events import matches_action
 from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch_ros.actions import Node
+from launch_ros.actions import LifecycleNode, Node
+from launch_ros.event_handlers import OnStateTransition
+from launch_ros.events.lifecycle import ChangeState
+from lifecycle_msgs.msg import Transition
 
 
 def generate_launch_description():
@@ -51,10 +55,11 @@ def generate_launch_description():
         description='Directory where geotiff_node writes the 2D GeoTIFF map',
     )
 
-    slam_node = Node(
+    slam_node = LifecycleNode(
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
+        namespace='',
         output='screen',
         remappings=[
             ('/map', '/slam_map'),
@@ -69,31 +74,25 @@ def generate_launch_description():
         ],
     )
 
-    # Lifecycle manager for SLAM Toolbox - delayed to ensure SLAM node is ready
-    lifecycle_manager = Node(
-        package='nav2_lifecycle_manager',
-        executable='lifecycle_manager',
-        name='lifecycle_manager_slam',
-        output='screen',
-        parameters=[{
-            'use_sim_time': LaunchConfiguration('use_sim_time'),
-            'autostart': True,
-            'node_names': ['slam_toolbox'],
-            'bond_timeout': 10.0,
-        }],
+    # Configure and activate the lifecycle node
+    configure_event = EmitEvent(
+        event=ChangeState(
+            lifecycle_node_matcher=matches_action(slam_node),
+            transition_id=Transition.TRANSITION_CONFIGURE,
+        ),
     )
 
-    # Start lifecycle manager after SLAM Toolbox process starts (with delay for ROS node initialization)
-    # Jetson Orin needs more time for SLAM Toolbox to advertise lifecycle services
-    lifecycle_manager_delayed = TimerAction(
-        period=10.0,
-        actions=[lifecycle_manager],
-    )
-
-    lifecycle_manager_event = RegisterEventHandler(
-        OnProcessStart(
-            target_action=slam_node,
-            on_start=[lifecycle_manager_delayed],
+    activate_event = RegisterEventHandler(
+        OnStateTransition(
+            target_lifecycle_node=slam_node,
+            start_state="configuring",
+            goal_state="inactive",
+            entities=[
+                EmitEvent(event=ChangeState(
+                    lifecycle_node_matcher=matches_action(slam_node),
+                    transition_id=Transition.TRANSITION_ACTIVATE,
+                ))
+            ],
         )
     )
 
@@ -187,8 +186,9 @@ def generate_launch_description():
             ply_save_path_arg,
             geotiff_save_path_arg,
             slam_node,
+            configure_event,
+            activate_event,
             map_republisher_node,
-            lifecycle_manager_event,
             ply_saver_node,
             geotiff_node,
             shutdown_geotiff,
