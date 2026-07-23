@@ -1,5 +1,5 @@
 # BUILD WITH:
-# docker build -t reseq-dtwin -f src/docker/Dockerfile.dtwin src
+# docker build -t reseq-gazebo -f src/docker/Dockerfile.gazebo src
 #
 # RUN WITH:
 # xhost +local:docker
@@ -10,9 +10,10 @@
 #   -e GAZEBO_WORLD=simple_course.world \
 #   -e LAUNCH_SIM=true \
 #   -e LAUNCH_RVIZ=false \
+#   -v /mnt/wslg/.X11-unix/X0:/tmp/.X11-unix/X0 \
 #   -v /tmp/.X11-unix:/tmp/.X11-unix \
 #   -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \
-#   -it reseq-dtwin
+#   -it reseq-gazebo
 
 FROM ros:jazzy-ros-base
 
