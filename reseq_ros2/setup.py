@@ -28,7 +28,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'agevar = reseq_ros2.agevar:main',
+            'ftl_controller = reseq_ros2.ftl_controller:main',
             'autonomy_coordinator = reseq_ros2.autonomy_coordinator:main',
             'cmd_vel_mux = reseq_ros2.cmd_vel_mux:main',
             'scaler = reseq_ros2.scaler:main',

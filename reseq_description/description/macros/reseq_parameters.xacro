@@ -7,9 +7,9 @@
   <xacro:property name="config_path_prop" value="$(arg config_path)"/>
 
   <xacro:property name="config" value="${xacro.load_yaml(config_path_prop)}"/>
-  <xacro:property name="a" value="${config['agevar_consts']['a']}" />
-  <xacro:property name="b" value="${config['agevar_consts']['b']}" />
-  <xacro:property name="r_eq" value="${config['agevar_consts']['r_eq']}" />
+  <xacro:property name="a" value="${config['ftl_controller_consts']['a']}" />
+  <xacro:property name="b" value="${config['ftl_controller_consts']['b']}" />
+  <xacro:property name="r_eq" value="${config['ftl_controller_consts']['r_eq']}" />
 
   <!-- See 'Parameters.pdf' pdf for parameters meaning (when it will exist ;) ) -->
   <!-- All values are in meters, radiants, kg -->

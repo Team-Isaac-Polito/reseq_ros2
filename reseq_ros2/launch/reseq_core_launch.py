@@ -38,12 +38,12 @@ def launch_setup(context, *args, **kwargs):
     launch_config.append(
         Node(
             package='reseq_ros2',
-            executable='agevar',
-            name='agevar',
+            executable='ftl_controller',
+            name='ftl_controller',
             parameters=[
                 {
-                    'a': config['agevar_consts']['a'],
-                    'b': config['agevar_consts']['b'],
+                    'a': config['ftl_controller_consts']['a'],
+                    'b': config['ftl_controller_consts']['b'],
                     'modules': addresses,
                     'use_sim_time': use_sim_time,
                 }
@@ -92,9 +92,8 @@ def launch_setup(context, *args, **kwargs):
         )
     )
 
-    # cmd_vel_mux: bridges /cmd_vel_teleop (scaler) → /cmd_vel (agevar)
+    # cmd_vel_mux: bridges /cmd_vel_teleop (scaler) → /cmd_vel (ftl_controller)
     # Also handles nav arbitration when autonomy is enabled.
-    # Without this node, teleop velocity commands never reach agevar.
     launch_config.append(
         Node(
             package='reseq_ros2',

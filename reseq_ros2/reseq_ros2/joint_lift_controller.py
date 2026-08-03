@@ -6,7 +6,7 @@ Subscribes to TOF obstacle height data and IMU readings, then publishes
 joint lift commands to raise the front modules when an obstacle is detected
 that is within the climbable height range.
 
-This node works in conjunction with the Agevar node. It modifies the
+This node works in conjunction with the ftl_controller node. It modifies the
 follow-the-leader behavior by injecting additional pitch commands to lift
 the front modules when approaching an obstacle.
 
@@ -22,7 +22,7 @@ The lifting strategy:
 
 Published Topics:
     /joint_lift/commands (std_msgs/Float64MultiArray): Additional pitch joint commands
-        to be added to the Agevar output. Size = n_joints, values in radians.
+        to be added to the output. Size = n_joints, values in radians.
     /joint_lift/status (std_msgs/String): Current lift state for debugging.
 
 Parameters:

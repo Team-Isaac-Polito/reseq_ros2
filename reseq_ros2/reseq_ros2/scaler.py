@@ -29,7 +29,7 @@ ROS node that handles scaling of the remote controller data into physical variab
 by the motors
 
 It receives a packet from the remote controller and rescales end_effector data
-(pitch, head_pitch, head_roll) and the Twist data used by Agevar
+(pitch, head_pitch, head_roll) and the Twist data used by traction controllers
 (linear velocity, angular velocity)
 
 It also handles the button presses and switches of the remote controller
@@ -39,7 +39,7 @@ and an optional hook function to be executed after the service is called.
 
 
 class Scaler(Node):
-    control_mode_enum: Enum = Enum('ControlMode', 'AGEVAR, PIVOT')
+    control_mode_enum: Enum = Enum('ControlMode', 'FTL, PIVOT')
     buttons_enum: IntEnum = IntEnum(
         'Buttons', 'S1, S2, S3, S4, S5, BGREEN, BBLACK, BRED, BWHITE, BBLUE', start=0
     )
@@ -48,11 +48,11 @@ class Scaler(Node):
     #               The buttons are zero when pressed
     handlers: list[dict] = [  # {button, service, inverted, condition, hook}
         {
-            'name': 'Enable/Disable Agevar',
+            'name': 'Enable/Disable FTL Controller',
             'button': buttons_enum.BBLUE,
-            'service': '/agevar/enable',
+            'service': '/ftl_controller/enable',
             'inverted': False,
-            'hook': lambda self: setattr(self, 'control_mode', Scaler.control_mode_enum.AGEVAR),
+            'hook': lambda self: setattr(self, 'control_mode', Scaler.control_mode_enum.FTL),
         },
         {
             'name': 'Enable/Disable Pivot',
@@ -114,7 +114,7 @@ class Scaler(Node):
         super().__init__('scaler')
         # initialize the button/switch handlers
         self.previous_buttons = [False, False, False, False, False, True, True, True, True, True]
-        self.control_mode = Scaler.control_mode_enum.AGEVAR
+        self.control_mode = Scaler.control_mode_enum.FTL
         self.autonomy_enabled = False
 
         self.r_linear_vel = (
@@ -306,8 +306,8 @@ class Scaler(Node):
                 lift_msg.z = 2.0
                 self.lift_pub.publish(lift_msg)
 
-        if self.control_mode == Scaler.control_mode_enum.AGEVAR:
-            cmd_vel = self.agevarScaler(cmd_vel)
+        if self.control_mode == Scaler.control_mode_enum.FTL:
+            cmd_vel = self.ftlScaler(cmd_vel)
         else:
             cmd_vel = self.pivotScaler(cmd_vel)
         self.speed_pub.publish(cmd_vel)
@@ -317,7 +317,7 @@ class Scaler(Node):
         data.angular.z = self.scale(data.angular.z, self.r_angular_vel)
         return data
 
-    def agevarScaler(self, data: Twist):
+    def ftlScaler(self, data: Twist):
         linear_input = data.linear.x
         angular_input = data.angular.z
 

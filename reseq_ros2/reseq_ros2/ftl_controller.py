@@ -26,7 +26,7 @@ Joint angle computation (follow-the-leader):
     This directly gives the URDF joint value: negative for left turns
     (rear module hasn't turned as much yet → points right relative to front).
 
-The AGEVAR kinematic model computes per-module velocities using the
+The kinematic model computes per-module velocities using the
 joint angles to account for the geometric coupling between modules.
 """
 
@@ -35,9 +35,9 @@ YAW_LIMIT = pi / 4
 PITCH_LIMIT = pi / 2
 
 
-class Agevar(Node):
+class FtlController(Node):
     def __init__(self):
-        super().__init__('agevar')
+        super().__init__('ftl_controller')
 
         # Declaring parameters and getting values
         self.a = self.declare_parameter('a', 0.0).get_parameter_value().double_value
@@ -48,7 +48,7 @@ class Agevar(Node):
 
         # create the enable/disable service
         self.enabled = True
-        self.create_service(SetBool, '/agevar/enable', self.handle_enable)
+        self.create_service(SetBool, '/ftl_controller/enable', self.handle_enable)
 
         self.n_mod = len(self.modules)
         self.n_joints = self.n_mod - 1
@@ -188,7 +188,7 @@ class Agevar(Node):
                 pub.publish(TwistStamped())  # stop all drive controllers
 
         response.success = True
-        response.message = 'Agevar node enabled' if self.enabled else 'Agevar node disabled'
+        response.message = 'FTL Controller enabled' if self.enabled else 'FTL Controller disabled'
         self.get_logger().info(response.message)
         return response
 
@@ -220,7 +220,7 @@ class Agevar(Node):
 
     def remote_callback(self, msg: Twist):
         if not self.enabled:
-            self.get_logger().debug('Agevar node is disabled, ignoring command')
+            self.get_logger().debug('FTL controller node is disabled, ignoring command')
             return
 
         # extract information from ROS Twist message
@@ -385,7 +385,7 @@ class Agevar(Node):
         # Keep pitch command publishing available during drive updates too.
         self._publish_pitch_commands()
 
-        # Compute per-module velocities using AGEVAR kinematic model
+        # Compute per-module velocities using FTL kinematic model
         modules = list(range(self.n_mod))
         if sign == -1:  # going backwards
             modules.reverse()
@@ -484,16 +484,16 @@ class Agevar(Node):
 def main(args=None):
     rclpy.init(args=args)
     try:
-        agevar = Agevar()
-        rclpy.spin(agevar)
+        controller = FtlController()
+        rclpy.spin(controller)
     except KeyboardInterrupt:
-        rclpy.logging.get_logger('agevar').warn('Agevar node interrupted by user')
+        rclpy.logging.get_logger('ftl_controller').warn('FTL Controller node interrupted by user')
     except Exception as err:
-        rclpy.logging.get_logger('agevar').fatal(
-            f'Error in the Agevar node: {str(err)}\n{traceback.format_exc()}'
+        rclpy.logging.get_logger('ftl_controller').fatal(
+            f'Error in the FTL Controller node: {str(err)}\n{traceback.format_exc()}'
         )
     else:
-        agevar.destroy_node()
+        controller.destroy_node()
         rclpy.shutdown()
 
 

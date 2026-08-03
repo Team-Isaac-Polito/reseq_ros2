@@ -165,13 +165,13 @@ def generate_controllers_config(
         with open(os.path.join(temp_path, version, generic_config_file), 'r') as file:
             generic_config = yaml.safe_load(file)
 
-        agevar_file = generic_config['include']['agevar_consts']
-        with open(os.path.join(config_path, version, agevar_file), 'r') as file:
-            agevar_config = yaml.safe_load(file)
+        ftl_controller_file = generic_config['include']['ftl_controller_consts']
+        with open(os.path.join(config_path, version, ftl_controller_file), 'r') as file:
+            ftl_controller_config = yaml.safe_load(file)
 
         context['num_modules'] = generic_config['num_modules']
-        context['wheel_separation'] = agevar_config['agevar_consts']['d']
-        context['wheel_radius'] = agevar_config['agevar_consts']['r_eq']
+        context['wheel_separation'] = ftl_controller_config['ftl_controller_consts']['d']
+        context['wheel_radius'] = ftl_controller_config['ftl_controller_consts']['r_eq']
 
     # Setup Jinja2 environment
     template_dir = os.path.join(config_path, 'templates')
