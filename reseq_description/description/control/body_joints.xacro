@@ -6,8 +6,8 @@
         <xacro:if value="${module &lt;= n_modules}">
 
             <!-- Wheels -->
-            <xacro:control_wheel_factory id="${module}" pos="front" side="left" />
-            <xacro:control_wheel_factory id="${module}" pos="front" side="right" />
+            <!-- Note: The real robot is rear-wheel drive,
+            so we only expose control interfaces for the rear (back) wheels. -->
             <xacro:control_wheel_factory id="${module}" pos="back" side="left" />
             <xacro:control_wheel_factory id="${module}" pos="back" side="right" />
 

@@ -52,13 +52,13 @@ controller_server:
 
     FollowPath:
       plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
-      desired_linear_vel: 0.16
+      desired_linear_vel: 0.19
       lookahead_dist: 0.6
       min_lookahead_dist: 0.3
       max_lookahead_dist: 0.9
       lookahead_time: 1.5
       use_rotate_to_heading: false
-      rotate_to_heading_angular_vel: 2.49
+      rotate_to_heading_angular_vel: 2.4912
       transform_tolerance: 0.3
       use_velocity_scaled_lookahead_dist: false
       min_approach_linear_velocity: 0.16
@@ -271,7 +271,7 @@ behavior_server:
     robot_base_frame: base_link
     transform_tolerance: 0.3
     simulate_ahead_time: 1.0
-    max_rotational_vel: 2.49  # Match pivot angular vel from scaler_consts
+    max_rotational_vel: 2.4912  # Match pivot angular vel from scaler_consts
     min_rotational_vel: 0.1
     rotational_acc_lim: 3.0
     behavior_plugins: ["backup", "wait"]
@@ -292,8 +292,8 @@ velocity_smoother:
     smoothing_frequency: 10.0
     scale_velocities: false
     feedback: OPEN_LOOP
-    max_velocity: [0.16, 0.0, 2.49]  # Match robot hardware limits: linear=0.16 m/s, angular=2.49 rad/s (pivot mode)
-    min_velocity: [-0.05, 0.0, -2.49]
+    max_velocity: [0.19, 0.0, 2.4912]  # Match robot hardware limits (pivot mode)
+    min_velocity: [-0.19, 0.0, -2.4912]
     max_accel: [0.5, 0.0, 3.0]
     max_decel: [-0.5, 0.0, -3.0]
     odom_topic: /diff_controller1/odom

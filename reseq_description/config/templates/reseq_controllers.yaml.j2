@@ -45,17 +45,15 @@ controller_manager:
 diff_controller{{ i + 1 }}:
   ros__parameters:
     left_wheel_names:
-      - mod{{ i + 1 }}__left_front_wheel
       - mod{{ i + 1 }}__left_back_wheel
     right_wheel_names:
-      - mod{{ i + 1 }}__right_front_wheel
       - mod{{ i + 1 }}__right_back_wheel
     position_feedback: false
     odom_frame_id: odom
     base_frame_id: base_link
     wheel_separation: {{ wheel_separation }}
     wheel_radius: {{ wheel_radius }}
-    wheels_per_side: 2
+    wheels_per_side: 1
     use_stamped_vel: true
     enable_odom_tf: false  # EKF node publishes odom->base_link TF instead
     enable_odom: {{ 'true' if i == 0 else 'false' }}

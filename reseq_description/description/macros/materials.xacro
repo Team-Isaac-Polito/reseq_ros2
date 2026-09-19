@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->
+
+  <material name="ChassisColor">
+    <color rgba="1 1 1 1" />
+  </material>
+  <material name="WheelColor">
+    <color rgba="0 0 0 1" />
+  </material>
+  <material name="JointColor">
+    <color rgba="0.5 0.5 0.5 1" />
+  </material>
+  <material name="LidarColor">
+    <color rgba="0.5 0.5 0.5 1" />
+  </material>
+  <material name="IMUColor">
+    <color rgba="0.1 0.1 0.1 1" />
+  </material>
+
+</robot>
