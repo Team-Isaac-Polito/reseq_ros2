@@ -17,7 +17,11 @@ controller_manager:
 {% for i in range(num_modules - 1) %}
     yaw_controller{{ i + 2 }}:
       type: forward_command_controller/ForwardCommandController
+{% endfor %}
+{% endif %}
 
+{% if pitch_controllers %}
+{% for i in range(num_modules - 1) %}
     pitch_controller{{ i + 2 }}:
       type: forward_command_controller/ForwardCommandController
 {% endfor %}
@@ -107,6 +111,11 @@ yaw_controller{{ i + 2 }}:
       - mod{{ i + 2 }}__yaw_joint
     interface_name: position
 
+{% endfor %}
+{% endif %}
+
+{% if pitch_controllers %}
+{% for i in range(num_modules - 1) %}
 pitch_controller{{ i + 2 }}:
   ros__parameters:
     joints:

@@ -42,6 +42,7 @@ def launch_setup(context, *args, **kwargs):
             'spawn_x': LaunchConfiguration('spawn_x'),
             'spawn_y': LaunchConfiguration('spawn_y'),
             'launch_yaw_controllers': 'true',
+            'launch_pitch_controllers': 'true',
         }.items(),
     )
 

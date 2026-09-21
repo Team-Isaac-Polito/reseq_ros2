@@ -77,6 +77,9 @@ def launch_setup(context, *args, **kwargs):
     launch_yaw_controllers = (
         LaunchConfiguration('launch_yaw_controllers').perform(context).lower() == 'true'
     )
+    launch_pitch_controllers = (
+        LaunchConfiguration('launch_pitch_controllers').perform(context).lower() == 'true'
+    )
     arm_max_cartesian_vel = float(LaunchConfiguration('arm_max_cartesian_vel').perform(context))
     arm_max_angular_vel = float(LaunchConfiguration('arm_max_angular_vel').perform(context))
     arm_max_joint_vel = float(LaunchConfiguration('arm_max_joint_vel').perform(context))
@@ -164,6 +167,9 @@ def launch_setup(context, *args, **kwargs):
     if launch_yaw_controllers:
         for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
+
+    if launch_pitch_controllers:
+        for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'pitch_controller{i + 2}', external_log_level))
 
     arm_velocity_spawner = None
@@ -336,6 +342,11 @@ def generate_launch_description():
                 'launch_yaw_controllers',
                 default_value='false',
                 description='Launch yaw position controllers in simulation/hardware control stack',
+            ),
+            DeclareLaunchArgument(
+                'launch_pitch_controllers',
+                default_value='false',
+                description='Launch pitch position controllers in simulation/hardware control stack',
             ),
             OpaqueFunction(function=launch_setup),
         ]
