@@ -54,13 +54,13 @@ diff_controller{{ i + 1 }}:
       - mod{{ i + 1 }}__right_back_wheel
     position_feedback: false
     odom_frame_id: odom
-    base_frame_id: base_link
+    base_frame_id: rear_axle{{ i + 1 }}_link
     wheel_separation: {{ wheel_separation }}
     wheel_radius: {{ wheel_radius }}
     wheels_per_side: 1
     use_stamped_vel: true
     enable_odom_tf: false  # EKF node publishes odom->base_link TF instead
-    enable_odom: {{ 'true' if i == 0 else 'false' }}
+    enable_odom: true  # FTL uses the tail module's speed when reversing
     pose_covariance_diagonal: [0.001, 0.001, 0.0, 0.0, 0.0, 0.01]
     twist_covariance_diagonal: [0.001, 0.001, 0.0, 0.0, 0.0, 0.01]
 

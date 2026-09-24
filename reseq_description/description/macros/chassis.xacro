@@ -25,7 +25,7 @@
         x="${WheelBase-JointDiameter/2-toll+EquivalentWheelDiameter*2/3-EquivalentWheelDiameter/2}"
         y="${ModuleWidth-2*TrackWidth-2*toll}"
         z="${EquivalentWheelDiameter-2*ChassisTopAndBottomClearance}">
-        <origin xyz="${EquivalentWheelDiameter/12+(toll+JointDiameter/2)/2} 0 0" rpy="0 0 0" />
+        <origin xyz="-${EquivalentWheelDiameter/12+(toll+JointDiameter/2)/2} 0 0" rpy="0 0 0" />
       </xacro:inertial_box>
     </link>
 
@@ -34,6 +34,13 @@
     </gazebo>
 
     <!-- Wheels -->
+    <!-- diff_drive_controller integrates the midpoint of its driven axle. -->
+    <link name="rear_axle${id}_link" />
+    <joint name="rear_axle${id}_joint" type="fixed">
+      <parent link="chassis${id}_link" />
+      <child link="rear_axle${id}_link" />
+      <origin xyz="${-WheelBase/2} 0 0" rpy="0 0 0" />
+    </joint>
     <xacro:wheel_factory id="${id}" pos="front" side="left" />
     <xacro:wheel_factory id="${id}" pos="front" side="right" />
     <xacro:wheel_factory id="${id}" pos="back" side="left" />
@@ -109,4 +116,3 @@
   </xacro:macro>
 
 </robot>
-

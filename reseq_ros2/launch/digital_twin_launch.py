@@ -125,6 +125,7 @@ def launch_setup(context, *args, **kwargs):
             'config_path': f'{config_path}/{version}/{config_filename}',
             'arm': arm_arg,
             'sim_mode': sim_mode,
+            'passive_yaw': 'false',
         },
     ).toxml()
 

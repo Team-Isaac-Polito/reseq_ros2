@@ -60,10 +60,12 @@
         </xacro:inertial_cylinder_y>
         </link>
 
-
-
+        <!-- Gazebo friction parameters for skid-steer drive. -->
         <gazebo reference="${side}_${pos}_wheel_${id}_link">
             <material>Gazebo/Black</material>
+            <mu1>1.0</mu1>
+            <mu2>0.3</mu2>
+            <fdir1>1 0 0</fdir1>
         </gazebo>
 
     </xacro:macro>
