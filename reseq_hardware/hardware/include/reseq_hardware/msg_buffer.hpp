@@ -17,7 +17,7 @@ namespace reseq_hardware
 struct ParsedMessage
 {
   CanID id; ///< CAN identifier of the message.
-  uint8_t data[8]; ///< Data payload of the message (up to 8 bytes).
+  uint8_t data[64]; ///< Data payload of the message (up to 64 bytes, CAN FD max).
   size_t size; ///< Size of the data payload.
   std::chrono::steady_clock::time_point timestamp; ///< Timestamp when the message was received.
 };
