@@ -32,9 +32,10 @@ class Agevar(Node):
         self.n_mod = len(self.modules)
         self.yaw_angles = [0] * self.n_mod
 
-        # subscribe to remote (parsed by teleop_twist_joy)
+        # Scaler publishes normalized-and-scaled body commands on /cmd_vel.
         self.create_subscription(Twist, '/cmd_vel', self.remote_callback, 10)
 
+        # Joint feedback supplies the current yaw angle used between modules.
         self.latest_feedback = None
         self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1)
 
@@ -63,11 +64,12 @@ class Agevar(Node):
             self.get_logger().debug('Agevar node is disabled, ignoring command')
             return
 
-        # extract information from ROS Twist message
+        # Extract forward speed and curvature command from the common command.
         linear_vel = msg.linear.x
         angular_vel = msg.angular.z
         sign = 1 if linear_vel >= 0 else -1
 
+        # Use the freshest joints before propagating the command through modules.
         self.update_yaw_angles()
 
         modules = list(range(self.n_mod))
@@ -77,6 +79,7 @@ class Agevar(Node):
             angular_vel = -angular_vel
 
         for mod_id in modules:
+            # Each differential-drive controller receives a timestamped command.
             out_msg = TwistStamped()
             out_msg.header.stamp = self.get_clock().now().to_msg()
             out_msg.twist.linear.x = sign * linear_vel
@@ -96,6 +99,8 @@ class Agevar(Node):
 
     # given data of a module, compute linear and angular velocities of the next one
     def kinematic(self, linear_vel, angular_vel, yaw_angle):
+        # Transform the velocity request through the joint angle to the next
+        # module; a and b are geometry constants supplied by the robot config.
         linear_out = linear_vel * cos(yaw_angle) + self.a * angular_vel * sin(yaw_angle)
         angular_out = (
             linear_vel * sin(yaw_angle) - self.a * angular_vel * cos(yaw_angle)
