@@ -362,7 +362,8 @@ hardware_interface::return_type ReseqHardware::write(
     }
 
     // Build the message according to the mapping instructions
-    uint8_t data[8] = {0};
+    // The length determines how many bytes are transmitted below.
+    uint8_t data[64] = {0};
     bool send_message = true;
     for (const auto & field : mapping.fields) {
       if (field.mapping_type != MappingType::JOINT_COMMAND) {
