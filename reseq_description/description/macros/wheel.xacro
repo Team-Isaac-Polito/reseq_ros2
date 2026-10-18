@@ -15,9 +15,9 @@
             <xacro:property name="pos_sign" value="-1" />
         </xacro:if>
 
-        <xacro:property name="side_sign" value="1" />
+        <xacro:property name="side_sign" value="-1" />
         <xacro:if value="${side == 'right'}">
-            <xacro:property name="side_sign" value="-1" />
+            <xacro:property name="side_sign" value="1" />
         </xacro:if>
 
         <xacro:if value="${pos == 'back'}">
