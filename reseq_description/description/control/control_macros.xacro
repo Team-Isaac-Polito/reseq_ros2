@@ -34,12 +34,12 @@
             <command_interface name="position" />
             <state_interface name="velocity" />
         </joint>
-        <xacro:unless value="$(arg passive_yaw)">
-            <joint name="mod${id}__yaw_joint">
+        <joint name="mod${id}__yaw_joint">
+            <xacro:unless value="$(arg passive_yaw)">
                 <command_interface name="position" />
-                <state_interface name="position" />
-            </joint>
-        </xacro:unless>
+            </xacro:unless>
+            <state_interface name="position" />
+        </joint>
 
     </xacro:macro>
 </robot>

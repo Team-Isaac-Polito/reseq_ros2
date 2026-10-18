@@ -80,6 +80,7 @@ def launch_setup(context, *args, **kwargs):
     launch_pitch_controllers = (
         LaunchConfiguration('launch_pitch_controllers').perform(context).lower() == 'true'
     )
+    passive_yaw = LaunchConfiguration('passive_yaw').perform(context).lower() == 'true'
     arm_max_cartesian_vel = float(LaunchConfiguration('arm_max_cartesian_vel').perform(context))
     arm_max_angular_vel = float(LaunchConfiguration('arm_max_angular_vel').perform(context))
     arm_max_joint_vel = float(LaunchConfiguration('arm_max_joint_vel').perform(context))
@@ -125,7 +126,7 @@ def launch_setup(context, *args, **kwargs):
             'config_path': f'{config_path}/{version}/{config_filename}',
             'arm': arm_arg,
             'sim_mode': sim_mode,
-            'passive_yaw': 'false',
+            'passive_yaw': 'true' if passive_yaw else 'false',
         },
     ).toxml()
 
@@ -343,6 +344,11 @@ def generate_launch_description():
                 'launch_yaw_controllers',
                 default_value='false',
                 description='Launch yaw position controllers in simulation/hardware control stack',
+            ),
+            DeclareLaunchArgument(
+                'passive_yaw',
+                default_value='false',
+                description='Leave inter-module yaw joints unactuated',
             ),
             DeclareLaunchArgument(
                 'launch_pitch_controllers',

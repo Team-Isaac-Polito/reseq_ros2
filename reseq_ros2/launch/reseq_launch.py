@@ -44,6 +44,7 @@ def launch_setup(context, *args, **kwargs):
     use_moveit = LaunchConfiguration('use_moveit').perform(context)
     launch_yaw_controllers = LaunchConfiguration('launch_yaw_controllers').perform(context)
     launch_pitch_controllers = LaunchConfiguration('launch_pitch_controllers').perform(context)
+    passive_yaw = LaunchConfiguration('passive_yaw').perform(context)
     arm_max_cartesian_vel = LaunchConfiguration('arm_max_cartesian_vel').perform(context)
     arm_max_angular_vel = LaunchConfiguration('arm_max_angular_vel').perform(context)
     arm_max_joint_vel = LaunchConfiguration('arm_max_joint_vel').perform(context)
@@ -167,6 +168,7 @@ def launch_setup(context, *args, **kwargs):
                 'use_moveit': use_moveit,
                 'launch_yaw_controllers': launch_yaw_controllers,
                 'launch_pitch_controllers': launch_pitch_controllers,
+                'passive_yaw': passive_yaw,
             }.items(),
         )
     )
@@ -341,6 +343,11 @@ def generate_launch_description():
             DeclareLaunchArgument('use_moveit', default_value='false'),
             DeclareLaunchArgument('launch_yaw_controllers', default_value='true'),
             DeclareLaunchArgument('launch_pitch_controllers', default_value='true'),
+            DeclareLaunchArgument(
+                'passive_yaw',
+                default_value='false',
+                description='Leave inter-module yaw joints unactuated',
+            ),
             DeclareLaunchArgument('no_body_controllers', default_value='false'),
             DeclareLaunchArgument('no_arm_controllers', default_value='false'),
             OpaqueFunction(function=generate_config_setup),
