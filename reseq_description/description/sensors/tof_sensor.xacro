@@ -119,7 +119,7 @@
     <!-- Gazebo ray sensors for each TOF (simulates VL53L1X) -->
     <!-- 4 sensors: up45 (+45°), front (0°), down45 (-45°), down (-90°) -->
     <gazebo reference="${prefix}_up45_link">
-      <sensor name="${prefix}_up45" type="ray">
+      <sensor name="${prefix}_up45" type="gpu_ray">
         <pose>0 0 0 0 0 0</pose>
         <visualize>false</visualize>
         <update_rate>30</update_rate>
@@ -149,7 +149,7 @@
     </gazebo>
 
     <gazebo reference="${prefix}_front_link">
-      <sensor name="${prefix}_front" type="ray">
+      <sensor name="${prefix}_front" type="gpu_ray">
         <pose>0 0 0 0 0 0</pose>
         <visualize>false</visualize>
         <update_rate>30</update_rate>
@@ -179,7 +179,7 @@
     </gazebo>
 
     <gazebo reference="${prefix}_down45_link">
-      <sensor name="${prefix}_down45" type="ray">
+      <sensor name="${prefix}_down45" type="gpu_ray">
         <pose>0 0 0 0 0 0</pose>
         <visualize>false</visualize>
         <update_rate>30</update_rate>
@@ -209,7 +209,7 @@
     </gazebo>
 
     <gazebo reference="${prefix}_down_link">
-      <sensor name="${prefix}_down" type="ray">
+      <sensor name="${prefix}_down" type="gpu_ray">
         <pose>0 0 0 0 0 0</pose>
         <visualize>false</visualize>
         <update_rate>30</update_rate>
