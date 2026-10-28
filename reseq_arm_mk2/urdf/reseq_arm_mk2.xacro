@@ -342,17 +342,17 @@
     name="arm_roll_wrist_link">
     <inertial>
       <origin
-        xyz="2.6021E-17 0.0094155 0.12425"
+        xyz="0.0001 0.0071 0.1197"
         rpy="0 0 0" />
       <mass
-        value="0.55801" />
+        value="0.1341" />
       <inertia
-        ixx="0.00046764"
-        ixy="1.3696E-19"
-        ixz="1.5471E-19"
-        iyy="0.000956"
-        iyz="7.6437E-06"
-        izz="0.00082011" />
+        ixx="1.332159E-04"
+        ixy="0"
+        ixz="-3.0E-10"
+        iyy="1.128104E-04"
+        iyz="-2.35230E-05"
+        izz="4.67873E-05" />
     </inertial>
     <visual>
       <origin
@@ -360,7 +360,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_roll_wrist_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/beak_body.STL" />
       </geometry>
       <material
         name="">
@@ -374,7 +374,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://reseq_arm_mk2/meshes/arm_roll_wrist_link.STL" />
+          filename="package://reseq_arm_mk2/meshes/beak_body.STL" />
       </geometry>
     </collision>
   </link>
@@ -395,6 +395,65 @@
       upper="3.14"
       effort="${arm_wrist_roll_effort}"
       velocity="1" />
+    <dynamics damping="0.5" friction="0.1" />
+  </joint>
+  <link
+    name="beak_finger_upper_link">
+    <inertial>
+      <origin
+        xyz="0.0208 0.0127 0.0386"
+        rpy="0 0 0" />
+      <mass
+        value="0.0233" />
+      <inertia
+        ixx="7.8788E-06"
+        ixy="-6.43E-08"
+        ixz="-2.019E-07"
+        iyy="1.04238E-05"
+        iyz="-2.6102E-06"
+        izz="5.3419E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://reseq_arm_mk2/meshes/beak_finger_upper.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://reseq_arm_mk2/meshes/beak_finger_upper.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="mod1__beak"
+    type="revolute">
+    <origin
+      xyz="-0.021 -0.0073 0.1307"
+      rpy="0 0 0" />
+    <parent
+      link="arm_roll_wrist_link" />
+    <child
+      link="beak_finger_upper_link" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-0.05"
+      upper="1.0"
+      effort="${XL430Torque}"
+      velocity="${XL430Velocity}" />
     <dynamics damping="0.5" friction="0.1" />
   </joint>
 
@@ -423,6 +482,10 @@
     <selfCollide>false</selfCollide>
   </gazebo>
   <gazebo reference="arm_roll_wrist_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <gazebo reference="beak_finger_upper_link">
     <material>Gazebo/Grey</material>
     <selfCollide>false</selfCollide>
   </gazebo>
