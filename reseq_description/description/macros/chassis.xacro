@@ -69,7 +69,7 @@
           </geometry>
         </collision>
         <xacro:inertial_cylinder_y mass="${WheelMass/4}" length="${TrackWidth/2}" radius="${EquivalentWheelDiameter/4}">
-          <origin xyz="0 0 0" rpy="-${pi/2} 0 0"/>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
         </xacro:inertial_cylinder_y>
       </link>
       <gazebo reference="small_front_left_wheel_${id}_link">
@@ -97,7 +97,7 @@
           </geometry>
         </collision>
         <xacro:inertial_cylinder_y mass="${WheelMass/4}" length="${TrackWidth/2}" radius="${EquivalentWheelDiameter/4}">
-          <origin xyz="0 0 0" rpy="-${pi/2} 0 0"/>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
         </xacro:inertial_cylinder_y>
       </link>
       <gazebo reference="small_front_right_wheel_${id}_link">

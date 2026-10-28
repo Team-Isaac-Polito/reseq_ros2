@@ -34,8 +34,8 @@
       <xacro:inertial_cylinder_x mass = "${JointBMass}"
         length = "${JointB}"
         radius = "${JointWidth/2}">
-        <origin xyz="-${JointB/2} 0 0" rpy="0 ${pi/2} 0" />
-      </xacro:inertial_cylinder_x>  
+        <origin xyz="-${JointB/2} 0 0" rpy="0 0 0" />
+      </xacro:inertial_cylinder_x>
 
     </link>
 
