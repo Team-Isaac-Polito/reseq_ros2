@@ -46,8 +46,10 @@ class Observer(Node):
         self.gazebo.subscribe(Pose_V, self.pose_topic, self._ground_truth_cb)
 
     def close(self):
-        # Stop Gazebo callbacks before Python exits; otherwise its thread aborts the process.
+        # Release the Gazebo node while Python is still running; destroying it during
+        # interpreter shutdown aborts the process.
         self.gazebo.unsubscribe(self.pose_topic)
+        self.gazebo = None
         self.destroy_node()
 
     def _ground_truth_cb(self, message):
