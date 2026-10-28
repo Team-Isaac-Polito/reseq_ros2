@@ -24,7 +24,7 @@ from nav2_msgs.action import NavigateToPose
 from nav_msgs.msg import OccupancyGrid, Odometry
 from sensor_msgs.msg import CompressedImage, Image, JointState, LaserScan
 from std_msgs.msg import Bool, String
-from std_srvs.srv import SetBool
+from std_srvs.srv import SetBool, Trigger
 from tf2_ros import Buffer, TransformException, TransformListener
 
 from .core import Grid, Tasks, clamp, convex_hull, transform_xy, yaw_of
@@ -59,10 +59,15 @@ class RosInterface(Node):
             'model_period_s': 1.0,
             'lightnav_url': '',
             'foresight_service': '/legged_deployment/foresight_planner',
+            'nav2_lifecycle_manager': '/lifecycle_manager_traction_navigation',
             'max_subgoal_distance_m': 2.0,
             'min_subgoal_distance_m': 0.12,
+            'unknown_gap_m': 0.15,
             'max_linear_speed': 0.19,
             'max_angular_speed': 2.4912,
+            # Nav2 uses ROS (+angular.z turns left); the traction stack turns right for
+            # +angular.z on the robot and in Gazebo, so the gate flips the sign.
+            'traction_turn_sign': -1.0,
             'num_modules': 3,
             'module_half_length': 0.23,
             'module_half_width': 0.16,
@@ -77,6 +82,12 @@ class RosInterface(Node):
         self.tf_listener = TransformListener(self.tf, self)
         self.nav = ActionClient(self, NavigateToPose, '/navigate_to_pose')
         self.enable_client = self.create_client(SetBool, '/autonomy/enable')
+        # The action server exists even while Nav2 is inactive, so ask its lifecycle manager.
+        self.nav2_active_client = self.create_client(
+            Trigger, self.cfg['nav2_lifecycle_manager'] + '/is_active'
+        )
+        self.nav2_active = False
+        self.nav2_active_future = None
         self.nav_goal = None
         self.nav_pending = False
         self.nav_epoch = 0
@@ -136,6 +147,7 @@ class RosInterface(Node):
         self.steady = Clock(clock_type=ClockType.STEADY_TIME)
         self.create_timer(0.05, self._tick, clock=self.steady)
         self.create_timer(0.2, self._publish_footprint, clock=self.steady)
+        self.create_timer(2.0, self._check_nav2_active, clock=self.steady)
         self.server = self._make_server()
         self.http_thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.http_thread.start()
@@ -236,6 +248,7 @@ class RosInterface(Node):
             info.resolution,
             (origin.position.x, origin.position.y, yaw_of(origin.orientation)),
             message.data,
+            self.cfg['unknown_gap_m'],
         )
         self.map_frame = message.header.frame_id
         self.received['map'] = time.monotonic()
@@ -249,7 +262,8 @@ class RosInterface(Node):
             return
         output = Twist()
         output.linear.x = clamp(linear, self.cfg['max_linear_speed'])
-        output.angular.z = clamp(angular, self.cfg['max_angular_speed'])
+        turn = self.cfg['traction_turn_sign'] * angular
+        output.angular.z = clamp(turn, self.cfg['max_angular_speed'])
         self.last_candidate = output
         self.candidate_time = time.monotonic()
 
@@ -359,6 +373,21 @@ class RosInterface(Node):
         for publisher in self.footprint_pubs:
             publisher.publish(polygon)
 
+    def _check_nav2_active(self):
+        if self.nav2_active_future is not None and not self.nav2_active_future.done():
+            return
+        if not self.nav2_active_client.service_is_ready():
+            self.nav2_active = False
+            return
+        self.nav2_active_future = self.nav2_active_client.call_async(Trigger.Request())
+        self.nav2_active_future.add_done_callback(self._nav2_active_cb)
+
+    def _nav2_active_cb(self, future):
+        try:
+            self.nav2_active = future.result().success
+        except Exception:
+            self.nav2_active = False
+
     def _readiness(self, visual=False):
         problems = []
         for name in ('odom', 'scan'):
@@ -371,6 +400,8 @@ class RosInterface(Node):
             problems.append('no_footprint_tf')
         if not self.nav.server_is_ready():
             problems.append('nav2_unavailable')
+        elif not self.nav2_active:
+            problems.append('nav2_inactive')
         try:
             self._pose('map')
         except TransformException:

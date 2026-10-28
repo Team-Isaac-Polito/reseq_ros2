@@ -27,7 +27,9 @@ ros2 launch reseq_traction_autonomy gazebo.launch.py \
   manager_python:="$HOME/.venvs/reseq-traction/bin/python"
 ```
 
-The launch starts `simple_course.world`, the robot and app stack, SLAM, Nav2 and the manager. It leaves out the old `autonomy_coordinator`. Closing the Gazebo window shuts down the whole launch.
+The launch starts `simple_course.world`, the robot and app stack, SLAM, Nav2 and the manager. It leaves out the old `autonomy_coordinator`.
+
+Gazebo runs as a server, and the window is a separate process. Closing the window leaves the simulation running; reopen it with `gz sim -g`, or start without it using `gui:=false`.
 
 ## Tools
 
@@ -44,6 +46,19 @@ ros2 run reseq_traction_autonomy traction_tool stop
 `traction_tool` posts JSON to `http://127.0.0.1:8765/tools/TOOL_NAME`. The API only listens on localhost; forward port 8765 over SSH for remote use.
 
 For an MCP client, run `bash src/reseq_traction_autonomy/scripts/run_mcp.sh`. It exposes the same seven tools with a `traction.` prefix.
+
+## Evaluate against ground truth
+
+`traction_eval` runs a course of tasks and measures each one with Gazebo's true robot pose, not with SLAM:
+
+```bash
+ros2 run reseq_traction_autonomy traction_eval            # default: config/simple_course.yaml
+ros2 run reseq_traction_autonomy traction_eval my_course.yaml --legs forward
+```
+
+At the start it records how the SLAM map lines up with the Gazebo world. For each leg it reports the true distance to the goal, the SLAM estimate of that distance, SLAM drift, path length and time. Results, including the true trajectory, are saved as JSON under `~/.local/state/reseq/traction/eval/`.
+
+A course file lists legs with a goal in the map frame. Visual legs also take `kind: visual`, `instruction` and `model`; their goal is used for measurement and as the evaluation region, and the model never sees it.
 
 ## Navigation models
 
@@ -85,7 +100,11 @@ Model pages: [Foresight VLM](https://huggingface.co/ut-amrl/foresight-qwen3vl-2b
 
 - One task at a time. Starting a second one fails until the first ends.
 - Nav2's output goes to `/traction/nav2/candidate`. The gate forwards it to `/cmd_vel_nav` only while the task has an accepted Nav2 goal, a recent Nav2 command and, for visual tasks, a recent model answer.
-- The manager publishes the robot outline, built from the three chassis transforms, to both Nav2 costmaps. Goals are checked against the map with the same outline.
+- The traction stack turns right for positive `angular.z`, on the robot and in Gazebo, while Nav2 uses the ROS convention (positive turns left). The gate flips the sign (`traction_turn_sign`). Joystick driving does not pass through the gate and is unchanged.
+- The manager publishes the robot outline, built from the three chassis transforms, to both Nav2 costmaps. Goals are checked against the map with the same outline. Small unknown gaps between lidar rays (`unknown_gap_m`) count as free; unexplored areas do not.
+- `cloud_decimator` keeps every 8th pixel of the depth camera cloud (about 5,000 points instead of 307,000). Nav2's costmaps and collision monitor read the thinned cloud; at full size most clouds were lost in transport and the collision monitor kept stopping the robot.
+- `config/nav2_overrides.yaml` holds the Nav2 changes for this robot on top of the shared `nav2_params.yaml`: no reversing, a longer lookahead, and the thinned cloud.
+- Readiness checks that Nav2's lifecycle manager reports the stack as active, not only that the action server exists.
 - Stop, cancel, timeout and failure all send a zero command, cancel the Nav2 goal and switch autonomy off so the joystick works normally again.
 - Moving the joystick past the mux deadband cancels the task.
 - Sensor and model deadlines use wall time, so pausing Gazebo fails the task.
@@ -93,8 +112,11 @@ Model pages: [Foresight VLM](https://huggingface.co/ut-amrl/foresight-qwen3vl-2b
 
 ## Known issues
 
-- With the real robot outline, Nav2 refuses some goals close to walls, usually when the tail would swing into them. With the old 0.12 m circle these goals were "reached" by ignoring the rear modules.
-- Real model inference, destination accuracy and Jetson performance have not been tested yet.
+- Steering responds late. The FTL controller bends the yaw joints so the rear modules follow the head's past path, and in Gazebo that bending outweighs the head's own tracks. After the steering direction changes, the robot keeps turning the old way for roughly one module length (about 4 s at 0.1 m/s). Nav2's controller assumes an immediate response, so tight turns swing wide.
+- The wheel odometry heading is mirrored. The wheel model is mirrored to match the robot's turning convention, so `diff_controller1/odom` reports a left turn when the robot turns right, and the EKF follows it because it fuses the wheel x/y position. Only SLAM recovers the true heading. This probably affects the real robot too.
+- With the real robot outline, Nav2 refuses goals where the tail would swing into a wall. With the old 0.12 m circle such goals were "reached" by ignoring the rear modules.
+- `simple_course.world` is small for a 1.3 m robot. Straight legs reach the goal within 0.1 m; the turning leg ends about 0.3 m away, next to the east wall.
+- Real model inference and Jetson performance have not been tested yet.
 
 ## Tests
 

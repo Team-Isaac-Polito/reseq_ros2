@@ -7,6 +7,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
+    ExecuteProcess,
     IncludeLaunchDescription,
     OpaqueFunction,
     SetEnvironmentVariable,
@@ -20,6 +21,7 @@ from launch_ros.parameter_descriptions import ParameterFile
 def setup(context):
     core = Path(get_package_share_directory('reseq_ros2'))
     sim = Path(get_package_share_directory('reseq_sim'))
+    gz_sim = Path(get_package_share_directory('ros_gz_sim'))
     use_sim = {'use_sim_time': True}
     world = LaunchConfiguration('world').perform(context)
     lightnav_url = LaunchConfiguration('lightnav_url').perform(context)
@@ -49,17 +51,40 @@ def setup(context):
                 'passive_yaw': 'false',
             }.items(),
         ),
+    ]
+    # Same as reseq_sim/gazebo_launch.py, except that the GUI is a separate process:
+    # closing or losing the window no longer shuts down the simulation.
+    gz_sensors = '/opt/ros/jazzy/opt/gz_sensors_vendor/lib'
+    sensor_paths = [gz_sensors, os.environ.get('GZ_SENSORS_PLUGIN_PATH', '')]
+    actions += [
+        SetEnvironmentVariable('GZ_SENSORS_PLUGIN_PATH', ':'.join(sensor_paths)),
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(str(sim / 'launch/gazebo_launch.py')),
+            PythonLaunchDescriptionSource(str(gz_sim / 'launch/gz_sim.launch.py')),
             launch_arguments={
-                'world': world,
-                'spawn_x': LaunchConfiguration('spawn_x'),
-                'spawn_y': LaunchConfiguration('spawn_y'),
-                'spawn_z': '0.2',
-                'num_modules': '3',
+                'gz_args': f'-r -s -v2 {sim / "worlds" / world}',
+                'on_exit_shutdown': 'true',
             }.items(),
         ),
+        Node(
+            package='ros_gz_sim',
+            executable='create',
+            arguments=[
+                '-name', 'reseq',
+                '-topic', '/robot_description',
+                '-x', LaunchConfiguration('spawn_x'),
+                '-y', LaunchConfiguration('spawn_y'),
+                '-z', '0.2',
+            ],
+            output='screen',
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            parameters=[{'config_file': str(sim / 'config/gz_bridge.yaml')}],
+        ),
     ]
+    if LaunchConfiguration('gui').perform(context) == 'true':
+        actions.append(ExecuteProcess(cmd=['gz', 'sim', '-g', '-v2'], output='log'))
     for sensor in ('up45', 'front', 'down45', 'down'):
         actions.append(
             Node(
@@ -103,8 +128,19 @@ def setup(context):
             output='screen',
         ),
     ]
+    traction = Path(get_package_share_directory('reseq_traction_autonomy'))
+    actions.append(
+        Node(
+            package='reseq_traction_autonomy',
+            executable='cloud_decimator',
+            name='cloud_decimator',
+            output='screen',
+            parameters=[use_sim],
+        )
+    )
     parameters = ParameterFile(str(core / 'config/nav2_params.yaml'), allow_substs=True)
-    common = [parameters, use_sim]
+    overrides_file = ParameterFile(str(traction / 'config/nav2_overrides.yaml'))
+    common = [parameters, overrides_file, use_sim]
     # Explicit topic routing keeps Nav2's raw command away from the existing mux.
     descriptions = [
         (
@@ -170,6 +206,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument('world', default_value='simple_course.world'),
+            DeclareLaunchArgument('gui', default_value='true'),
             DeclareLaunchArgument('spawn_x', default_value='0.0'),
             DeclareLaunchArgument('spawn_y', default_value='0.0'),
             DeclareLaunchArgument('api_port', default_value='8765'),

@@ -34,6 +34,18 @@ def transform_xy(point, pose):
     )
 
 
+def compose(a, b):
+    """Return pose b, given relative to pose a, in the frame of a."""
+    x, y = transform_xy((b[0], b[1]), a)
+    return (x, y, a[2] + b[2])
+
+
+def inverse(pose):
+    x, y, yaw = pose
+    c, s = math.cos(yaw), math.sin(yaw)
+    return (-c * x - s * y, s * x - c * y, -yaw)
+
+
 def convex_hull(points):
     points = sorted(set(points))
     if len(points) <= 2:
@@ -72,6 +84,9 @@ class Grid:
     resolution: float
     origin: tuple
     data: object
+    # Unknown cells this close to a known free cell count as free. A lidar scan taken
+    # from one spot leaves such gaps between its rays.
+    unknown_gap_m: float = 0.0
 
     def cell(self, x, y):
         ox, oy, yaw = self.origin
@@ -82,12 +97,25 @@ class Grid:
             return None
         return col, row
 
+    def value(self, col, row):
+        return self.data[row * self.width + col]
+
     def traversable(self, x, y):
         cell = self.cell(x, y)
         if cell is None:
             return False
-        value = self.data[cell[1] * self.width + cell[0]]
-        return 0 <= value < 65
+        col, row = cell
+        value = self.value(col, row)
+        if value >= 65:
+            return False
+        if value >= 0:
+            return True
+        reach = round(self.unknown_gap_m / self.resolution)
+        for c in range(max(col - reach, 0), min(col + reach + 1, self.width)):
+            for r in range(max(row - reach, 0), min(row + reach + 1, self.height)):
+                if 0 <= self.value(c, r) < 65:
+                    return True
+        return False
 
     def pose_free(self, pose, footprint):
         polygon = [transform_xy(p, pose) for p in footprint]

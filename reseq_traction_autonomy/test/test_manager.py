@@ -11,6 +11,7 @@ from std_msgs.msg import Bool
 from reseq_traction_autonomy.core import Tasks
 from reseq_traction_autonomy.manager import Manager
 from reseq_traction_autonomy.models import foresight_waypoints
+from reseq_traction_autonomy.ros_interface import RosInterface
 
 
 def plan(frame='odom', verdict=True):
@@ -100,6 +101,21 @@ def test_gate_opens_only_with_goal_fresh_prediction_and_fresh_command():
     assert command.linear.x == 0.1
     node.candidate_time = time.monotonic() - 1
     assert Manager._gate(node)[1] == 'nav_command_expired'
+
+
+def test_gate_flips_nav2_turns_into_the_traction_convention_and_clamps():
+    node = SimpleNamespace(
+        cfg={'max_linear_speed': 0.19, 'max_angular_speed': 1.0, 'traction_turn_sign': -1.0}
+    )
+    message = Twist()
+    message.linear.x = 0.5
+    message.angular.z = 0.4
+    RosInterface._candidate_cb(node, message)
+    assert node.last_candidate.linear.x == pytest.approx(0.19)
+    assert node.last_candidate.angular.z == pytest.approx(-0.4)
+    message.angular.z = -3.0
+    RosInterface._candidate_cb(node, message)
+    assert node.last_candidate.angular.z == pytest.approx(1.0)
 
 
 def test_every_relative_waypoint_is_anchored_at_the_observation_pose():

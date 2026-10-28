@@ -1,7 +1,15 @@
 import math
 import pytest
 
-from reseq_traction_autonomy.core import Grid, Tasks, convex_hull, finite, transform_xy
+from reseq_traction_autonomy.core import (
+    Grid,
+    Tasks,
+    compose,
+    convex_hull,
+    finite,
+    inverse,
+    transform_xy,
+)
 
 
 def test_cancelled_request_generation_cannot_control_a_new_task():
@@ -69,6 +77,22 @@ def test_unknown_and_out_of_map_goals_are_rejected():
     assert not grid.traversable(0.5, 0.5)
     assert not grid.traversable(-0.1, 0.5)
     assert grid.traversable(1.5, 1.5)
+
+
+def test_gaps_between_lidar_rays_pass_but_unexplored_areas_do_not():
+    # A row of free cells with one unknown gap, then a wide unknown area.
+    data = [0, 0, -1, 0, 0, -1, -1, -1, -1, -1]
+    grid = Grid(10, 1, 0.05, (0, 0, 0), data, unknown_gap_m=0.05)
+    assert grid.traversable(0.125, 0.025)
+    assert not grid.traversable(0.425, 0.025)
+
+
+def test_compose_and_inverse_round_trip():
+    pose = (1.0, -2.0, 0.7)
+    assert compose(pose, inverse(pose)) == pytest.approx((0.0, 0.0, 0.0))
+    assert compose((1.0, 0.0, math.pi / 2), (1.0, 0.0, 0.0)) == pytest.approx(
+        (1.0, 1.0, math.pi / 2)
+    )
 
 
 def test_bent_body_footprint_contains_all_module_corners():
