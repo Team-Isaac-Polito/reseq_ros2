@@ -10,7 +10,7 @@ import rclpy
 from geometry_msgs.msg import Twist, Vector3
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float64MultiArray
 from std_srvs.srv import SetBool, Trigger
 
 from reseq_interfaces.msg import Remote
@@ -175,6 +175,9 @@ class Scaler(Node):
 
         self.speed_pub = self.create_publisher(Twist, '/cmd_vel_teleop', 10)
         self.autonomy_pub = self.create_publisher(Bool, '/autonomy/enabled', 10)
+        self.beak_pub = self.create_publisher(Float64MultiArray, '/beak_controller/commands', 10)
+        self.beak_open_position = self.declare_parameter('beak_open_position', 1.0).value
+        self.beak_closed_position = self.declare_parameter('beak_closed_position', 0.0).value
 
         self.create_service(SetBool, '/autonomy/enable', self.handle_autonomy_enable)
 
@@ -214,6 +217,11 @@ class Scaler(Node):
                     elif handler.get('type') == 'beak':
                         if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
                             self.beak_state = not self.beak_state
+                            beak_position = (
+                                self.beak_open_position if self.beak_state
+                                else self.beak_closed_position
+                            )
+                            self.beak_pub.publish(Float64MultiArray(data=[float(beak_position)]))
                             if self.can_bus is not None:
                                 self._send_beak_command(self.beak_state)
                                 self.get_logger().debug(f'Beak command sent: {"open" if self.beak_state else "close"}')
