@@ -344,8 +344,8 @@ class FtlController(Node):
                             rear_dist, self._bwd_dist, self._bwd_heading
                         )
                     ftl_angle = atan2(sin(rear_heading - front_heading), cos(rear_heading - front_heading))
-                    if sign == -1:
-                        ftl_angle = -ftl_angle  # invert for backward motion
+                    if sign == 1:
+                        ftl_angle = -ftl_angle
                     ftl_angle = max(-YAW_LIMIT, min(YAW_LIMIT, ftl_angle))
                 else:
                     ftl_angle = (1.0 if angular_vel > 0 else -1.0) * YAW_LIMIT
@@ -385,18 +385,17 @@ class FtlController(Node):
         # Keep pitch command publishing available during drive updates too.
         self._publish_pitch_commands()
 
-        # Compute per-module velocities using FTL kinematic model
+        # Compute per-module velocities using the FTL kinematic model.
         modules = list(range(self.n_mod))
-        if sign == -1:  # going backwards
+        reverse = sign == -1
+        if reverse:
             modules.reverse()
-            linear_vel = -linear_vel
-            angular_vel = -angular_vel
 
         for mod_id in modules:
             out_msg = TwistStamped()
             out_msg.header.stamp = self.get_clock().now().to_msg()
-            out_msg.twist.linear.x = sign * linear_vel
-            out_msg.twist.angular.z = sign * angular_vel
+            out_msg.twist.linear.x = linear_vel
+            out_msg.twist.angular.z = angular_vel
 
             if self.enabled:
                 self.controller_pubs[mod_id].publish(out_msg)
@@ -415,8 +414,9 @@ class FtlController(Node):
                 else:
                     yaw_angle = 0.0
 
-                # compute linear and angular velocity of the following module
-                linear_vel, angular_vel = self.kinematic(linear_vel, angular_vel, yaw_angle)
+                linear_vel, angular_vel = self.kinematic(
+                    linear_vel, angular_vel, yaw_angle, reverse=reverse
+                )
 
                 self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
 
@@ -457,8 +457,19 @@ class FtlController(Node):
         h1 = heading_buf[idx]
         return h0 + t * (h1 - h0)
 
-    def kinematic(self, linear_vel, angular_vel, yaw_angle):
-        """Compute next module's velocities given current module's velocities and joint angle."""
+    def kinematic(self, linear_vel, angular_vel, yaw_angle, reverse=False):
+        """Compute the next module velocity in the selected traversal direction."""
+        if reverse:
+            return (
+                linear_vel * cos(yaw_angle)
+                + self.b * angular_vel * sin(yaw_angle),
+                (
+                    linear_vel * sin(yaw_angle)
+                    - self.b * angular_vel * cos(yaw_angle)
+                )
+                / self.a,
+            )
+
         linear_out = linear_vel * cos(yaw_angle) + self.a * angular_vel * sin(yaw_angle)
         angular_out = (
             linear_vel * sin(yaw_angle) - self.a * angular_vel * cos(yaw_angle)
