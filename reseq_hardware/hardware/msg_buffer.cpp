@@ -5,6 +5,10 @@ namespace reseq_hardware
 {
 void MessageBuffer::push_msg(const CanID & id, const uint8_t * data, size_t size)
 {
+  // Clamp to the ParsedMessage data buffer size (64 bytes, CAN FD max)
+  if (size > sizeof(ParsedMessage{}.data)) {
+    size = sizeof(ParsedMessage{}.data);
+  }
   ParsedMessage pm = {id, {}, size, std::chrono::steady_clock::now()};
   std::memcpy(pm.data, data, size);
 

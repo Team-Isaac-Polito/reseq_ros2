@@ -3,6 +3,7 @@
 #include <yaml-cpp/yaml.h>                  // for Node, LoadFile, ...
 #include <rclcpp/logger.hpp>                // for get_logger
 #include <rclcpp/logging.hpp>               // for RCLCPP_INFO
+#include <sstream>                          // for ostringstream
 #include <stdexcept>                        // for runtime_error
 #include <vector>                           // for vector
 #include "reseq_hardware/canbus.hpp"        // for CanID
@@ -10,6 +11,21 @@
 
 namespace reseq_hardware
 {
+
+namespace
+{
+constexpr size_t CAN_FD_MAX_PAYLOAD = 64;
+constexpr size_t FLOAT32_SIZE = sizeof(float);
+
+std::runtime_error mapping_error(
+  const std::string & filename, uint8_t msg_id, uint8_t mod_id, const std::string & reason)
+{
+  std::ostringstream message;
+  message << "Invalid CAN mapping in " << filename << " for 0x" << std::hex
+          << static_cast<int>(msg_id) << static_cast<int>(mod_id) << ": " << reason;
+  return std::runtime_error(message.str());
+}
+}  // namespace
 
 /**
  * @brief Generates a unique joint name string by combining module ID and joint name.
@@ -57,6 +73,9 @@ std::map<CanID, CanMessageMapping> parse_can_config_file(
       if (modules == "only_first" && i != 1) {
         continue;
       }
+      if (modules == "only_third" && i != 3) {
+        continue;
+      }
 
       // Parse Message mapping for this module
       CanMessageMapping msg_mapping;
@@ -64,6 +83,11 @@ std::map<CanID, CanMessageMapping> parse_can_config_file(
       msg_mapping.id.msg_id = mapping["msg_id"].as<uint8_t>();
       msg_mapping.length = mapping["length"].as<uint8_t>(4);
       msg_mapping.is_command = mapping["is_command"].as<bool>(false);
+      if (msg_mapping.length > CAN_FD_MAX_PAYLOAD) {
+        throw mapping_error(
+                filename, msg_mapping.id.msg_id, msg_mapping.id.mod_id,
+                "payload length exceeds the CAN-FD maximum of 64 bytes");
+      }
 
       // Parse all fields for this message
       for (const auto & field : mapping["fields"]) {
@@ -84,6 +108,15 @@ std::map<CanID, CanMessageMapping> parse_can_config_file(
         field_mapping.offset = field["offset"].as<uint8_t>(0);
         field_mapping.scale = field["scale"].as<double>(1.0);
         field_mapping.bias = field["bias"].as<double>(0.0);
+        if (field_mapping.data_type == "float32" &&
+          static_cast<size_t>(field_mapping.offset) + FLOAT32_SIZE > msg_mapping.length)
+        {
+          throw mapping_error(
+                  filename, msg_mapping.id.msg_id, msg_mapping.id.mod_id,
+                  "float32 field at offset " + std::to_string(field_mapping.offset) +
+                  " exceeds the configured payload length of " +
+                  std::to_string(msg_mapping.length));
+        }
 
         msg_mapping.fields.push_back(field_mapping);
       }

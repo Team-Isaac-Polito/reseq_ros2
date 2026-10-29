@@ -3,9 +3,12 @@
 
   <xacro:arg name="use_ros2_control" default="true"/>
   <xacro:arg name="sim_mode" default="false"/>
+  <xacro:arg name="passive_yaw" default="false"/>
 
   <xacro:include filename="$(find reseq_description)/description/macros/reseq_parameters.xacro" />
-  
+
+  <xacro:include filename="$(find reseq_description)/description/macros/materials.xacro" />
+
   <xacro:include filename="$(find reseq_description)/description/macros/inertial_macros.xacro" />
 
   <xacro:include filename="$(find reseq_description)/description/macros/utils.xacro" />

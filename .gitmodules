@@ -7,3 +7,7 @@
 	path = computer_vision
 	url = https://github.com/Team-Isaac-Polito/computer_vision.git
 	branch = main
+[submodule "is_slam"]
+	path = is_slam
+	url = https://github.com/Team-Isaac-Polito/is-slam.git
+	branch = humble-devel

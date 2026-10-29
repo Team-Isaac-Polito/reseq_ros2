@@ -13,9 +13,15 @@ realsense:
         color_profile: 640X480X30
       align_depth:
         enable: true
+      pointcloud:
+        enable: true
+        ordered_pc: false
 
       ".realsense2_camera_node.color.image_raw.jpeg_quality": 30
       ".realsense2_camera_node.depth.image_rect_raw.format": png
       ".realsense2_camera_node.depth.image_rect_raw.png_level": 9
       
-      wait_for_device_timeout: 10.0 
+      wait_for_device_timeout: 10.0
+      
+      # Set base frame to the RealSense mounting link
+      base_frame: realsense_link

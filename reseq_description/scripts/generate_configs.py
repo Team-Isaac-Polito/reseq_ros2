@@ -45,6 +45,16 @@ def copy_realsense_config(realsense_config):
             f_dst.write(f_src.read())
 
 
+# Function to copy the TOF config file to the temp directory
+def copy_tof_config(tof_config):
+    src = os.path.join(config_path, tof_config)
+    dst = os.path.join(temp_path, tof_config)
+    if os.path.exists(src):
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        with open(src, 'r') as f_src, open(dst, 'w') as f_dst:
+            f_dst.write(f_src.read())
+
+
 # Function to find the '/dev/video' device corresponding to each usb camera
 def find_video_devices(num_cam):
     try:
@@ -94,6 +104,10 @@ def generate_final_config(version: str, include_file):
         if 'realsense_config' in main_config:
             copy_realsense_config(main_config['realsense_config'])
 
+        # Copy the TOF config file to the temp directory
+        if 'tof_config' in main_config:
+            copy_tof_config(main_config['tof_config'])
+
         # Genearate a config file for each usb camera, then copy all of them in the temp directory
         if 'usb_camera_config' in main_config:
             cameras = True
@@ -139,6 +153,8 @@ def generate_controllers_config(
     context = {
         'use_sim_time': use_sim_time,
         'body_controllers': not no_body_controllers,
+        'yaw_controllers': not no_body_controllers,
+        'pitch_controllers': not no_body_controllers,
         'arm_controller': not no_arm_controllers and version == 'mk2',
         'num_modules': 0,
         'wheel_separation': 0.0,
@@ -150,13 +166,13 @@ def generate_controllers_config(
         with open(os.path.join(temp_path, version, generic_config_file), 'r') as file:
             generic_config = yaml.safe_load(file)
 
-        agevar_file = generic_config['include']['agevar_consts']
-        with open(os.path.join(config_path, version, agevar_file), 'r') as file:
-            agevar_config = yaml.safe_load(file)
+        ftl_controller_file = generic_config['include']['ftl_controller_consts']
+        with open(os.path.join(config_path, version, ftl_controller_file), 'r') as file:
+            ftl_controller_config = yaml.safe_load(file)
 
         context['num_modules'] = generic_config['num_modules']
-        context['wheel_separation'] = agevar_config['agevar_consts']['d']
-        context['wheel_radius'] = agevar_config['agevar_consts']['r_eq']
+        context['wheel_separation'] = ftl_controller_config['ftl_controller_consts']['d']
+        context['wheel_radius'] = ftl_controller_config['ftl_controller_consts']['r_eq']
 
     # Setup Jinja2 environment
     template_dir = os.path.join(config_path, 'templates')

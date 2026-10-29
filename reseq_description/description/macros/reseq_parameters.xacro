@@ -7,9 +7,9 @@
   <xacro:property name="config_path_prop" value="$(arg config_path)"/>
 
   <xacro:property name="config" value="${xacro.load_yaml(config_path_prop)}"/>
-  <xacro:property name="a" value="${config['agevar_consts']['a']}" />
-  <xacro:property name="b" value="${config['agevar_consts']['b']}" />
-  <xacro:property name="r_eq" value="${config['agevar_consts']['r_eq']}" />
+  <xacro:property name="a" value="${config['ftl_controller_consts']['a']}" />
+  <xacro:property name="b" value="${config['ftl_controller_consts']['b']}" />
+  <xacro:property name="r_eq" value="${config['ftl_controller_consts']['r_eq']}" />
 
   <!-- See 'Parameters.pdf' pdf for parameters meaning (when it will exist ;) ) -->
   <!-- All values are in meters, radiants, kg -->
@@ -38,21 +38,29 @@
   <xacro:property name="roll" value="${pi/2}"/>
   <xacro:property name="yaw" value="${pi/4}"/>
 
+  <!-- actuator limits at 12V: angular velocity [rad/s], output torque [Nm]. -->
+  <xacro:property name="XM540Velocity" value="3.14"/>  <!-- XM540-W270-T -->
+  <xacro:property name="XM540Torque" value="10.6"/>
+  <xacro:property name="XL430Velocity" value="6.39"/>  <!-- XL430-W250-T -->
+  <xacro:property name="XL430Torque" value="1.5"/>
+
+  <!-- Mechanism limits may be derated independently here. -->
+  <xacro:property name="TractionVelocity" value="${XM540Velocity}"/>
+  <xacro:property name="TractionTorque" value="${XM540Torque}"/>
+  <xacro:property name="YawVelocity" value="${XM540Velocity}"/>
+  <xacro:property name="YawTorque" value="${XM540Torque}"/>
+  <xacro:property name="PitchVelocity" value="${XM540Velocity}"/>
+  <xacro:property name="PitchTorque" value="${XM540Torque}"/>
+  <xacro:property name="RollVelocity" value="${XL430Velocity}"/>
+  <xacro:property name="RollTorque" value="${XL430Torque}"/>
+
+  <xacro:property name="arm_pitch_effort" value="${XM540Torque}" />
+  <xacro:property name="arm_wrist_pitch_effort" value="${XL430Torque}" />
+  <xacro:property name="arm_base_roll_effort" value="${XM540Torque}" />
+  <xacro:property name="arm_forearm_roll_effort" value="${XL430Torque}" />
+  <xacro:property name="arm_wrist_roll_effort" value="${XL430Torque}" />
+
   <xacro:property name="JointAMass" value="${config['xacro']['JointAMass']}"/>
   <xacro:property name="JointBMass" value="${config['xacro']['JointBMass']}"/>
-
-  <!-- Rviz colors (for Gazebo ones change in single files) (from 0 to 1) -->
-  <material name="ChassisColor">
-    <color rgba="1 1 1 1" />
-  </material>
-  <material name="WheelColor">
-    <color rgba="0 0 0 1" />
-  </material>
-  <material name="JointColor">
-    <color rgba="0.5 0.5 0.5 1" />
-  </material>
-  <material name="LidarColor">
-    <color rgba="0.5 0.5 0.5 1" />
-  </material>
 
 </robot>

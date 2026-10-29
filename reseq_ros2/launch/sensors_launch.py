@@ -103,6 +103,29 @@ def launch_setup(context, *args, **kwargs):
                         arguments=['--ros-args', '--log-level', external_log_level],
                     )
                 )
+                # Static transform from realsense_link to its optical frames
+                launch_config.append(
+                    Node(
+                        package='tf2_ros',
+                        executable='static_transform_publisher',
+                        name='realsense_depth_optical_transform',
+                        arguments=[
+                            '0', '0', '0', '0', '0', '0',
+                            'realsense_link', 'realsense_link_depth_optical_frame',
+                        ],
+                    )
+                )
+                launch_config.append(
+                    Node(
+                        package='tf2_ros',
+                        executable='static_transform_publisher',
+                        name='realsense_color_optical_transform',
+                        arguments=[
+                            '0', '0', '0', '0', '0', '0',
+                            'realsense_link', 'realsense_link_color_optical_frame',
+                        ],
+                    )
+                )
             # Launch a usb_cam node for each usb_camera present
             if name == 'usb_cameras':
                 num_usb_cam = sensor[name]
@@ -134,6 +157,35 @@ def launch_setup(context, *args, **kwargs):
                         executable='thermal_node',
                         name='thermal_node',
                         parameters=[{'use_sim_time': use_sim_time == 'true'}],
+                        arguments=['--ros-args', '--log-level', external_log_level],
+                        output='screen',
+                    )
+                )
+            # Launch the joint lift controller alongside the TOF detector
+            if name == 'tof':
+                launch_config.append(
+                    Node(
+                        package='reseq_ros2',
+                        executable='tof_obstacle_detector',
+                        name='tof_obstacle_detector',
+                        parameters=[
+                            ParameterFile(f'{config_path}/{config["tof_config"]}'),
+                            {'use_sim_time': use_sim_time == 'true'},
+                        ],
+                        arguments=['--ros-args', '--log-level', external_log_level],
+                        output='screen',
+                    )
+                )
+
+                launch_config.append(
+                    Node(
+                        package='reseq_ros2',
+                        executable='joint_lift_controller',
+                        name='joint_lift_controller',
+                        parameters=[
+                            ParameterFile(f'{config_path}/{config["tof_config"]}'),
+                            {'use_sim_time': use_sim_time == 'true'},
+                        ],
                         arguments=['--ros-args', '--log-level', external_log_level],
                         output='screen',
                     )

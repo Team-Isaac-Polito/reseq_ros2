@@ -15,17 +15,28 @@
             <xacro:property name="pos_sign" value="-1" />
         </xacro:if>
 
-        <xacro:property name="side_sign" value="1" />
+        <xacro:property name="side_sign" value="-1" />
         <xacro:if value="${side == 'right'}">
-            <xacro:property name="side_sign" value="-1" />
+            <xacro:property name="side_sign" value="1" />
         </xacro:if>
 
-        <joint name="mod${id}__${side}_${pos}_wheel" type="continuous">
-        <parent link="chassis${id}_link" />
-        <child link="${side}_${pos}_wheel_${id}_link" />
-        <origin xyz="${pos_sign*WheelBase/2} ${side_sign*(ModuleWidth/2-TrackWidth/2)} 0" rpy="0 0 0" />
-        <axis xyz="0 1 0" />
-        </joint>
+        <xacro:if value="${pos == 'back'}">
+            <joint name="mod${id}__${side}_${pos}_wheel" type="revolute">
+                <limit effort="${TractionTorque}" lower="-1e10" upper="1e10" velocity="${TractionVelocity}" />
+                <parent link="chassis${id}_link" />
+                <child link="${side}_${pos}_wheel_${id}_link" />
+                <origin xyz="${pos_sign*WheelBase/2} ${side_sign*(ModuleWidth/2-TrackWidth/2)} 0" rpy="0 0 0" />
+                <axis xyz="0 1 0" />
+            </joint>
+        </xacro:if>
+        <xacro:unless value="${pos == 'back'}">
+            <joint name="mod${id}__${side}_${pos}_wheel" type="continuous">
+                <parent link="chassis${id}_link" />
+                <child link="${side}_${pos}_wheel_${id}_link" />
+                <origin xyz="${pos_sign*WheelBase/2} ${side_sign*(ModuleWidth/2-TrackWidth/2)} 0" rpy="0 0 0" />
+                <axis xyz="0 1 0" />
+            </joint>
+        </xacro:unless>
 
         <link name="${side}_${pos}_wheel_${id}_link">
         <visual>
@@ -49,10 +60,12 @@
         </xacro:inertial_cylinder_y>
         </link>
 
-
-
+        <!-- Gazebo friction parameters for skid-steer drive. -->
         <gazebo reference="${side}_${pos}_wheel_${id}_link">
             <material>Gazebo/Black</material>
+            <mu1>1.0</mu1>
+            <mu2>0.3</mu2>
+            <fdir1>1 0 0</fdir1>
         </gazebo>
 
     </xacro:macro>

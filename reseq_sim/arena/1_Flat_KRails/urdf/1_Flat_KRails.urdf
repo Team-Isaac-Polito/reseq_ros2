@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="1_Flat_KRails">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="1.4821 0.68233 0.1453"
+        rpy="0 0 0" />
+      <mass
+        value="1003.3" />
+      <inertia
+        ixx="231.93"
+        ixy="-6.8336E-13"
+        ixz="7.1145E-15"
+        iyy="218.67"
+        iyz="1.6382E-15"
+        izz="444.77" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://1_Flat_KRails/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://1_Flat_KRails/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

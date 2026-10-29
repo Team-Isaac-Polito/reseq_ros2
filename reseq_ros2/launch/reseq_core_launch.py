@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, EmitEvent, OpaqueFunction
 from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -9,6 +9,13 @@ from reseq_ros2.utils.launch_utils import (
     default_filename,
     get_addresses,
     parse_config,
+)
+
+# Path to autonomy parameters (cmd_vel_mux config)
+import os
+from ament_index_python.packages import get_package_share_directory
+_autonomy_params = os.path.join(
+    get_package_share_directory('reseq_ros2'), 'config', 'autonomy_params.yaml'
 )
 
 
@@ -31,18 +38,18 @@ def launch_setup(context, *args, **kwargs):
     launch_config.append(
         Node(
             package='reseq_ros2',
-            executable='agevar',
-            name='agevar',
+            executable='ftl_controller',
+            name='ftl_controller',
             parameters=[
                 {
-                    'a': config['agevar_consts']['a'],
-                    'b': config['agevar_consts']['b'],
+                    'a': config['ftl_controller_consts']['a'],
+                    'b': config['ftl_controller_consts']['b'],
                     'modules': addresses,
                     'use_sim_time': use_sim_time,
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
         )
     )
     launch_config.append(
@@ -57,7 +64,7 @@ def launch_setup(context, *args, **kwargs):
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
         )
     )
 
@@ -71,12 +78,29 @@ def launch_setup(context, *args, **kwargs):
                     'r_linear_vel': config['scaler_consts']['r_linear_vel'],
                     'r_inverse_radius': config['scaler_consts']['r_inverse_radius'],
                     'r_angular_vel': config['scaler_consts']['r_angular_vel'],
+                    'arm_input_scale': config['scaler_consts'].get('arm_input_scale', 1.0),
+                    'arm_input_deadzone': config['scaler_consts'].get('arm_input_deadzone', 0.08),
+                    'arm_vel_topic': config['scaler_consts'].get(
+                        'arm_vel_topic', '/mk2_arm_vel_scaled'
+                    ),
                     'version': config['version'],
                     'use_sim_time': use_sim_time,
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
-            on_exit=Shutdown(),
+            on_exit=[EmitEvent(event=Shutdown())],
+        )
+    )
+
+    # cmd_vel_mux: bridges /cmd_vel_teleop (scaler) → /cmd_vel (ftl_controller)
+    # Also handles nav arbitration when autonomy is enabled.
+    launch_config.append(
+        Node(
+            package='reseq_ros2',
+            executable='cmd_vel_mux',
+            name='cmd_vel_mux',
+            parameters=[_autonomy_params, {'use_sim_time': use_sim_time}],
+            arguments=['--ros-args', '--log-level', log_level],
         )
     )
 

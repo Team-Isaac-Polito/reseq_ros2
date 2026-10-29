@@ -11,9 +11,9 @@ class AppGateway(Node):
     def __init__(self):
         super().__init__('app_gateway')
         self.callback_group = ReentrantCallbackGroup()
-        self.service_mapping = {'thermal': '/activate_thermal', 'velocity': '/vel'}
+        self.service_mapping = {'thermal': '/activate_thermal'}
 
-        self.node_states = {'thermal': False, 'lidar': False, 'velocity': False}
+        self.node_states = {'thermal': False, 'lidar': False}
 
         self.sync_states_with_graph()
 
@@ -51,6 +51,7 @@ class AppGateway(Node):
         self.get_logger().info(f'UI request for module {module_id}: {action}')
 
         if action == 'query':
+            self.sync_states_with_graph()
             state = 'RUNNING' if self.node_states.get(module_id) else 'STOPPED'
             response.success = True
             response.message = f'{module_id}: {state}'

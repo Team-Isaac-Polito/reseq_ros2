@@ -21,6 +21,7 @@ for the RESE.Q MK2 Manipulator</p>
   <exec_depend>moveit_configs_utils</exec_depend>
   <exec_depend>moveit_kinematics</exec_depend>
   <exec_depend>pick_ik</exec_depend>
+  <exec_depend>python_orocos_kdl_vendor</exec_depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>
