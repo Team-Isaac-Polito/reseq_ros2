@@ -48,4 +48,8 @@
     <disable_collisions link1="arm_pitch_wrist_link" link2="arm_roll_forearm_link" reason="Adjacent"/>
     <disable_collisions link1="arm_pitch_wrist_link" link2="arm_roll_wrist_link" reason="Adjacent"/>
     <disable_collisions link1="arm_roll_forearm_link" link2="arm_roll_wrist_link" reason="Never"/>
+    <disable_collisions link1="arm_roll_wrist_link" link2="beak_finger_upper_link" reason="Adjacent"/>
+    <disable_collisions link1="arm_pitch_wrist_link" link2="beak_finger_upper_link" reason="Never"/>
+    <disable_collisions link1="arm_roll_forearm_link" link2="beak_finger_upper_link" reason="Never"/>
+    <disable_collisions link1="arm_pitch_forearm_link" link2="beak_finger_upper_link" reason="Never"/>
 </robot>

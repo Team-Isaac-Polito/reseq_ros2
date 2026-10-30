@@ -80,4 +80,12 @@
             <command_interface name="velocity" />
         </xacro:if>
     </joint>
+    <xacro:if value="$(arg sim_mode)">
+        <joint name="mod1__beak">
+            <command_interface name="position" />
+            <state_interface name="position">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+        </joint>
+    </xacro:if>
 </robot>

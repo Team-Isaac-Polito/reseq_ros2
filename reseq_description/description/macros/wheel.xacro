@@ -56,7 +56,7 @@
 
         <xacro:inertial_cylinder_y mass="${WheelMass}" length="${TrackWidth}"
             radius="${EquivalentWheelDiameter/2}">
-            <origin xyz="0 0 0" rpy="-${pi/2} 0 0" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
         </xacro:inertial_cylinder_y>
         </link>
 

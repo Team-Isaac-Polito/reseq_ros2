@@ -175,8 +175,11 @@ def launch_setup(context, *args, **kwargs):
             body_spawners.append(_spawner(f'pitch_controller{i + 2}', external_log_level))
 
     arm_velocity_spawner = None
+    beak_spawner = None
     if arm:
         arm_velocity_spawner = _spawner('joint_group_velocity_controller', external_log_level)
+        if sim_mode == 'true':
+            beak_spawner = _spawner('beak_controller', external_log_level)
 
     for i in range(num_modules):
         body_spawners.append(_spawner(f'imu{i + 1}_broadcaster', external_log_level))
@@ -215,6 +218,15 @@ def launch_setup(context, *args, **kwargs):
                 OnProcessExit(
                     target_action=joint_state_spawner,
                     on_exit=[arm_velocity_spawner],
+                )
+            )
+        )
+    if beak_spawner is not None:
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=arm_velocity_spawner,
+                    on_exit=[beak_spawner],
                 )
             )
         )

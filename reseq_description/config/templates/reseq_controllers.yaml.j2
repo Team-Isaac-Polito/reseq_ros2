@@ -42,6 +42,11 @@ controller_manager:
 {% endif %}
     joint_group_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
+{% if use_sim_time %}
+
+    beak_controller:
+      type: forward_command_controller/ForwardCommandController
+{% endif %}
 {% endif %}
 
 {% if body_controllers %}
@@ -101,6 +106,14 @@ joint_group_velocity_controller:
       - mod1__wrist_pitch_arm_joint
       - mod1__wrist_roll_arm_joint
     interface_name: velocity
+{% if use_sim_time %}
+
+beak_controller:
+  ros__parameters:
+    joints:
+      - mod1__beak
+    interface_name: position
+{% endif %}
 {% endif %}
 
 {% if yaw_controllers %}
