@@ -930,6 +930,7 @@ class CartesianArmController(Node):
         )
         self._diag_ctr = 0
         self._home_active = False
+        self._home_start_time = None
         self._startup_home: np.ndarray | None = None
         self._startup_measured_pose: np.ndarray | None = None
         self._startup_hold_sent = False
@@ -1631,8 +1632,16 @@ class CartesianArmController(Node):
         idle_threshold = max(deadzone, 1e-6)
 
         if self._home_active:
-            self._run_home_velocity()
-            return
+            if cmd_norm > idle_threshold:
+                current_q = self._q_continuous if self._q_continuous is not None else self._q
+                self._home_active = False
+                self._moving = False
+                self._home_start_time = None
+                self._q_cmd = current_q.copy()
+                self.get_logger().info('Homing interrupted by manual arm command.')
+            else:
+                self._run_home_velocity()
+                return
 
         if self._startup_recovery_active:
             if cmd_norm > idle_threshold:
@@ -1886,54 +1895,55 @@ class CartesianArmController(Node):
             )
             if not self._linear_mode and active_dofs >= 6:
                 # Rotation mode: ONLY move wrist joints [q3, q4, q5].
-                # q0/q1/q2 are structurally excluded — the 3×3 wrist Jacobian
-                # has no column for them.
+                # q0/q1/q2 are structurally excluded — the wrist Jacobian has no column for them.
                 #
-                # Use the full 3×3 DLS so that pan commands correctly use q3+q5
-                # together (they cancel roll while adding yaw). Narrow q4's
-                # effective limits to stay away from the asymmetric lower bound
-                # (-0.46 rad) so the solver never redistributes q4 away during pan,
-                # which was what broke reversing in the previous attempt.
-                wrist_jacobian = J[3:6, 3:6]
-                wrist_weights = self._joint_weights[3:6]
+                # Decoupled control (as confirmed by controller author):
+                # 1. Tilt (Z stick) is assigned directly to q4 (wrist pitch).
+                #    If q4 hits its limit, tilt stops cleanly without twisting q3 or q5.
+                # 2. Roll (X stick) and Pan (Y stick) are solved on q3 and q5.
                 wrist_mid = (self._q_lo[3:6] + self._q_hi[3:6]) / 2.0
-                cmd_norm = float(np.linalg.norm(primary_vel))
                 dq = np.zeros(active_dofs)
+                cmd_norm = float(np.linalg.norm(self._cmd_vel))
 
-                if cmd_norm < 0.05:
-                    # Joystick idle: recenter wrist joints.
-                    center_vel = 0.3 * (wrist_mid - solve_q[3:6])
-                    center_vel = np.clip(center_vel, -max_jv, max_jv)
+                if cmd_norm <= idle_threshold:
+                    # Joystick idle: recenter wrist roll joints toward zero gently
+                    center_gain = 0.2
+                    center_vel = center_gain * (wrist_mid - solve_q[3:6])
+                    center_vel = np.clip(center_vel, -0.3 * max_jv, 0.3 * max_jv)
                     dq[3:6] = center_vel
+                    dq[3:6] = _clamp_joint_velocity_to_limits(
+                        solve_q[3:6], dq[3:6], self._q_lo[3:6], self._q_hi[3:6], self._dt
+                    )
                     joints_clipped = []
                     vel_scale = 1.0
                 else:
-                    # Give q4 a large weight so the DLS solver strongly avoids
-                    # using it for pan/roll commands. At any arm pose, q4's tilt
-                    # axis (angular-Y) contribution is dominant, but in non-home
-                    # configurations it also develops small angular-X/Z coupling.
-                    # The high weight routes that coupling away to q3/q5 instead.
-                    # q4 still moves freely for pure tilt commands — the DLS solution
-                    # for a singular axis is weight-independent.
-                    q4_weight = 30.0
-                    wrist_weights_rot = wrist_weights.copy()
-                    wrist_weights_rot[1] *= q4_weight
+                    # 1. Direct tilt control on q4:
+                    dq[4] = float(np.clip(tool_angular_vel[1], -max_jv, max_jv))
 
-                    dq_raw = _solve_weighted_dls_task_velocity(
-                        task_jacobian=wrist_jacobian,
-                        cart_vel=primary_vel,
-                        joint_weights=wrist_weights_rot,
+                    # 2. Pan and Roll control on q3 and q5:
+                    omega_rp = tool_angular_vel[0] * roll_axis + np.array([0.0, 0.0, tool_angular_vel[2]])
+                    J_rp = J[3:6, [3, 5]]
+                    weights_rp = self._joint_weights[[3, 5]]
+                    dq_rp = _solve_weighted_dls_task_velocity(
+                        task_jacobian=J_rp,
+                        cart_vel=omega_rp,
+                        joint_weights=weights_rp,
                         damping=lam,
                     )
-                    peak = float(np.max(np.abs(dq_raw)))
+                    dq[3] = dq_rp[0]
+                    dq[5] = dq_rp[1]
+
+                    # Scale peak velocity so no wrist joint exceeds max_jv (0.80 rad/s)
+                    peak = float(np.max(np.abs(dq[3:6])))
                     vel_scale = 1.0
                     if peak > max_jv:
                         vel_scale = max_jv / peak
-                        dq_raw *= vel_scale
-                    dq_wrist = _clamp_joint_velocity_to_limits(
-                        solve_q[3:6], dq_raw, self._q_lo[3:6], self._q_hi[3:6], self._dt
+                        dq[3:6] *= vel_scale
+
+                    # Clamp all wrist joints to safe soft limits
+                    dq[3:6] = _clamp_joint_velocity_to_limits(
+                        solve_q[3:6], dq[3:6], self._q_lo[3:6], self._q_hi[3:6], self._dt
                     )
-                    dq[3:6] = dq_wrist
                     joints_clipped = []
             else:
                 dq, joints_clipped, vel_scale = _solve_prioritized_task_velocity(
@@ -2172,15 +2182,31 @@ class CartesianArmController(Node):
         if float(np.max(np.abs(error))) < self.HOME_TOLERANCE:
             self._home_active = False
             self._moving = False
+            self._home_start_time = None
             self._ee_z_ref = None
             self._publish_velocity([0.0] * self.N_JOINTS)
             self.get_logger().info('Home reached.')
             return
 
-        max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
         dur = self.get_parameter('home_duration_sec').get_parameter_value().double_value
-        home_gain = 1.0 / max(dur, self._dt)
+        if self._home_start_time is not None:
+            elapsed = (self.get_clock().now() - self._home_start_time).nanoseconds * 1e-9
+            if elapsed > max(dur * 3.0, 10.0):
+                self._home_active = False
+                self._moving = False
+                self._home_start_time = None
+                self._ee_z_ref = None
+                self._publish_velocity([0.0] * self.N_JOINTS)
+                self.get_logger().warn('Homing timed out; manual control restored.')
+                return
+
+        max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
+        home_gain = self.get_parameter('idle_hold_gain').get_parameter_value().double_value
         dq = error * home_gain
+        # Maintain a minimum homing speed so joints do not crawl and stall near target
+        for i in range(len(dq)):
+            if abs(error[i]) > self.HOME_TOLERANCE and abs(dq[i]) < 0.08:
+                dq[i] = float(np.sign(error[i]) * 0.08)
         dq = np.clip(dq, -max_jv, max_jv)
 
         dq = _clamp_joint_velocity_to_limits(self._q, dq, self._q_lo, self._q_hi, self._dt)
@@ -2232,9 +2258,9 @@ class CartesianArmController(Node):
         self._publish_velocity(dq.tolist())
 
     def _get_home_position(self) -> np.ndarray:
-        if self._startup_home is not None:
-            return self._startup_home.copy()
-        return np.array(self.HOME_POSITION, dtype=float)
+        if self._startup_hold_target is not None:
+            return np.clip(self._startup_hold_target, self._q_lo, self._q_hi)
+        return np.clip(np.array(self.HOME_POSITION, dtype=float), self._q_lo, self._q_hi)
 
     # Trajectory publisher.
 
@@ -2272,8 +2298,13 @@ class CartesianArmController(Node):
         self._traj_pub.publish(traj)
 
     def _publish_velocity(self, velocities: list[float]):
+        max_jv = self.get_parameter('max_joint_vel').get_parameter_value().double_value
+        v_arr = np.array(velocities, dtype=float)
+        peak = float(np.max(np.abs(v_arr))) if len(v_arr) > 0 else 0.0
+        if peak > max_jv and peak > 1e-9:
+            v_arr = v_arr * (max_jv / peak)
         msg = Float64MultiArray()
-        msg.data = [float(v) for v in velocities]
+        msg.data = [float(v) for v in v_arr]
         self._vel_pub.publish(msg)
         self._vel_pub_legacy.publish(msg)
 
@@ -2296,6 +2327,7 @@ class CartesianArmController(Node):
         self._ee_pos_ref = None
         if self._command_mode == 'velocity':
             self._home_active = True
+            self._home_start_time = self.get_clock().now()
             res.success = True
             res.message = f'Homing to {np.round(home_target, 3).tolist()} over {dur:.1f}s'
         else:
