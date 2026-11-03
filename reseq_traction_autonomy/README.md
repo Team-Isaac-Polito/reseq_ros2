@@ -29,6 +29,8 @@ ros2 launch reseq_traction_autonomy gazebo.launch.py \
 
 The launch starts `simple_course.world`, the robot and app stack, SLAM, Nav2 and the manager. It leaves out the old `autonomy_coordinator`.
 
+`world:=rescue_maze.world` loads a dwelling-search maze modelled on the RoboCup Rescue arena: plywood walls, four rooms off a central corridor, hazmat placards at 60 cm, a victim doll, backpack, hard hat, fire extinguisher, propane tank, debris, and start and end zones. Passages are wider than the league's and the floor is flat, so a 1.3 m robot that does not reverse can get around. An overhead camera publishes `/overview/image` for recordings. Change the layout in `worlds/generate_rescue_maze.py` and rerun it; it rewrites the world and its textures.
+
 Gazebo runs as a server, and the window is a separate process. Closing the window leaves the simulation running; reopen it with `gz sim -g`, or start without it using `gui:=false`.
 
 ## Tools

@@ -10,6 +10,8 @@ setup(
         ('share/reseq_traction_autonomy', ['package.xml']),
         ('share/reseq_traction_autonomy/launch', glob('launch/*.launch.py')),
         ('share/reseq_traction_autonomy/config', glob('config/*.yaml')),
+        ('share/reseq_traction_autonomy/worlds', glob('worlds/*.world')),
+        ('share/reseq_traction_autonomy/worlds/textures', glob('worlds/textures/*')),
     ],
     install_requires=['setuptools'],
     extras_require={'mcp': ['mcp>=1.12,<2'], 'lightnav': ['websockets>=12,<16']},

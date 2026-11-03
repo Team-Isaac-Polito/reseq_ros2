@@ -22,8 +22,13 @@ def setup(context):
     core = Path(get_package_share_directory('reseq_ros2'))
     sim = Path(get_package_share_directory('reseq_sim'))
     gz_sim = Path(get_package_share_directory('ros_gz_sim'))
+    traction = Path(get_package_share_directory('reseq_traction_autonomy'))
     use_sim = {'use_sim_time': True}
     world = LaunchConfiguration('world').perform(context)
+    # Worlds in this package (such as rescue_maze.world) take precedence over reseq_sim's.
+    world_path = traction / 'worlds' / world
+    if not world_path.exists():
+        world_path = sim / 'worlds' / world
     lightnav_url = LaunchConfiguration('lightnav_url').perform(context)
     port = int(LaunchConfiguration('api_port').perform(context))
     body_config = 'reseq_mk2_vcan.yaml'
@@ -61,7 +66,7 @@ def setup(context):
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(str(gz_sim / 'launch/gz_sim.launch.py')),
             launch_arguments={
-                'gz_args': f'-r -s -v2 {sim / "worlds" / world}',
+                'gz_args': f'-r -s -v2 {world_path}',
                 'on_exit_shutdown': 'true',
             }.items(),
         ),
@@ -81,6 +86,14 @@ def setup(context):
             package='ros_gz_bridge',
             executable='parameter_bridge',
             parameters=[{'config_file': str(sim / 'config/gz_bridge.yaml')}],
+        ),
+        # Overhead view of worlds that define an overview camera, for recordings only.
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='overview_camera_bridge',
+            arguments=['/overview/image@sensor_msgs/msg/Image[gz.msgs.Image'],
+            parameters=[use_sim],
         ),
     ]
     if LaunchConfiguration('gui').perform(context) == 'true':
@@ -128,7 +141,6 @@ def setup(context):
             output='screen',
         ),
     ]
-    traction = Path(get_package_share_directory('reseq_traction_autonomy'))
     actions.append(
         Node(
             package='reseq_traction_autonomy',
