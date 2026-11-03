@@ -62,6 +62,12 @@ class RosInterface(Node):
             'frame_period_s': 0.25,
             # LightNav sometimes predicts stop for a single frame; require a run of them.
             'stop_confirmations': 3,
+            # Visual tasks: replace a subgoal with a newer prediction after this long, and
+            # back up this far after this many predictions the robot cannot follow.
+            'subgoal_refresh_s': 3.0,
+            'escape_after_unreachable': 2,
+            'backup_distance_m': 0.3,
+            'backup_speed': 0.15,
             'lightnav_url': '',
             'foresight_service': '/legged_deployment/foresight_planner',
             'nav2_lifecycle_manager': '/lifecycle_manager_traction_navigation',

@@ -8,19 +8,18 @@ import time
 from importlib import import_module
 
 import rclpy
-from action_msgs.msg import GoalStatus
-from geometry_msgs.msg import PoseStamped, Twist
-from nav2_msgs.action import NavigateToPose
+from geometry_msgs.msg import Twist
 from rclpy.executors import ExternalShutdownException
 from std_msgs.msg import String
 from std_srvs.srv import SetBool
 
 from .core import finite, transform_xy
 from .models import foresight_waypoints
-from .ros_interface import RosInterface, stamp_seconds
+from .navigation import Navigation
+from .ros_interface import stamp_seconds
 
 
-class Manager(RosInterface):
+class Manager(Navigation):
     def _start(self, kind, arguments, timeout_s):
         problems = self._readiness(visual=kind == 'visual')
         if problems:
@@ -45,6 +44,8 @@ class Manager(RosInterface):
         self.next_prediction = 0
         self.next_frame = 0
         self.stop_claims = 0
+        self.unreachable_predictions = 0
+        self.backing_up = False
         future = self.enable_client.call_async(SetBool.Request(data=True))
         task_id, generation = task.id, self.tasks.generation
 
@@ -106,67 +107,6 @@ class Manager(RosInterface):
             self.log_file.close()
             self.log_file = None
         self.gate_reason = 'idle'
-
-    def _send_goal(self, x, y, yaw, frame):
-        task = self.tasks.active
-        if task is None or self.nav_goal is not None or self.nav_pending:
-            return
-        x, y, yaw = self._validate_goal(x, y, yaw, frame)
-        goal = NavigateToPose.Goal()
-        goal.pose = PoseStamped()
-        goal.pose.header.frame_id = self.map_frame
-        goal.pose.header.stamp = self.get_clock().now().to_msg()
-        goal.pose.pose.position.x = x
-        goal.pose.pose.position.y = y
-        goal.pose.pose.orientation.z = math.sin(yaw / 2)
-        goal.pose.pose.orientation.w = math.cos(yaw / 2)
-        task.subgoal = {'x': x, 'y': y, 'yaw': yaw, 'frame': self.map_frame}
-        self.nav_pending = True
-        self.nav_epoch += 1
-        task_id, generation, epoch = task.id, self.tasks.generation, self.nav_epoch
-        future = self.nav.send_goal_async(
-            goal, feedback_callback=lambda msg: self._feedback(msg, task_id, generation, epoch)
-        )
-
-        def accepted(done):
-            handle = done.result()
-            if not self.tasks.current(task_id, generation) or self.nav_epoch != epoch:
-                if handle.accepted:
-                    handle.cancel_goal_async()
-                return
-            self.nav_pending = False
-            if not handle.accepted:
-                self._finish('failed', 'Nav2 rejected the goal')
-                return
-            self.nav_goal = handle
-            result = handle.get_result_async()
-            result.add_done_callback(lambda f: self._nav_result(f, task_id, generation, epoch))
-
-        future.add_done_callback(accepted)
-        self._event('subgoal_sent', task.subgoal)
-
-    def _feedback(self, message, task_id, generation, epoch):
-        if self.tasks.current(task_id, generation) and self.nav_epoch == epoch:
-            self.tasks.active.progress['distance_remaining_m'] = (
-                message.feedback.distance_remaining
-            )
-
-    def _nav_result(self, future, task_id, generation, epoch):
-        if not self.tasks.current(task_id, generation) or self.nav_epoch != epoch:
-            return
-        self.nav_goal = None
-        self.nav_pending = False
-        status = future.result().status
-        if status != GoalStatus.STATUS_SUCCEEDED:
-            self._finish('failed', f'Nav2 ended with status {status}')
-        elif self.tasks.active.kind == 'metric':
-            self._finish('succeeded', 'Nav2 reported success; position not independently measured')
-        else:
-            task = self.tasks.active
-            task.progress['completed_subgoals'] = task.progress.get('completed_subgoals', 0) + 1
-            task.subgoal = None
-            self.next_prediction = 0
-            self._event('subgoal_reached', task.progress)
 
     def _model_context(self, kind, observation):
         task = self.tasks.active
@@ -254,15 +194,23 @@ class Manager(RosInterface):
             else:
                 self._finish('failed', 'Model stopped outside the evaluation region')
             return
-        if self.nav_goal is not None or self.nav_pending:
+        if self.nav_pending or self.backing_up:
+            return
+        driving = self.nav_goal is not None
+        # Keep the model in charge: a newer prediction replaces a subgoal after a few seconds.
+        if driving and time.monotonic() - self.subgoal_sent < self.cfg['subgoal_refresh_s']:
             return
         subgoal = self._choose_subgoal(rows, frame, context['observation']['robot_pose'])
         if subgoal is None:
-            # Turn-in-place or blocked answers are common; wait for the next prediction.
+            # Turn-in-place or blocked answers are common. Keep driving the current subgoal;
+            # when there is none, a run of them backs the robot away from the wall.
             self._event('no_feasible_subgoal', {'waypoints': rows})
+            if not driving:
+                self._note_unreachable()
             return
+        self.unreachable_predictions = 0
         x, y, yaw = subgoal
-        self._send_goal(x, y, yaw, self.map_frame)
+        self._send_goal(x, y, yaw, self.map_frame, replace=True)
 
     def _choose_subgoal(self, rows, frame, observation_pose):
         """Return the farthest feasible waypoint as a map pose, or None."""

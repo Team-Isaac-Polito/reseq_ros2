@@ -5,11 +5,13 @@ from types import SimpleNamespace
 import pytest
 
 pytest.importorskip('rclpy')
+from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool
 
 from reseq_traction_autonomy.core import Tasks
 from reseq_traction_autonomy.manager import Manager
+from reseq_traction_autonomy.navigation import Navigation
 from reseq_traction_autonomy.models import foresight_waypoints
 from reseq_traction_autonomy.ros_interface import RosInterface
 
@@ -165,9 +167,68 @@ def test_prediction_without_a_feasible_subgoal_keeps_the_task_running():
     events = []
     node._event = lambda kind, data: events.append(kind)
     node._choose_subgoal = lambda rows, frame, pose: None
+    node.backing_up = False
+    node._note_unreachable = lambda: events.append('unreachable')
     task = node.tasks.start('visual', {}, 20)
     context = {'model': 'lightnav', 'observation': {'stamp_s': 1.0, 'robot_pose': {}}}
     turn_in_place = {'frame': 'base_link', 'waypoints': [[0.0, 0.0, -0.31]], 'stop': False}
     Manager._apply_prediction(node, turn_in_place, context)
     assert task.status == 'running'
-    assert events[-1] == 'no_feasible_subgoal'
+    assert events[-2:] == ['no_feasible_subgoal', 'unreachable']
+
+
+def visual_node(subgoal_age_s):
+    node, _ = manager()
+    sent = []
+    node.cfg = {'stop_confirmations': 3, 'subgoal_refresh_s': 3.0}
+    node.stop_claims = 0
+    node.last_prediction = None
+    node.backing_up = False
+    node.nav_goal = object()  # Nav2 is driving an earlier subgoal
+    node.subgoal_sent = time.monotonic() - subgoal_age_s
+    node.unreachable_predictions = 0
+    node.map_frame = 'map'
+    node._choose_subgoal = lambda rows, frame, pose: (1.0, 0.0, 0.0)
+    node._send_goal = lambda x, y, yaw, frame, replace=False: sent.append(replace)
+    node.tasks.start('visual', {}, 20)
+    return node, sent
+
+
+def test_newer_prediction_replaces_a_subgoal_only_after_the_refresh_time():
+    context = {'model': 'lightnav', 'observation': {'stamp_s': 1.0, 'robot_pose': {}}}
+    move = {'frame': 'base_link', 'waypoints': [[0.6, 0.0, 0.0]], 'stop': False}
+    young, young_sent = visual_node(subgoal_age_s=1.0)
+    Manager._apply_prediction(young, move, context)
+    assert young_sent == []
+    old, old_sent = visual_node(subgoal_age_s=5.0)
+    Manager._apply_prediction(old, move, context)
+    assert old_sent == [True]
+
+
+def test_a_run_of_unreachable_predictions_backs_the_robot_up_once():
+    backups = []
+    node = SimpleNamespace(
+        unreachable_predictions=0,
+        cfg={'escape_after_unreachable': 2},
+        _back_up=lambda: backups.append(1),
+    )
+    Navigation._note_unreachable(node)
+    assert backups == []
+    Navigation._note_unreachable(node)
+    assert backups == [1]
+    assert node.unreachable_predictions == 0
+
+
+def test_failed_subgoal_continues_a_visual_task_but_fails_a_metric_task():
+    for kind, expected in (('visual', 'running'), ('metric', 'failed')):
+        node, _ = manager()
+        events = []
+        node._event = lambda name, data: events.append(name)
+        node._note_unreachable = lambda: events.append('unreachable')
+        node.next_prediction = 5.0
+        task = node.tasks.start(kind, {}, 20)
+        Navigation._goal_finished(node, GoalStatus.STATUS_ABORTED)
+        assert task.status == expected
+        if kind == 'visual':
+            assert events == ['subgoal_failed', 'unreachable']
+            assert node.next_prediction == 0
