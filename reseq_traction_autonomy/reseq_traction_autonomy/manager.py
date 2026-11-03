@@ -46,6 +46,7 @@ class Manager(Navigation):
         self.stop_claims = 0
         self.unreachable_predictions = 0
         self.backing_up = False
+        self.camera_lost_since = None
         future = self.enable_client.call_async(SetBool.Request(data=True))
         task_id, generation = task.id, self.tasks.generation
 
@@ -289,6 +290,15 @@ class Manager(Navigation):
             self._finish('timed_out', 'Mission deadline exceeded')
             return
         problems = self._readiness(visual=task.kind == 'visual')
+        if problems == ['camera_not_ready']:
+            # Under load a frame or its transform can arrive late; fail only if it lasts.
+            now = time.monotonic()
+            if self.camera_lost_since is None:
+                self.camera_lost_since = now
+            if now - self.camera_lost_since > self.cfg['camera_grace_s']:
+                self._finish('failed', 'camera_not_ready')
+            return
+        self.camera_lost_since = None
         if problems:
             self._finish('failed', ', '.join(problems))
             return

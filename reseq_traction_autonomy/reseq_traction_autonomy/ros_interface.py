@@ -55,6 +55,7 @@ class RosInterface(Node):
             'candidate_topic': '/traction/nav2/candidate',
             'camera_max_age_s': 2.0,
             'sensor_max_age_s': 2.0,
+            'camera_grace_s': 3.0,
             'prediction_max_age_s': 6.0,
             'model_timeout_s': 5.0,
             'model_period_s': 1.0,
@@ -82,6 +83,9 @@ class RosInterface(Node):
             'num_modules': 3,
             'module_half_length': 0.23,
             'module_half_width': 0.16,
+            # The arm camera sits 5 cm behind the front edge and its near clip is 0.28 m;
+            # padding the footprint ahead of it keeps walls far enough away to be seen.
+            'camera_standoff_m': 0.25,
             'record_directory': str(Path.home() / '.local/state/reseq/traction'),
         }
         self.cfg = {
@@ -369,12 +373,12 @@ class RosInterface(Node):
     def _publish_footprint(self):
         a = self.cfg['module_half_length']
         b = self.cfg['module_half_width']
-        corners = [(-a, -b), (a, -b), (a, b), (-a, b)]
         points = []
         try:
             for i in range(1, int(self.cfg['num_modules']) + 1):
                 pose = self._pose('base_link', source=f'chassis{i}_link')
-                for corner in corners:
+                front = a + self.cfg['camera_standoff_m'] if i == 1 else a
+                for corner in ((-a, -b), (front, -b), (front, b), (-a, b)):
                     points.append(transform_xy(corner, pose))
         except TransformException:
             self.footprint = []
