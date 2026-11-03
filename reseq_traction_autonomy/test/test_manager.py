@@ -136,3 +136,38 @@ def test_every_relative_waypoint_is_anchored_at_the_observation_pose():
     x, y, yaw = Manager._choose_subgoal(node, rows, 'base_link', origin)
     assert (x, y, yaw) == pytest.approx((1.0, 0.6, math.pi / 2))
     assert validated == ['odom', 'odom']
+
+
+def test_only_a_run_of_stop_claims_ends_a_visual_task():
+    node, _ = manager()
+    node.cfg = {'stop_confirmations': 3}
+    node.stop_claims = 0
+    node.last_prediction = None
+    node.nav_pending = True  # a Nav2 goal is on its way, so moves send nothing new
+    node._in_evaluation_region = lambda task: None
+    task = node.tasks.start('visual', {}, 20)
+    context = {'model': 'lightnav', 'observation': {'stamp_s': 1.0}}
+    stop = {'frame': 'base_link', 'waypoints': [], 'stop': True}
+    move = {'frame': 'base_link', 'waypoints': [[0.3, 0.0, 0.0]], 'stop': False}
+    for result in (stop, stop, move, stop, stop):
+        Manager._apply_prediction(node, result, context)
+    assert task.status == 'running'
+    Manager._apply_prediction(node, stop, context)
+    assert task.status == 'succeeded'
+    assert task.reason == 'Model stop claim; destination not measured'
+
+
+def test_prediction_without_a_feasible_subgoal_keeps_the_task_running():
+    node, _ = manager()
+    node.cfg = {'stop_confirmations': 3}
+    node.stop_claims = 0
+    node.last_prediction = None
+    events = []
+    node._event = lambda kind, data: events.append(kind)
+    node._choose_subgoal = lambda rows, frame, pose: None
+    task = node.tasks.start('visual', {}, 20)
+    context = {'model': 'lightnav', 'observation': {'stamp_s': 1.0, 'robot_pose': {}}}
+    turn_in_place = {'frame': 'base_link', 'waypoints': [[0.0, 0.0, -0.31]], 'stop': False}
+    Manager._apply_prediction(node, turn_in_place, context)
+    assert task.status == 'running'
+    assert events[-1] == 'no_feasible_subgoal'

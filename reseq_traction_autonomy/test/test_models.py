@@ -7,7 +7,7 @@ import pytest
 
 server_module = pytest.importorskip('websockets.sync.server')
 
-from reseq_traction_autonomy.models import LightNav
+from reseq_traction_autonomy.models import LightNav, LightNavSession
 
 
 @pytest.fixture
@@ -20,8 +20,10 @@ def worker():
             request = json.loads(raw)
             received.append(request)
             data = {'rc': 0}
-            if request['action'] == 'next':
+            if request['action'] == 'next' and request['data']['instruction']:
                 data = replies.popleft()
+            elif request['action'] == 'next':
+                data = {'rc': 0, 'msg': 'image received'}
             socket.send(json.dumps({'data': data}))
 
     with server_module.serve(handle, '127.0.0.1', 0) as server:
@@ -65,3 +67,31 @@ def test_lightnav_rejects_worker_errors_and_empty_actions(worker, reply):
             model.predict(b'image bytes', 'Go forward')
     finally:
         model.close()
+
+
+def test_history_frames_are_sent_without_an_instruction(worker):
+    url, received, replies = worker
+    replies.append({'rc': 0, 'actions': {'actions': [[0.3, 0.0, 0.0]]}})
+    model = LightNav(url, timeout=2)
+    try:
+        model.observe(b'frame 1')
+        model.observe(b'frame 2')
+        model.predict(b'frame 3', 'Go to the door')
+    finally:
+        model.close()
+    frames = [item['data'] for item in received if item['action'] == 'next']
+    assert [frame['instruction'] for frame in frames] == ['', '', 'Go to the door']
+    assert [frame['seq'] for frame in frames] == [1, 2, 3]
+
+
+def test_session_opens_a_fresh_connection_for_each_task(worker):
+    url, received, _ = worker
+    session = LightNavSession(url, timeout=2)
+    try:
+        session.observe('task-a', b'a1')
+        session.observe('task-a', b'a2')
+        session.observe('task-b', b'b1')
+    finally:
+        session.close()
+    actions = [item['action'] for item in received]
+    assert actions == ['login', 'reset', 'next', 'next', 'login', 'reset', 'next']

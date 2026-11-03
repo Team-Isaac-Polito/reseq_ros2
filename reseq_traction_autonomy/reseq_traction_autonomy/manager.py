@@ -16,7 +16,7 @@ from std_msgs.msg import String
 from std_srvs.srv import SetBool
 
 from .core import finite, transform_xy
-from .models import LightNav, foresight_waypoints
+from .models import foresight_waypoints
 from .ros_interface import RosInterface, stamp_seconds
 
 
@@ -43,6 +43,8 @@ class Manager(RosInterface):
         self.candidate_time = 0.0
         self.last_prediction = None
         self.next_prediction = 0
+        self.next_frame = 0
+        self.stop_claims = 0
         future = self.enable_client.call_async(SetBool.Request(data=True))
         task_id, generation = task.id, self.tasks.generation
 
@@ -105,19 +107,6 @@ class Manager(RosInterface):
             self.log_file = None
         self.gate_reason = 'idle'
 
-    def _validate_goal(self, x, y, yaw, frame):
-        if self.grid is None or not self.footprint:
-            raise ValueError('Map and robot footprint must be ready before setting a goal')
-        if frame not in ('map', 'odom'):
-            raise ValueError('frame must be map or odom')
-        if frame != self.map_frame:
-            frame_pose = self._pose(self.map_frame, source=frame)
-            x, y = transform_xy((x, y), frame_pose)
-            yaw += frame_pose[2]
-        if not self.grid.pose_free((x, y, yaw), self.footprint):
-            raise ValueError('Goal footprint intersects occupied, unknown or unmapped cells')
-        return x, y, yaw
-
     def _send_goal(self, x, y, yaw, frame):
         task = self.tasks.active
         if task is None or self.nav_goal is not None or self.nav_pending:
@@ -179,32 +168,32 @@ class Manager(RosInterface):
             self.next_prediction = 0
             self._event('subgoal_reached', task.progress)
 
-    def _foresight_client(self):
-        if self.foresight is None:
-            from rosidl_runtime_py.utilities import get_service
+    def _model_context(self, kind, observation):
+        task = self.tasks.active
+        now = time.monotonic()
+        # Keep a steady frame cadence; restart it only after a long gap such as a prediction.
+        due = self.next_frame + self.cfg['frame_period_s']
+        self.next_frame = due if due > now else now + self.cfg['frame_period_s']
+        return {
+            'kind': kind,
+            'id': task.id,
+            'generation': self.tasks.generation,
+            'created': now,
+            'observation': observation,
+            'model': task.arguments['model'],
+        }
 
-            self.foresight_type = get_service('amrl_msgs/srv/ForesightPlannerSrv')
-            self.foresight = self.create_client(self.foresight_type, self.cfg['foresight_service'])
-        return self.foresight
-
-    def _lightnav_predict(self, task_id, jpeg, instruction):
-        if self.lightnav_task != task_id:
-            if self.lightnav is not None:
-                self.lightnav.close()
-            self.lightnav = LightNav(self.cfg['lightnav_url'], self.cfg['model_timeout_s'])
-            self.lightnav_task = task_id
-        return self.lightnav.predict(jpeg, instruction)
+    def _send_history_frame(self):
+        """Stream a frame between predictions so LightNav sees its trained frame rate."""
+        observation = self._observation()
+        self.model_context = self._model_context('frame', observation)
+        task_id = self.tasks.active.id
+        self.model_future = self.pool.submit(self.lightnav.observe, task_id, observation['jpeg'])
 
     def _request_prediction(self):
         task = self.tasks.active
         observation = self._observation()
-        self.model_context = {
-            'id': task.id,
-            'generation': self.tasks.generation,
-            'created': time.monotonic(),
-            'observation': observation,
-            'model': task.arguments['model'],
-        }
+        self.model_context = self._model_context('prediction', observation)
         if self.recorded_images < 1000:
             filename = f'image_{self.recorded_images:05d}.jpg'
             (self.record_dir / filename).write_bytes(observation['jpeg'])
@@ -215,7 +204,7 @@ class Manager(RosInterface):
             self._event('observation', details)
         if task.arguments['model'] == 'lightnav':
             self.model_future = self.pool.submit(
-                self._lightnav_predict, task.id, observation['jpeg'], task.arguments['instruction']
+                self.lightnav.predict, task.id, observation['jpeg'], task.arguments['instruction']
             )
         else:
             request = self.foresight_type.Request()
@@ -250,8 +239,13 @@ class Manager(RosInterface):
             {'frame': frame, 'waypoints': rows, 'stop': stop, 'observation_stamp_s': stamp_s},
         )
         self.last_prediction = time.monotonic()
-        if stop:
+        if not stop:
+            self.stop_claims = 0
+        else:
             # LightNav sets stop when its whole action chunk is zero; that is not a measurement.
+            self.stop_claims += 1
+            if self.stop_claims < self.cfg['stop_confirmations']:
+                return
             reached = self._in_evaluation_region(self.tasks.active)
             if reached is None:
                 self._finish('succeeded', 'Model stop claim; destination not measured')
@@ -264,7 +258,9 @@ class Manager(RosInterface):
             return
         subgoal = self._choose_subgoal(rows, frame, context['observation']['robot_pose'])
         if subgoal is None:
-            raise ValueError('Model produced no feasible subgoal within the configured distance')
+            # Turn-in-place or blocked answers are common; wait for the next prediction.
+            self._event('no_feasible_subgoal', {'waypoints': rows})
+            return
         x, y, yaw = subgoal
         self._send_goal(x, y, yaw, self.map_frame)
 
@@ -312,9 +308,12 @@ class Manager(RosInterface):
         if not self.tasks.current(context['id'], context['generation']):
             return
         try:
+            result = future.result()
+            if context['kind'] == 'frame':
+                return
             if time.monotonic() - context['created'] > self.cfg['prediction_max_age_s']:
                 raise ValueError('Prediction arrived after its observation expired')
-            self._apply_prediction(future.result(), context)
+            self._apply_prediction(result, context)
         except Exception as exc:
             self._finish('failed', f'Model error: {exc}')
 
@@ -351,8 +350,12 @@ class Manager(RosInterface):
             if self._in_evaluation_region(task):
                 self._finish('succeeded', 'Configured destination region reached')
                 return
-            if self.model_future is None and time.monotonic() >= self.next_prediction:
-                self._request_prediction()
+            if self.model_future is None:
+                now = time.monotonic()
+                if now >= self.next_prediction:
+                    self._request_prediction()
+                elif task.arguments['model'] == 'lightnav' and now >= self.next_frame:
+                    self._send_history_frame()
         except Exception as exc:
             self._finish('failed', str(exc))
 

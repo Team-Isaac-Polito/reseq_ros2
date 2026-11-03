@@ -26,9 +26,9 @@ class LightNav:
             raise RuntimeError(f'LightNav rejected request: {data.get("msg", reply)}')
         return data
 
-    def predict(self, jpeg, instruction):
+    def _next(self, jpeg, instruction):
         self.seq += 1
-        data = self._request(
+        return self._request(
             {
                 'action': 'next',
                 'data': {
@@ -38,6 +38,13 @@ class LightNav:
                 },
             }
         )
+
+    def observe(self, jpeg):
+        """Add a frame to the history without asking for a prediction."""
+        self._next(jpeg, '')
+
+    def predict(self, jpeg, instruction):
+        data = self._next(jpeg, instruction)
         if data.get('stop'):
             return {'stop': True, 'waypoints': [], 'frame': 'base_link'}
         rows = data.get('actions', {}).get('actions', [])
@@ -51,6 +58,35 @@ class LightNav:
 
     def close(self):
         self.socket.close()
+
+
+class LightNavSession:
+    """One LightNav connection per task, so every task starts with an empty history."""
+
+    def __init__(self, url, timeout):
+        self.url = url
+        self.timeout = timeout
+        self.client = None
+        self.task_id = None
+
+    def _client_for(self, task_id):
+        if self.task_id != task_id:
+            self.close()
+            self.client = LightNav(self.url, self.timeout)
+            self.task_id = task_id
+        return self.client
+
+    def observe(self, task_id, jpeg):
+        self._client_for(task_id).observe(jpeg)
+
+    def predict(self, task_id, jpeg, instruction):
+        return self._client_for(task_id).predict(jpeg, instruction)
+
+    def close(self):
+        if self.client is not None:
+            self.client.close()
+        self.client = None
+        self.task_id = None
 
 
 def foresight_waypoints(plan):

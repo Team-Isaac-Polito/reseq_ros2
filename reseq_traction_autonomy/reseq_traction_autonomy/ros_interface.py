@@ -28,6 +28,7 @@ from std_srvs.srv import SetBool, Trigger
 from tf2_ros import Buffer, TransformException, TransformListener
 
 from .core import Grid, Tasks, clamp, convex_hull, transform_xy, yaw_of
+from .models import LightNavSession
 
 # ROS encoding: (PIL raw decoder, PIL image mode, bytes per pixel)
 CAMERA_ENCODINGS = {
@@ -57,6 +58,10 @@ class RosInterface(Node):
             'prediction_max_age_s': 6.0,
             'model_timeout_s': 5.0,
             'model_period_s': 1.0,
+            # LightNav-0 is trained on frames 0.25 s apart (video_fps 4 in its eval_config).
+            'frame_period_s': 0.25,
+            # LightNav sometimes predicts stop for a single frame; require a run of them.
+            'stop_confirmations': 3,
             'lightnav_url': '',
             'foresight_service': '/legged_deployment/foresight_planner',
             'nav2_lifecycle_manager': '/lifecycle_manager_traction_navigation',
@@ -94,10 +99,11 @@ class RosInterface(Node):
         self.model_future = None
         self.model_context = None
         self.next_prediction = 0.0
+        self.next_frame = 0.0
         self.last_prediction = None
+        self.stop_claims = 0
         self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix='traction-model')
-        self.lightnav = None
-        self.lightnav_task = None
+        self.lightnav = LightNavSession(self.cfg['lightnav_url'], self.cfg['model_timeout_s'])
         self.foresight = None
         self.foresight_type = None
         self.received = {}
@@ -373,6 +379,14 @@ class RosInterface(Node):
         for publisher in self.footprint_pubs:
             publisher.publish(polygon)
 
+    def _foresight_client(self):
+        if self.foresight is None:
+            from rosidl_runtime_py.utilities import get_service
+
+            self.foresight_type = get_service('amrl_msgs/srv/ForesightPlannerSrv')
+            self.foresight = self.create_client(self.foresight_type, self.cfg['foresight_service'])
+        return self.foresight
+
     def _check_nav2_active(self):
         if self.nav2_active_future is not None and not self.nav2_active_future.done():
             return
@@ -387,6 +401,19 @@ class RosInterface(Node):
             self.nav2_active = future.result().success
         except Exception:
             self.nav2_active = False
+
+    def _validate_goal(self, x, y, yaw, frame):
+        if self.grid is None or not self.footprint:
+            raise ValueError('Map and robot footprint must be ready before setting a goal')
+        if frame not in ('map', 'odom'):
+            raise ValueError('frame must be map or odom')
+        if frame != self.map_frame:
+            frame_pose = self._pose(self.map_frame, source=frame)
+            x, y = transform_xy((x, y), frame_pose)
+            yaw += frame_pose[2]
+        if not self.grid.pose_free((x, y, yaw), self.footprint):
+            raise ValueError('Goal footprint intersects occupied, unknown or unmapped cells')
+        return x, y, yaw
 
     def _readiness(self, visual=False):
         problems = []

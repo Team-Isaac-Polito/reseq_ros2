@@ -74,9 +74,9 @@ ros2 launch reseq_traction_autonomy gazebo.launch.py \
   lightnav_url:=ws://127.0.0.1:8050
 ```
 
-Then call `start_visual_navigation` with `instruction` and `"model": "lightnav"`. Each task opens a fresh LightNav session. LightNav answers with a short list of `[forward, lateral, yaw]` poses relative to where the robot was when the image was taken. The manager places them in the odometry frame and sends the farthest reachable one (at most `max_subgoal_distance_m`) to Nav2.
+Then call `start_visual_navigation` with `instruction` and `"model": "lightnav"`. Each task opens a fresh LightNav session. The model is trained on frames 0.25 s apart, so between predictions (every `model_period_s`, 1 s) the manager streams camera frames every `frame_period_s` (0.25 s) without asking for a prediction. LightNav answers with a short list of `[forward, lateral, yaw]` poses relative to where the robot was when the image was taken. The manager places them in the odometry frame and sends the farthest reachable one (at most `max_subgoal_distance_m`) to Nav2. If no point is reachable, for example when the model only turns in place, the prediction is logged and skipped.
 
-LightNav's `stop` flag only means it predicted no further motion. The manager reports it as "Model stop claim; destination not measured".
+LightNav's `stop` flag only means it predicted no further motion, and it sometimes appears for a single frame. A task ends only after `stop_confirmations` (3) stop predictions in a row, and the manager reports it as "Model stop claim; destination not measured".
 
 ### Foresight
 
