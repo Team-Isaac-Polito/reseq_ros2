@@ -201,10 +201,13 @@ class Scaler(Node):
             if buttons[handler['button']] != self.previous_buttons[handler['button']]:
                 if 'condition' not in handler or handler['condition'](buttons):
                     if handler.get('type') == 'trigger':
-                        handler['service'].call_async(Trigger.Request())
-                        self.get_logger().debug(
-                            f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}"  # noqa
-                        )
+                        # Trigger only on button press (momentary button: pressed = False)
+                        # Detect falling edge (True -> False)
+                        if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
+                            handler['service'].call_async(Trigger.Request())
+                            self.get_logger().debug(
+                                f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}"  # noqa
+                            )
                     elif handler.get('type') == 'led':
                         # Toggle on button press (momentary button: pressed = False)
                         # Detect falling edge (True -> False)
