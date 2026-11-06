@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-import traceback
-import warnings
-from enum import Enum, IntEnum
 import struct
 import time
+import traceback
+import warnings
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import Enum, IntEnum
+from typing import ClassVar
 
+import can
 import rclpy
 from geometry_msgs.msg import Twist, Vector3
 from rclpy.node import Node
@@ -15,13 +19,8 @@ from std_srvs.srv import SetBool, Trigger
 
 from reseq_interfaces.msg import Remote
 
-import can
-import struct
-import os
-import sys
-
 # Suppress pkg_resources deprecation warning from python-can library
-warnings.filterwarnings("ignore", category=UserWarning, module="can.interfaces")
+warnings.filterwarnings('ignore', category=UserWarning, module='can.interfaces')
 
 
 """
@@ -38,6 +37,35 @@ and an optional hook function to be executed after the service is called.
 """
 
 
+class ControlMode(Enum):
+    FTL = 0
+    PIVOT = 1
+
+
+class ButtonEnum(IntEnum):
+    S1 = 0
+    S2 = 1
+    S3 = 2
+    S4 = 3
+    S5 = 4
+    BGREEN = 5
+    BBLACK = 6
+    BRED = 7
+    BWHITE = 8
+    BBLUE = 9
+
+
+@dataclass
+class Handler:
+    name: str
+    button: ButtonEnum
+    service: str | None
+    action_type: str | None = None
+    hook: Callable[[Scaler], None] | None = None
+    inverted: bool | None = None
+    condition: Callable[[list[bool]], bool] | None = None
+
+
 class Scaler(Node):
     control_mode_enum: Enum = Enum('ControlMode', 'FTL, PIVOT')
     buttons_enum: IntEnum = IntEnum(
@@ -46,62 +74,64 @@ class Scaler(Node):
 
     # OBSERVATIONS: The switches are zero in the upwards position,
     #               The buttons are zero when pressed
-    handlers: list[dict] = [  # {button, service, inverted, condition, hook}
-        {
-            'name': 'Enable/Disable FTL Controller',
-            'button': buttons_enum.BBLUE,
-            'service': '/ftl_controller/enable',
-            'inverted': False,
-            'hook': lambda self: setattr(self, 'control_mode', Scaler.control_mode_enum.FTL),
-        },
-        {
-            'name': 'Enable/Disable Pivot',
-            'button': buttons_enum.BBLUE,
-            'service': '/pivot_controller/enable',
-            'inverted': True,
-            'hook': lambda self: setattr(self, 'control_mode', Scaler.control_mode_enum.PIVOT),
-        },
-        {
-            'name': 'Enable/Disable Pivot on Head',
-            'button': buttons_enum.S5,
-            'service': '/pivot_controller/pivot_on_head',
-            'inverted': True,
-            'condition': lambda b: not b[Scaler.buttons_enum.BBLUE],
-        },
-        {
-            'name': 'Switch MK2 Arm End-Effector Mode',
-            'button': buttons_enum.S4,
-            'service': '/cartesian_arm_controller/switch_vel',
+    handlers: ClassVar[list[Handler]] = [  # {button, service, inverted, condition, hook}
+        Handler(
+            name='Enable/Disable FTL Controller',
+            button=ButtonEnum.BBLUE,
+            service='/ftl_controller/enable',
+            inverted=False,
+            hook=lambda self: setattr(self, 'control_mode', ControlMode.FTL),
+        ),
+        Handler(
+            name='Enable/Disable Pivot',
+            button=ButtonEnum.BBLUE,
+            service='/pivot_controller/enable',
+            inverted=True,
+            hook=lambda self: setattr(self, 'control_mode', ControlMode.PIVOT),
+        ),
+        Handler(
+            name='Enable/Disable Pivot on Head',
+            button=ButtonEnum.S5,
+            service='/pivot_controller/pivot_on_head',
+            inverted=True,
+            condition=lambda b: not b[ButtonEnum.BBLUE],
+        ),
+        Handler(
+            name='Switch MK2 Arm End-Effector Mode',
+            button=ButtonEnum.S4,
+            service='/cartesian_arm_controller/switch_vel',
             # Switches read False in the upper position. The arm controller
             # expects True=linear, False=rotation.
-            'inverted': True,
-        },
-        {
-            'name': 'Home MK2 Arm',
-            'button': buttons_enum.BGREEN,
-            'service': '/cartesian_arm_controller/go_home',
-            'inverted': False,
-            'type': 'trigger',
-        },
-        {
-            'name': 'Open/Close MK2 Arm Beak',
-            'button': buttons_enum.BBLACK,
-            'inverted': False,
-            'type': 'beak',
-        },
-        {
-            'name': 'Toggle Module 1 LED',
-            'button': buttons_enum.BWHITE,
-            'inverted': False,
-            'type': 'led',
-        },
-        {
-            'name': 'Autonomy Enable/Disable',
-            'button': buttons_enum.BRED,
-            'service': '/autonomy/enable',
-            'inverted': False,
-            'type': 'autonomy',
-        },
+            inverted=True,
+        ),
+        Handler(
+            name='Home MK2 Arm',
+            button=ButtonEnum.BGREEN,
+            service='/cartesian_arm_controller/go_home',
+            inverted=False,
+            action_type='trigger',
+        ),
+        Handler(
+            name='Open/Close MK2 Arm Beak',
+            button=ButtonEnum.BBLACK,
+            service=None,
+            inverted=False,
+            action_type='beak',
+        ),
+        Handler(
+            name='Toggle Module 1 LED',
+            button=ButtonEnum.BWHITE,
+            service=None,
+            inverted=False,
+            action_type='led',
+        ),
+        Handler(
+            name='Autonomy Enable/Disable',
+            button=ButtonEnum.BRED,
+            service='/autonomy/enable',
+            inverted=False,
+            action_type='autonomy',
+        ),
     ]
 
     qos = QoSProfile(
@@ -140,12 +170,12 @@ class Scaler(Node):
         )
         arm_vel_topic = self.declare_parameter('arm_vel_topic', '/mk2_arm_vel').value
         for h in self.handlers:
-            if 'service' not in h:
-                continue  # handler uses a custom action (e.g. LED toggle) instead of a service call
-            if h.get('type') == 'trigger':
-                h['service'] = self.create_client(Trigger, h['service'])
+            if h.service is None:
+                continue  # handler uses a custom action (e.g. LED toggle) instead of a service
+            if h.action_type == 'trigger':
+                h.service = self.create_client(Trigger, h.service)
             else:
-                h['service'] = self.create_client(SetBool, h['service'])
+                h.service = self.create_client(SetBool, h.service)
 
         self.create_subscription(Remote, '/remote', self.remote_callback, self.qos)
 
@@ -159,8 +189,10 @@ class Scaler(Node):
             self.can_bus = can.interface.Bus(channel=can_channel, bustype=can_interface)
             self.get_logger().info(f'CAN bus initialized on {can_channel}')
         except Exception as e:
-            self.get_logger().error(f'Failed to initialize CAN bus on {can_channel}: {type(e).__name__}: {e}')
-        
+            self.get_logger().error(
+                f'Failed to initialize CAN bus on {can_channel}: {type(e).__name__}: {e}'
+            )
+
         # Joint lift velocity publisher
         self.lift_pub = self.create_publisher(Vector3, '/inter_module_lift_vel', 10)
 
@@ -197,47 +229,55 @@ class Scaler(Node):
             return
 
         for handler in self.handlers:
-            self.get_logger().debug(str(handler['button']))
-            if buttons[handler['button']] != self.previous_buttons[handler['button']]:
-                if 'condition' not in handler or handler['condition'](buttons):
-                    if handler.get('type') == 'trigger':
-                        handler['service'].call_async(Trigger.Request())
-                        self.get_logger().debug(
-                            f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}"  # noqa
+            self.get_logger().debug(str(handler.button))
+            if buttons[handler.button] != self.previous_buttons[handler.button] and (
+                handler.condition is None or handler.condition(buttons)
+            ):
+                if handler.action_type == 'trigger':
+                    handler.service.call_async(Trigger.Request())
+                    self.get_logger().debug(
+                        f"Called service '{handler.name}' for "
+                        f'{handler.button.name}={buttons[handler.button]}'
+                    )
+                elif handler.action_type == 'led':
+                    # Toggle on button press (momentary button: pressed = False)
+                    # Detect falling edge (True -> False)
+                    if self.previous_buttons[handler.button] and not buttons[handler.button]:
+                        self.led_state = not self.led_state
+                        brightness = 125 if self.led_state else 0
+                        if self.can_bus is not None:
+                            self._send_led_brightness(brightness)
+                            self.get_logger().debug(f'LED brightness set to {brightness}')
+                elif handler.action_type == 'beak':
+                    if self.previous_buttons[handler.button] and not buttons[handler.button]:
+                        self.beak_state = not self.beak_state
+                        beak_position = (
+                            self.beak_open_position
+                            if self.beak_state
+                            else self.beak_closed_position
                         )
-                    elif handler.get('type') == 'led':
-                        # Toggle on button press (momentary button: pressed = False)
-                        # Detect falling edge (True -> False)
-                        if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
-                            self.led_state = not self.led_state
-                            brightness = 125 if self.led_state else 0
-                            if self.can_bus is not None:
-                                self._send_led_brightness(brightness)
-                                self.get_logger().debug(f'LED brightness set to {brightness}')
-                    elif handler.get('type') == 'beak':
-                        if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
-                            self.beak_state = not self.beak_state
-                            beak_position = (
-                                self.beak_open_position if self.beak_state
-                                else self.beak_closed_position
+                        self.beak_pub.publish(Float64MultiArray(data=[float(beak_position)]))
+                        if self.can_bus is not None:
+                            self._send_beak_command(self.beak_state)
+                            self.get_logger().debug(
+                                f'Beak command sent: {"open" if self.beak_state else "close"}'
                             )
-                            self.beak_pub.publish(Float64MultiArray(data=[float(beak_position)]))
-                            if self.can_bus is not None:
-                                self._send_beak_command(self.beak_state)
-                                self.get_logger().debug(f'Beak command sent: {"open" if self.beak_state else "close"}')
-                    elif handler.get('type') == 'autonomy':
-                        if self.previous_buttons[handler['button']] and not buttons[handler['button']]:
-                            next_state = not self.autonomy_enabled
-                            handler['service'].call_async(SetBool.Request(data=next_state))
-                            self.get_logger().debug(f"Autonomy {'enabled' if next_state else 'disabled'} via button press")
-                    else:
-                        data = handler['inverted'] ^ buttons[handler['button']]
-                        handler['service'].call_async(SetBool.Request(data=data))
-                        if 'hook' in handler and data:
-                            handler['hook'](self)
+                elif handler.action_type == 'autonomy':
+                    if self.previous_buttons[handler.button] and not buttons[handler.button]:
+                        next_state = not self.autonomy_enabled
+                        handler.service.call_async(SetBool.Request(data=next_state))
                         self.get_logger().debug(
-                            f"Called service '{handler['name']}' for {handler['button'].name}={buttons[handler['button']]}, value={data}"  # noqa
+                            f'Autonomy {"enabled" if next_state else "disabled"} via button press'
                         )
+                else:
+                    data = bool(handler.inverted) ^ bool(buttons[handler.button])
+                    handler.service.call_async(SetBool.Request(data=data))
+                    if handler.hook is not None and data:
+                        handler.hook(self)
+                    self.get_logger().debug(
+                        f"Called service '{handler.name}' for "
+                        f'{handler.button.name}={buttons[handler.button]}, value={data}'
+                    )
         self.previous_buttons = buttons
 
     def remote_callback(self, data: Remote):
@@ -266,7 +306,10 @@ class Scaler(Node):
         # Torque control for inter-module joints based on S2/S3 switch state
         # When switch is ON (down position, True), enable torque for the corresponding joint
         # When switch is OFF (up position, False), disable torque
-        self.get_logger().debug(f'S2={s2}, prev_s2={self.prev_s2}, S3={s3}, prev_s3={self.prev_s3}, can_bus={self.can_bus is not None}')
+        self.get_logger().debug(
+            f'S2={s2}, prev_s2={self.prev_s2}, S3={s3}, prev_s3={self.prev_s3},'
+            f' can_bus={self.can_bus is not None}'
+        )
         if s2 != self.prev_s2:
             # S2 controls module 2 (middle module) - joint motors are bits 2 and 3
             # Bit 2 = joint-left (yaw), Bit 3 = joint-right (pitch)
@@ -276,7 +319,10 @@ class Scaler(Node):
                 torque_bitfield ^= 0b1100
             if self.can_bus is not None:
                 self._send_torque_enable(torque_bitfield, module_id=0x22)  # MK2_MOD2
-                self.get_logger().info(f'S2 switch changed: torque {"enabled" if s2 else "disabled"} for module 2 joints (bitfield=0x{torque_bitfield:04X})')
+                self.get_logger().info(
+                    f'S2 switch changed: torque {"enabled" if s2 else "disabled"} '
+                    f'for module 2 joints (bitfield=0x{torque_bitfield:04X})'
+                )
             else:
                 self.get_logger().warn('CAN bus not available - cannot send torque command for S2')
             self.prev_s2 = s2
@@ -289,7 +335,10 @@ class Scaler(Node):
                 torque_bitfield ^= 0b1100
             if self.can_bus is not None:
                 self._send_torque_enable(torque_bitfield, module_id=0x23)  # MK2_MOD3
-                self.get_logger().info(f'S3 switch changed: torque {"enabled" if s3 else "disabled"} for module 3 joints (bitfield=0x{torque_bitfield:04X})')
+                self.get_logger().info(
+                    f'S3 switch changed: torque {"enabled" if s3 else "disabled"} '
+                    f'for module 3 joints (bitfield=0x{torque_bitfield:04X})'
+                )
             else:
                 self.get_logger().warn('CAN bus not available - cannot send torque command for S3')
             self.prev_s3 = s3
@@ -349,7 +398,7 @@ class Scaler(Node):
 
     def _send_torque_enable(self, torque_bitfield: int, module_id: int) -> None:
         """Send TORQUE_ENABLE_DISABLE (0x74) CAN message to a module.
-        
+
         Args:
             torque_bitfield: uint16 bitmask (1=enable, 0=disable per motor)
             module_id: Target module CAN ID (0x22 for MOD2, 0x23 for MOD3)
@@ -359,23 +408,28 @@ class Scaler(Node):
             # msg_id = 0x74 (TORQUE_ENABLE_DISABLE)
             # mod_id = module_id (0x22 or 0x23)
             arb_id = (0x74 << 16) | (module_id << 8) | 0x00
-            
+
             # Pack torque_bitfield as little-endian uint16 (2 bytes)
             data = struct.pack('<H', torque_bitfield)
-            
+
             msg = can.Message(
                 arbitration_id=arb_id,
                 data=data,
                 is_extended_id=True,
             )
             self.can_bus.send(msg)
-            self.get_logger().debug(f'Sent TORQUE_ENABLE_DISABLE to module 0x{module_id:02X}: bitfield=0x{torque_bitfield:04X}')
+            self.get_logger().debug(
+                f'Sent TORQUE_ENABLE_DISABLE to module 0x{module_id:02X}: '
+                + f'bitfield=0x{torque_bitfield:04X}'
+            )
         except Exception as e:
-            self.get_logger().error(f'Failed to send torque enable command: {type(e).__name__}: {e}')
+            self.get_logger().error(
+                f'Failed to send torque enable command: {type(e).__name__}: {e}'
+            )
 
     def _send_led_brightness(self, brightness: int) -> None:
         """Send LED_HP_BRIGHTNESS (0x75) CAN message to module 1.
-        
+
         Args:
             brightness: 0-255 brightness value
         """
@@ -384,23 +438,27 @@ class Scaler(Node):
             # msg_id = 0x75 (LED_HP_BRIGHTNESS)
             # mod_id = 0x21 (MK2_MOD1)
             arb_id = (0x75 << 16) | (0x21 << 8) | 0x00
-            
+
             # Pack brightness as uint8 (1 byte)
             data = struct.pack('<B', brightness)
-            
+
             msg = can.Message(
                 arbitration_id=arb_id,
                 data=data,
                 is_extended_id=True,
             )
             self.can_bus.send(msg)
-            self.get_logger().debug(f'Sent LED_HP_BRIGHTNESS to module 0x21: brightness={brightness}')
+            self.get_logger().debug(
+                f'Sent LED_HP_BRIGHTNESS to module 0x21: brightness={brightness}'
+            )
         except Exception as e:
-            self.get_logger().error(f'Failed to send LED brightness command: {type(e).__name__}: {e}')
+            self.get_logger().error(
+                f'Failed to send LED brightness command: {type(e).__name__}: {e}'
+            )
 
     def _send_beak_command(self, open_beak: bool) -> None:
         """Send ARM_ROLL_6_SETPOINT (0x5B) CAN message to module 1 for beak control.
-        
+
         Args:
             open_beak: True to open, False to close
         """
@@ -409,11 +467,11 @@ class Scaler(Node):
             # msg_id = 0x5B (ARM_ROLL_6_SETPOINT)
             # mod_id = 0x21 (MK2_MOD1)
             arb_id = (0x5B << 16) | (0x21 << 8) | 0x00
-            
+
             # Pack as int32: 0=close, 1=open
             value = 1 if open_beak else 0
             data = struct.pack('<i', value)
-            
+
             msg = can.Message(
                 arbitration_id=arb_id,
                 data=data,
@@ -423,12 +481,17 @@ class Scaler(Node):
             for attempt in range(3):
                 try:
                     self.can_bus.send(msg)
-                    self.get_logger().debug(f'Sent ARM_ROLL_6_SETPOINT to module 0x21: {"open" if open_beak else "close"}')
+                    self.get_logger().debug(
+                        'Sent ARM_ROLL_6_SETPOINT to module 0x21: '
+                        f'{"open" if open_beak else "close"}'
+                    )
                     break
                 except can.CanError as e:
                     if attempt == 2:
                         raise
-                    self.get_logger().warn(f'Beak send attempt {attempt+1} failed, retrying: {e}')
+                    self.get_logger().warn(
+                        f'Beak send attempt {attempt + 1} failed, retrying: {e}'
+                    )
                     time.sleep(0.01)
         except Exception as e:
             self.get_logger().error(f'Failed to send beak command: {type(e).__name__}: {e}')
@@ -443,7 +506,7 @@ def main(args=None):
         rclpy.logging.get_logger('scaler').warn('Scaler node interrupted by user')
     except Exception as err:
         rclpy.logging.get_logger('scaler').fatal(
-            f'Error in the Scaler node: {str(err)}\n{traceback.format_exc()}'
+            f'Error in the Scaler node: {err!s}\n{traceback.format_exc()}'
         )
     else:
         scaler.destroy_node()
