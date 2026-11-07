@@ -1,9 +1,11 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, EmitEvent, OpaqueFunction
 from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-
 from reseq_ros2.utils.launch_utils import (
     config_path,
     default_filename,
@@ -12,8 +14,6 @@ from reseq_ros2.utils.launch_utils import (
 )
 
 # Path to autonomy parameters (cmd_vel_mux config)
-import os
-from ament_index_python.packages import get_package_share_directory
 _autonomy_params = os.path.join(
     get_package_share_directory('reseq_ros2'), 'config', 'autonomy_params.yaml'
 )
@@ -29,7 +29,7 @@ def launch_setup(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration('use_sim_time').perform(
         context
     )  # it's a string either 'true' or 'false'
-    use_sim_time = True if use_sim_time == 'true' else False
+    use_sim_time = use_sim_time == 'true'
 
     # Parse the config file
     config = parse_config(f'{config_path}/{version}/{config_filename}')
@@ -85,6 +85,7 @@ def launch_setup(context, *args, **kwargs):
                     ),
                     'version': config['version'],
                     'use_sim_time': use_sim_time,
+                    'torque_modules': list(range(2, max(config['num_modules'], 2) + 1)),
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
@@ -118,9 +119,10 @@ def generate_launch_description():
                 default_value='false',
                 description="set use_sim_time to 'true' if you are using gazebo.\
                                     In general this parameter is not set from this launch\
-                                    but instead is passed by other launch files that use this launch file.\
-                                    Setting this arg to 'true', it will set the use_sim_time parameter of all nodes launched in this file \
-                                    to True.",
+                                    but instead is passed by other launch files that use this\
+                                    launch file.\
+                                    Setting this arg to 'true', it will set the use_sim_time\
+                                    parameter of all nodes launched in this file to True.",
             ),
             OpaqueFunction(function=launch_setup),
         ]
