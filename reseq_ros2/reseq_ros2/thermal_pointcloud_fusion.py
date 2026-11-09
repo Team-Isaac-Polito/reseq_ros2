@@ -19,14 +19,21 @@ import traceback
 
 import cv2
 import numpy as np
+
 import rclpy
 import tf2_ros
+
 from cv_bridge import CvBridge
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
+
 from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
 from sensor_msgs_py import point_cloud2 as pc2
-from std_msgs.msg import Header
+from std_msgs.msg import Header, ColorRGBA
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
+from nav_msgs.msg import OccupancyGrid
+
 from tf2_ros import TransformException
 
 
@@ -41,31 +48,52 @@ class ThermalPointcloudFusion(Node):
         self.declare_parameter('thermal_image_topic', '/thermal/image_raw')
         self.declare_parameter('thermal_camera_info', '/thermal/camera_info')
         self.declare_parameter('camera_frame', 'thermal_frame')
+        self.declare_parameter('target_frame', 'map')
         self.declare_parameter('publish_fused_cloud_topic', '/fused/points')
         self.declare_parameter('publish_heatmap_topic', '/fused/heatmap')
+        self.declare_parameter('cloudMap_topic','/fused/points_map')
+        self.declare_parameter('thermalMarker_topic','/thermal/markers')
+        self.declare_parameter('pub_costmap_topic','/costmap/thermal_layer')
+
         self.declare_parameter('grid_resolution', 0.01)
         self.declare_parameter('grid_width', 500)
         self.declare_parameter('grid_height', 500)
         self.declare_parameter('grid_origin_x', -2.5)
         self.declare_parameter('grid_origin_y', -2.5)
+
         self.declare_parameter('use_camera_info', True)
         self.declare_parameter('intrinsics.fx', 300.0)
         self.declare_parameter('intrinsics.fy', 300.0)
         self.declare_parameter('intrinsics.cx', 160.0)
         self.declare_parameter('intrinsics.cy', 120.0)
-        self.declare_parameter('publish_heatmap', True)
 
+        self.declare_parameter('temp_min_threshold', 30.0)
+        self.declare_parameter('temp_max_threshold', 100.0)
+        self.declare_parameter('publish_heatmap', True)
+        
+        # ── Params load ──────────────────────────────────────────────
         self.pc_topic = self._str_param('pointcloud_topic')
         self.thermal_topic = self._str_param('thermal_image_topic')
         self.camera_info_topic = self._str_param('thermal_camera_info')
+
         self.camera_frame = self._str_param('camera_frame')
+        self.target_frame = self._str_param('target_frame')
+
         self.fused_cloud_topic = self._str_param('publish_fused_cloud_topic')
         self.heatmap_topic = self._str_param('publish_heatmap_topic')
+        self.cloudMap_topic = self._str_param('cloudMap_topic')
+        self.thermalMarker_topic = self._str_param('thermalMarker_topic')
+        self.pub_costmap_topic = self._str_param('pub_costmap_topic')
+
         self.grid_resolution = self._double_param('grid_resolution')
         self.grid_w = int(self.get_parameter('grid_width').get_parameter_value().integer_value)
         self.grid_h = int(self.get_parameter('grid_height').get_parameter_value().integer_value)
+
         self.grid_origin_x = self._double_param('grid_origin_x')
         self.grid_origin_y = self._double_param('grid_origin_y')
+
+        self.temp_min_threshold = self._double_param('temp_min_threshold')
+        self.temp_max_threshold = self._double_param('temp_max_threshold')
         self.use_camera_info = self.get_parameter('use_camera_info').get_parameter_value().bool_value
         self.publish_heatmap_flag = self.get_parameter('publish_heatmap').get_parameter_value().bool_value
 
@@ -81,11 +109,19 @@ class ThermalPointcloudFusion(Node):
         # ── TF ──────────────────────────────────────────────────────
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        
+        # GRID 
+        self.grid_sum = np.zeros((self.grid_h, self.grid_w), dtype=np.float32)
+        self.grid_count = np.zeros((self.grid_h, self.grid_w), dtype=np.int32)
+
+        # ── Hotspots buffer ─────────────────────────────────────
+        self.hotspots = []
 
         # ── Subscriptions ───────────────────────────────────────────
         qos = rclpy.qos.QoSProfile(depth=5)
         self.create_subscription(PointCloud2, self.pc_topic, self._pc_cb, qos)
         self.create_subscription(Image, self.thermal_topic, self._thermal_cb, qos)
+
         self._caminfo_sub = None
         if self.use_camera_info:
             self._caminfo_sub = self.create_subscription(
@@ -95,10 +131,13 @@ class ThermalPointcloudFusion(Node):
         # ── Publishers ──────────────────────────────────────────────
         self.pub_cloud = self.create_publisher(PointCloud2, self.fused_cloud_topic, qos)
         self.pub_heatmap = self.create_publisher(Image, self.heatmap_topic, qos)
+        self.pub_cloud_map = self.create_publisher(PointCloud2, self.cloudMap_topic, qos)
+        self.pub_marker = self.create_publisher(Marker, self.thermalMarker_topic, qos)
+        self.pub_costmap = self.create_publisher(OccupancyGrid, self.pub_costmap_topic , qos)
 
         self.get_logger().info(
             f'ThermalPointcloudFusion ready  '
-            f'PC: {self.pc_topic} → {self.fused_cloud_topic}  '
+            f'PC: {self.pc_topic} → {self.fused_cloud_topic} → {self.cloudMap_topic}'
             f'Thermal: {self.thermal_topic}'
         )
 
@@ -146,7 +185,7 @@ class ThermalPointcloudFusion(Node):
         # 1. Look up transform  pc_frame → thermal_frame
         try:
             tf_stamped = self.tf_buffer.lookup_transform(
-                self.camera_frame, pc_msg.header.frame_id, rclpy.time.Time()
+                self.camera_frame, pc_msg.header.frame_id,  pc_msg.header.stamp
             )
         except TransformException as e:
             self.get_logger().warn(f'TF failed: {e}', throttle_duration_sec=5.0)
@@ -158,15 +197,17 @@ class ThermalPointcloudFusion(Node):
         if pts.size == 0:
             return
 
-        # 3. Build 4×4 transform matrix from TF
+        # 3. Build 4×4 transform matrix from TF 
         t = tf_stamped.transform.translation
         q = tf_stamped.transform.rotation
         T = self._quat_to_matrix(q.x, q.y, q.z, q.w, t.x, t.y, t.z)
+        
 
         # 4. Transform points into thermal frame  (N×3)
         ones = np.ones((pts.shape[0], 1), dtype=np.float32)
         pts_h = np.hstack([pts, ones])  # N×4
         pts_tf = (T @ pts_h.T).T[:, :3]  # N×3
+        
 
         # 5. Perspective projection  u = fx*X/Z + cx,  v = fy*Y/Z + cy
         Z = pts_tf[:, 2]
@@ -182,18 +223,18 @@ class ThermalPointcloudFusion(Node):
         in_bounds = (u >= 0) & (u < th_w) & (v >= 0) & (v < th_h)
 
         u = u[in_bounds]
-        v = v[in_bounds]
+        v = v[in_bounds] 
+        
         xyz = pts_tf[valid][in_bounds]  # M×3
-
         if xyz.shape[0] == 0:
             return
-
+        
         temps = self.latest_thermal[v, u]  # M temperatures
 
         # 6. Build & publish fused cloud
         fused = np.column_stack([xyz, temps])  # M×4
         header = Header()
-        header.stamp = self.get_clock().now().to_msg()
+        header.stamp = pc_msg.header.stamp
         header.frame_id = self.camera_frame
         fields = [
             PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
@@ -204,11 +245,57 @@ class ThermalPointcloudFusion(Node):
         cloud_msg = pc2.create_cloud(header, fields, fused.tolist())
         self.pub_cloud.publish(cloud_msg)
 
-        # 7. Optional birds-eye heatmap
-        if self.publish_heatmap_flag:
-            self._publish_heatmap(fused, header)
+        # 7. Look up transform  thermal_frame → map_frame
+        try:
+            tf_map = self.tf_buffer.lookup_transform(
+                self.target_frame, self.camera_frame, pc_msg.header.stamp
+            )
+        except Exception as e:
+            self.get_logger().error(f'Map TF failed: {e}', throttle_duration_sec=5.0)
+            return
+        
+        # 8. Build & publish fused cloud in map_frame
+        ones_map = np.ones((fused[:, :3].shape[0], 1), dtype=np.float32)
+        pts_h_map = np.hstack([fused[:, :3], ones_map])
+        t_map = tf_map.transform.translation
+        q_map = tf_map.transform.rotation
+        T_map = self._quat_to_matrix(q_map.x, q_map.y, q_map.z, q_map.w, t_map.x, t_map.y, t_map.z)
 
-        self.get_logger().debug(f'Fused cloud: {fused.shape[0]} pts')
+        pts_map = (T_map @ pts_h_map.T).T[:, :3]  # N×3
+
+        fused_map = np.column_stack([pts_map, fused[:, 3]])  # M×4
+
+        hot_mask = fused_map[:, 3] >= self.temp_min_threshold
+        self.hotspots = fused_map[hot_mask]  # Nx4 (x,y,z,temp)
+
+        # 9. Publish cloud in map
+        header_map = Header()
+        header_map.stamp = pc_msg.header.stamp
+        header_map.frame_id = self.target_frame
+        
+        cloud_map_msg = pc2.create_cloud(header_map, fields, fused_map.tolist())
+        self.pub_cloud_map.publish(cloud_map_msg)
+
+        # 10. Optional birds-eye heatmap
+        if self.publish_heatmap_flag:
+            self._publish_heatmap(fused_map, header_map)
+
+        self.get_logger().debug(f'Fused cloud: {fused_map.shape[0]} pts')
+
+        # 11. Grid update
+        gx = ((pts_map[:,0]-self.grid_origin_x)/self.grid_resolution).astype(int)
+        gy = ((pts_map[:,1]-self.grid_origin_y)/self.grid_resolution).astype(int)
+        mask = (gx>=0) & (gx<self.grid_w) & (gy>=0) & (gy<self.grid_h)
+
+        np.add.at(self.grid_sum, (gy[mask], gx[mask]), fused_map[:, 3][mask])
+        np.add.at(self.grid_count, (gy[mask], gx[mask]), 1)
+
+        # 12. Visualization
+        self._publish_markers(self.hotspots, header_map)
+        self._publish_costmap(header_map)
+
+        self.get_logger().info(f"Publishing {pts_map.shape[0]} points in MAP")
+        
 
     # ── heatmap grid (vectorised) ────────────────────────────────────
     def _publish_heatmap(self, fused: np.ndarray, header: Header):
@@ -245,6 +332,85 @@ class ThermalPointcloudFusion(Node):
         msg = self.bridge.cv2_to_imgmsg(heatmap_colour, encoding='bgr8')
         msg.header = header
         self.pub_heatmap.publish(msg)
+    
+    # ─────────────────────────────────────────────
+    def _publish_costmap(self, header: Header):
+       # ── Create the message ─────────────────────────────
+       grid_msg = OccupancyGrid()
+       grid_msg.header = header
+       grid_msg.header.frame_id = self.target_frame
+
+       grid_msg.info.resolution = self.grid_resolution
+       grid_msg.info.width = self.grid_w
+       grid_msg.info.height = self.grid_h
+       grid_msg.info.origin.position.x = self.grid_origin_x
+       grid_msg.info.origin.position.y = self.grid_origin_y
+
+       # ── Average temperature per cell ────────────────
+       with np.errstate(divide='ignore', invalid='ignore'):
+        grid = self.grid_sum / np.maximum(self.grid_count, 1)
+
+       # ── Initialize costmap ────────────────────────
+       cost = np.full_like(grid, -1, dtype=np.int8)
+
+       # ── Masks ───────────────────────────────────
+       valid = self.grid_count > 0
+
+       mask_low = valid & (grid < self.temp_min_threshold)
+       mask_high = valid & (grid > self.temp_max_threshold)
+       mask_mid = valid & ~(mask_low | mask_high)
+
+       # ── assegna costi ──────────────────────────────
+       cost[mask_low] = 0
+       cost[mask_high] = 100
+
+       cost[mask_mid] = (
+         (grid[mask_mid] - self.temp_min_threshold) /
+         (self.temp_max_threshold - self.temp_min_threshold) * 100
+       ).astype(np.int8)
+
+       # ── flatten ────────────────────────────────────
+       grid_msg.data = cost.flatten().tolist()
+
+       self.pub_costmap.publish(grid_msg)
+
+    # ─────────────────────────────────────────────
+    def _publish_markers(self, hotspots: np.ndarray, header: Header):
+
+        marker = Marker()
+
+        marker.points = []
+        marker.colors = []
+        
+        marker.header.frame_id = self.target_frame
+        marker.header = header
+        marker.ns = "thermal Hotspots"
+        marker.id = 0
+        marker.type = Marker.POINTS
+        marker.action = Marker.ADD
+
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+
+        if hotspots is None or len(hotspots) == 0:
+             self.pub_marker.publish(marker)
+             return
+        
+        for x,y,z,temp in hotspots:
+            p = Point()
+            p.x = float(x)
+            p.y = float(y)
+            p.z = float(z)
+            marker.points.append(p)
+
+            c = ColorRGBA()
+            c.r = min(1.0, temp/100.)
+            c.g = 0.0
+            c.b = 1.0 - c.r
+            c.a = 1.0
+            marker.colors.append(c)
+
+        self.pub_marker.publish(marker)
 
     # ── quaternion → 4×4 homogeneous matrix ─────────────────────────
     @staticmethod
