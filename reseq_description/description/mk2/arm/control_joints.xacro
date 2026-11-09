@@ -80,12 +80,21 @@
             <command_interface name="velocity" />
         </xacro:if>
     </joint>
-    <xacro:if value="$(arg sim_mode)">
-        <joint name="mod1__beak">
-            <command_interface name="position" />
-            <state_interface name="position">
-                <param name="initial_value">0.0</param>
-            </state_interface>
-        </joint>
-    </xacro:if>
+    <!-- Beak (J6). Sim: position joint driven by Gazebo.
+         Hardware: ReseqHardware maps the position command to ARM_ROLL_6_SETPOINT (0x5B),
+         sent on change and rounded to 0=close / 1=open (no position feedback over CAN). -->
+    <joint name="mod1__beak">
+        <command_interface name="position" />
+        <state_interface name="position">
+            <param name="initial_value">0.0</param>
+        </state_interface>
+    </joint>
+
+    <!-- LED HP board on MOD1 (handled by the MODC_ARM firmware): LED_HP_BRIGHTNESS (0x75),
+         uint8 0-255, sent on change. Commanded through led_controller. -->
+    <xacro:unless value="$(arg sim_mode)">
+        <gpio name="mod1__led">
+            <command_interface name="brightness" />
+        </gpio>
+    </xacro:unless>
 </robot>
