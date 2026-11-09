@@ -16,6 +16,25 @@
                 <xacro:control_joint_factory id="${module}" />
             </xacro:if>
 
+            <!-- Inter-module joint torque (MK2 MOD2/MOD3 hardware): TORQUE_ENABLE_DISABLE (0x74).
+                 One command interface per motor group, 1=enable 0=disable; ReseqHardware packs them
+                 into the uint16 bitfield and sends it on change.
+                 joint: J1 left/right differential pitch/yaw motors (bits 2-3), owned by torque_controller
+                 traction / roll: not claimed by any controller, they keep their initial_value. -->
+            <xacro:if value="${module != 1 and '$(arg version)' == 'mk2'}">
+                <xacro:unless value="$(arg sim_mode)">
+                    <gpio name="mod${module}__torque">
+                        <command_interface name="joint" />
+                        <command_interface name="traction">
+                            <param name="initial_value">1</param>
+                        </command_interface>
+                        <command_interface name="roll">
+                            <param name="initial_value">0</param>
+                        </command_interface>
+                    </gpio>
+                </xacro:unless>
+            </xacro:if>
+
             <!-- IMU sensor hardware interfaces.
                  Sim: GazeboSimSystem reads the Gazebo IMU sensor and exposes these state interfaces.
                  Hardware: ReseqHardware reads CAN messages 0x92 (accel) and 0x93 (gyro)

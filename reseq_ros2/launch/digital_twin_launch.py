@@ -1,3 +1,4 @@
+import itertools
 import os
 import subprocess
 
@@ -13,7 +14,6 @@ from launch.actions import (
 from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-
 from reseq_ros2.utils.launch_utils import config_path, default_filename, parse_config
 
 share_folder = get_package_share_directory('reseq_ros2')
@@ -53,7 +53,7 @@ def _append_spawner_chain(launch_config, start_action, spawners):
         )
     )
 
-    for previous_spawner, next_spawner in zip(spawners, spawners[1:]):
+    for previous_spawner, next_spawner in itertools.pairwise(spawners):
         launch_config.append(
             RegisterEventHandler(
                 OnProcessExit(
@@ -174,12 +174,19 @@ def launch_setup(context, *args, **kwargs):
         for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'pitch_controller{i + 2}', external_log_level))
 
+    # Inter-module joint torque (CAN 0x74 via ReseqHardware gpio), hardware only
+    if sim_mode == 'false' and version == 'mk2' and num_modules > 1:
+        body_spawners.append(_spawner('torque_controller', external_log_level))
+
     arm_velocity_spawner = None
     beak_spawner = None
+    led_spawner = None
     if arm:
         arm_velocity_spawner = _spawner('joint_group_velocity_controller', external_log_level)
-        if sim_mode == 'true':
-            beak_spawner = _spawner('beak_controller', external_log_level)
+        # Sim: Gazebo beak joint. Hardware: CAN 0x5B via ReseqHardware.
+        beak_spawner = _spawner('beak_controller', external_log_level)
+        if sim_mode == 'false':
+            led_spawner = _spawner('led_controller', external_log_level)
 
     for i in range(num_modules):
         body_spawners.append(_spawner(f'imu{i + 1}_broadcaster', external_log_level))
@@ -189,7 +196,7 @@ def launch_setup(context, *args, **kwargs):
             'bash',
             '-lc',
             'until ros2 service type /controller_manager/list_controllers '
-            '> /dev/null 2>&1; do sleep 1; done',
+            + '> /dev/null 2>&1; do sleep 1; done',
         ],
         output='screen',
     )
@@ -227,6 +234,15 @@ def launch_setup(context, *args, **kwargs):
                 OnProcessExit(
                     target_action=arm_velocity_spawner,
                     on_exit=[beak_spawner],
+                )
+            )
+        )
+    if led_spawner is not None:
+        launch_config.append(
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=beak_spawner,
+                    on_exit=[led_spawner],
                 )
             )
         )
@@ -365,7 +381,8 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'launch_pitch_controllers',
                 default_value='false',
-                description='Launch pitch position controllers in simulation/hardware control stack',
+                description='Launch pitch position controllers in simulation/hardware control\
+                    stack',
             ),
             OpaqueFunction(function=launch_setup),
         ]

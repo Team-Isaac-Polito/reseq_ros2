@@ -71,6 +71,9 @@ if(BUILD_TESTING)
     ros2_control_test_assets
     hardware_interface
   )
+
+  ament_add_gmock(test_payload_codec test/test_payload_codec.cpp)
+  target_link_libraries(test_payload_codec reseq_hardware)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)

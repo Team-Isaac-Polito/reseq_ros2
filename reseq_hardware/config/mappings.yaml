@@ -3,6 +3,24 @@
 # modules: "all"       → every module (1..num_modules)
 # modules: "skip_first" → modules 2..num_modules (skips module 1)
 # modules: "only_first" → module 1 only
+# modules: "only_third" → module 3 only
+#
+# Message keys:
+#   is_command: true       → written by ReseqHardware::write()
+#   send_mode:  "cyclic"    → (default) sent every command cycle — setpoint streams
+#               "on_change" → sent only when the encoded payload changes — one-shot actions
+#                             (torque, LED, beak). Held back while any field has no command
+#                             yet (NaN); retried on the next cycle if the CAN send fails.
+#
+# Field keys:
+#   type:      "state" | "command" (joint interface) | "gpio_command" (ros2_control <gpio>)
+#              The name gets the "mod<N>__" prefix, e.g. "led" → "mod1__led".
+#   mode:      joint interface (position/velocity/effort) or gpio command interface name
+#   data_type: float32 | int8 | uint8 | int16 | uint16 | int32 | uint32  (little-endian)
+#   scale/bias: ros_value = raw * scale + bias
+#   min/max:   clamp on the raw value before encoding (integers are also rounded and saturated)
+#   bitmask:   flag field — a non-zero command sets these bits of the word, zero clears them.
+#              Several flag fields may share the same word.
 
 # ── Traction (0x2X) ──────────────────────────────────────────────────────────
 
@@ -143,6 +161,20 @@
 #   ]
 # }
 
+# Arm J6 beak setpoint — int32: 0=close (grip), 1=open. The firmware restarts its grip state
+# machine on every frame, so it is sent on change only. Command via beak_controller:
+# mod1__beak/position, rounded and clamped to {0, 1}.
+- {
+  msg_id: 0x5B,
+  modules: "only_first",
+  length: 4,
+  is_command: true,
+  send_mode: "on_change",
+  fields: [
+    { name: "beak", type: "command", mode: "position", data_type: "int32", min: 0, max: 1 },
+  ]
+}
+
 # ── Inter-module joint — MK2 MOD2/MOD3 (0x6X) ──────────────────────────────
 
 - {
@@ -196,15 +228,40 @@
 #   length: 7,
 #   fields: []
 # }
-# - {
-#   msg_id: 0x74, # Torque enable/disable — uint16 bitfield (1=enable, 0=disable per motor)
-#   modules: "all",
-#   length: 2,
-#   is_command: true,
-#   fields: [
-#     { name: "torque_bitfield", type: "command", mode: "position", data_type: "uint16", offset: 0, scale: 1.0 },
-#   ]
-# }
+# Torque enable/disable — uint16 bitfield, 1=enable / 0=disable per motor (STM32LowLevel main.cpp):
+#   bit 0 right traction, bit 1 left traction                      — all modules
+#   bits 2-8 arm J1a, J1b, J2, J3, J4, J5, J6 (beak)                — MOD1 (MODC_ARM)
+#   bits 2-4 joint J1-left, J1-right (differential pitch/yaw), J2 roll — MOD2/MOD3 (MODC_JOINT)
+# The frame always carries every bit, so each motor group is a separate gpio command and the
+# remote only owns the group it controls (mod<N>__torque/joint). Traction and roll start from the
+# URDF initial_value (traction enabled, roll disabled as at firmware boot); the frame is not sent
+# until mod<N>__torque/joint receives its first command.
+- {
+  msg_id: 0x74,
+  modules: "skip_first",
+  length: 2,
+  is_command: true,
+  send_mode: "on_change",
+  fields: [
+    { name: "torque", type: "gpio_command", mode: "traction", data_type: "uint16", bitmask: 0x0003 },
+    { name: "torque", type: "gpio_command", mode: "joint",    data_type: "uint16", bitmask: 0x000C },
+    { name: "torque", type: "gpio_command", mode: "roll",     data_type: "uint16", bitmask: 0x0010 },
+  ]
+}
+# MOD1 (arm) torque is not exposed yet. If needed, add a "only_first" mapping with
+# { mode: "traction", bitmask: 0x0003 } and { mode: "arm", bitmask: 0x01FC } and the matching gpio.
+
+# LED HP board brightness — uint8, 0=off … 255=max. Handled by MOD1 firmware built with MODC_ARM.
+- {
+  msg_id: 0x75,
+  modules: "only_first",
+  length: 1,
+  is_command: true,
+  send_mode: "on_change",
+  fields: [
+    { name: "led", type: "gpio_command", mode: "brightness", data_type: "uint8", min: 0, max: 255 },
+  ]
+}
 
 # ── Arm velocity states — MK2 MOD1 (0x8X) ───────────────────────────────────
 
