@@ -4,7 +4,7 @@
 
 ekf_filter_node:
   ros__parameters:
-    frequency: 10.0
+    frequency: 40.0
     sensor_timeout: 0.5
     two_d_mode: true          # Planar robot, suppress z/roll/pitch
     transform_time_offset: 0.0
@@ -20,10 +20,10 @@ ekf_filter_node:
     # Wheel odometry from diff_controller1
     # Provides: x, y, yaw, vx, vy, vyaw
     odom0: /diff_controller1/odom
-    odom0_config: [true,  true,  false,   # x, y, z position
-                   false, false, false,   # roll, pitch, yaw (disabled: track slip causes large cumulative yaw error during FTL turns)
-                   true,  true,  false,   # vx, vy, vz
-                   false, false, false,   # vroll, vpitch, vyaw (disabled: use IMU gyro instead, tracks slip during FTL)
+    odom0_config: [false, false, false,   # x, y, z position (disabled: position is derived from wheel yaw; enabling causes violent conflict with IMU)
+                   false, false, false,   # roll, pitch, yaw
+                   true,  false, false,   # vx, vy, vz (only body forward velocity vx)
+                   false, false, false,   # vroll, vpitch, vyaw (disabled: rotation handled purely by IMU gyro)
                    false, false, false]   # ax, ay, az
     odom0_queue_size: 10
     odom0_nodelay: false
@@ -35,9 +35,9 @@ ekf_filter_node:
     # Provides: angular velocity
     imu0: /imu1_broadcaster/imu
     imu0_config: [false, false, false,    # x, y, z position (not from IMU)
-                  false, false, false,    # roll, pitch, yaw (no magnetometer)
+                  false, false, false,    # roll, pitch, yaw (no magnetometer / orientation disabled)
                   false, false, false,    # vx, vy, vz
-                  false, false, true,     # vroll, vpitch, vyaw
+                  false, false, true,     # vroll, vpitch, vyaw (angular velocity gyro Z)
                   false, false, false]    # ax, ay, az
     imu0_queue_size: 10
     imu0_nodelay: false
@@ -52,13 +52,13 @@ ekf_filter_node:
                                0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
                                0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
                                0.0,  0.0,  0.0,  0.0,  0.03, 0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-                               0.0,  0.0,  0.0,  0.0,  0.0,  0.06, 0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.12, 0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
                                0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
                                0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.025,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
                                0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.04, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
                                0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0,  0.0,
                                0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0,
-                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.02, 0.0,  0.0,  0.0,
+                               0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.08, 0.0,  0.0,  0.0,
                                0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,
                                0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,
                                0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.015]

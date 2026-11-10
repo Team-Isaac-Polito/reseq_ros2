@@ -112,10 +112,14 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        if node.stop_motor_cli.wait_for_service(timeout_sec=1.0):
-            node.stop_motor_cli.call_async(Empty.Request())
+        try:
+            if rclpy.ok() and node.stop_motor_cli.wait_for_service(timeout_sec=1.0):
+                node.stop_motor_cli.call_async(Empty.Request())
+        except Exception:
+            pass
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':
