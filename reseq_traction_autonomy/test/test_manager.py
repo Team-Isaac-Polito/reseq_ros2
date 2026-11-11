@@ -282,7 +282,9 @@ def zone_task(deadline):
 
 def test_arriving_with_a_zone_qr_waits_for_the_code_before_finishing():
     node, task = zone_task(None)
+    node.qr_text = 'END'
     Navigation._goal_finished(node, GoalStatus.STATUS_SUCCEEDED)
+    assert node.qr_text == ''
     assert task.status == 'running'
     assert node.qr_deadline is not None
 

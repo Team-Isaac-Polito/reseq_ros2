@@ -239,6 +239,14 @@ def save_results(output, course_path, results):
     print(f'results: {path}')
 
 
+def stop_robot():
+    """Stop the running task, if the manager can still be reached."""
+    try:
+        call('stop')
+    except Exception as exc:
+        print(f'could not stop the robot: {exc}')
+
+
 def main():
     args = parse_args()
     course = yaml.safe_load(Path(args.course).read_text())
@@ -260,8 +268,12 @@ def main():
             print(f'running {leg["name"]} -> ({leg["x"]}, {leg["y"]})', flush=True)
             results.append(run_leg(observer, leg, world_to_map, tolerance))
     except KeyboardInterrupt:
-        call('stop')
+        stop_robot()
         print('stopped')
+    except Exception as exc:
+        # Still stop the robot and save the legs that finished.
+        stop_robot()
+        print(f'evaluation ended early: {exc}')
     finally:
         executor.shutdown()
         observer.close()

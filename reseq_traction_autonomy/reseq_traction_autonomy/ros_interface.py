@@ -24,7 +24,7 @@ from tf2_ros import Buffer, TransformException, TransformListener
 
 from .api_server import make_server
 from .camera import to_jpeg
-from .core import Grid, Tasks, convex_hull, transform_xy, yaw_of
+from .core import Grid, Tasks, convex_hull, finite_or_none, transform_xy, yaw_of
 from .models import LightNavSession
 from .parameters import DEFAULTS
 
@@ -380,7 +380,11 @@ class RosInterface(Node):
         velocity = None
         if self.latest_odom is not None:
             twist = self.latest_odom.twist.twist
-            velocity = {'linear_x': twist.linear.x, 'angular_z': twist.angular.z}
+            # A NaN here would make the JSON status fail, so report it as None.
+            velocity = {
+                'linear_x': finite_or_none(twist.linear.x),
+                'angular_z': finite_or_none(twist.angular.z),
+            }
         active_task = None
         if self.tasks.active is not None:
             active_task = self.tasks.active.view(time.monotonic())

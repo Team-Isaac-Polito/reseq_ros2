@@ -31,6 +31,14 @@ def clamp(value, limit):
     return max(-limit, min(limit, value))
 
 
+def finite_or_none(value):
+    """Return value as a float, or None if it is not a finite number."""
+    value = float(value)
+    if not math.isfinite(value):
+        return None
+    return value
+
+
 def yaw_of(q):
     """Return the yaw angle of a quaternion."""
     sin_yaw = 2 * (q.w * q.z + q.x * q.y)
@@ -235,7 +243,8 @@ class Task:
             'elapsed_s': round(end - self.created, 3),
             'timeout_s': self.timeout_s,
             'subgoal': self.subgoal,
-            'progress': self.progress,
+            # A copy: the ROS thread keeps updating progress while HTTP sends this.
+            'progress': dict(self.progress),
             'arguments': self.arguments,
         }
 

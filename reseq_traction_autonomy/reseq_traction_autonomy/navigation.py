@@ -15,7 +15,7 @@ from rclpy.duration import Duration
 from std_msgs.msg import String
 from tf2_ros import TransformException
 
-from .core import clamp, line_pursuit_curvature
+from .core import clamp, finite_or_none, line_pursuit_curvature
 from .ros_interface import RosInterface
 
 # Tail steering applies only while the tail's heading is within 60 degrees
@@ -159,7 +159,8 @@ class Navigation(RosInterface):
         self._finish('failed', 'Nav2 rejected the goal')
 
     def _goal_feedback(self, feedback):
-        self.tasks.active.progress['distance_remaining_m'] = feedback.distance_remaining
+        remaining = finite_or_none(feedback.distance_remaining)
+        self.tasks.active.progress['distance_remaining_m'] = remaining
 
     def _goal_finished(self, status):
         task = self.tasks.active
@@ -186,6 +187,8 @@ class Navigation(RosInterface):
             return
         zone_qr = task.arguments.get('zone_qr')
         if zone_qr:
+            # Only a code read after arriving counts, not one seen on the way.
+            self.qr_text = ''
             # Arrived. Succeed only once the zone's QR code is read (see _check_zone_qr).
             self.qr_deadline = time.monotonic() + self.cfg['zone_qr_timeout_s']
             self._event('reading_zone_qr', {'expected': zone_qr})

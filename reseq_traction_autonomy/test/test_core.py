@@ -7,6 +7,7 @@ from reseq_traction_autonomy.core import (
     compose,
     convex_hull,
     finite,
+    finite_or_none,
     inverse,
     line_pursuit_curvature,
     transform_xy,
@@ -101,6 +102,20 @@ def test_bent_body_footprint_contains_all_module_corners():
     hull = convex_hull(points)
     assert (-1, -1) in hull and (1, 1) in hull
     assert (0, 0) not in hull
+
+
+def test_finite_or_none_passes_numbers_and_drops_nan_and_infinity():
+    assert finite_or_none(1) == 1.0
+    assert finite_or_none(math.nan) is None
+    assert finite_or_none(math.inf) is None
+
+
+def test_task_view_progress_is_a_copy():
+    task = Tasks(clock=lambda: 10).start('metric', {}, 20)
+    task.progress['a'] = 1
+    view = task.view(11)
+    task.progress['a'] = 2
+    assert view['progress'] == {'a': 1}
 
 
 def test_line_pursuit_goes_straight_on_the_line():

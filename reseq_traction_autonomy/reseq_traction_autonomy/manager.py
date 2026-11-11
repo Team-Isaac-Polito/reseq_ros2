@@ -102,8 +102,13 @@ class Manager(VisualNavigation):
             'ros_s': self.get_clock().now().nanoseconds / 1e9,
             'data': data,
         }
-        self.log_file.write(json.dumps(record, allow_nan=False) + '\n')
-        self.log_file.flush()
+        try:
+            self.log_file.write(json.dumps(record, allow_nan=False) + '\n')
+            self.log_file.flush()
+        except OSError as exc:
+            # A full disk must not stop the control loop; give up recording instead.
+            self.get_logger().error(f'Task record stopped: {exc}')
+            self.log_file = None
 
     def _cancel_model_request(self):
         if self.model_future is None:
