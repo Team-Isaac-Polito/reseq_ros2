@@ -15,6 +15,7 @@ from world_parts import (
     TEXTURES,
     box_visual,
     cylinder,
+    tint,
     make_base_textures,
     material,
     overview_camera,
@@ -66,11 +67,11 @@ def make_textures():
     make_base_textures()
 
     # Cardboard with a strip of tape.
-    cardboard = Image.effect_noise((256, 256), 18).point(lambda v: int(v * 0.25))
-    cardboard = Image.merge('RGB', [
-        cardboard.point(lambda v: 160 + v), cardboard.point(lambda v: 118 + v),
-        cardboard.point(lambda v: 74 + v),
-    ])
+    noise = tint(Image.effect_noise((256, 256), 18), 0, 0.25)
+    red = tint(noise, 160, 1)
+    green = tint(noise, 118, 1)
+    blue = tint(noise, 74, 1)
+    cardboard = Image.merge('RGB', [red, green, blue])
     ImageDraw.Draw(cardboard).rectangle([0, 110, 256, 146], fill=(200, 180, 140))
     cardboard.save(TEXTURES / 'cardboard.jpg', quality=88)
 
@@ -107,12 +108,23 @@ def placard(name, label, number, color, text_color):
         draw.polygon(diamond, fill=color)
     draw.polygon(diamond, outline=(20, 20, 20), width=6)
     inner = [(size / 2, 40), (size - 40, size / 2), (size / 2, size - 40), (40, size / 2)]
-    draw.polygon(inner, outline=text_color if color is not None else (20, 20, 20), width=3)
-    font = ImageFont.truetype(FONT, 46 if '\n' in label or len(label) > 9 else 54)
-    label_color = (20, 20, 20) if color is None else text_color
+    # The corrosive placard has a fixed black and white style.
+    if color is None:
+        outline_color = (20, 20, 20)
+        label_color = (20, 20, 20)
+        number_color = 'white'
+    else:
+        outline_color = text_color
+        label_color = text_color
+        number_color = text_color
+    draw.polygon(inner, outline=outline_color, width=3)
+    # Smaller letters for long or two-line labels.
+    font_size = 54
+    if '\n' in label or len(label) > 9:
+        font_size = 46
+    font = ImageFont.truetype(FONT, font_size)
     draw.multiline_text((size / 2, size / 2 - 20), label, fill=label_color, anchor='mm',
                         align='center', font=font)
-    number_color = 'white' if color is None else text_color
     draw.text((size / 2, size - 95), number, fill=number_color, anchor='mm',
               font=ImageFont.truetype(FONT, 64))
     board.save(TEXTURES / f'{name}.png')
@@ -131,13 +143,17 @@ def floor_model():
 
 
 def sign_model(index, texture, x, y, yaw):
-    size = '0.008 0.32 0.32' if texture != 'end_sign' else '0.008 0.6 0.6'
+    size = '0.008 0.32 0.32'
+    if texture == 'end_sign':
+        size = '0.008 0.6 0.6'
     body = box_visual('board', '0 0 0 0 0 0', size, material(f'{texture}.png'))
     return static_model(f'sign_{index}_{texture}', f'{x} {y} 0.6 0 0 {yaw:.4f}', body)
 
 
 def objects():
-    skin, shirt, trousers = '0.85 0.65 0.5 1', '0.95 0.45 0.6 1', '0.2 0.35 0.7 1'
+    skin = '0.85 0.65 0.5 1'
+    shirt = '0.95 0.45 0.6 1'
+    trousers = '0.2 0.35 0.7 1'
     # Victim: a doll-sized figure lying on its back (about 0.8 m long).
     victim = (
         solid('torso', '0 0 0.07 0 0 0', '<box><size>0.32 0.2 0.12</size></box>', shirt)
@@ -168,17 +184,19 @@ def objects():
         + solid('valve', '0 0 0.62 0 0 0', cylinder(0.04, 0.08), '0.75 0.65 0.2 1')
     )
     barrel = solid('barrel', '0 0 0.44 0 0 0', cylinder(0.29, 0.88), '0.15 0.35 0.65 1')
-    box = '<box><size>{}</size></box>'
-    debris = ''
-    for i, (pose, size) in enumerate([
+    # Cardboard boxes as (pose, size).
+    boxes = [
         ('0 0 0.2 0 0 0.3', '0.5 0.4 0.4'),
         ('0.45 0.3 0.15 0 0 -0.5', '0.4 0.4 0.3'),
         ('-0.2 0.45 0.25 0 0 0.9', '0.35 0.6 0.5'),
         ('0.2 -0.35 0.12 0.2 0 0.1', '0.6 0.3 0.24'),
-    ]):
-        debris += (f'<collision name="box_{i}_collision"><pose>{pose}</pose><geometry>'
-                   f'{box.format(size)}</geometry></collision>'
-                   + box_visual(f'box_{i}', pose, size, material('cardboard.jpg')))
+    ]
+    debris = ''
+    for i, (pose, size) in enumerate(boxes):
+        geometry = f'<box><size>{size}</size></box>'
+        debris += (f'<collision name="box_{i}_collision"><pose>{pose}</pose>'
+                   f'<geometry>{geometry}</geometry></collision>')
+        debris += box_visual(f'box_{i}', pose, size, material('cardboard.jpg'))
     return [
         static_model('victim_doll', '5.2 3.0 0 0 0 0.4', victim),
         static_model('backpack', '-0.5 3.2 0 0 0 0.6', backpack),
@@ -194,8 +212,10 @@ def objects():
 def main():
     make_textures()
     models = [floor_model()]
-    models += [wall_model(i, *wall) for i, wall in enumerate(WALLS)]
-    models += [sign_model(i, *sign) for i, sign in enumerate(SIGNS)]
+    for i, wall in enumerate(WALLS):
+        models.append(wall_model(i, *wall))
+    for i, sign in enumerate(SIGNS):
+        models.append(sign_model(i, *sign))
     models += objects()
     # Above the arena centre; the 12 m length runs across the image width.
     models.append(overview_camera(4, 0, 9.5))

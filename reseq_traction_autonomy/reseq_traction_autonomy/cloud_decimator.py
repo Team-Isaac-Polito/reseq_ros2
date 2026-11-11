@@ -17,17 +17,34 @@ from sensor_msgs_py import point_cloud2
 
 def decimate(message, stride):
     """Return an (N, 3) float32 array from every stride-th row and column."""
-    offsets = {field.name: field.offset for field in message.fields}
-    rows = np.frombuffer(bytes(message.data), dtype=np.uint8)
-    rows = rows.reshape(message.height, message.row_step)[::stride]
-    points = rows[:, : message.width * message.point_step]
-    points = points.reshape(len(rows), message.width, message.point_step)[:, ::stride]
+    offsets = {}
+    for field in message.fields:
+        offsets[field.name] = field.offset
+
+    # View the raw bytes as image rows, and keep every stride-th row.
+    data = np.frombuffer(bytes(message.data), dtype=np.uint8)
+    rows = data.reshape(message.height, message.row_step)
+    rows = rows[::stride]
+
+    # Rows may have padding at the end; cut it off, then split rows into points.
+    row_bytes = message.width * message.point_step
+    rows = rows[:, :row_bytes]
+    points = rows.reshape(len(rows), message.width, message.point_step)
+
+    # Keep every stride-th point in each row, then make one flat list of points.
+    points = points[:, ::stride]
     points = points.reshape(-1, message.point_step)
+
+    # Copy the 4 bytes of x, y and z out of each point and read them as floats.
     xyz = np.empty((len(points), 3), dtype=np.float32)
     for column, name in enumerate('xyz'):
         start = offsets[name]
-        xyz[:, column] = points[:, start : start + 4].copy().view(np.float32).ravel()
-    return xyz[np.isfinite(xyz).all(axis=1)]
+        field_bytes = points[:, start:start + 4].copy()
+        xyz[:, column] = field_bytes.view(np.float32).ravel()
+
+    # Drop points without a depth reading (NaN or inf).
+    valid = np.isfinite(xyz).all(axis=1)
+    return xyz[valid]
 
 
 class CloudDecimator(Node):
@@ -45,7 +62,8 @@ class CloudDecimator(Node):
             self.get_logger().warning('Big-endian clouds are not supported', once=True)
             return
         xyz = decimate(message, self.stride)
-        self.output.publish(point_cloud2.create_cloud_xyz32(message.header, xyz))
+        cloud = point_cloud2.create_cloud_xyz32(message.header, xyz)
+        self.output.publish(cloud)
 
 
 def main():

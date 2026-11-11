@@ -6,12 +6,18 @@ import json
 from .core import yaw_of
 
 
+MAX_MESSAGE_BYTES = 16 * 1024 * 1024
+
+
 class LightNav:
+    """Websocket client for a LightNav-0 server."""
+
     def __init__(self, url, timeout):
+        # Optional dependency, only needed when LightNav is used.
         from websockets.sync.client import connect
 
         self.socket = connect(
-            url, open_timeout=timeout, close_timeout=1, max_size=16 * 1024 * 1024
+            url, open_timeout=timeout, close_timeout=1, max_size=MAX_MESSAGE_BYTES
         )
         self.timeout = timeout
         self.seq = 0
@@ -47,7 +53,9 @@ class LightNav:
         data = self._next(jpeg, instruction)
         if data.get('stop'):
             return {'stop': True, 'waypoints': [], 'frame': 'base_link'}
-        rows = data.get('actions', {}).get('actions', [])
+        # The reply nests the rows: {"actions": {"actions": [[...], ...]}}
+        actions = data.get('actions', {})
+        rows = actions.get('actions', [])
         if not rows:
             raise RuntimeError('LightNav returned no actions')
         for row in rows:
@@ -93,7 +101,9 @@ def foresight_waypoints(plan):
     """Return [x, y, yaw] rows from an amrl_msgs ForesightPlannerMsg."""
     if not plan.verdict.data:
         raise ValueError('Foresight rejected its plan: ' + plan.reason.data)
-    frame = plan.path.header.frame_id or plan.header.frame_id
+    frame = plan.path.header.frame_id
+    if not frame:
+        frame = plan.header.frame_id
     # The planner labels its odometry pose with path_frame_id; it does not look up TF.
     if frame != 'odom':
         raise ValueError('Foresight path_frame_id must be odom, matching its pose_topic')

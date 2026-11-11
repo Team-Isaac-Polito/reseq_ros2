@@ -2,8 +2,6 @@ import math
 import time
 from types import SimpleNamespace
 
-import cv2
-import numpy as np
 import pytest
 
 pytest.importorskip('rclpy')
@@ -13,7 +11,7 @@ from std_msgs.msg import Bool
 
 from reseq_traction_autonomy.core import Tasks
 from reseq_traction_autonomy.manager import Manager
-from reseq_traction_autonomy.navigation import Navigation, read_qr
+from reseq_traction_autonomy.navigation import Navigation
 from reseq_traction_autonomy.models import foresight_waypoints
 from reseq_traction_autonomy.ros_interface import RosInterface
 
@@ -43,6 +41,13 @@ def test_foresight_rejects_relabelled_frames_and_negative_verdicts(frame, verdic
         foresight_waypoints(plan(frame, verdict))
 
 
+def bind(node, cls, *names):
+    """Attach methods of cls to a stub node, so methods can call each other."""
+    for name in names:
+        method = getattr(cls, name)
+        setattr(node, name, method.__get__(node))
+
+
 def manager():
     tasks = Tasks(clock=lambda: 10)
     removed = []
@@ -60,7 +65,15 @@ def manager():
         enabled_generation=None,
         _event=lambda *args: None,
     )
-    node._finish = lambda status, reason: Manager._finish(node, status, reason)
+    bind(
+        node,
+        Manager,
+        '_finish',
+        '_cancel_model_request',
+        '_read_prediction',
+        '_stop_claimed',
+        '_metric_goal_finished',
+    )
     return node, removed
 
 
@@ -240,7 +253,6 @@ def zone_task(deadline):
     """A metric task that has arrived and is waiting to read its zone QR code."""
     node, _ = manager()
     node.cfg = {'zone_qr_timeout_s': 3.0}
-    node._observation = lambda: {'jpeg': b''}
     node.qr_deadline = deadline
     task = node.tasks.start('metric', {'zone_qr': 'END'}, 20)
     return node, task
@@ -258,27 +270,9 @@ def test_arriving_with_a_zone_qr_waits_for_the_code_before_finishing():
     [('END', math.inf, 'succeeded'), ('', math.inf, 'running'), ('', 0.0, 'failed')],
 )
 def test_zone_qr_check_succeeds_on_the_right_text_and_fails_after_timeout(
-    monkeypatch, text, deadline, expected
+    text, deadline, expected
 ):
-    monkeypatch.setattr('reseq_traction_autonomy.navigation.read_qr', lambda jpeg: text)
     node, task = zone_task(deadline)
+    node.qr_text = text
     Navigation._check_zone_qr(node)
     assert task.status == expected
-
-
-def jpeg_of(image):
-    _, encoded = cv2.imencode('.jpg', image)
-    return encoded.tobytes()
-
-
-def test_read_qr_returns_the_code_text():
-    modules = cv2.QRCodeEncoder.create().encode('RESEQ END ZONE')
-    image = cv2.resize(modules, (300, 300), interpolation=cv2.INTER_NEAREST)
-    image = cv2.copyMakeBorder(image, 40, 40, 40, 40, cv2.BORDER_CONSTANT, value=255)
-    assert read_qr(jpeg_of(image)) == 'RESEQ END ZONE'
-
-
-def test_read_qr_returns_empty_text_without_a_code():
-    blank = np.full((240, 320), 200, np.uint8)
-    assert read_qr(jpeg_of(blank)) == ''
-    assert read_qr(b'not a jpeg') == ''

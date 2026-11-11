@@ -1,4 +1,7 @@
-"""Run a course of traction tasks and measure each leg against Gazebo ground truth."""
+"""Run a course of traction tasks and measure each leg against Gazebo ground truth.
+
+Usage: ros2 run reseq_traction_autonomy traction_eval [course.yaml] [--repeat N]
+"""
 
 import argparse
 from datetime import datetime
@@ -22,6 +25,31 @@ from .client import call
 from .core import compose, inverse, yaw_of
 
 
+def distance(a, b):
+    return math.hypot(a[0] - b[0], a[1] - b[1])
+
+
+def rounded(values, digits=3):
+    result = []
+    for value in values:
+        result.append(round(value, digits))
+    return result
+
+
+def find_pose_topic(gazebo, timeout_s=5.0):
+    """Return Gazebo's dynamic pose topic. Wait a moment for Gazebo to list it."""
+    deadline = time.monotonic() + timeout_s
+    topics = []
+    while not topics and time.monotonic() < deadline:
+        for topic in gazebo.topic_list():
+            if topic.endswith('/dynamic_pose/info'):
+                topics.append(topic)
+        time.sleep(0.2)
+    if len(topics) != 1:
+        raise RuntimeError(f'Expected one Gazebo world, found pose topics {topics}')
+    return topics[0]
+
+
 class Observer(Node):
     """Tracks base_link in Gazebo's world frame and in the SLAM map frame."""
 
@@ -35,14 +63,7 @@ class Observer(Node):
         self.tf_listener = TransformListener(self.tf, self)
         # The ROS bridge drops entity names from Pose_V, so read Gazebo directly.
         self.gazebo = GazeboNode()
-        topics = []
-        deadline = time.monotonic() + 5.0
-        while not topics and time.monotonic() < deadline:
-            topics = [t for t in self.gazebo.topic_list() if t.endswith('/dynamic_pose/info')]
-            time.sleep(0.2)
-        if len(topics) != 1:
-            raise RuntimeError(f'Expected one Gazebo world, found pose topics {topics}')
-        self.pose_topic = topics[0]
+        self.pose_topic = find_pose_topic(self.gazebo)
         self.gazebo.subscribe(Pose_V, self.pose_topic, self._ground_truth_cb)
 
     def close(self):
@@ -55,8 +76,7 @@ class Observer(Node):
     def _ground_truth_cb(self, message):
         poses = {}
         for pose in message.pose:
-            q = pose.orientation
-            poses[pose.name] = (pose.position.x, pose.position.y, yaw_of(q))
+            poses[pose.name] = (pose.position.x, pose.position.y, yaw_of(pose.orientation))
         if self.model not in poses:
             return
         pose = poses[self.model]
@@ -110,18 +130,22 @@ def start_task(leg, tolerance):
 
 
 def run_leg(observer, leg, world_to_map, tolerance):
+    """Run one leg and measure it. Returns a result dict."""
+
     def true_pose():
         return compose(world_to_map, observer.world_pose)
 
-    result = {'leg': leg['name'], 'kind': leg.get('kind', 'metric'), 'goal': [leg['x'], leg['y']]}
-    start = true_pose()
+    goal = (leg['x'], leg['y'])
+    result = {'leg': leg['name'], 'kind': leg.get('kind', 'metric'), 'goal': list(goal)}
     try:
         task = start_task(leg, tolerance)
     except RuntimeError as exc:
         result.update(status='rejected', reason=str(exc), reached=False)
         return result
+
+    # Follow the robot until the task ends.
     path_m = 0.0
-    previous = start
+    previous = true_pose()
     started = time.monotonic()
     trajectory = []
     while True:
@@ -130,14 +154,16 @@ def run_leg(observer, leg, world_to_map, tolerance):
             break
         time.sleep(0.2)
         current = true_pose()
-        path_m += math.hypot(current[0] - previous[0], current[1] - previous[1])
+        path_m += distance(current, previous)
         previous = current
-        trajectory.append([round(time.monotonic() - started, 2)] + [round(v, 3) for v in current])
+        elapsed = round(time.monotonic() - started, 2)
+        trajectory.append([elapsed] + rounded(current))
+
     # Let the robot come to rest before measuring where it ended.
     time.sleep(1.0)
     final = true_pose()
     slam = observer.slam_pose()
-    true_error = math.hypot(final[0] - leg['x'], final[1] - leg['y'])
+    true_error = distance(final, goal)
     result.update(
         status=view['status'],
         reason=view['reason'],
@@ -145,9 +171,9 @@ def run_leg(observer, leg, world_to_map, tolerance):
         duration_s=view['elapsed_s'],
         path_m=round(path_m, 3),
         true_error_m=round(true_error, 3),
-        slam_error_m=round(math.hypot(slam[0] - leg['x'], slam[1] - leg['y']), 3),
-        slam_drift_m=round(math.hypot(slam[0] - final[0], slam[1] - final[1]), 3),
-        final_true_pose=[round(v, 3) for v in final],
+        slam_error_m=round(distance(slam, goal), 3),
+        slam_drift_m=round(distance(slam, final), 3),
+        final_true_pose=rounded(final),
         reached=true_error <= tolerance,
         trajectory=trajectory,
     )
@@ -155,44 +181,70 @@ def run_leg(observer, leg, world_to_map, tolerance):
 
 
 def print_table(results):
-    header = f'{"leg":16} {"status":10} {"true err":>9} {"slam err":>9} {"drift":>6}'
-    print(header + f' {"path":>6} {"time":>6}  reached')
+    print(f'{"leg":16} {"status":10} {"true err":>9} {"slam err":>9} {"drift":>6}'
+          f' {"path":>6} {"time":>6}  reached')
+    reached_count = 0
     for r in results:
         if r['status'] == 'rejected':
             print(f'{r["leg"]:16} rejected   {r["reason"]}')
             continue
-        print(
-            f'{r["leg"]:16} {r["status"]:10} {r["true_error_m"]:8.2f}m {r["slam_error_m"]:8.2f}m'
-            f' {r["slam_drift_m"]:5.2f}m {r["path_m"]:5.2f}m {r["duration_s"]:5.1f}s'
-            f'  {"yes" if r["reached"] else "no"}'
-        )
-    reached = sum(1 for r in results if r['reached'])
-    print(f'{reached}/{len(results)} legs reached within tolerance (Gazebo ground truth)')
+        reached = 'no'
+        if r['reached']:
+            reached = 'yes'
+            reached_count += 1
+        print(f'{r["leg"]:16} {r["status"]:10}'
+              f' {r["true_error_m"]:8.2f}m {r["slam_error_m"]:8.2f}m {r["slam_drift_m"]:5.2f}m'
+              f' {r["path_m"]:5.2f}m {r["duration_s"]:5.1f}s  {reached}')
+    print(f'{reached_count}/{len(results)} legs reached within tolerance (Gazebo ground truth)')
 
 
-def main():
-    default_course = Path(get_package_share_directory('reseq_traction_autonomy'))
-    default_course = default_course / 'config' / 'simple_course.yaml'
+def load_legs(course, only, repeat):
+    """Return the legs to run: warm-up legs first, then the course `repeat` times."""
+    legs = course['legs']
+    if only:
+        wanted = only.split(',')
+        selected = []
+        for leg in legs:
+            if leg['name'] in wanted:
+                selected.append(leg)
+        legs = selected
+    if repeat > 1:
+        # Number each round: down_range_1, return_1, down_range_2, ...
+        rounds = []
+        for i in range(1, repeat + 1):
+            for leg in legs:
+                rounds.append(dict(leg, name=f'{leg["name"]}_{i}'))
+        legs = rounds
+    # Warm-up legs run once first, for example to let SLAM map the lane.
+    return course.get('warmup', []) + legs
+
+
+def parse_args():
+    share = Path(get_package_share_directory('reseq_traction_autonomy'))
+    default_course = share / 'config' / 'simple_course.yaml'
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('course', nargs='?', default=str(default_course))
     parser.add_argument('--legs', help='comma-separated leg names to run')
     parser.add_argument('--repeat', type=int, help='rounds to run (default: from the course)')
     parser.add_argument('--model', default='reseq', help='Gazebo model name of the robot')
     parser.add_argument('--output', default='~/.local/state/reseq/traction/eval')
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def save_results(output, course_path, results):
+    folder = Path(output).expanduser()
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f'{datetime.now():%Y%m%d-%H%M%S}.json'
+    path.write_text(json.dumps({'course': course_path, 'results': results}, indent=2))
+    print(f'results: {path}')
+
+
+def main():
+    args = parse_args()
     course = yaml.safe_load(Path(args.course).read_text())
     tolerance = course.get('tolerance', 0.25)
-    legs = course['legs']
-    if args.legs:
-        wanted = args.legs.split(',')
-        legs = [leg for leg in legs if leg['name'] in wanted]
-    # Run the whole list of legs `repeat` times, numbering each round.
     repeat = args.repeat or course.get('repeat', 1)
-    if repeat > 1:
-        legs = [dict(leg, name=f'{leg["name"]}_{i + 1}') for i in range(repeat) for leg in legs]
-    # Warm-up legs run once first, for example to let SLAM map the lane.
-    legs = course.get('warmup', []) + legs
+    legs = load_legs(course, args.legs, repeat)
 
     rclpy.init()
     observer = Observer(args.model)
@@ -216,11 +268,7 @@ def main():
         rclpy.try_shutdown()
 
     print_table(results)
-    output = Path(args.output).expanduser()
-    output.mkdir(parents=True, exist_ok=True)
-    path = output / f'{datetime.now():%Y%m%d-%H%M%S}.json'
-    path.write_text(json.dumps({'course': args.course, 'results': results}, indent=2))
-    print(f'results: {path}')
+    save_results(args.output, args.course, results)
 
 
 if __name__ == '__main__':

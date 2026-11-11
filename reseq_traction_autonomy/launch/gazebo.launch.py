@@ -191,16 +191,16 @@ def setup(context):
                 remappings=[('/tf', 'tf'), ('/tf_static', 'tf_static'), *remappings],
             )
         )
+    nav2_nodes = []
+    for _, executable, _, _ in descriptions:
+        nav2_nodes.append(executable)
     actions += [
         Node(
             package='nav2_lifecycle_manager',
             executable='lifecycle_manager',
             name='lifecycle_manager_traction_navigation',
             output='screen',
-            parameters=[
-                use_sim,
-                {'autostart': True, 'node_names': [item[1] for item in descriptions]},
-            ],
+            parameters=[use_sim, {'autostart': True, 'node_names': nav2_nodes}],
         ),
         Node(
             package='reseq_traction_autonomy',

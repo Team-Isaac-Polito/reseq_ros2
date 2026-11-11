@@ -22,7 +22,6 @@
   <exec_depend>sensor_msgs_py</exec_depend>
   <exec_depend>rosidl_runtime_py</exec_depend>
   <exec_depend>python3-pil</exec_depend>
-  <exec_depend>python3-opencv</exec_depend>
   <exec_depend>reseq_ros2</exec_depend>
   <exec_depend>reseq_sim</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>

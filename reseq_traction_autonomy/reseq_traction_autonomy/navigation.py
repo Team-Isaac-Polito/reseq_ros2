@@ -3,27 +3,14 @@
 import math
 import time
 
-import cv2
-import numpy as np
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import PoseStamped
 from nav2_msgs.action import BackUp, NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.duration import Duration
+from std_msgs.msg import String
 
 from .ros_interface import RosInterface
-
-_qr_detector = cv2.QRCodeDetector()
-
-
-def read_qr(jpeg):
-    """Return the text of the QR code in a JPEG image, or an empty string."""
-    # Decoding runs on the robot, as the league rules require.
-    image = cv2.imdecode(np.frombuffer(jpeg, np.uint8), cv2.IMREAD_GRAYSCALE)
-    if image is None:
-        return ''
-    text, _, _ = _qr_detector.detectAndDecode(image)
-    return text
 
 
 class Navigation(RosInterface):
@@ -34,16 +21,26 @@ class Navigation(RosInterface):
         self.subgoal_sent = 0.0
         self.unreachable_predictions = 0
         self.qr_deadline = None
+        # The computer_vision package reads QR codes and publishes their text.
+        self.qr_text = ''
+        self.create_subscription(String, self.cfg['qr_topic'], self._qr_cb, 10)
+
+    def _qr_cb(self, message):
+        self.qr_text = message.data
 
     def _dispatch(self, client, goal, on_finished, on_rejected, on_feedback=None):
         """Send an action goal for the active task. Replies from older goals are ignored."""
-        task = self.tasks.active
         self.nav_pending = True
         self.nav_epoch += 1
-        task_id, generation, epoch = task.id, self.tasks.generation, self.nav_epoch
+        task_id = self.tasks.active.id
+        generation = self.tasks.generation
+        epoch = self.nav_epoch
 
         def current():
-            return self.tasks.current(task_id, generation) and self.nav_epoch == epoch
+            """True while this goal still belongs to the running task."""
+            if not self.tasks.current(task_id, generation):
+                return False
+            return self.nav_epoch == epoch
 
         def feedback(message):
             if on_feedback is not None and current():
@@ -52,6 +49,7 @@ class Navigation(RosInterface):
         def accepted(done):
             handle = done.result()
             if not current():
+                # Too late: cancel a goal nobody waits for.
                 if handle.accepted:
                     handle.cancel_goal_async()
                 return
@@ -67,7 +65,8 @@ class Navigation(RosInterface):
                 self.nav_goal = None
                 on_finished(done.result().status)
 
-        client.send_goal_async(goal, feedback_callback=feedback).add_done_callback(accepted)
+        sent = client.send_goal_async(goal, feedback_callback=feedback)
+        sent.add_done_callback(accepted)
 
     def _send_goal(self, x, y, yaw, frame, replace=False):
         """Send a NavigateToPose goal. With replace, Nav2 preempts the goal it is driving."""
@@ -83,6 +82,7 @@ class Navigation(RosInterface):
         goal.pose.header.stamp = self.get_clock().now().to_msg()
         goal.pose.pose.position.x = x
         goal.pose.pose.position.y = y
+        # A yaw-only quaternion.
         goal.pose.pose.orientation.z = math.sin(yaw / 2)
         goal.pose.pose.orientation.w = math.cos(yaw / 2)
         task.subgoal = {'x': x, 'y': y, 'yaw': yaw, 'frame': self.map_frame}
@@ -91,10 +91,13 @@ class Navigation(RosInterface):
             self.nav,
             goal,
             self._goal_finished,
-            lambda: self._finish('failed', 'Nav2 rejected the goal'),
+            self._goal_rejected,
             self._goal_feedback,
         )
         self._event('subgoal_sent', task.subgoal)
+
+    def _goal_rejected(self):
+        self._finish('failed', 'Nav2 rejected the goal')
 
     def _goal_feedback(self, feedback):
         self.tasks.active.progress['distance_remaining_m'] = feedback.distance_remaining
@@ -103,37 +106,40 @@ class Navigation(RosInterface):
         task = self.tasks.active
         succeeded = status == GoalStatus.STATUS_SUCCEEDED
         if task.kind == 'metric':
-            if not succeeded:
-                self._finish('failed', f'Nav2 ended with status {status}')
-            elif task.arguments.get('zone_qr'):
-                # Arrived. Succeed only once the camera reads the zone's QR code.
-                self.qr_deadline = time.monotonic() + self.cfg['zone_qr_timeout_s']
-                self._event('reading_zone_qr', {'expected': task.arguments['zone_qr']})
-            else:
-                reason = 'Nav2 reported success; position not independently measured'
-                self._finish('succeeded', reason)
+            self._metric_goal_finished(task, succeeded, status)
             return
+
+        # Visual task: one subgoal ended; the next prediction picks a new one.
         task.subgoal = None
         self.next_prediction = 0
         if succeeded:
-            task.progress['completed_subgoals'] = task.progress.get('completed_subgoals', 0) + 1
+            completed = task.progress.get('completed_subgoals', 0)
+            task.progress['completed_subgoals'] = completed + 1
             self._event('subgoal_reached', task.progress)
             return
         # Near walls Nav2 often refuses a subgoal; let the model choose again instead of failing.
         self._event('subgoal_failed', {'status': status})
         self._note_unreachable()
 
+    def _metric_goal_finished(self, task, succeeded, status):
+        if not succeeded:
+            self._finish('failed', f'Nav2 ended with status {status}')
+            return
+        zone_qr = task.arguments.get('zone_qr')
+        if zone_qr:
+            # Arrived. Succeed only once the zone's QR code is read (see _check_zone_qr).
+            self.qr_deadline = time.monotonic() + self.cfg['zone_qr_timeout_s']
+            self._event('reading_zone_qr', {'expected': zone_qr})
+            return
+        self._finish('succeeded', 'Nav2 reported success; position not independently measured')
+
     def _check_zone_qr(self):
-        """At the goal, look for the zone's QR code until it is read or time runs out."""
+        """At the goal, wait for the zone's QR code until it is read or time runs out."""
         if self.qr_deadline is None:
             return
         expected = self.tasks.active.arguments['zone_qr']
-        try:
-            text = read_qr(self._observation()['jpeg'])
-        except ValueError:
-            text = ''  # no fresh frame this tick
-        if text == expected:
-            self._finish('succeeded', f'Reached the zone and read its QR code "{text}"')
+        if self.qr_text == expected:
+            self._finish('succeeded', f'Reached the zone and read its QR code "{expected}"')
         elif time.monotonic() > self.qr_deadline:
             self._finish('failed', f'Reached the goal but did not read QR code "{expected}"')
 
@@ -146,17 +152,20 @@ class Navigation(RosInterface):
 
     def _back_up(self):
         """Reverse a short distance with Nav2's collision-checked BackUp behavior."""
-        if self.backing_up or self.nav_pending or not self.backup.server_is_ready():
+        if self.backing_up or self.nav_pending:
+            return
+        if not self.backup.server_is_ready():
             return
         goal = BackUp.Goal()
         goal.target.x = float(self.cfg['backup_distance_m'])
         goal.speed = float(self.cfg['backup_speed'])
         goal.time_allowance = Duration(seconds=10.0).to_msg()
         self.backing_up = True
-        self._dispatch(
-            self.backup, goal, self._backup_finished, lambda: self._backup_finished('rejected')
-        )
+        self._dispatch(self.backup, goal, self._backup_finished, self._backup_rejected)
         self._event('backup_sent', {'distance_m': goal.target.x})
+
+    def _backup_rejected(self):
+        self._backup_finished('rejected')
 
     def _backup_finished(self, status):
         self.backing_up = False

@@ -1,11 +1,14 @@
-"""Traction mission lifecycle, navigation goals and model requests."""
+"""Traction mission lifecycle, navigation goals and model requests.
+
+Every 50 ms _tick runs: handle API requests, read model replies,
+supervise the active task, then publish the gated command.
+Visual tasks (model requests and predictions) live in visual.py.
+"""
 
 import json
-import math
 from pathlib import Path
 import queue
 import time
-from importlib import import_module
 
 import rclpy
 from geometry_msgs.msg import Twist
@@ -13,14 +16,20 @@ from rclpy.executors import ExternalShutdownException
 from std_msgs.msg import String
 from std_srvs.srv import SetBool
 
-from .core import finite, transform_xy
-from .models import foresight_waypoints
-from .navigation import Navigation
-from .ros_interface import stamp_seconds
+from .core import finite
+from .visual import VisualNavigation
+
+MAX_INSTRUCTION_LENGTH = 2000
+# The gate closes when Nav2 has not sent a command for this long.
+COMMAND_MAX_AGE_S = 0.5
 
 
-class Manager(Navigation):
-    def _start(self, kind, arguments, timeout_s):
+class Manager(VisualNavigation):
+
+    # ---- Task start and end ----
+
+    def _check_can_start(self, kind):
+        """Raise if the robot or the launch setup is not ready for a task."""
         problems = self._readiness(visual=kind == 'visual')
         if problems:
             raise ValueError('Not ready: ' + ', '.join(problems))
@@ -32,12 +41,8 @@ class Manager(Navigation):
             raise ValueError('The existing autonomy_coordinator must be excluded from this launch')
         if not self.enable_client.service_is_ready():
             raise ValueError('/autonomy/enable is unavailable')
-        task = self.tasks.start(kind, arguments, timeout_s)
-        try:
-            self._open_record(task)
-        except OSError:
-            self.tasks.finish('failed', 'Could not create task record')
-            raise
+
+    def _reset_task_state(self):
         self.last_candidate = Twist()
         self.candidate_time = 0.0
         self.last_prediction = None
@@ -48,19 +53,34 @@ class Manager(Navigation):
         self.backing_up = False
         self.camera_lost_since = None
         self.qr_deadline = None
-        future = self.enable_client.call_async(SetBool.Request(data=True))
-        task_id, generation = task.id, self.tasks.generation
+        self.qr_text = ''  # only codes read during this task count
+
+    def _start(self, kind, arguments, timeout_s):
+        self._check_can_start(kind)
+        task = self.tasks.start(kind, arguments, timeout_s)
+        try:
+            self._open_record(task)
+        except OSError:
+            self.tasks.finish('failed', 'Could not create task record')
+            raise
+        self._reset_task_state()
+
+        # Ask the mux to listen to the gate. The task fails if the mux refuses.
+        task_id = task.id
+        generation = self.tasks.generation
 
         def enabled(done):
-            if self.tasks.current(task_id, generation):
-                try:
-                    if done.result().success:
-                        self.enabled_generation = generation
-                    else:
-                        self._finish('failed', 'Autonomy enable rejected')
-                except Exception as exc:
-                    self._finish('failed', str(exc))
+            if not self.tasks.current(task_id, generation):
+                return
+            try:
+                if done.result().success:
+                    self.enabled_generation = generation
+                else:
+                    self._finish('failed', 'Autonomy enable rejected')
+            except Exception as exc:
+                self._finish('failed', str(exc))
 
+        future = self.enable_client.call_async(SetBool.Request(data=True))
         future.add_done_callback(enabled)
         self._event('task_started', task.view(time.monotonic()))
         return task
@@ -73,6 +93,7 @@ class Manager(Navigation):
         self.recorded_images = 0
 
     def _event(self, kind, data):
+        """Append one event to the task record."""
         if not self.log_file:
             return
         record = {
@@ -84,23 +105,29 @@ class Manager(Navigation):
         self.log_file.write(json.dumps(record, allow_nan=False) + '\n')
         self.log_file.flush()
 
+    def _cancel_model_request(self):
+        if self.model_future is None:
+            return
+        if self.model_context['model'] == 'foresight':
+            self.foresight.remove_pending_request(self.model_future)
+        self.model_future.cancel()
+        self.model_future = None
+        self.model_context = None
+
     def _finish(self, status, reason):
+        """End the active task (if any), stop the robot and give control back to teleop."""
         task = self.tasks.finish(status, reason)
         self.nav_epoch += 1
         self.nav_pending = False
-        if self.model_future is not None:
-            if self.model_context['model'] == 'foresight':
-                self.foresight.remove_pending_request(self.model_future)
-            self.model_future.cancel()
-            self.model_future = None
-            self.model_context = None
+        self._cancel_model_request()
         # Publishing fails once rclpy has shut down; the mux then stops on stale commands.
         if rclpy.ok():
             self.output.publish(Twist())
             if self.nav_goal is not None:
                 self.nav_goal.cancel_goal_async()
             # Return the mux to teleop so joystick input below the override deadband works.
-            if (task or self.autonomy_enabled) and self.enable_client.service_is_ready():
+            was_enabled = task is not None or self.autonomy_enabled
+            if was_enabled and self.enable_client.service_is_ready():
                 self.enable_client.call_async(SetBool.Request(data=False))
         self.nav_goal = None
         if task:
@@ -110,169 +137,16 @@ class Manager(Navigation):
             self.log_file = None
         self.gate_reason = 'idle'
 
-    def _model_context(self, kind, observation):
-        task = self.tasks.active
-        now = time.monotonic()
-        # Keep a steady frame cadence; restart it only after a long gap such as a prediction.
-        due = self.next_frame + self.cfg['frame_period_s']
-        self.next_frame = due if due > now else now + self.cfg['frame_period_s']
-        return {
-            'kind': kind,
-            'id': task.id,
-            'generation': self.tasks.generation,
-            'created': now,
-            'observation': observation,
-            'model': task.arguments['model'],
-        }
-
-    def _send_history_frame(self):
-        """Stream a frame between predictions so LightNav sees its trained frame rate."""
-        observation = self._observation()
-        self.model_context = self._model_context('frame', observation)
-        task_id = self.tasks.active.id
-        self.model_future = self.pool.submit(self.lightnav.observe, task_id, observation['jpeg'])
-
-    def _request_prediction(self):
-        task = self.tasks.active
-        observation = self._observation()
-        self.model_context = self._model_context('prediction', observation)
-        if self.recorded_images < 1000:
-            filename = f'image_{self.recorded_images:05d}.jpg'
-            (self.record_dir / filename).write_bytes(observation['jpeg'])
-            self.recorded_images += 1
-            details = dict(observation)
-            del details['jpeg']
-            details['image'] = filename
-            self._event('observation', details)
-        if task.arguments['model'] == 'lightnav':
-            self.model_future = self.pool.submit(
-                self.lightnav.predict, task.id, observation['jpeg'], task.arguments['instruction']
-            )
-        else:
-            request = self.foresight_type.Request()
-            request.goal_command.data = task.arguments['instruction']
-            self.model_future = self.foresight.call_async(request)
-        self.next_prediction = time.monotonic() + self.cfg['model_period_s']
-
-    def _in_evaluation_region(self, task):
-        goal = task.arguments.get('evaluation_goal')
-        if not goal:
-            return None
-        robot = self._pose(goal['frame'])
-        distance = math.hypot(robot[0] - goal['x'], robot[1] - goal['y'])
-        task.progress['evaluation_distance_m'] = distance
-        return distance <= goal['tolerance']
-
-    def _apply_prediction(self, result, context):
-        if context['model'] == 'foresight':
-            plan = result.foresight_plan
-            rows = foresight_waypoints(plan)
-            frame, stop = 'odom', False
-            # Foresight plans from its own latest image, not from the manager's observation.
-            stamp_s = stamp_seconds(plan.header.stamp)
-            ros_now = self.get_clock().now().nanoseconds / 1e9
-            if ros_now - stamp_s > self.cfg['prediction_max_age_s']:
-                raise ValueError('Foresight planned from an expired image')
-        else:
-            frame, rows, stop = result['frame'], result['waypoints'], result['stop']
-            stamp_s = context['observation']['stamp_s']
-        self._event(
-            'prediction',
-            {'frame': frame, 'waypoints': rows, 'stop': stop, 'observation_stamp_s': stamp_s},
-        )
-        self.last_prediction = time.monotonic()
-        if not stop:
-            self.stop_claims = 0
-        else:
-            # LightNav sets stop when its whole action chunk is zero; that is not a measurement.
-            self.stop_claims += 1
-            if self.stop_claims < self.cfg['stop_confirmations']:
-                return
-            reached = self._in_evaluation_region(self.tasks.active)
-            if reached is None:
-                self._finish('succeeded', 'Model stop claim; destination not measured')
-            elif reached:
-                self._finish('succeeded', 'Configured destination region reached')
-            else:
-                self._finish('failed', 'Model stopped outside the evaluation region')
-            return
-        if self.nav_pending or self.backing_up:
-            return
-        driving = self.nav_goal is not None
-        # Keep the model in charge: a newer prediction replaces a subgoal after a few seconds.
-        if driving and time.monotonic() - self.subgoal_sent < self.cfg['subgoal_refresh_s']:
-            return
-        subgoal = self._choose_subgoal(rows, frame, context['observation']['robot_pose'])
-        if subgoal is None:
-            # Turn-in-place or blocked answers are common. Keep driving the current subgoal;
-            # when there is none, a run of them backs the robot away from the wall.
-            self._event('no_feasible_subgoal', {'waypoints': rows})
-            if not driving:
-                self._note_unreachable()
-            return
-        self.unreachable_predictions = 0
-        x, y, yaw = subgoal
-        self._send_goal(x, y, yaw, self.map_frame, replace=True)
-
-    def _choose_subgoal(self, rows, frame, observation_pose):
-        """Return the farthest feasible waypoint as a map pose, or None."""
-        robot = self._pose(self.map_frame)
-        min_distance = self.cfg['min_subgoal_distance_m']
-        max_distance = self.cfg['max_subgoal_distance_m']
-        for row in reversed(rows):
-            if len(row) not in (2, 3):
-                raise ValueError('Waypoint must contain x, y and optional yaw')
-            x = finite(row[0], 'waypoint.x')
-            y = finite(row[1], 'waypoint.y')
-            yaw = 0.0
-            if len(row) == 3:
-                yaw = finite(row[2], 'waypoint.yaw')
-            goal_frame = frame
-            if frame == 'base_link':
-                # Relative waypoints belong to the pose where the image was taken.
-                origin = (observation_pose['x'], observation_pose['y'], observation_pose['yaw'])
-                x, y = transform_xy((x, y), origin)
-                yaw += origin[2]
-                goal_frame = 'odom'
-            try:
-                x, y, yaw = self._validate_goal(x, y, yaw, goal_frame)
-            except ValueError:
-                continue
-            distance = math.hypot(x - robot[0], y - robot[1])
-            if min_distance <= distance <= max_distance:
-                return x, y, yaw
-        return None
-
-    def _poll_model(self):
-        if self.model_future is None:
-            return
-        context = self.model_context
-        if not self.model_future.done():
-            if (
-                self.tasks.current(context['id'], context['generation'])
-                and time.monotonic() - context['created'] > self.cfg['model_timeout_s']
-            ):
-                self._finish('failed', 'Model inference timed out')
-            return
-        future, self.model_future = self.model_future, None
-        if not self.tasks.current(context['id'], context['generation']):
-            return
-        try:
-            result = future.result()
-            if context['kind'] == 'frame':
-                return
-            if time.monotonic() - context['created'] > self.cfg['prediction_max_age_s']:
-                raise ValueError('Prediction arrived after its observation expired')
-            self._apply_prediction(result, context)
-        except Exception as exc:
-            self._finish('failed', f'Model error: {exc}')
+    # ---- Every tick ----
 
     def _handle_requests(self):
+        """Run up to 8 queued API tool calls on the ROS thread."""
         for _ in range(8):
             try:
                 name, arguments, future = self.requests.get_nowait()
             except queue.Empty:
                 return
+            # The HTTP side may have given up already.
             if not future.set_running_or_notify_cancel():
                 continue
             try:
@@ -283,6 +157,13 @@ class Manager(Navigation):
             except Exception as exc:
                 future.set_result({'error': str(exc)})
 
+    def _camera_problem_lasts(self):
+        """Under load a frame or its transform can arrive late; fail only if it lasts."""
+        now = time.monotonic()
+        if self.camera_lost_since is None:
+            self.camera_lost_since = now
+        return now - self.camera_lost_since > self.cfg['camera_grace_s']
+
     def _supervise_task(self):
         task = self.tasks.active
         if task is None:
@@ -292,11 +173,7 @@ class Manager(Navigation):
             return
         problems = self._readiness(visual=task.kind == 'visual')
         if problems == ['camera_not_ready']:
-            # Under load a frame or its transform can arrive late; fail only if it lasts.
-            now = time.monotonic()
-            if self.camera_lost_since is None:
-                self.camera_lost_since = now
-            if now - self.camera_lost_since > self.cfg['camera_grace_s']:
+            if self._camera_problem_lasts():
                 self._finish('failed', 'camera_not_ready')
             return
         self.camera_lost_since = None
@@ -307,15 +184,7 @@ class Manager(Navigation):
             self._check_zone_qr()
             return
         try:
-            if self._in_evaluation_region(task):
-                self._finish('succeeded', 'Configured destination region reached')
-                return
-            if self.model_future is None:
-                now = time.monotonic()
-                if now >= self.next_prediction:
-                    self._request_prediction()
-                elif task.arguments['model'] == 'lightnav' and now >= self.next_frame:
-                    self._send_history_frame()
+            self._drive_visual_task(task)
         except Exception as exc:
             self._finish('failed', str(exc))
 
@@ -334,7 +203,7 @@ class Manager(Navigation):
                 return Twist(), 'prediction_expired'
             if now - self.last_prediction > self.cfg['prediction_max_age_s']:
                 return Twist(), 'prediction_expired'
-        if now - self.candidate_time > 0.5:
+        if now - self.candidate_time > COMMAND_MAX_AGE_S:
             return Twist(), 'nav_command_expired'
         return self.last_candidate, 'open'
 
@@ -347,18 +216,24 @@ class Manager(Navigation):
         if self.gate_reason != self.previous_gate_reason:
             self._event('gate', {'reason': self.gate_reason})
             self.previous_gate_reason = self.gate_reason
+        # Publish and record the state twice a second.
         if time.monotonic() - self.last_state_log >= 0.5:
             state = self.tool_get_state()
             self.status_pub.publish(String(data=json.dumps(state, allow_nan=False)))
             self._event('state', state)
             self.last_state_log = time.monotonic()
 
+    # ---- Tools (called through the local API) ----
+
     def tool_navigate_to_pose(
         self, x, y, yaw=0.0, frame='map', timeout_s=120.0, zone_qr=None
     ):
-        x, y, yaw = finite(x, 'x'), finite(y, 'y'), finite(yaw, 'yaw')
-        if zone_qr is not None and (not isinstance(zone_qr, str) or not zone_qr):
-            raise ValueError('zone_qr must be the non-empty text of the QR code')
+        x = finite(x, 'x')
+        y = finite(y, 'y')
+        yaw = finite(yaw, 'yaw')
+        if zone_qr is not None:
+            if not isinstance(zone_qr, str) or not zone_qr:
+                raise ValueError('zone_qr must be the non-empty text of the QR code')
         self._validate_goal(x, y, yaw, frame)
         arguments = {'x': x, 'y': y, 'yaw': yaw, 'frame': frame, 'zone_qr': zone_qr}
         task = self._start('metric', arguments, timeout_s)
@@ -379,40 +254,28 @@ class Manager(Navigation):
         goal_frame='map',
         goal_tolerance=0.25,
     ):
-        if not isinstance(instruction, str) or not instruction.strip() or len(instruction) > 2000:
-            raise ValueError('Provide an instruction between 1 and 2000 characters')
-        if model not in ('foresight', 'lightnav'):
-            raise ValueError('model must be foresight or lightnav')
-        if model == 'lightnav':
-            if not self.cfg['lightnav_url']:
-                raise ValueError('Configure lightnav_url to a real model server before starting')
-            try:
-                import_module('websockets.sync.client')
-            except ImportError as exc:
-                raise ValueError(
-                    'Install the lightnav optional dependency in the manager environment'
-                ) from exc
-        else:
-            try:
-                client = self._foresight_client()
-            except (ImportError, ModuleNotFoundError, AttributeError) as exc:
-                raise ValueError(
-                    'Build the upstream amrl_msgs interfaces and start the Foresight planner'
-                ) from exc
-            if not client.service_is_ready():
-                raise ValueError('Foresight planner service is unavailable')
-        args = {'instruction': instruction.strip(), 'model': model}
+        length_error = f'Provide an instruction between 1 and {MAX_INSTRUCTION_LENGTH} characters'
+        if not isinstance(instruction, str) or not instruction.strip():
+            raise ValueError(length_error)
+        if len(instruction) > MAX_INSTRUCTION_LENGTH:
+            raise ValueError(length_error)
+        self._check_model_available(model)
+        arguments = {'instruction': instruction.strip(), 'model': model}
+        # Optional: a measured destination, used by evaluations.
         if goal_x is not None or goal_y is not None:
             tolerance = finite(goal_tolerance, 'goal_tolerance')
-            if not 0.05 <= tolerance <= 1.0 or goal_frame not in ('map', 'odom'):
+            if tolerance < 0.05 or tolerance > 1.0:
                 raise ValueError('Invalid evaluation goal frame or tolerance')
-            args['evaluation_goal'] = {
+            if goal_frame not in ('map', 'odom'):
+                raise ValueError('Invalid evaluation goal frame or tolerance')
+            arguments['evaluation_goal'] = {
                 'x': finite(goal_x, 'goal_x'),
                 'y': finite(goal_y, 'goal_y'),
                 'frame': goal_frame,
                 'tolerance': tolerance,
             }
-        return self._start('visual', args, timeout_s).view(time.monotonic())
+        task = self._start('visual', arguments, timeout_s)
+        return task.view(time.monotonic())
 
     def tool_get_task(self, task_id):
         task = self.tasks.items.get(task_id)
