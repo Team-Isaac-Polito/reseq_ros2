@@ -24,7 +24,7 @@ from tf2_ros import Buffer, TransformException, TransformListener
 
 from .api_server import make_server
 from .camera import to_jpeg
-from .core import Grid, Tasks, clamp, convex_hull, transform_xy, yaw_of
+from .core import Grid, Tasks, convex_hull, transform_xy, yaw_of
 from .models import LightNavSession
 from .parameters import DEFAULTS
 
@@ -128,7 +128,6 @@ class RosInterface(Node):
         self.create_subscription(LaserScan, '/scan', self._scan_cb, sensor_qos)
         self.create_subscription(JointState, '/joint_states', self._joint_cb, 5)
         self.create_subscription(OccupancyGrid, cfg['map_topic'], self._map_cb, map_qos)
-        self.create_subscription(Twist, cfg['candidate_topic'], self._candidate_cb, 5)
         self.create_subscription(String, '/autonomy/cmd_source', self._source_cb, 5)
         self.create_subscription(String, '/autonomy/health', self._health_cb, 5)
         self.create_subscription(Bool, '/autonomy/enabled', self._enabled_cb, 5)
@@ -191,21 +190,6 @@ class RosInterface(Node):
         )
         self.map_frame = message.header.frame_id
         self.received['map'] = time.monotonic()
-
-    def _candidate_cb(self, message):
-        """Nav2's command. Limit it and convert it to the traction stack's turn sign."""
-        linear = message.linear.x
-        angular = message.angular.z
-        if not math.isfinite(linear) or not math.isfinite(angular):
-            self.last_candidate = Twist()
-            self.candidate_time = 0.0
-            return
-        turn = self.cfg['traction_turn_sign'] * angular
-        output = Twist()
-        output.linear.x = clamp(linear, self.cfg['max_linear_speed'])
-        output.angular.z = clamp(turn, self.cfg['max_angular_speed'])
-        self.last_candidate = output
-        self.candidate_time = time.monotonic()
 
     def _source_cb(self, message):
         self.source = message.data

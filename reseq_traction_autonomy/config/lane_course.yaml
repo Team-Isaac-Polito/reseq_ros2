@@ -24,5 +24,7 @@ legs:
     # so base_link stops near the spawn point to keep the tail off the back wall.
     x: 0.15
     y: 0.0
-    yaw: 0.0  # still facing down range
+    # Still facing down range. In reverse the tail follows the line through the
+    # goal along this yaw, so it also sets the direction of the return.
+    yaw: 0.0
     timeout_s: 120

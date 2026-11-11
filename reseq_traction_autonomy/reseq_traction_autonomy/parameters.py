@@ -54,6 +54,9 @@ DEFAULTS = {
     # for +angular.z, on the robot and in Gazebo, so the gate flips the sign.
     'traction_turn_sign': -1.0,
 
+    # Reversing, the tail aims at the goal line this far ahead of itself.
+    'reverse_lookahead_m': 0.6,
+
     # Robot body, used for the footprint
     'num_modules': 3,
     'module_half_length': 0.23,

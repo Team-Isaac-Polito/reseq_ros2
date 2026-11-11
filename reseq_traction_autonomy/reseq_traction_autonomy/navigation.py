@@ -1,16 +1,26 @@
-"""Nav2 goals for traction tasks: send, replace, back up and track their results."""
+"""Nav2 goals for traction tasks: send, replace, back up and track their results.
+
+Nav2's velocity command also arrives here, where it is limited and, in
+reverse, re-steered for the tail before the gate may forward it.
+"""
 
 import math
 import time
 
 from action_msgs.msg import GoalStatus
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Twist
 from nav2_msgs.action import BackUp, NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.duration import Duration
 from std_msgs.msg import String
+from tf2_ros import TransformException
 
+from .core import clamp, line_pursuit_curvature
 from .ros_interface import RosInterface
+
+# Tail steering applies only while the tail's heading is within 60 degrees
+# (cosine 0.5) of the goal line.
+REVERSE_MIN_ALIGNMENT = 0.5
 
 
 class Navigation(RosInterface):
@@ -24,9 +34,58 @@ class Navigation(RosInterface):
         # The computer_vision package reads QR codes and publishes their text.
         self.qr_text = ''
         self.create_subscription(String, self.cfg['qr_topic'], self._qr_cb, 10)
+        self.create_subscription(Twist, self.cfg['candidate_topic'], self._candidate_cb, 5)
 
     def _qr_cb(self, message):
         self.qr_text = message.data
+
+    # ---- Nav2's velocity command ----
+
+    def _candidate_cb(self, message):
+        """Nav2's command. Limit it and convert it to the traction stack's turn sign."""
+        linear = message.linear.x
+        angular = message.angular.z
+        if not math.isfinite(linear) or not math.isfinite(angular):
+            self.last_candidate = Twist()
+            self.candidate_time = 0.0
+            return
+        if linear < 0:
+            angular = self._reverse_turn_rate(linear, angular)
+        turn = self.cfg['traction_turn_sign'] * angular
+        output = Twist()
+        output.linear.x = clamp(linear, self.cfg['max_linear_speed'])
+        output.angular.z = clamp(turn, self.cfg['max_angular_speed'])
+        self.last_candidate = output
+        self.candidate_time = time.monotonic()
+
+    def _reverse_turn_rate(self, linear, nav2_turn):
+        """Return the turn rate (ROS sign) for a reverse command.
+
+        In reverse the tail leads and the traction stack applies the turn to the
+        tail, but Nav2 computed it for base_link, which now comes last. Steering
+        on that late signal makes the body swing wider on every leg. So steer
+        the tail itself along the straight line through the goal along its yaw.
+        """
+        task = self.tasks.active
+        following_goal = self.nav_goal is not None and not self.backing_up
+        if task is None or task.subgoal is None or not following_goal:
+            return nav2_turn
+        tail_frame = f'chassis{int(self.cfg["num_modules"])}_link'
+        try:
+            x, y, yaw = self._pose(self.map_frame, source=tail_frame)
+        except TransformException:
+            return nav2_turn
+        # Reversing, the tail travels opposite to the way the robot faces.
+        travel = (x, y, yaw + math.pi)
+        goal = task.subgoal
+        line = (goal['x'], goal['y'], goal['yaw'] + math.pi)
+        # A goal off to the side is left to Nav2.
+        if math.cos(travel[2] - line[2]) < REVERSE_MIN_ALIGNMENT:
+            return nav2_turn
+        curvature = line_pursuit_curvature(travel, line, self.cfg['reverse_lookahead_m'])
+        return abs(linear) * curvature
+
+    # ---- Goals ----
 
     def _dispatch(self, client, goal, on_finished, on_rejected, on_feedback=None):
         """Send an action goal for the active task. Replies from older goals are ignored."""

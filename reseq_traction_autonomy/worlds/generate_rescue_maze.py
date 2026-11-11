@@ -1,8 +1,8 @@
 """Generate rescue_maze.world and its textures.
 
 A dwelling-search maze in the style of the RoboCup Rescue Robot League arena,
-sized for Rese.Q: a 1.3 m three-module robot driven by a 2D Nav2 stack that
-does not reverse. The corridor is 2 m wide and the floor is flat.
+sized for Rese.Q: a 1.3 m three-module robot that cannot turn on the spot.
+The corridor is 2 m wide and the floor is flat.
 
 Run it from this directory after changing the layout:  python3 generate_rescue_maze.py
 """

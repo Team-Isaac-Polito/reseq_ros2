@@ -8,6 +8,7 @@ from reseq_traction_autonomy.core import (
     convex_hull,
     finite,
     inverse,
+    line_pursuit_curvature,
     transform_xy,
 )
 
@@ -100,3 +101,22 @@ def test_bent_body_footprint_contains_all_module_corners():
     hull = convex_hull(points)
     assert (-1, -1) in hull and (1, 1) in hull
     assert (0, 0) not in hull
+
+
+def test_line_pursuit_goes_straight_on_the_line():
+    curvature = line_pursuit_curvature((1.0, 0.0, 0.0), (0.0, 0.0, 0.0), 0.6)
+    assert curvature == pytest.approx(0.0)
+
+
+def test_line_pursuit_turns_back_toward_the_line():
+    line = (0.0, 0.0, 0.0)
+    left = line_pursuit_curvature((0.0, 0.2, 0.0), line, 0.6)
+    right = line_pursuit_curvature((0.0, -0.2, 0.0), line, 0.6)
+    assert left < 0
+    assert right > 0
+    assert left == pytest.approx(-right)
+
+
+def test_line_pursuit_works_for_a_reversing_tail():
+    curvature = line_pursuit_curvature((2.0, 0.2, math.pi), (0.15, 0.0, math.pi), 0.6)
+    assert curvature > 0

@@ -13,7 +13,6 @@ from reseq_traction_autonomy.core import Tasks
 from reseq_traction_autonomy.manager import Manager
 from reseq_traction_autonomy.navigation import Navigation
 from reseq_traction_autonomy.models import foresight_waypoints
-from reseq_traction_autonomy.ros_interface import RosInterface
 
 
 def plan(frame='odom', verdict=True):
@@ -127,11 +126,11 @@ def test_gate_flips_nav2_turns_into_the_traction_convention_and_clamps():
     message = Twist()
     message.linear.x = 0.5
     message.angular.z = 0.4
-    RosInterface._candidate_cb(node, message)
+    Navigation._candidate_cb(node, message)
     assert node.last_candidate.linear.x == pytest.approx(0.19)
     assert node.last_candidate.angular.z == pytest.approx(-0.4)
     message.angular.z = -3.0
-    RosInterface._candidate_cb(node, message)
+    Navigation._candidate_cb(node, message)
     assert node.last_candidate.angular.z == pytest.approx(1.0)
 
 
@@ -209,6 +208,29 @@ def visual_node(subgoal_age_s):
     return node, sent
 
 
+def reversing_node(tail_pose):
+    """A node driving a goal at (0.15, 0, yaw 0) whose tail is at tail_pose in the map."""
+    tasks = Tasks(clock=lambda: 10)
+    task = tasks.start('metric', {}, 20)
+    task.subgoal = {'x': 0.15, 'y': 0.0, 'yaw': 0.0, 'frame': 'map'}
+    node = SimpleNamespace(
+        tasks=tasks,
+        nav_goal=object(),
+        backing_up=False,
+        map_frame='map',
+        cfg={
+            'num_modules': 3,
+            'reverse_lookahead_m': 0.6,
+            'max_linear_speed': 0.19,
+            'max_angular_speed': 1.0,
+            'traction_turn_sign': -1.0,
+        },
+        _pose=lambda frame, source: tail_pose,
+    )
+    bind(node, Navigation, '_reverse_turn_rate')
+    return node
+
+
 def test_newer_prediction_replaces_a_subgoal_only_after_the_refresh_time():
     context = {'model': 'lightnav', 'observation': {'stamp_s': 1.0, 'robot_pose': {}}}
     move = {'frame': 'base_link', 'waypoints': [[0.6, 0.0, 0.0]], 'stop': False}
@@ -276,3 +298,42 @@ def test_zone_qr_check_succeeds_on_the_right_text_and_fails_after_timeout(
     node.qr_text = text
     Navigation._check_zone_qr(node)
     assert task.status == expected
+
+
+def test_reversing_tail_on_the_goal_line_goes_straight():
+    node = reversing_node((1.0, 0.0, 0.0))
+    assert node._reverse_turn_rate(-0.19, 0.3) == pytest.approx(0.0)
+
+
+def test_reversing_tail_steers_back_to_the_goal_line():
+    left = reversing_node((1.0, 0.2, 0.0))
+    right = reversing_node((1.0, -0.2, 0.0))
+    assert left._reverse_turn_rate(-0.19, 0.0) > 0
+    assert right._reverse_turn_rate(-0.19, 0.0) < 0
+
+
+def test_reverse_steering_is_left_to_nav2_when_it_does_not_apply():
+    node = reversing_node((1.0, 0.2, 0.0))
+    node.backing_up = True
+    assert node._reverse_turn_rate(-0.19, 0.3) == 0.3
+
+    node = reversing_node((1.0, 0.2, 0.0))
+    node.nav_goal = None
+    assert node._reverse_turn_rate(-0.19, 0.3) == 0.3
+
+    node = reversing_node((1.0, 0.2, 0.0))
+    node.tasks.active.subgoal = None
+    assert node._reverse_turn_rate(-0.19, 0.3) == 0.3
+
+    node = reversing_node((1.0, 0.2, math.pi / 2))
+    assert node._reverse_turn_rate(-0.19, 0.3) == 0.3
+
+
+def test_reverse_command_is_steered_for_the_tail_and_sign_flipped():
+    node = reversing_node((1.0, 0.2, 0.0))
+    message = Twist()
+    message.linear.x = -0.19
+    message.angular.z = 0.0
+    Navigation._candidate_cb(node, message)
+    assert node.last_candidate.linear.x == pytest.approx(-0.19)
+    assert node.last_candidate.angular.z < 0

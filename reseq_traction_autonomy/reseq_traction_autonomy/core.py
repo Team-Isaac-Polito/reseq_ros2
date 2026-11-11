@@ -66,6 +66,20 @@ def inverse(pose):
     return new_x, new_y, -yaw
 
 
+def line_pursuit_curvature(pose, line, lookahead):
+    """Return the curvature (1/m, positive turns left) that steers pose onto a line.
+
+    line is (x, y, yaw): a point on the line and the direction to follow it in.
+    This is pure pursuit: aim at the line point `lookahead` metres further on.
+    """
+    # Where pose is in the line's frame: x along the line, y to its left.
+    along, _, _ = compose(inverse(line), pose)
+    target = transform_xy((along + lookahead, 0.0), line)
+    # The same target seen from pose: x ahead, y to the left.
+    ahead, left = transform_xy(target, inverse(pose))
+    return 2 * left / (ahead * ahead + left * left)
+
+
 def _cross(o, a, b):
     """Positive when o -> a -> b turns left."""
     return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
