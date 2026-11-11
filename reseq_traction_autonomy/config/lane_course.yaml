@@ -1,6 +1,9 @@
 # Mobility lane course for lane.world (made by worlds/generate_lane.py).
 # The robot starts in the start bay facing down range (+x).
-# One round: drive to the end bay and read its QR code, then drive back.
+# One round: drive to the end bay, then back out to the start bay.
+# The robot cannot turn around in a 2.4 m lane, so it reverses on the way back.
+# On the robot, add  zone_qr: RESEQ END ZONE  to down_range to check the end QR code.
+# It needs the computer_vision detector, which does not run in this simulation.
 # Goals are in the SLAM map frame, which starts at the spawn pose.
 tolerance: 0.3
 repeat: 3
@@ -15,10 +18,11 @@ legs:
   - name: down_range
     x: 2.9
     y: 0.0
-    zone_qr: RESEQ END ZONE
     timeout_s: 90
   - name: return
-    x: -0.35
+    # Facing down range the body trails about 1.1 m behind base_link,
+    # so base_link stops near the spawn point to keep the tail off the back wall.
+    x: 0.15
     y: 0.0
-    yaw: 3.1416
+    yaw: 0.0  # still facing down range
     timeout_s: 120
