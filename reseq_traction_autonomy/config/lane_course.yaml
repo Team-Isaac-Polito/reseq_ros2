@@ -1,0 +1,24 @@
+# Mobility lane course for lane.world (made by worlds/generate_lane.py).
+# The robot starts in the start bay facing down range (+x).
+# One round: drive to the end bay and read its QR code, then drive back.
+# Goals are in the SLAM map frame, which starts at the spawn pose.
+tolerance: 0.3
+repeat: 3
+# Standing still, SLAM marks only cells near the robot as free.
+# A short creep inside the start bay lets it map the whole lane first.
+warmup:
+  - name: map_lane
+    x: 0.4
+    y: 0.0
+    timeout_s: 30
+legs:
+  - name: down_range
+    x: 2.9
+    y: 0.0
+    zone_qr: RESEQ END ZONE
+    timeout_s: 90
+  - name: return
+    x: -0.35
+    y: 0.0
+    yaw: 3.1416
+    timeout_s: 120

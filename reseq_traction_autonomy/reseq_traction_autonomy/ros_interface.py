@@ -56,6 +56,7 @@ class RosInterface(Node):
             'camera_max_age_s': 2.0,
             'sensor_max_age_s': 2.0,
             'camera_grace_s': 3.0,
+            'zone_qr_timeout_s': 3.0,
             'prediction_max_age_s': 6.0,
             'model_timeout_s': 5.0,
             'model_period_s': 1.0,

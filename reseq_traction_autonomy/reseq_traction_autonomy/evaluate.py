@@ -94,6 +94,8 @@ def start_task(leg, tolerance):
             'frame': 'map',
             'timeout_s': timeout_s,
         }
+        if 'zone_qr' in leg:
+            arguments['zone_qr'] = leg['zone_qr']
         return call('navigate_to_pose', arguments)
     arguments = {
         'instruction': leg['instruction'],
@@ -174,6 +176,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('course', nargs='?', default=str(default_course))
     parser.add_argument('--legs', help='comma-separated leg names to run')
+    parser.add_argument('--repeat', type=int, help='rounds to run (default: from the course)')
     parser.add_argument('--model', default='reseq', help='Gazebo model name of the robot')
     parser.add_argument('--output', default='~/.local/state/reseq/traction/eval')
     args = parser.parse_args()
@@ -184,6 +187,12 @@ def main():
     if args.legs:
         wanted = args.legs.split(',')
         legs = [leg for leg in legs if leg['name'] in wanted]
+    # Run the whole list of legs `repeat` times, numbering each round.
+    repeat = args.repeat or course.get('repeat', 1)
+    if repeat > 1:
+        legs = [dict(leg, name=f'{leg["name"]}_{i + 1}') for i in range(repeat) for leg in legs]
+    # Warm-up legs run once first, for example to let SLAM map the lane.
+    legs = course.get('warmup', []) + legs
 
     rclpy.init()
     observer = Observer(args.model)

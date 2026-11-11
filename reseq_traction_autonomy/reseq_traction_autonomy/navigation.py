@@ -3,6 +3,8 @@
 import math
 import time
 
+import cv2
+import numpy as np
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import PoseStamped
 from nav2_msgs.action import BackUp, NavigateToPose
@@ -10,6 +12,18 @@ from rclpy.action import ActionClient
 from rclpy.duration import Duration
 
 from .ros_interface import RosInterface
+
+_qr_detector = cv2.QRCodeDetector()
+
+
+def read_qr(jpeg):
+    """Return the text of the QR code in a JPEG image, or an empty string."""
+    # Decoding runs on the robot, as the league rules require.
+    image = cv2.imdecode(np.frombuffer(jpeg, np.uint8), cv2.IMREAD_GRAYSCALE)
+    if image is None:
+        return ''
+    text, _, _ = _qr_detector.detectAndDecode(image)
+    return text
 
 
 class Navigation(RosInterface):
@@ -19,6 +33,7 @@ class Navigation(RosInterface):
         self.backing_up = False
         self.subgoal_sent = 0.0
         self.unreachable_predictions = 0
+        self.qr_deadline = None
 
     def _dispatch(self, client, goal, on_finished, on_rejected, on_feedback=None):
         """Send an action goal for the active task. Replies from older goals are ignored."""
@@ -88,11 +103,15 @@ class Navigation(RosInterface):
         task = self.tasks.active
         succeeded = status == GoalStatus.STATUS_SUCCEEDED
         if task.kind == 'metric':
-            if succeeded:
+            if not succeeded:
+                self._finish('failed', f'Nav2 ended with status {status}')
+            elif task.arguments.get('zone_qr'):
+                # Arrived. Succeed only once the camera reads the zone's QR code.
+                self.qr_deadline = time.monotonic() + self.cfg['zone_qr_timeout_s']
+                self._event('reading_zone_qr', {'expected': task.arguments['zone_qr']})
+            else:
                 reason = 'Nav2 reported success; position not independently measured'
                 self._finish('succeeded', reason)
-            else:
-                self._finish('failed', f'Nav2 ended with status {status}')
             return
         task.subgoal = None
         self.next_prediction = 0
@@ -103,6 +122,20 @@ class Navigation(RosInterface):
         # Near walls Nav2 often refuses a subgoal; let the model choose again instead of failing.
         self._event('subgoal_failed', {'status': status})
         self._note_unreachable()
+
+    def _check_zone_qr(self):
+        """At the goal, look for the zone's QR code until it is read or time runs out."""
+        if self.qr_deadline is None:
+            return
+        expected = self.tasks.active.arguments['zone_qr']
+        try:
+            text = read_qr(self._observation()['jpeg'])
+        except ValueError:
+            text = ''  # no fresh frame this tick
+        if text == expected:
+            self._finish('succeeded', f'Reached the zone and read its QR code "{text}"')
+        elif time.monotonic() > self.qr_deadline:
+            self._finish('failed', f'Reached the goal but did not read QR code "{expected}"')
 
     def _note_unreachable(self):
         """Back up after a run of predictions the robot cannot follow."""

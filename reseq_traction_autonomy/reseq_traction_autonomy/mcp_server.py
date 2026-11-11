@@ -25,13 +25,21 @@ def observe():
 
 @server.tool(name='traction.navigate_to_pose')
 def navigate_to_pose(
-    x: float, y: float, yaw: float = 0.0, frame: str = 'map', timeout_s: float = 120.0
+    x: float,
+    y: float,
+    yaw: float = 0.0,
+    frame: str = 'map',
+    timeout_s: float = 120.0,
+    zone_qr: str | None = None,
 ) -> dict:
-    """Start a metric Nav2 task. Returns a task ID, not a claim of arrival."""
-    return call(
-        'navigate_to_pose',
-        {'x': x, 'y': y, 'yaw': yaw, 'frame': frame, 'timeout_s': timeout_s},
-    )
+    """Start a metric Nav2 task. Returns a task ID, not a claim of arrival.
+
+    With zone_qr, the task succeeds only if the camera reads that QR text at the goal.
+    """
+    arguments = {'x': x, 'y': y, 'yaw': yaw, 'frame': frame, 'timeout_s': timeout_s}
+    if zone_qr:
+        arguments['zone_qr'] = zone_qr
+    return call('navigate_to_pose', arguments)
 
 
 @server.tool(name='traction.start_visual_navigation')

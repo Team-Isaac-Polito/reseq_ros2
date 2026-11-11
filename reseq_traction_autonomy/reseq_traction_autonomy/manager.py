@@ -47,6 +47,7 @@ class Manager(Navigation):
         self.unreachable_predictions = 0
         self.backing_up = False
         self.camera_lost_since = None
+        self.qr_deadline = None
         future = self.enable_client.call_async(SetBool.Request(data=True))
         task_id, generation = task.id, self.tasks.generation
 
@@ -302,7 +303,8 @@ class Manager(Navigation):
         if problems:
             self._finish('failed', ', '.join(problems))
             return
-        if task.kind != 'visual':
+        if task.kind == 'metric':
+            self._check_zone_qr()
             return
         try:
             if self._in_evaluation_region(task):
@@ -351,10 +353,15 @@ class Manager(Navigation):
             self._event('state', state)
             self.last_state_log = time.monotonic()
 
-    def tool_navigate_to_pose(self, x, y, yaw=0.0, frame='map', timeout_s=120.0):
+    def tool_navigate_to_pose(
+        self, x, y, yaw=0.0, frame='map', timeout_s=120.0, zone_qr=None
+    ):
         x, y, yaw = finite(x, 'x'), finite(y, 'y'), finite(yaw, 'yaw')
+        if zone_qr is not None and (not isinstance(zone_qr, str) or not zone_qr):
+            raise ValueError('zone_qr must be the non-empty text of the QR code')
         self._validate_goal(x, y, yaw, frame)
-        task = self._start('metric', {'x': x, 'y': y, 'yaw': yaw, 'frame': frame}, timeout_s)
+        arguments = {'x': x, 'y': y, 'yaw': yaw, 'frame': frame, 'zone_qr': zone_qr}
+        task = self._start('metric', arguments, timeout_s)
         try:
             self._send_goal(x, y, yaw, frame)
         except Exception as exc:

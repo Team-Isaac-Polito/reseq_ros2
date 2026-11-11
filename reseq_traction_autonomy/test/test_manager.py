@@ -2,6 +2,8 @@ import math
 import time
 from types import SimpleNamespace
 
+import cv2
+import numpy as np
 import pytest
 
 pytest.importorskip('rclpy')
@@ -11,7 +13,7 @@ from std_msgs.msg import Bool
 
 from reseq_traction_autonomy.core import Tasks
 from reseq_traction_autonomy.manager import Manager
-from reseq_traction_autonomy.navigation import Navigation
+from reseq_traction_autonomy.navigation import Navigation, read_qr
 from reseq_traction_autonomy.models import foresight_waypoints
 from reseq_traction_autonomy.ros_interface import RosInterface
 
@@ -232,3 +234,51 @@ def test_failed_subgoal_continues_a_visual_task_but_fails_a_metric_task():
         if kind == 'visual':
             assert events == ['subgoal_failed', 'unreachable']
             assert node.next_prediction == 0
+
+
+def zone_task(deadline):
+    """A metric task that has arrived and is waiting to read its zone QR code."""
+    node, _ = manager()
+    node.cfg = {'zone_qr_timeout_s': 3.0}
+    node._observation = lambda: {'jpeg': b''}
+    node.qr_deadline = deadline
+    task = node.tasks.start('metric', {'zone_qr': 'END'}, 20)
+    return node, task
+
+
+def test_arriving_with_a_zone_qr_waits_for_the_code_before_finishing():
+    node, task = zone_task(None)
+    Navigation._goal_finished(node, GoalStatus.STATUS_SUCCEEDED)
+    assert task.status == 'running'
+    assert node.qr_deadline is not None
+
+
+@pytest.mark.parametrize(
+    'text, deadline, expected',
+    [('END', math.inf, 'succeeded'), ('', math.inf, 'running'), ('', 0.0, 'failed')],
+)
+def test_zone_qr_check_succeeds_on_the_right_text_and_fails_after_timeout(
+    monkeypatch, text, deadline, expected
+):
+    monkeypatch.setattr('reseq_traction_autonomy.navigation.read_qr', lambda jpeg: text)
+    node, task = zone_task(deadline)
+    Navigation._check_zone_qr(node)
+    assert task.status == expected
+
+
+def jpeg_of(image):
+    _, encoded = cv2.imencode('.jpg', image)
+    return encoded.tobytes()
+
+
+def test_read_qr_returns_the_code_text():
+    modules = cv2.QRCodeEncoder.create().encode('RESEQ END ZONE')
+    image = cv2.resize(modules, (300, 300), interpolation=cv2.INTER_NEAREST)
+    image = cv2.copyMakeBorder(image, 40, 40, 40, 40, cv2.BORDER_CONSTANT, value=255)
+    assert read_qr(jpeg_of(image)) == 'RESEQ END ZONE'
+
+
+def test_read_qr_returns_empty_text_without_a_code():
+    blank = np.full((240, 320), 200, np.uint8)
+    assert read_qr(jpeg_of(blank)) == ''
+    assert read_qr(b'not a jpeg') == ''

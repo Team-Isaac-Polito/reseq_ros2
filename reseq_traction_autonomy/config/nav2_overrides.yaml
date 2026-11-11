@@ -1,6 +1,12 @@
 # Applied on top of reseq_ros2/config/nav2_params.yaml by gazebo.launch.py.
 # Only the keys that differ are listed; the shared file stays unchanged.
 
+# The behaviour tree gave the planner 20 ms to accept a goal. Under simulation
+# load it often took longer, and Nav2 aborted the goal at once.
+bt_navigator:
+  ros__parameters:
+    default_server_timeout: 200
+
 # The rear modules follow the head's past path (FTL), so the body answers a steering
 # change only after it has driven about one module length. Steer gently and never
 # reverse: driving backwards makes the tail the head and resets that path history.
