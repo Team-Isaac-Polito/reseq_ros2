@@ -206,49 +206,21 @@
 #   ]
 # }
 
-# ── Arm velocity states — MK2 MOD1 (0x8X) ───────────────────────────────────
+# ── Robotic Arm States — MK2 MOD1 (0x8X) ───────────────────────────────────
 
-# - {
-#   msg_id: 0x80, # Arm J1a/J1b velocity — Float×2, rad/s
-#   modules: "only_first",
-#   length: 8,
-#   fields: [
-#     { name: "base_pitch_arm_joint", mode: "velocity" },
-#     { name: "base_roll_arm_joint",  mode: "velocity", offset: 4 },
-#   ]
-# }
-# - {
-#   msg_id: 0x81, # Arm J2 velocity — Float, rad/s
-#   modules: "only_first",
-#   length: 4,
-#   fields: [
-#     { name: "elbow_pitch_arm_joint", mode: "velocity" },
-#   ]
-# }
-# - {
-#   msg_id: 0x82, # Arm J3 velocity — Float, rad/s
-#   modules: "only_first",
-#   length: 4,
-#   fields: [
-#     { name: "forearm_roll_arm_joint", mode: "velocity" },
-#   ]
-# }
-# - {
-#   msg_id: 0x83, # Arm J4 velocity — Float, rad/s
-#   modules: "only_first",
-#   length: 4,
-#   fields: [
-#     { name: "wrist_pitch_arm_joint", mode: "velocity", scale: -1.0 },
-#   ]
-# }
-# - {
-#   msg_id: 0x84, # Arm J5 velocity — Float, rad/s
-#   modules: "only_first",
-#   length: 4,
-#   fields: [
-#     { name: "wrist_roll_arm_joint", mode: "velocity", scale: -1.0 },
-#   ]
-# }
+- {
+  msg_id: 0x84, # Arm J1a/J1b/J2/J3/J4/J5 position feedback — Float×6, rad
+  modules: "only_first",
+  length: 24,
+  fields: [
+    { name: "base_pitch_arm_joint", mode: "position", scale: 1.0 },
+    { name: "base_roll_arm_joint", mode: "position", offset: 4, scale: 1.0 },
+    { name: "elbow_pitch_arm_joint", mode: "position", offset: 8, scale: 1.0 },
+    { name: "forearm_roll_arm_joint", mode: "position", offset: 12, scale: 1.0 },
+    { name: "wrist_pitch_arm_joint", mode: "position", offset: 16, scale: 1.0 },
+    { name: "wrist_roll_arm_joint", mode: "position", offset: 20, scale: 1.0 }
+  ]
+}
 - {
   msg_id: 0x86, # Arm J1a/J1b/J2/J3/J4/J5 velocity setpoint — Float×6, rad/s
   modules: "only_first",
