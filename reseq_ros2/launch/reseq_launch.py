@@ -64,6 +64,7 @@ def launch_setup(context, *args, **kwargs):
                 'config_file': config_filename,
                 'log_level': log_level,
                 'use_sim_time': use_sim_time,
+                'passive_yaw': passive_yaw,
             }.items(),
         )
     )

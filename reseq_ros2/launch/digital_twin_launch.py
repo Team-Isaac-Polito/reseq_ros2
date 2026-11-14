@@ -166,7 +166,7 @@ def launch_setup(context, *args, **kwargs):
     for i in range(num_modules):
         body_spawners.append(_spawner(f'diff_controller{i + 1}', external_log_level))
 
-    if launch_yaw_controllers:
+    if launch_yaw_controllers and not passive_yaw:
         for i in range(num_modules - 1):
             body_spawners.append(_spawner(f'yaw_controller{i + 2}', external_log_level))
 

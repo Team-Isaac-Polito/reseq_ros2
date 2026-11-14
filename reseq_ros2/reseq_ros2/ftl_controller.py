@@ -2,7 +2,7 @@ import time as walltime
 import traceback
 from bisect import bisect_left
 from collections import deque
-from math import atan2, cos, pi, sin
+from math import atan2, cos, isfinite, pi, sin
 
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped, Vector3
@@ -53,9 +53,12 @@ class FtlController(Node):
         self.n_mod = len(self.modules)
         self.n_joints = self.n_mod - 1
         self.module_spacing = self.a + self.b
+        self.passive_yaw = self.declare_parameter('passive_yaw', False).value
 
-        # Actual yaw angles from joint_states (for monitoring)
+        # Module 1 has no incoming yaw joint; module N's yaw is index N-1.
         self.yaw_angles = [0.0] * self.n_mod
+        self.yaw_feedback_at = [None] * self.n_mod
+        self.last_feedback_warning = 0.0
 
         # Follow-the-leader path tracking
         # Head heading tracked via dead-reckoning from cmd_vel
@@ -94,7 +97,6 @@ class FtlController(Node):
         # subscribe to remote (parsed by teleop_twist_joy)
         self.create_subscription(Twist, '/cmd_vel', self.remote_callback, 10)
 
-        self.latest_feedback = None
         self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1)
 
         self.controller_pubs = []
@@ -222,6 +224,22 @@ class FtlController(Node):
             self.get_logger().debug('FTL controller node is disabled, ignoring command')
             return
 
+        if self.passive_yaw:
+            now = walltime.monotonic()
+            if any(
+                stamp is None or now - stamp > 0.5
+                for stamp in self.yaw_feedback_at[1:]
+            ):
+                # Never propagate with assumed joint angles on a passive robot.
+                for pub in self.controller_pubs:
+                    pub.publish(TwistStamped())
+                if now - self.last_feedback_warning > 2.0:
+                    self.get_logger().warning(
+                        'Passive yaw feedback missing or stale; stopping traction'
+                    )
+                    self.last_feedback_warning = now
+                return
+
         # extract information from ROS Twist message
         linear_vel = msg.linear.x
         angular_vel = msg.angular.z
@@ -234,7 +252,7 @@ class FtlController(Node):
                 last_lag_dist = self.head_distance - self.n_joints * self.module_spacing
                 self._bwd_head_theta = self._interp_heading(last_lag_dist)
 
-                # Reconstruct the backward buffer from the current joint commands
+                # Reconstruct the backward buffer from the current joint angles
                 self._bwd_distance = 0.0
                 self._bwd_dist.clear()
                 self._bwd_heading.clear()
@@ -243,7 +261,7 @@ class FtlController(Node):
                 for j in range(self.n_joints + 1):
                     entries_bwd.append((-j * self.module_spacing, cumulative_bwd))
                     if j < self.n_joints:
-                        cumulative_bwd += self.yaw_commands[self.n_joints - 1 - j]
+                        cumulative_bwd += self._joint_yaw(self.n_joints - 1 - j)
 
                 # Append in ascending distance order
                 for d, h in reversed(entries_bwd):
@@ -258,7 +276,7 @@ class FtlController(Node):
                         first_lag_dist, self._bwd_dist, self._bwd_heading
                     )
 
-                # Reconstruct the forward path buffer from the current joint commands.
+                # Reconstruct the forward path buffer from the current joint angles.
                 self._dist.clear()
                 self._heading.clear()
                 entries = []
@@ -266,7 +284,7 @@ class FtlController(Node):
                 for j in range(self.n_joints + 1):
                     entries.append((self.head_distance - j * self.module_spacing, cumulative_h))
                     if j < self.n_joints:
-                        cumulative_h -= self.yaw_commands[j]
+                        cumulative_h -= self._joint_yaw(j)
 
                 # Append in ascending distance order
                 for d, h in reversed(entries):
@@ -279,8 +297,6 @@ class FtlController(Node):
         dt = self._compute_dt()
         if dt <= 0:
             return
-
-        self.update_yaw_angles()
 
         abs_v = abs(linear_vel)
         abs_w = abs(angular_vel)
@@ -389,9 +405,10 @@ class FtlController(Node):
                 delta = max(-max_delta, min(max_delta, delta))
                 self.yaw_commands[cmd_idx] += delta
 
-                yaw_msg = Float64MultiArray()
-                yaw_msg.data = [self.yaw_commands[cmd_idx]]
-                self.yaw_pubs[cmd_idx].publish(yaw_msg)
+                if not self.passive_yaw:
+                    yaw_msg = Float64MultiArray()
+                    yaw_msg.data = [self.yaw_commands[cmd_idx]]
+                    self.yaw_pubs[cmd_idx].publish(yaw_msg)
 
         # Keep pitch command publishing available during drive updates too.
         self._publish_pitch_commands()
@@ -421,7 +438,7 @@ class FtlController(Node):
                 if 0 <= joint_idx < self.n_joints:
                     # Kinematic model uses heading change (positive = left turn)
                     # yaw_commands stores URDF angle (negative = left turn)
-                    yaw_angle = -sign * self.yaw_commands[joint_idx]
+                    yaw_angle = -sign * self._joint_yaw(joint_idx)
                 else:
                     yaw_angle = 0.0
 
@@ -488,19 +505,28 @@ class FtlController(Node):
 
         return linear_out, angular_out
 
-    # update the latest joint states
-    def joint_state_callback(self, msg):
-        self.latest_feedback = msg
+    def _joint_yaw(self, joint_idx):
+        """Use measured yaw for passive joints; preserve active-yaw behavior."""
+        if self.passive_yaw:
+            return self.yaw_angles[joint_idx + 1]
+        return self.yaw_commands[joint_idx]
 
-    # update yaw angles from the latest joint states
-    def update_yaw_angles(self):
-        if self.latest_feedback is None:
-            return
-        for i in range(self.n_mod):
+    def joint_state_callback(self, msg):
+        now = walltime.monotonic()
+        for i in range(1, self.n_mod):
             joint_name = f'mod{i + 1}__yaw_joint'
-            if joint_name in self.latest_feedback.name:
-                idx = self.latest_feedback.name.index(joint_name)
-                self.yaw_angles[i] = self.latest_feedback.position[idx]
+            if joint_name not in msg.name:
+                continue
+            idx = msg.name.index(joint_name)
+            if idx >= len(msg.position):
+                continue
+            angle = msg.position[idx]
+            # Firmware's failed AS5048B read reports -1000 degrees; reject it.
+            if isfinite(angle) and abs(angle) <= YAW_LIMIT + 0.1:
+                self.yaw_angles[i] = angle
+                self.yaw_feedback_at[i] = now
+            else:
+                self.yaw_feedback_at[i] = None
 
 
 def main(args=None):

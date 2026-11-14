@@ -30,6 +30,7 @@ def launch_setup(context, *args, **kwargs):
         context
     )  # it's a string either 'true' or 'false'
     use_sim_time = True if use_sim_time == 'true' else False
+    passive_yaw = LaunchConfiguration('passive_yaw').perform(context) == 'true'
 
     # Parse the config file
     config = parse_config(f'{config_path}/{version}/{config_filename}')
@@ -46,6 +47,7 @@ def launch_setup(context, *args, **kwargs):
                     'b': config['ftl_controller_consts']['b'],
                     'modules': addresses,
                     'use_sim_time': use_sim_time,
+                    'passive_yaw': passive_yaw,
                 }
             ],
             arguments=['--ros-args', '--log-level', log_level],
@@ -113,6 +115,7 @@ def generate_launch_description():
             DeclareLaunchArgument('version', default_value='mk1', choices=['mk1', 'mk2']),
             DeclareLaunchArgument('config_file', default_value=default_filename),
             DeclareLaunchArgument('log_level', default_value='info'),
+            DeclareLaunchArgument('passive_yaw', default_value='false'),
             DeclareLaunchArgument(
                 'use_sim_time',
                 default_value='false',
