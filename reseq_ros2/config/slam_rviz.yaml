@@ -119,7 +119,7 @@ Visualization Manager:
         Reliability Policy: Best Effort
       Size (m): 0.05
       Color Transformer: FlatColor
-      Color: 255; 0; 0
+      Color: 0; 255; 0
       Style: Points
 
     - Class: rviz_default_plugins/RobotModel
@@ -136,7 +136,7 @@ Visualization Manager:
     - Class: rviz_default_plugins/PointCloud2
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Name: Point Cloud Map
       Position Transformer: XYZ
       Size (m): 0.03
@@ -145,9 +145,9 @@ Visualization Manager:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Reliable
+        Reliability Policy: Best Effort
         Value: /ply_map/points
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/Image
       Enabled: true
       Name: RGB Camera

@@ -79,9 +79,8 @@ class FtlController(Node):
 
         # Commanded yaw angles per joint (stores URDF joint angles)
         self.yaw_commands = [0.0] * self.n_joints
+        self.yaw_targets = [0.0] * self.n_joints
         self.joint_vel_limit = self.declare_parameter('joint_vel_limit', 3.14).get_parameter_value().double_value
-
-        # Smoothness: per-joint blend between FTL angle and previous joint's command.
         self.smoothness = self.declare_parameter('smoothness', 0.6).get_parameter_value().double_value
 
         # Track previous sign to detect direction changes and flush the path buffer
@@ -267,12 +266,14 @@ class FtlController(Node):
                 for j in range(self.n_joints + 1):
                     entries.append((self.head_distance - j * self.module_spacing, cumulative_h))
                     if j < self.n_joints:
-                        cumulative_h += self.yaw_commands[j]
+                        cumulative_h -= self.yaw_commands[j]
 
                 # Append in ascending distance order
                 for d, h in reversed(entries):
                     self._dist.append(d)
                     self._heading.append(h)
+            # Keep target filtering continuous across a direction change.
+            self.yaw_targets = self.yaw_commands.copy()
             self._prev_sign = sign
 
         dt = self._compute_dt()
@@ -323,10 +324,12 @@ class FtlController(Node):
                     self._bwd_dist.popleft()
                     self._bwd_heading.popleft()
 
-            # Compute joint angles: FTL with per-joint cascade blending.
+            # Compute the spatial FTL angles first. Smoothing must operate on
+            # this snapshot, not on actuator commands.
+            ftl_angles = []
             for j in range(self.n_joints):
                 # Compute FTL angle from path buffer
-                if is_moving:
+                if is_moving or is_rotating:
                     if sign == 1:
                         # Forward: followers lag behind (lower accumulated distance).
                         front_dist = self.head_distance - j * self.module_spacing
@@ -347,34 +350,42 @@ class FtlController(Node):
                     if sign == 1:
                         ftl_angle = -ftl_angle
                     ftl_angle = max(-YAW_LIMIT, min(YAW_LIMIT, ftl_angle))
-                else:
-                    ftl_angle = (1.0 if angular_vel > 0 else -1.0) * YAW_LIMIT
 
-                # In backward mode, joint j from the last module's perspective maps to
-                # physical joint in the yaw_commands array.
+                ftl_angles.append(ftl_angle)
+
+            # Apply a one-joint spatial preview to the FTL snapshot.
+            for j, ftl_angle in enumerate(ftl_angles):
                 cmd_idx = j if sign == 1 else (self.n_joints - 1 - j)
-
-                # Per-joint blend: front joint = pure FTL, rear joints blend with previous
-                if j == 0:
+                if j == 0 or not is_moving:
                     target = ftl_angle
                 else:
-                    # blend_ratio increases with joint index
-                    if self.n_joints > 1:
-                        blend_ratio = self.smoothness * j / (self.n_joints - 1)
+                    blend_ratio = self.smoothness
+                    if abs(ftl_angle) < 1e-6:
+                        target = 0.0
                     else:
-                        blend_ratio = 0.0
-                    # Previous joint's command (already rate-limited)
-                    if sign == 1:
-                        prev_cmd = self.yaw_commands[cmd_idx - 1]
-                    else:
-                        prev_cmd = self.yaw_commands[cmd_idx + 1]
-                    target = (1.0 - blend_ratio) * ftl_angle + blend_ratio * prev_cmd
+                        previous_ftl_angle = ftl_angles[j - 1]
+                        target = (
+                            (1.0 - blend_ratio) * ftl_angle
+                            + blend_ratio * previous_ftl_angle
+                        )
 
                 target = max(-YAW_LIMIT, min(YAW_LIMIT, target))
 
+                # Limit target motion by distance travelled.
+                if self.module_spacing > 0.0:
+                    path_step = abs_v * dt
+                    if not is_moving and is_rotating:
+                        path_step = abs_w * self.module_spacing * 2.0 * dt
+                    target_alpha = min(1.0, path_step / self.module_spacing)
+                else:
+                    target_alpha = 1.0
+                self.yaw_targets[cmd_idx] += target_alpha * (
+                    target - self.yaw_targets[cmd_idx]
+                )
+
                 # Rate-limit the command change to match physical joint velocity.
                 max_delta = self.joint_vel_limit * dt
-                delta = target - self.yaw_commands[cmd_idx]
+                delta = self.yaw_targets[cmd_idx] - self.yaw_commands[cmd_idx]
                 delta = max(-max_delta, min(max_delta, delta))
                 self.yaw_commands[cmd_idx] += delta
 

@@ -64,6 +64,15 @@ def generate_launch_description():
         remappings=[
             ('/map', '/slam_map'),
             ('/map_metadata', '/slam_map_metadata'),
+            # IMPORTANT (DO NOT REMOVE OR CHANGE):
+            # Node-scoped remap 'slam_toolbox:/tf' -> '/slam_tf' redirects ONLY
+            # slam_toolbox's TransformBroadcaster (which publishes raw step-wise
+            # map->odom transforms) to '/slam_tf', while leaving its internal
+            # TransformListener node ('transform_listener_impl_*') subscribed to '/tf'.
+            # 'map_republisher' subscribes to '/slam_tf', applies an SE(2) EMA +
+            # slew-rate filter to eliminate discrete scan-match jumps (jitter),
+            # and republishes the smoothed map->odom transform to '/tf'.
+            ('slam_toolbox:/tf', '/slam_tf'),
         ],
         parameters=[
             LaunchConfiguration('slam_params_file'),
