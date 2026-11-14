@@ -4,11 +4,15 @@
 
 ekf_filter_node:
   ros__parameters:
-    frequency: 40.0
+    # IMPORTANT (DO NOT CHANGE):
+    # Keep frequency at 30.0 Hz (33.3 ms period > 30 ms Gazebo 3-tick spikes to avoid
+    # "Failed to meet update rate! Took 0.030s" errors) and transform_time_offset at 0.0.
+    # Negative offsets cause slam_toolbox's tf2::MessageFilter to time out and drop /scan.
+    frequency: 30.0
     sensor_timeout: 0.5
     two_d_mode: true          # Planar robot, suppress z/roll/pitch
     transform_time_offset: 0.0
-    transform_timeout: 0.2
+    transform_timeout: 0.05
     print_diagnostics: true
     debug: false
 
@@ -26,7 +30,7 @@ ekf_filter_node:
                    false, false, false,   # vroll, vpitch, vyaw (disabled: rotation handled purely by IMU gyro)
                    false, false, false]   # ax, ay, az
     odom0_queue_size: 10
-    odom0_nodelay: false
+    odom0_nodelay: true
     odom0_differential: false
     odom0_relative: false
 
@@ -40,10 +44,10 @@ ekf_filter_node:
                   false, false, true,     # vroll, vpitch, vyaw (angular velocity gyro Z)
                   false, false, false]    # ax, ay, az
     imu0_queue_size: 10
-    imu0_nodelay: false
+    imu0_nodelay: true
     imu0_differential: false
     imu0_relative: false
-    imu0_remove_gravitational_acceleration: true
+    imu0_remove_gravitational_acceleration: false
 
     # Process noise covariance (Q matrix)
     # Format: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]

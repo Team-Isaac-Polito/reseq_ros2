@@ -37,21 +37,6 @@ def launch_setup(context, *args, **kwargs):
         ]
     )
 
-    mux_parameters = [
-        LaunchConfiguration('autonomy_params_file'),
-        {'use_sim_time': LaunchConfiguration('use_sim_time')},
-    ]
-    if map_file:
-        mux_parameters.append({'require_recent_map': False})
-
-    mux_node = Node(
-        package='reseq_ros2',
-        executable='cmd_vel_mux',
-        name='cmd_vel_mux',
-        output='screen',
-        parameters=mux_parameters,
-    )
-
     explorer_node = Node(
         package='reseq_ros2',
         executable='autonomy_coordinator',
@@ -118,7 +103,7 @@ def launch_setup(context, *args, **kwargs):
     else:
         launch_actions.append(nav2_launch)
 
-    launch_actions.extend([mux_node, explorer_node])
+    launch_actions.append(explorer_node)
     return launch_actions
 
 
