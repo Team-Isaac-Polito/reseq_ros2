@@ -363,7 +363,7 @@ class FtlController(Node):
                             rear_dist, self._bwd_dist, self._bwd_heading
                         )
                     ftl_angle = atan2(sin(rear_heading - front_heading), cos(rear_heading - front_heading))
-                    if sign == 1:
+                    if sign == -1:
                         ftl_angle = -ftl_angle
                     ftl_angle = max(-YAW_LIMIT, min(YAW_LIMIT, ftl_angle))
 
