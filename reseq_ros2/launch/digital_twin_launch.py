@@ -138,7 +138,8 @@ def launch_setup(context, *args, **kwargs):
             {
                 'robot_description': robot_description,
                 'use_sim_time': sim_branch_use_sim_time == 'true',
-                'publish_frequency': 50.0,
+                # Match joint_state_broadcaster rate (100 Hz) to eliminate chassis TF lag
+                'publish_frequency': 100.0,
             }
         ],
         arguments=['--ros-args', '--log-level', external_log_level],

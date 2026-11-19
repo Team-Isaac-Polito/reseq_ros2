@@ -64,6 +64,8 @@ def generate_launch_description():
         remappings=[
             ('/map', '/slam_map'),
             ('/map_metadata', '/slam_map_metadata'),
+            # Redirect raw map->odom TF to map_republisher for smoothing
+            ('slam_toolbox:/tf', '/slam_tf'),
         ],
         parameters=[
             LaunchConfiguration('slam_params_file'),
