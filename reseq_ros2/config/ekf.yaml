@@ -4,10 +4,7 @@
 
 ekf_filter_node:
   ros__parameters:
-    # IMPORTANT (DO NOT CHANGE):
-    # Keep frequency at 30.0 Hz (33.3 ms period > 30 ms Gazebo 3-tick spikes to avoid
-    # "Failed to meet update rate! Took 0.030s" errors) and transform_time_offset at 0.0.
-    # Negative offsets cause slam_toolbox's tf2::MessageFilter to time out and drop /scan.
+    # 30 Hz prevents Gazebo update rate warnings and ensures smooth TF for SLAM
     frequency: 30.0
     sensor_timeout: 0.5
     two_d_mode: true          # Planar robot, suppress z/roll/pitch

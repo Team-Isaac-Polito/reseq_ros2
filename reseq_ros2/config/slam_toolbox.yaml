@@ -16,12 +16,6 @@ slam_toolbox:
     mode: mapping  # mapping or localization
 
     # Process params
-    # NOTE (DO NOT CHANGE WITHOUT CARE):
-    # - slam_toolbox's raw map->odom TF is routed to /slam_tf in slam_launch.py and
-    #   smoothed into /tf by map_republisher.py. Keep transform_publish_period: 0.02 (50 Hz).
-    # - Do NOT lower minimum_travel_distance to 0.01 (causes pose-graph node explosion).
-    # - Keep restamp_tf: true and transform_timeout: 0.1 so tf2::MessageFilter does not
-    #   drop scans while avoiding 500 ms future-dated TF cache jumps.
     debug_logging: false
     throttle_scans: 1 
     transform_publish_period: 0.02

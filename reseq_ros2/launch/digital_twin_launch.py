@@ -138,9 +138,7 @@ def launch_setup(context, *args, **kwargs):
             {
                 'robot_description': robot_description,
                 'use_sim_time': sim_branch_use_sim_time == 'true',
-                # IMPORTANT: Keep at 100.0 Hz to match joint_state_broadcaster (100 Hz).
-                # Default 20 Hz causes 50-200 ms TF lag on chassis2_link/chassis3_link
-                # relative to base_link in RViz.
+                # Match joint_state_broadcaster rate (100 Hz) to eliminate chassis TF lag
                 'publish_frequency': 100.0,
             }
         ],
