@@ -436,14 +436,14 @@ class FtlController(Node):
                     joint_idx = mod_id - 1
 
                 if 0 <= joint_idx < self.n_joints:
-                    # Kinematic model uses heading change (positive = left turn)
-                    # yaw_commands stores URDF angle (negative = left turn)
-                    yaw_angle = -sign * self._joint_yaw(joint_idx)
+                    # URDF yaw = rear module heading relative to front module,
+                    # regardless of the direction of travel.
+                    joint_yaw = self._joint_yaw(joint_idx)
                 else:
-                    yaw_angle = 0.0
+                    joint_yaw = 0.0
 
                 linear_vel, angular_vel = self.kinematic(
-                    linear_vel, angular_vel, yaw_angle, reverse=reverse
+                    linear_vel, angular_vel, joint_yaw, reverse=reverse
                 )
 
                 self.get_logger().debug(f'Output lin:{linear_vel}, ang:{angular_vel}, sign:{sign}')
@@ -485,24 +485,26 @@ class FtlController(Node):
         h1 = heading_buf[idx]
         return h0 + t * (h1 - h0)
 
-    def kinematic(self, linear_vel, angular_vel, yaw_angle, reverse=False):
-        """Compute the next module velocity in the selected traversal direction."""
-        if reverse:
-            return (
-                linear_vel * cos(yaw_angle)
-                + self.b * angular_vel * sin(yaw_angle),
-                (
-                    linear_vel * sin(yaw_angle)
-                    - self.b * angular_vel * cos(yaw_angle)
-                )
-                / self.a,
-            )
+    def kinematic(self, linear_vel, angular_vel, joint_yaw, reverse=False):
+        """Propagate a module's twist through the shared yaw hinge.
 
-        linear_out = linear_vel * cos(yaw_angle) + self.a * angular_vel * sin(yaw_angle)
+        The URDF yaw is the rear module's orientation relative to the front.
+        For forward motion the source uses its rear hinge (b) and the follower
+        its front hinge (a); for reverse motion these distances swap roles.
+        The hinge-point velocity must agree in both module frames.
+        """
+        source_arm = self.a if reverse else self.b
+        follower_arm = self.b if reverse else self.a
+        yaw_angle = -joint_yaw  # Transform from source to follower frame.
+
+        linear_out = (
+            linear_vel * cos(yaw_angle)
+            + source_arm * angular_vel * sin(yaw_angle)
+        )
         angular_out = (
-            linear_vel * sin(yaw_angle) - self.a * angular_vel * cos(yaw_angle)
-        ) / self.b
-
+            linear_vel * sin(yaw_angle)
+            - source_arm * angular_vel * cos(yaw_angle)
+        ) / follower_arm
         return linear_out, angular_out
 
     def _joint_yaw(self, joint_idx):
