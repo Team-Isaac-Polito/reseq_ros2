@@ -105,7 +105,7 @@ CMD ["/bin/bash", "-lc", "\
   export GZ_SIM_RESOURCE_PATH=/ros2_ws/src:/ros2_ws/src/reseq_sim/arena:/ros2_ws/install/reseq_sim/share/reseq_sim/arena; \
   python3 -m http.server 8080 --directory /ros2_ws/ros_app/build/web & \
   if [ \"$LAUNCH_RVIZ\" = \"true\" ]; then \
-    rviz2 -d /ros2_ws/src/reseq_ros2/config/slam_rviz.yaml & \
+    rviz2 -d /ros2_ws/src/reseq_ros2/config/slam_rviz.yaml --ros-args -p use_sim_time:=true & \
   fi; \
   MAP_ARG=; \
   if [ -n \"$GAZEBO_MAP_FILE\" ]; then MAP_ARG=\"map_file:=$GAZEBO_MAP_FILE\"; fi; \

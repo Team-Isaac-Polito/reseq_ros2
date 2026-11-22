@@ -119,24 +119,13 @@ Visualization Manager:
         Reliability Policy: Best Effort
       Size (m): 0.05
       Color Transformer: FlatColor
-      Color: 255; 0; 0
+      Color: 0; 255; 0
       Style: Points
 
-    - Class: rviz_default_plugins/RobotModel
-      Name: RobotModel
-      Enabled: true
-      Value: true
-      Description Source: Topic
-      Description Topic:
-        Value: /robot_description
-        Depth: 5
-        Durability Policy: Transient Local
-        History Policy: Keep Last
-        Reliability Policy: Reliable
     - Class: rviz_default_plugins/PointCloud2
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Name: Point Cloud Map
       Position Transformer: XYZ
       Size (m): 0.03
@@ -145,9 +134,9 @@ Visualization Manager:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Reliable
+        Reliability Policy: Best Effort
         Value: /ply_map/points
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/Image
       Enabled: true
       Name: RGB Camera
@@ -157,6 +146,43 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /realsense/color/image_raw
+      Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Name: Thermal Camera
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /thermal/image_visualization
+      Value: true
+    - Class: rviz_default_plugins/PointCloud2
+      Channel Name: intensity
+      Autocompute Intensity Bounds: true
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Name: Thermal Points (Map)
+      Position Transformer: XYZ
+      Size (m): 0.04
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /thermal/points
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Thermal Hotspot Markers
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /thermal/markers
       Value: true
 
   Views:

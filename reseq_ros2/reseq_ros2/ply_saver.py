@@ -77,17 +77,39 @@ def _tf_to_Rt(tf_stamped):
     return R, t
 
 
-def _write_ply_rgb(path: Path, pts: np.ndarray, colors: np.ndarray) -> int:
-    """Write ASCII PLY with XYZ+RGB. Returns vertex count."""
+def _temp_to_rgb(temp: float) -> tuple[int, int, int]:
+    """Map Celsius temperature (15 to 45 °C) to RGB tuple."""
+    if not np.isfinite(temp):
+        return 128, 128, 128
+    norm = float(np.clip((temp - 15.0) / 30.0, 0.0, 1.0))
+    if norm < 0.5:
+        r = 0
+        g = int(norm * 2.0 * 255.0)
+        b = int((1.0 - norm * 2.0) * 255.0)
+    else:
+        r = int((norm - 0.5) * 2.0 * 255.0)
+        g = int((1.0 - (norm - 0.5) * 2.0) * 255.0)
+        b = 0
+    return r, g, b
+
+
+def _write_ply_rgb(path: Path, pts: np.ndarray, colors: np.ndarray, temps: np.ndarray | None = None) -> int:
+    """Write ASCII PLY with XYZ + RGB + optional Temperature. Returns vertex count."""
     path.parent.mkdir(parents=True, exist_ok=True)
     n = len(pts)
     with path.open('w') as f:
         f.write(f'ply\nformat ascii 1.0\nelement vertex {n}\n')
         f.write('property float x\nproperty float y\nproperty float z\n')
         f.write('property uchar red\nproperty uchar green\nproperty uchar blue\n')
+        if temps is not None:
+            f.write('property float temperature\n')
         f.write('end_header\n')
-        data = np.column_stack((pts, colors))
-        np.savetxt(f, data, fmt='%.4f %.4f %.4f %d %d %d')
+        if temps is not None:
+            data = np.column_stack((pts, colors, temps))
+            np.savetxt(f, data, fmt='%.4f %.4f %.4f %d %d %d %.2f')
+        else:
+            data = np.column_stack((pts, colors))
+            np.savetxt(f, data, fmt='%.4f %.4f %.4f %d %d %d')
     return n
 
 
@@ -106,10 +128,12 @@ class PlySaver(Node):
         self.declare_parameter('scan_frame_skip', 2)
         self.declare_parameter('scan_max_range', 12.0)
         self.declare_parameter('scan_color_rgb', [255, 210, 0])
+        self.declare_parameter('thermal_points_topic', '/thermal/points')
         self.declare_parameter('wait_for_map', True)
         self.declare_parameter('map_timeout_sec', 30.0)
 
         self._pc_topic = self.get_parameter('pointcloud_topic').get_parameter_value().string_value
+        self._thermal_topic = self.get_parameter('thermal_points_topic').get_parameter_value().string_value
         save_dir = Path(self.get_parameter('save_path').get_parameter_value().string_value)
         interval = self.get_parameter('save_interval').get_parameter_value().double_value
         publish_interval = (
@@ -167,6 +191,12 @@ class PlySaver(Node):
             self._scan_cb,
             scan_qos,
         )
+        self.create_subscription(
+            PointCloud2,
+            self._thermal_topic,
+            self._thermal_cb,
+            pc_qos,
+        )
 
         self._map_pub = self.create_publisher(PointCloud2, self._map_topic, pc_qos)
 
@@ -178,7 +208,7 @@ class PlySaver(Node):
             self._map_wait_timer = self.create_timer(0.5, self._check_map_frame)
 
         self.get_logger().info(
-            f'PlySaver listening on [{self._pc_topic}] and [{self._scan_topic}], '
+            f'PlySaver listening on [{self._pc_topic}], [{self._scan_topic}], [{self._thermal_topic}], '
             f'save every {interval:.0f}s -> {self._ply_path}'
         )
 
@@ -210,7 +240,67 @@ class PlySaver(Node):
         vs = self._voxel_size
         voxel_keys = tuple(np.floor(pts_map[:, i] / vs).astype(np.int64) for i in range(3))
         for k0, k1, k2, c in zip(*voxel_keys, rgb):
-            self._voxel_map[(int(k0), int(k1), int(k2))] = (int(c[0]), int(c[1]), int(c[2]))
+            key = (int(k0), int(k1), int(k2))
+            if key in self._voxel_map:
+                prev_temp = self._voxel_map[key][3]
+                self._voxel_map[key] = (int(c[0]), int(c[1]), int(c[2]), prev_temp)
+            else:
+                self._voxel_map[key] = (int(c[0]), int(c[1]), int(c[2]), float('nan'))
+
+    def _thermal_cb(self, msg: PointCloud2) -> None:
+        """Accumulate temperature measurements from /thermal/points into the voxel map."""
+        if self._wait_for_map and not self._map_frame_exists:
+            return
+
+        try:
+            field_names = [f.name for f in msg.fields]
+            if 'temperature' not in field_names:
+                return
+
+            pts_temp = pc2.read_points_numpy(msg, field_names=['x', 'y', 'z', 'temperature'], skip_nans=True)
+        except Exception:
+            try:
+                raw = np.array(list(pc2.read_points(msg, field_names=('x', 'y', 'z', 'temperature'), skip_nans=True)))
+                if raw.dtype.names:
+                    pts_temp = np.column_stack([raw[k] for k in ('x', 'y', 'z', 'temperature')]).astype(np.float32)
+                else:
+                    pts_temp = raw.astype(np.float32)
+            except Exception as e:
+                self.get_logger().debug(f'Thermal point parse error: {e}')
+                return
+
+        if pts_temp.size == 0:
+            return
+
+        pts = pts_temp[:, :3].astype(np.float64)
+        temps = pts_temp[:, 3].astype(np.float64)
+
+        if msg.header.frame_id != 'map':
+            try:
+                tf_s = self._tf_buffer.lookup_transform(
+                    'map',
+                    msg.header.frame_id,
+                    rclpy.time.Time(),
+                    rclpy.duration.Duration(seconds=0.1),
+                )
+                R, t = _tf_to_Rt(tf_s)
+                pts = (R @ pts.T).T + t
+            except Exception as e:
+                self.get_logger().debug(f'Thermal TF transform failed: {e}')
+                return
+
+        vs = self._voxel_size
+        voxel_keys = tuple(np.floor(pts[:, i] / vs).astype(np.int64) for i in range(3))
+        for k0, k1, k2, t_val in zip(*voxel_keys, temps):
+            key = (int(k0), int(k1), int(k2))
+            t_f = float(t_val)
+            if key in self._voxel_map:
+                r, g, b, prev_t = self._voxel_map[key]
+                new_t = t_f if np.isnan(prev_t) else max(prev_t, t_f)
+                self._voxel_map[key] = (r, g, b, new_t)
+            else:
+                r, g, b = _temp_to_rgb(t_f)
+                self._voxel_map[key] = (r, g, b, t_f)
 
     def _voxel_map_to_pointcloud(self) -> PointCloud2 | None:
         if not self._voxel_map:
@@ -219,7 +309,8 @@ class PlySaver(Node):
         vs = self._voxel_size
         items = list(self._voxel_map.items())
         keys = np.array([k for k, _ in items], dtype=np.int64)
-        colors = np.array([v for _, v in items], dtype=np.uint8)
+        colors = np.array([v[:3] for _, v in items], dtype=np.uint8)
+        temps = np.array([v[3] for _, v in items], dtype=np.float32)
         pts = keys.astype(np.float64) * vs + vs / 2.0
 
         rgb_uint32 = (
@@ -237,9 +328,12 @@ class PlySaver(Node):
             PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
             PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
             PointField(name='rgb', offset=12, datatype=PointField.FLOAT32, count=1),
+            PointField(name='temperature', offset=16, datatype=PointField.FLOAT32, count=1),
         ]
-        cloud_rows = np.column_stack((pts.astype(np.float32), rgb_float.astype(np.float32)))
-        return pc2.create_cloud(header, fields, cloud_rows.tolist())
+        cloud_rows = np.ascontiguousarray(
+            np.column_stack((pts.astype(np.float32), rgb_float, temps)), dtype=np.float32
+        )
+        return pc2.create_cloud(header, fields, cloud_rows)
 
     def _publish_map_cloud(self) -> None:
         cloud_msg = self._voxel_map_to_pointcloud()
@@ -336,12 +430,16 @@ class PlySaver(Node):
         vs = self._voxel_size
         items = list(self._voxel_map.items())
         keys = np.array([k for k, _ in items], dtype=np.int64)
-        colors = np.array([v for _, v in items], dtype=np.uint8)
+        colors = np.array([v[:3] for _, v in items], dtype=np.uint8)
+        temps = np.array([v[3] for _, v in items], dtype=np.float64)
         pts = keys.astype(np.float64) * vs + vs / 2
 
         try:
-            _write_ply_rgb(self._ply_path, pts, colors)
-            self.get_logger().info(f'PlySaver: saved {n} pts -> {self._ply_path.name}')
+            _write_ply_rgb(self._ply_path, pts, colors, temps)
+            n_thermal = int(np.count_nonzero(~np.isnan(temps)))
+            self.get_logger().info(
+                f'PlySaver: saved {n} pts ({n_thermal} with thermal) -> {self._ply_path.name}'
+            )
         except OSError as exc:
             self.get_logger().error(f'PlySaver: save failed: {exc}')
 
