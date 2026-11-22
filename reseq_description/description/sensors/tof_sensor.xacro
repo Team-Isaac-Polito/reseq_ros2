@@ -124,6 +124,7 @@
         <visualize>false</visualize>
         <update_rate>30</update_rate>
         <topic>/tof/up45</topic>
+        <gz_frame_id>${prefix}_up45_link</gz_frame_id>
         <ray>
           <scan>
             <horizontal>
@@ -154,6 +155,7 @@
         <visualize>false</visualize>
         <update_rate>30</update_rate>
         <topic>/tof/front</topic>
+        <gz_frame_id>${prefix}_front_link</gz_frame_id>
         <ray>
           <scan>
             <horizontal>
@@ -184,6 +186,7 @@
         <visualize>false</visualize>
         <update_rate>30</update_rate>
         <topic>/tof/down45</topic>
+        <gz_frame_id>${prefix}_down45_link</gz_frame_id>
         <ray>
           <scan>
             <horizontal>
@@ -214,6 +217,7 @@
         <visualize>false</visualize>
         <update_rate>30</update_rate>
         <topic>/tof/down</topic>
+        <gz_frame_id>${prefix}_down_link</gz_frame_id>
         <ray>
           <scan>
             <horizontal>

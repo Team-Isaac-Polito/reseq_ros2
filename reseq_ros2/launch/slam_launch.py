@@ -131,6 +131,7 @@ def generate_launch_description():
             {
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'pointcloud_topic': '/realsense/depth/color/points',
+                'thermal_points_topic': '/thermal/points',
                 'save_path': LaunchConfiguration('ply_save_path'),
                 'save_interval': 60.0,
                 'voxel_size': 0.05,
@@ -142,6 +143,36 @@ def generate_launch_description():
                 'scan_color_rgb': [255, 210, 0],
                 'wait_for_map': True,
                 'map_timeout_sec': 30.0,
+            }
+        ],
+        condition=IfCondition(
+            PythonExpression(["'", LaunchConfiguration('slam_mode'), "' == 'mapping'"])
+        ),
+    )
+
+    # thermal_pointcloud_fusion: fuses depth pointcloud with thermal data in 'map' frame
+    thermal_fusion_node = Node(
+        package='reseq_ros2',
+        executable='thermal_pointcloud_fusion',
+        name='thermal_pointcloud_fusion',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'target_frame': 'map',
+                'camera_frame': 'cameras_holder_link',
+                'pointcloud_topic': '/realsense/depth/color/points',
+                'thermal_image_topic': '/thermal/image_raw',
+                'thermal_camera_info': '/thermal/camera_info',
+                'publish_fused_cloud_topic': '/thermal/points',
+                'publish_markers_topic': '/thermal/markers',
+                'detections_topic': '/object_detection/detections',
+                'temp_hotspot_threshold': 30.0,
+                'cluster_radius': 0.15,
+                'min_cluster_points': 20,
+                'dedup_distance': 0.25,
+                'min_persistence_hits': 3,
+                'stale_timeout_sec': 1.0,
             }
         ],
         condition=IfCondition(
@@ -199,6 +230,7 @@ def generate_launch_description():
             activate_event,
             map_republisher_node,
             ply_saver_node,
+            thermal_fusion_node,
             geotiff_node,
             shutdown_geotiff,
         ]
