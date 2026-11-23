@@ -10,6 +10,9 @@ import uuid
 
 TERMINAL = {'succeeded', 'cancelled', 'timed_out', 'failed'}
 
+# The longest task: the 15 minutes of a comprehensive maze map.
+MAX_TASK_TIMEOUT_S = 900
+
 # Occupancy grid values: -1 is unknown, 0 is free, 100 is occupied.
 # Cells at or above this value count as obstacles.
 OCCUPIED = 65
@@ -289,8 +292,8 @@ class Tasks:
 
     def start(self, kind, arguments, timeout_s):
         timeout_s = finite(timeout_s, 'timeout_s')
-        if timeout_s < 1 or timeout_s > 600:
-            raise ValueError('timeout_s must be between 1 and 600')
+        if timeout_s < 1 or timeout_s > MAX_TASK_TIMEOUT_S:
+            raise ValueError(f'timeout_s must be between 1 and {MAX_TASK_TIMEOUT_S}')
         if self.active:
             raise ValueError('A task is running; cancel it before starting another')
         task = Task(kind, arguments, timeout_s, self.clock())

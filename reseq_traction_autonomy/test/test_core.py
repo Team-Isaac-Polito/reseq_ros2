@@ -110,6 +110,15 @@ def test_padded_box_grows_the_outline_on_every_side():
         assert corner == pytest.approx(wanted)
 
 
+def test_tasks_may_last_up_to_a_full_maze_mapping_run():
+    tasks = Tasks(clock=lambda: 10)
+    task = tasks.start('explore', {}, 900)
+    assert task.timeout_s == 900
+    tasks.finish('cancelled')
+    with pytest.raises(ValueError):
+        tasks.start('explore', {}, 901)
+
+
 def test_compose_and_inverse_round_trip():
     pose = (1.0, -2.0, 0.7)
     assert compose(pose, inverse(pose)) == pytest.approx((0.0, 0.0, 0.0))
