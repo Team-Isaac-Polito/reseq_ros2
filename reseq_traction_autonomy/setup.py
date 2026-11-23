@@ -21,6 +21,8 @@ setup(
             'traction_mcp = reseq_traction_autonomy.mcp_server:main',
             'traction_tool = reseq_traction_autonomy.client:main',
             'traction_eval = reseq_traction_autonomy.evaluate:main',
+            'traction_replay = reseq_traction_autonomy.replay:main',
+            'traction_explore_check = reseq_traction_autonomy.explore_check:main',
             'cloud_decimator = reseq_traction_autonomy.cloud_decimator:main',
         ]
     },
