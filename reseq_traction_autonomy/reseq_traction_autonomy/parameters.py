@@ -71,13 +71,19 @@ DEFAULTS = {
     'frontier_min_distance_m': 1.0,
     # Frontiers this close to one tried before are skipped.
     'frontier_tried_radius_m': 1.0,
+    # A frontier's viewing pose must leave this much free space around the head,
+    # so the robot is not parked against clutter it cannot back out of.
+    # 0.1 m chosen with traction_explore_check: 0.15 m or more finds no poses in the maze.
+    'frontier_clearance_m': 0.1,
     # How far back from a frontier the robot stands, nearest first.
-    'frontier_standoffs_m': [0.6, 0.9, 1.2, 1.5],
+    'frontier_standoffs_m': [0.6, 0.9, 1.2, 1.5, 1.8, 2.1],
     # A frontier goal is a longer drive; give it this long before a newer prediction wins.
     'frontier_refresh_s': 20.0,
-    # Exploration without a model: give up on a frontier after this long,
-    # and finish once no frontier has been left for this long.
-    'explore_goal_timeout_s': 60.0,
+    # Exploration without a model: give up on a frontier when the remaining distance
+    # has not dropped by explore_progress_m for this long, and finish once no
+    # frontier has been left for explore_done_after_s.
+    'explore_goal_timeout_s': 20.0,
+    'explore_progress_m': 0.2,
     'explore_done_after_s': 10.0,
 
     # Speed limits of the command gate

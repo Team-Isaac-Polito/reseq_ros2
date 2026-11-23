@@ -6,6 +6,7 @@ Visual tasks (model requests and predictions) live in visual.py.
 """
 
 import json
+import math
 from pathlib import Path
 import queue
 import time
@@ -54,6 +55,8 @@ class Manager(VisualNavigation):
         self.tried_frontiers = []
         self.no_frontier_since = None
         self.last_area_update = 0.0
+        self.best_remaining = math.inf
+        self.last_progress = 0.0
         self.backing_up = False
         self.camera_lost_since = None
         self.qr_deadline = None

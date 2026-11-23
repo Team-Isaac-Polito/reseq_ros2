@@ -15,7 +15,7 @@ Usage:
 import argparse
 import math
 
-from .core import Grid
+from .core import Grid, padded_box
 from .explore import UNKNOWN, choose_frontier
 from .parameters import DEFAULTS
 from .replay import straight_footprint, world_grid
@@ -28,6 +28,8 @@ CAMERA_RANGE_M = 3.0
 CAMERA_HALF_FOV_RAD = 0.6
 # The target is an obstacle itself; rays may stop this close to its centre.
 TARGET_RADIUS_M = 0.45
+# A goal with less free space than this around the head counts as tight.
+TIGHT_MARGIN_M = 0.15
 
 
 def blank_copy(grid):
@@ -98,13 +100,19 @@ def free_share(known, truth):
 
 def explore(truth, cfg, target=None, start=(0.0, 0.0, 0.0)):
     """Run exploration and return a list of steps, one dict per chosen frontier."""
-    footprint = straight_footprint(cfg)
+    # Goals are checked with the head, as on the robot.
+    head = straight_footprint(dict(cfg, num_modules=1))
+    roomy = padded_box(head, cfg['frontier_clearance_m'])
+    # A goal is tight when the head has less than this free space around it.
+    tight_check = padded_box(head, TIGHT_MARGIN_M)
     known = blank_copy(truth)
 
     def place(x, y, yaw):
-        if known.pose_free((x, y, yaw), footprint):
-            return x, y, yaw
-        return None
+        if not known.pose_free((x, y, yaw), head):
+            return None
+        if not known.pose_free((x, y, yaw), roomy):
+            return None
+        return x, y, yaw
 
     robot = start
     look(known, truth, robot)
@@ -130,6 +138,7 @@ def explore(truth, cfg, target=None, start=(0.0, 0.0, 0.0)):
             'travelled_m': round(travelled, 1),
             'explored': round(free_share(known, truth), 3),
             'target_seen': target_seen_at is not None,
+            'tight': not truth.pose_free(goal, tight_check),
         })
     return steps, target_seen_at
 
@@ -148,7 +157,8 @@ def main():
     steps, target_seen_at = explore(truth, DEFAULTS, target)
     for step in steps:
         print(f'step {step["step"]:2d}  goal {step["goal"]}  travelled {step["travelled_m"]:5.1f} m'
-              f'  explored {100 * step["explored"]:5.1f}%  target seen {step["target_seen"]}')
+              f'  explored {100 * step["explored"]:5.1f}%  target seen {step["target_seen"]}'
+              f'  tight {step["tight"]}')
     if target is not None:
         print(f'target first seen after step {target_seen_at}')
 

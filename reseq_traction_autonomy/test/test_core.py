@@ -10,6 +10,7 @@ from reseq_traction_autonomy.core import (
     finite_or_none,
     inverse,
     line_pursuit_curvature,
+    padded_box,
     transform_xy,
 )
 
@@ -100,6 +101,13 @@ def test_blocked_ahead_sees_walls_only_inside_its_range():
     assert not grid.blocked_ahead(facing_wall, 0.0, 0.3)
     facing_away = (0.25, 0.5, math.pi)
     assert not grid.blocked_ahead(facing_away, 0.2, 0.4)
+
+
+def test_padded_box_grows_the_outline_on_every_side():
+    box = padded_box([(-0.2, -0.1), (0.5, -0.1), (0.5, 0.1), (-0.2, 0.1)], 0.1)
+    expected = [(-0.3, -0.2), (0.6, -0.2), (0.6, 0.2), (-0.3, 0.2)]
+    for corner, wanted in zip(box, expected):
+        assert corner == pytest.approx(wanted)
 
 
 def test_compose_and_inverse_round_trip():

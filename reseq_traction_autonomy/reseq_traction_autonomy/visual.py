@@ -16,6 +16,7 @@ from tf2_ros import TransformException
 from .models import foresight_waypoints
 from .navigation import Navigation
 from .ros_interface import stamp_seconds
+from .core import padded_box
 from .explore import choose_frontier, free_area
 from .subgoals import FORWARD_ARC, REVERSE_ARC, WAYPOINT, choose_subgoal
 
@@ -208,11 +209,17 @@ class VisualNavigation(Navigation):
         except TransformException:
             return None
 
+        # Keep clear of clutter: a pose squeezed next to obstacles can trap the robot.
+        roomy = padded_box(self.goal_footprint, self.cfg['frontier_clearance_m'])
+
         def place(x, y, yaw):
             try:
-                return self._validate_goal(x, y, yaw, self.map_frame)
+                goal = self._validate_goal(x, y, yaw, self.map_frame)
             except ValueError:
                 return None
+            if not self.grid.pose_free(goal, roomy):
+                return None
+            return goal
 
         goal, frontier = choose_frontier(self.grid, robot, place, self.tried_frontiers, self.cfg)
         if goal is None:
@@ -279,6 +286,18 @@ class VisualNavigation(Navigation):
         elif task.arguments['model'] == 'lightnav' and now >= self.next_frame:
             self._send_history_frame()
 
+    def _making_progress(self, task, now):
+        """True while Nav2 keeps getting closer to the frontier goal.
+
+        A long drive is fine; a goal is given up only when the remaining distance
+        has not dropped by explore_progress_m for explore_goal_timeout_s.
+        """
+        remaining = task.progress.get('distance_remaining_m')
+        if remaining is not None and remaining < self.best_remaining - self.cfg['explore_progress_m']:
+            self.best_remaining = remaining
+            self.last_progress = now
+        return now - self.last_progress < self.cfg['explore_goal_timeout_s']
+
     def _drive_exploration(self, task):
         """Each tick of an explore task: keep driving, or pick the next frontier."""
         now = time.monotonic()
@@ -288,10 +307,8 @@ class VisualNavigation(Navigation):
             self.last_area_update = now
         if self.nav_pending or self.backing_up:
             return
-        if self.nav_goal is not None:
-            # Give up on a frontier that takes too long; the next one is picked below.
-            if now - self.subgoal_sent < self.cfg['explore_goal_timeout_s']:
-                return
+        if self.nav_goal is not None and self._making_progress(task, now):
+            return
         goal = self._frontier_goal()
         if goal is None:
             if self.nav_goal is not None:
@@ -305,6 +322,10 @@ class VisualNavigation(Navigation):
         self.no_frontier_since = None
         visited = task.progress.get('frontiers', 0)
         task.progress['frontiers'] = visited + 1
+        # Start measuring progress afresh for the new goal.
+        task.progress.pop('distance_remaining_m', None)
+        self.best_remaining = math.inf
+        self.last_progress = now
         self.subgoal_kind = FRONTIER
         x, y, yaw = goal
         self._send_goal(x, y, yaw, self.map_frame, replace=True)

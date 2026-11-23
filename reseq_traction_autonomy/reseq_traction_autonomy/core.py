@@ -88,6 +88,20 @@ def line_pursuit_curvature(pose, line, lookahead):
     return 2 * left / (ahead * ahead + left * left)
 
 
+def padded_box(outline, margin):
+    """Return the box around an outline, grown by margin on every side."""
+    xs = []
+    ys = []
+    for x, y in outline:
+        xs.append(x)
+        ys.append(y)
+    low_x = min(xs) - margin
+    high_x = max(xs) + margin
+    low_y = min(ys) - margin
+    high_y = max(ys) + margin
+    return [(low_x, low_y), (high_x, low_y), (high_x, high_y), (low_x, high_y)]
+
+
 def _cross(o, a, b):
     """Positive when o -> a -> b turns left."""
     return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
