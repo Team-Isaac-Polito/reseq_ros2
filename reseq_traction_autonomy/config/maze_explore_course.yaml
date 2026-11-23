@@ -1,0 +1,18 @@
+# Maze exploration without a model, timed like the RoboCup maze mapping runs:
+# up to 5 minutes for a quick map and up to 15 for a comprehensive one.
+# Each leg drives to one frontier after another and reports the mapped free area.
+# The goal (0, 0) is the start: the distance to it shows how far away the robot
+# ended. Restart the simulation between runs and run one leg per launch.
+tolerance: 1.0
+repeat: 1
+legs:
+  - name: quick_map
+    kind: explore
+    x: 0.0
+    y: 0.0
+    timeout_s: 300
+  - name: full_map
+    kind: explore
+    x: 0.0
+    y: 0.0
+    timeout_s: 900

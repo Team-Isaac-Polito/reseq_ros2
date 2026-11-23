@@ -1,0 +1,45 @@
+# Victim search course for rescue_maze.world (made by worlds/generate_rescue_maze.py).
+# LightNav-0 gets a text instruction and must drive to the victim doll.
+# The robot spawns at the world origin, so the map frame matches the world frame
+# and the doll is at (5.2, 3.0), lying in a side room.
+# The leg succeeds when the front module gets within the tolerance of the doll.
+# 1.0 m leaves room for the doll's 0.8 m length and for stopping in front of it.
+# The robot stays by the doll after a run, so restart the simulation between runs
+# and run one leg per launch.
+tolerance: 1.0
+repeat: 1
+# The legs differ only in the instruction. Pick one per launch with --legs NAME.
+# None of them says anything about this map.
+legs:
+  - name: find_victim
+    kind: visual
+    model: lightnav
+    instruction: Find the person lying on the floor
+    x: 5.2
+    y: 3.0
+    timeout_s: 600
+  # LightNav was trained on route instructions, so these two read more like a route.
+  - name: search_rooms
+    kind: visual
+    model: lightnav
+    instruction: Walk along the hallway and go into each room to look for a person lying on the floor.
+    x: 5.2
+    y: 3.0
+    timeout_s: 600
+  - name: explore_rooms
+    kind: visual
+    model: lightnav
+    instruction: Explore the rooms one by one and stop next to the person lying on the floor.
+    x: 5.2
+    y: 3.0
+    timeout_s: 600
+  # The same search with exploration: when the model only turns or has nothing to
+  # follow, the robot drives to the nearest unexplored part of the map instead.
+  - name: explore_rooms_explore
+    kind: visual
+    model: lightnav
+    instruction: Explore the rooms one by one and stop next to the person lying on the floor.
+    explore: true
+    x: 5.2
+    y: 3.0
+    timeout_s: 600
