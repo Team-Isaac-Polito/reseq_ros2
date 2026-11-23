@@ -89,6 +89,19 @@ def test_gaps_between_lidar_rays_pass_but_unexplored_areas_do_not():
     assert not grid.traversable(0.425, 0.025)
 
 
+def test_blocked_ahead_sees_walls_only_inside_its_range():
+    # A wall in column 8 of a 10 x 10 grid of 0.1 m cells.
+    data = [0] * 100
+    for row in range(10):
+        data[row * 10 + 8] = 100
+    grid = Grid(10, 10, 0.1, (0, 0, 0), data)
+    facing_wall = (0.25, 0.5, 0.0)
+    assert grid.blocked_ahead(facing_wall, 0.2, 0.4)
+    assert not grid.blocked_ahead(facing_wall, 0.0, 0.3)
+    facing_away = (0.25, 0.5, math.pi)
+    assert not grid.blocked_ahead(facing_away, 0.2, 0.4)
+
+
 def test_compose_and_inverse_round_trip():
     pose = (1.0, -2.0, 0.7)
     assert compose(pose, inverse(pose)) == pytest.approx((0.0, 0.0, 0.0))

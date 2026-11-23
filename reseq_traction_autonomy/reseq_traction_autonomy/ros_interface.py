@@ -75,7 +75,9 @@ class RosInterface(Node):
         self.latest_odom = None
         self.joints = {}
         self.grid = None
+        # What Nav2 checks, and what a goal must fit (see _publish_footprint).
         self.footprint = []
+        self.goal_footprint = []
         self.source = ''
         self.health = ''
         self.autonomy_enabled = False
@@ -280,18 +282,44 @@ class RosInterface(Node):
             front = a + self.cfg['camera_standoff_m']
         return [(-a, -b), (front, -b), (front, b), (-a, b)]
 
-    def _publish_footprint(self):
-        """Publish the hull around all modules, so Nav2 sees the robot's current shape."""
+    def _outline(self, indices):
+        """The hull around the given modules, in base_link, as they are bent right now."""
         points = []
+        for index in indices:
+            pose = self._pose('base_link', source=f'chassis{index}_link')
+            for corner in self._module_corners(index):
+                points.append(transform_xy(corner, pose))
+        return convex_hull(points)
+
+    def _reversing(self):
+        """True while Nav2 is driving backwards, so the tail leads."""
+        recent = time.monotonic() - self.candidate_time < 1.0
+        return recent and self.last_candidate.linear.x < 0
+
+    def _publish_footprint(self):
+        """Publish the outline Nav2 checks against obstacles.
+
+        Rese.Q follows the leader: the other modules drive along the head's path. A
+        rigid outline of the whole body would make every turn into a doorway look like
+        a collision, so driving forward only the head is published, and goals are
+        checked with the head only. Reversing keeps the whole body: Nav2 needs an
+        outline around base_link, and the tail is 0.8 m behind it.
+        """
+        all_modules = list(range(1, int(self.cfg['num_modules']) + 1))
         try:
-            for index in range(1, int(self.cfg['num_modules']) + 1):
-                pose = self._pose('base_link', source=f'chassis{index}_link')
-                for corner in self._module_corners(index):
-                    points.append(transform_xy(corner, pose))
+            body = self._outline(all_modules)
+            if self.cfg['footprint_head_only']:
+                self.goal_footprint = self._outline([1])
+                self.footprint = self.goal_footprint
+                if self._reversing():
+                    self.footprint = body
+            else:
+                self.footprint = body
+                self.goal_footprint = body
         except TransformException:
             self.footprint = []
+            self.goal_footprint = []
             return
-        self.footprint = convex_hull(points)
         polygon = Polygon()
         for x, y in self.footprint:
             polygon.points.append(Point32(x=float(x), y=float(y), z=0.0))
@@ -329,7 +357,7 @@ class RosInterface(Node):
 
     def _validate_goal(self, x, y, yaw, frame):
         """Return the goal in the map frame, or raise if the robot cannot stand there."""
-        if self.grid is None or not self.footprint:
+        if self.grid is None or not self.goal_footprint:
             raise ValueError('Map and robot footprint must be ready before setting a goal')
         if frame not in ('map', 'odom'):
             raise ValueError('frame must be map or odom')
@@ -337,7 +365,7 @@ class RosInterface(Node):
             frame_pose = self._pose(self.map_frame, source=frame)
             x, y = transform_xy((x, y), frame_pose)
             yaw += frame_pose[2]
-        if not self.grid.pose_free((x, y, yaw), self.footprint):
+        if not self.grid.pose_free((x, y, yaw), self.goal_footprint):
             raise ValueError('Goal footprint intersects occupied, unknown or unmapped cells')
         return x, y, yaw
 

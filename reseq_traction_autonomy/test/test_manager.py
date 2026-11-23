@@ -63,6 +63,7 @@ def manager():
         autonomy_enabled=False,
         enabled_generation=None,
         _event=lambda *args: None,
+        _wall_ahead=lambda: False,
     )
     bind(
         node,
@@ -149,8 +150,9 @@ def test_every_relative_waypoint_is_anchored_at_the_observation_pose():
     )
     rows = [[0.3, 0.0, 0.0], [0.6, 0.0, 0.0], [3.0, 0.0, 0.0]]
     origin = {'x': 1.0, 'y': 0.0, 'yaw': math.pi / 2}
-    x, y, yaw = Manager._choose_subgoal(node, rows, 'base_link', origin)
-    assert (x, y, yaw) == pytest.approx((1.0, 0.6, math.pi / 2))
+    goal, kind = Manager._choose_subgoal(node, rows, 'base_link', origin)
+    assert kind == 'waypoint'
+    assert goal == pytest.approx((1.0, 0.6, math.pi / 2))
     assert validated == ['odom', 'odom']
 
 
@@ -173,6 +175,24 @@ def test_only_a_run_of_stop_claims_ends_a_visual_task():
     assert task.reason == 'Model stop claim; destination not measured'
 
 
+def test_stop_claims_facing_a_wall_do_not_end_the_task():
+    node, _ = manager()
+    node.cfg = {'stop_confirmations': 3}
+    node.stop_claims = 0
+    node.last_prediction = None
+    node._in_evaluation_region = lambda task: None
+    node._wall_ahead = lambda: True
+    unreachable = []
+    node._note_unreachable = lambda: unreachable.append(1)
+    task = node.tasks.start('visual', {}, 20)
+    context = {'model': 'lightnav', 'observation': {'stamp_s': 1.0}}
+    stop = {'frame': 'base_link', 'waypoints': [], 'stop': True}
+    for _ in range(4):
+        Manager._apply_prediction(node, stop, context)
+    assert task.status == 'running'
+    assert len(unreachable) == 4
+
+
 def test_prediction_without_a_feasible_subgoal_keeps_the_task_running():
     node, _ = manager()
     node.cfg = {'stop_confirmations': 3}
@@ -180,7 +200,7 @@ def test_prediction_without_a_feasible_subgoal_keeps_the_task_running():
     node.last_prediction = None
     events = []
     node._event = lambda kind, data: events.append(kind)
-    node._choose_subgoal = lambda rows, frame, pose: None
+    node._choose_subgoal = lambda rows, frame, pose: (None, None)
     node.backing_up = False
     node._note_unreachable = lambda: events.append('unreachable')
     task = node.tasks.start('visual', {}, 20)
@@ -191,10 +211,15 @@ def test_prediction_without_a_feasible_subgoal_keeps_the_task_running():
     assert events[-2:] == ['no_feasible_subgoal', 'unreachable']
 
 
-def visual_node(subgoal_age_s):
+def visual_node(subgoal_age_s, kind='waypoint', arguments=None):
     node, _ = manager()
     sent = []
-    node.cfg = {'stop_confirmations': 3, 'subgoal_refresh_s': 3.0}
+    node.cfg = {
+        'stop_confirmations': 3,
+        'subgoal_refresh_s': 3.0,
+        'arc_refresh_s': 12.0,
+        'frontier_refresh_s': 20.0,
+    }
     node.stop_claims = 0
     node.last_prediction = None
     node.backing_up = False
@@ -202,9 +227,11 @@ def visual_node(subgoal_age_s):
     node.subgoal_sent = time.monotonic() - subgoal_age_s
     node.unreachable_predictions = 0
     node.map_frame = 'map'
-    node._choose_subgoal = lambda rows, frame, pose: (1.0, 0.0, 0.0)
+    node.subgoal_kind = kind
+    bind(node, Manager, '_refresh_time')
+    node._choose_subgoal = lambda rows, frame, pose: ((1.0, 0.0, 0.0), 'waypoint')
     node._send_goal = lambda x, y, yaw, frame, replace=False: sent.append(replace)
-    node.tasks.start('visual', {}, 20)
+    node.tasks.start('visual', arguments or {}, 20)
     return node, sent
 
 
@@ -240,6 +267,35 @@ def test_newer_prediction_replaces_a_subgoal_only_after_the_refresh_time():
     old, old_sent = visual_node(subgoal_age_s=5.0)
     Manager._apply_prediction(old, move, context)
     assert old_sent == [True]
+
+
+def test_an_arc_is_not_replaced_until_its_longer_refresh_time():
+    context = {'model': 'lightnav', 'observation': {'stamp_s': 1.0, 'robot_pose': {}}}
+    move = {'frame': 'base_link', 'waypoints': [[0.6, 0.0, 0.0]], 'stop': False}
+    driving_arc, arc_sent = visual_node(subgoal_age_s=5.0, kind='forward_arc')
+    Manager._apply_prediction(driving_arc, move, context)
+    assert arc_sent == []
+    old_arc, old_arc_sent = visual_node(subgoal_age_s=13.0, kind='reverse_arc')
+    Manager._apply_prediction(old_arc, move, context)
+    assert old_arc_sent == [True]
+    assert old_arc.subgoal_kind == 'waypoint'
+
+
+def test_exploring_task_drives_to_a_frontier_when_the_model_only_turns():
+    context = {'model': 'lightnav', 'observation': {'stamp_s': 1.0, 'robot_pose': {}}}
+    turn = {'frame': 'base_link', 'waypoints': [[0.0, 0.0, 2.6]], 'stop': False}
+    node, sent = visual_node(subgoal_age_s=30.0, arguments={'explore': True})
+    node._choose_subgoal = lambda rows, frame, pose: (None, None)
+    node._frontier_goal = lambda: (2.0, 1.0, 0.5)
+    Manager._apply_prediction(node, turn, context)
+    assert sent == [True]
+    assert node.subgoal_kind == 'frontier'
+    # Without explore, the same answer sends nothing.
+    plain, plain_sent = visual_node(subgoal_age_s=30.0)
+    plain._choose_subgoal = lambda rows, frame, pose: (None, None)
+    plain._event = lambda kind, data: None
+    Manager._apply_prediction(plain, turn, context)
+    assert plain_sent == []
 
 
 def test_a_run_of_unreachable_predictions_backs_the_robot_up_once():
@@ -339,3 +395,101 @@ def test_reverse_command_is_steered_for_the_tail_and_sign_flipped():
     Navigation._candidate_cb(node, message)
     assert node.last_candidate.linear.x == pytest.approx(-0.19)
     assert node.last_candidate.angular.z < 0
+
+
+def footprint_node(head_only, reversing):
+    """A node whose three modules lie straight behind each other, 0.4 m apart."""
+    node = SimpleNamespace(
+        cfg={
+            'num_modules': 3,
+            'module_half_length': 0.23,
+            'module_half_width': 0.16,
+            'camera_standoff_m': 0.25,
+            'footprint_head_only': head_only,
+        },
+        footprint_pubs=[],
+        last_candidate=Twist(),
+        candidate_time=time.monotonic(),
+    )
+    if reversing:
+        node.last_candidate.linear.x = -0.1
+
+    def pose(frame, source):
+        index = int(source[len('chassis'):-len('_link')])
+        return (-0.4 * (index - 1), 0.0, 0.0)
+
+    node._pose = pose
+    bind(node, Manager, '_outline', '_module_corners', '_reversing', '_publish_footprint')
+    return node
+
+
+def x_range(outline):
+    xs = []
+    for x, _ in outline:
+        xs.append(x)
+    return min(xs), max(xs)
+
+
+def test_forward_nav2_and_goals_check_only_the_head():
+    node = footprint_node(head_only=True, reversing=False)
+    node._publish_footprint()
+    assert x_range(node.footprint) == pytest.approx((-0.23, 0.48))
+    assert node.goal_footprint == node.footprint
+
+
+def test_reversing_nav2_checks_the_whole_body_but_goals_still_the_head():
+    node = footprint_node(head_only=True, reversing=True)
+    node._publish_footprint()
+    assert x_range(node.footprint) == pytest.approx((-1.03, 0.48))
+    assert x_range(node.goal_footprint) == pytest.approx((-0.23, 0.48))
+
+
+def test_whole_body_outline_is_still_available():
+    node = footprint_node(head_only=False, reversing=False)
+    node._publish_footprint()
+    assert x_range(node.footprint) == pytest.approx((-1.03, 0.48))
+    assert x_range(node.goal_footprint) == pytest.approx((-1.03, 0.48))
+
+
+def exploring_node():
+    node, _ = manager()
+    node.cfg = {'explore_goal_timeout_s': 60.0, 'explore_done_after_s': 10.0}
+    node.grid = None
+    node.last_area_update = 0.0
+    node.backing_up = False
+    node.subgoal_sent = 0.0
+    node.no_frontier_since = None
+    node.map_frame = 'map'
+    sent = []
+    node._send_goal = lambda x, y, yaw, frame, replace=False: sent.append((x, y))
+    task = node.tasks.start('explore', {}, 300)
+    return node, task, sent
+
+
+def test_exploration_drives_to_the_next_frontier():
+    node, task, sent = exploring_node()
+    node._frontier_goal = lambda: (2.0, 1.0, 0.0)
+    Manager._drive_exploration(node, task)
+    assert sent == [(2.0, 1.0)]
+    assert task.progress['frontiers'] == 1
+    assert node.subgoal_kind == 'frontier'
+
+
+def test_exploration_keeps_driving_a_recent_frontier():
+    node, task, sent = exploring_node()
+    node.nav_goal = object()
+    node.subgoal_sent = time.monotonic()
+    node._frontier_goal = lambda: (2.0, 1.0, 0.0)
+    Manager._drive_exploration(node, task)
+    assert sent == []
+
+
+def test_exploration_finishes_after_a_quiet_while_without_frontiers():
+    node, task, sent = exploring_node()
+    node._frontier_goal = lambda: None
+    Manager._drive_exploration(node, task)
+    assert task.status == 'running'
+    node.no_frontier_since = time.monotonic() - 11.0
+    Manager._drive_exploration(node, task)
+    assert task.status == 'succeeded'
+    assert sent == []

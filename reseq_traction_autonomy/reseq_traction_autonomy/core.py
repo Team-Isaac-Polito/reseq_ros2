@@ -212,6 +212,19 @@ class Grid:
                     return False
         return self.traversable(pose[0], pose[1])
 
+    def blocked_ahead(self, pose, start, length):
+        """True if an obstacle lies straight ahead of pose, from start to start + length metres."""
+        steps = math.ceil(length / self.resolution)
+        for i in range(steps + 1):
+            x, y = transform_xy((start + i * self.resolution, 0.0), pose)
+            cell = self.cell(x, y)
+            if cell is None:
+                continue
+            col, row = cell
+            if self.value(col, row) >= OCCUPIED:
+                return True
+        return False
+
 
 def new_task_id():
     return uuid.uuid4().hex

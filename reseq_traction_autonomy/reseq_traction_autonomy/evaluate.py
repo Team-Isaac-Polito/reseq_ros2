@@ -106,6 +106,8 @@ def wait_for_poses(observer, timeout_s=30.0):
 
 def start_task(leg, tolerance):
     timeout_s = leg.get('timeout_s', 60.0)
+    if leg.get('kind') == 'explore':
+        return call('explore', {'timeout_s': timeout_s})
     if leg.get('kind', 'metric') == 'metric':
         arguments = {
             'x': leg['x'],
@@ -125,6 +127,7 @@ def start_task(leg, tolerance):
         'goal_y': leg['y'],
         'goal_frame': 'map',
         'goal_tolerance': tolerance,
+        'explore': leg.get('explore', False),
     }
     return call('start_visual_navigation', arguments)
 
@@ -177,6 +180,10 @@ def run_leg(observer, leg, world_to_map, tolerance):
         reached=true_error <= tolerance,
         trajectory=trajectory,
     )
+    if result['kind'] == 'explore':
+        # An explore leg has no goal; its result is how much of the map it covered.
+        result['free_area_m2'] = view['progress'].get('free_area_m2')
+        result['frontiers'] = view['progress'].get('frontiers')
     return result
 
 
@@ -195,6 +202,8 @@ def print_table(results):
         print(f'{r["leg"]:16} {r["status"]:10}'
               f' {r["true_error_m"]:8.2f}m {r["slam_error_m"]:8.2f}m {r["slam_drift_m"]:5.2f}m'
               f' {r["path_m"]:5.2f}m {r["duration_s"]:5.1f}s  {reached}')
+        if r['kind'] == 'explore':
+            print(f'{"":16} mapped free area {r["free_area_m2"]} m2, {r["frontiers"]} frontiers')
     print(f'{reached_count}/{len(results)} legs reached within tolerance (Gazebo ground truth)')
 
 

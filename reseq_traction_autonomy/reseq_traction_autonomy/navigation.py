@@ -169,7 +169,7 @@ class Navigation(RosInterface):
             self._metric_goal_finished(task, succeeded, status)
             return
 
-        # Visual task: one subgoal ended; the next prediction picks a new one.
+        # Visual or explore task: one subgoal ended; the next prediction or frontier follows.
         task.subgoal = None
         self.next_prediction = 0
         if succeeded:

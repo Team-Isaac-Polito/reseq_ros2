@@ -44,13 +44,29 @@ def navigate_to_pose(
 
 @server.tool(name='traction.start_visual_navigation')
 def start_visual_navigation(
-    instruction: str, model: str = 'foresight', timeout_s: float = 120.0
+    instruction: str,
+    model: str = 'foresight',
+    timeout_s: float = 120.0,
+    explore: bool = False,
 ) -> dict:
-    """Start navigation using an available frozen Foresight or LightNav worker."""
-    return call(
-        'start_visual_navigation',
-        {'instruction': instruction, 'model': model, 'timeout_s': timeout_s},
-    )
+    """Start navigation using an available frozen Foresight or LightNav worker.
+
+    With explore, the robot visits unexplored parts of the map whenever the
+    model has no forward move to follow.
+    """
+    arguments = {
+        'instruction': instruction,
+        'model': model,
+        'timeout_s': timeout_s,
+        'explore': explore,
+    }
+    return call('start_visual_navigation', arguments)
+
+
+@server.tool(name='traction.explore')
+def explore(timeout_s: float = 300.0) -> dict:
+    """Explore the map without a model: drive to one unexplored frontier after another."""
+    return call('explore', {'timeout_s': timeout_s})
 
 
 @server.tool(name='traction.get_task')

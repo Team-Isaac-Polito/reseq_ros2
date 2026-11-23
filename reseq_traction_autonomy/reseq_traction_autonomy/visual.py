@@ -1,17 +1,26 @@
 """Visual tasks: ask a navigation model where to go and turn its answer into Nav2 goals.
 
 A visual task loops: send a camera frame, get waypoints back, pick the farthest
-waypoint the robot can reach, and send it to Nav2 as a subgoal.
+waypoint the robot can reach (or an arc, when the model only asks to turn on the
+spot), and send it to Nav2 as a subgoal.
+
+Explore tasks use no model: they drive to one frontier of the map after another.
 """
 
 import math
 import time
 from importlib import import_module
 
-from .core import finite, transform_xy
+from tf2_ros import TransformException
+
 from .models import foresight_waypoints
 from .navigation import Navigation
 from .ros_interface import stamp_seconds
+from .explore import choose_frontier, free_area
+from .subgoals import FORWARD_ARC, REVERSE_ARC, WAYPOINT, choose_subgoal
+
+# A subgoal kind of its own: a pose facing a frontier of the explored map.
+FRONTIER = 'frontier'
 
 MAX_RECORDED_IMAGES = 1000
 
@@ -120,6 +129,13 @@ class VisualNavigation(Navigation):
     def _stop_claimed(self):
         """Count a stop answer; after a run of them, end the task."""
         # LightNav sets stop when its whole action chunk is zero; that is not a measurement.
+        # Facing a wall it often has nothing to do, so there a stop is not a find:
+        # treat it like a prediction the robot cannot follow, which backs it away.
+        if self._wall_ahead():
+            self.stop_claims = 0
+            self._event('stop_at_wall', {})
+            self._note_unreachable()
+            return
         self.stop_claims += 1
         if self.stop_claims < self.cfg['stop_confirmations']:
             return
@@ -150,11 +166,19 @@ class VisualNavigation(Navigation):
             return
         driving = self.nav_goal is not None
         # Keep the model in charge: a newer prediction replaces a subgoal after a few seconds.
+        # Arcs and frontiers are given longer: cut off halfway they leave the robot swinging
+        # in place, and each new goal also restarts Nav2's recovery when it is stuck.
         if driving:
             subgoal_age = time.monotonic() - self.subgoal_sent
-            if subgoal_age < self.cfg['subgoal_refresh_s']:
+            if subgoal_age < self._refresh_time(self.subgoal_kind):
                 return
-        subgoal = self._choose_subgoal(rows, frame, context['observation']['robot_pose'])
+        subgoal, kind = self._choose_subgoal(rows, frame, context['observation']['robot_pose'])
+        if kind != WAYPOINT and self.tasks.active.arguments.get('explore'):
+            # The model only turns or has nothing to follow: look somewhere new instead.
+            frontier = self._frontier_goal()
+            if frontier is not None:
+                subgoal = frontier
+                kind = FRONTIER
         if subgoal is None:
             # Turn-in-place or blocked answers are common. Keep driving the current subgoal;
             # when there is none, a run of them backs the robot away from the wall.
@@ -163,37 +187,72 @@ class VisualNavigation(Navigation):
                 self._note_unreachable()
             return
         self.unreachable_predictions = 0
+        self.subgoal_kind = kind
         x, y, yaw = subgoal
         self._send_goal(x, y, yaw, self.map_frame, replace=True)
 
-    def _choose_subgoal(self, rows, frame, observation_pose):
-        """Return the farthest feasible waypoint as a map pose, or None."""
-        robot = self._pose(self.map_frame)
-        min_distance = self.cfg['min_subgoal_distance_m']
-        max_distance = self.cfg['max_subgoal_distance_m']
-        for row in reversed(rows):
-            if len(row) not in (2, 3):
-                raise ValueError('Waypoint must contain x, y and optional yaw')
-            x = finite(row[0], 'waypoint.x')
-            y = finite(row[1], 'waypoint.y')
-            yaw = 0.0
-            if len(row) == 3:
-                yaw = finite(row[2], 'waypoint.yaw')
-            goal_frame = frame
-            if frame == 'base_link':
-                # Relative waypoints belong to the pose where the image was taken.
-                origin = (observation_pose['x'], observation_pose['y'], observation_pose['yaw'])
-                x, y = transform_xy((x, y), origin)
-                yaw += origin[2]
-                goal_frame = 'odom'
+    def _refresh_time(self, kind):
+        """How long a subgoal of this kind is kept before a newer prediction may replace it."""
+        if kind == FRONTIER:
+            return self.cfg['frontier_refresh_s']
+        if kind in (FORWARD_ARC, REVERSE_ARC):
+            return self.cfg['arc_refresh_s']
+        return self.cfg['subgoal_refresh_s']
+
+    def _frontier_goal(self):
+        """Return a map pose facing the best unexplored frontier, or None."""
+        if self.grid is None:
+            return None
+        try:
+            robot = self._pose(self.map_frame)
+        except TransformException:
+            return None
+
+        def place(x, y, yaw):
             try:
-                x, y, yaw = self._validate_goal(x, y, yaw, goal_frame)
+                return self._validate_goal(x, y, yaw, self.map_frame)
             except ValueError:
-                continue
-            distance = math.hypot(x - robot[0], y - robot[1])
-            if min_distance <= distance <= max_distance:
-                return x, y, yaw
-        return None
+                return None
+
+        goal, frontier = choose_frontier(self.grid, robot, place, self.tried_frontiers, self.cfg)
+        if goal is None:
+            return None
+        self.tried_frontiers.append(frontier)
+        self._event('frontier', {'x': frontier[0], 'y': frontier[1]})
+        return goal
+
+    def _choose_subgoal(self, rows, frame, observation_pose):
+        """Return (map pose, kind) of the next subgoal, or (None, None).
+
+        See subgoals.choose_subgoal.
+        """
+        robot = self._pose(self.map_frame)
+        origin = None
+        if frame == 'base_link':
+            origin = (observation_pose['x'], observation_pose['y'], observation_pose['yaw'])
+
+        def place(x, y, yaw, goal_frame):
+            try:
+                return self._validate_goal(x, y, yaw, goal_frame)
+            except ValueError:
+                return None
+
+        goal, kind = choose_subgoal(rows, frame, origin, robot, place, self.cfg)
+        if kind is not None and kind != WAYPOINT:
+            # The model asked to turn on the spot; record the arc used instead.
+            self._event('turn_arc', {'kind': kind})
+        return goal, kind
+
+    def _wall_ahead(self):
+        """True if the map shows an obstacle just in front of the front module."""
+        if self.grid is None:
+            return False
+        try:
+            pose = self._pose(self.map_frame)
+        except TransformException:
+            return False
+        front = self.cfg['module_half_length']
+        return self.grid.blocked_ahead(pose, front, self.cfg['stop_wall_distance_m'])
 
     def _in_evaluation_region(self, task):
         """True/False if the task has an evaluation goal, else None."""
@@ -219,6 +278,36 @@ class VisualNavigation(Navigation):
             self._request_prediction()
         elif task.arguments['model'] == 'lightnav' and now >= self.next_frame:
             self._send_history_frame()
+
+    def _drive_exploration(self, task):
+        """Each tick of an explore task: keep driving, or pick the next frontier."""
+        now = time.monotonic()
+        # Record how much of the map is known, for measuring coverage.
+        if self.grid is not None and now - self.last_area_update >= 5.0:
+            task.progress['free_area_m2'] = round(free_area(self.grid), 2)
+            self.last_area_update = now
+        if self.nav_pending or self.backing_up:
+            return
+        if self.nav_goal is not None:
+            # Give up on a frontier that takes too long; the next one is picked below.
+            if now - self.subgoal_sent < self.cfg['explore_goal_timeout_s']:
+                return
+        goal = self._frontier_goal()
+        if goal is None:
+            if self.nav_goal is not None:
+                return
+            # The map may still be filling in; finish only after a quiet while.
+            if self.no_frontier_since is None:
+                self.no_frontier_since = now
+            if now - self.no_frontier_since > self.cfg['explore_done_after_s']:
+                self._finish('succeeded', 'No frontiers left; the map is explored')
+            return
+        self.no_frontier_since = None
+        visited = task.progress.get('frontiers', 0)
+        task.progress['frontiers'] = visited + 1
+        self.subgoal_kind = FRONTIER
+        x, y, yaw = goal
+        self._send_goal(x, y, yaw, self.map_frame, replace=True)
 
     def _check_model_available(self, model):
         """Raise if the chosen model cannot be reached."""

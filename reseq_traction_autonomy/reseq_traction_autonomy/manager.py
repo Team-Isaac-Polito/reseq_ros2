@@ -50,6 +50,10 @@ class Manager(VisualNavigation):
         self.next_frame = 0
         self.stop_claims = 0
         self.unreachable_predictions = 0
+        self.subgoal_kind = None
+        self.tried_frontiers = []
+        self.no_frontier_since = None
+        self.last_area_update = 0.0
         self.backing_up = False
         self.camera_lost_since = None
         self.qr_deadline = None
@@ -189,7 +193,10 @@ class Manager(VisualNavigation):
             self._check_zone_qr()
             return
         try:
-            self._drive_visual_task(task)
+            if task.kind == 'explore':
+                self._drive_exploration(task)
+            else:
+                self._drive_visual_task(task)
         except Exception as exc:
             self._finish('failed', str(exc))
 
@@ -258,6 +265,7 @@ class Manager(VisualNavigation):
         goal_y=None,
         goal_frame='map',
         goal_tolerance=0.25,
+        explore=False,
     ):
         length_error = f'Provide an instruction between 1 and {MAX_INSTRUCTION_LENGTH} characters'
         if not isinstance(instruction, str) or not instruction.strip():
@@ -265,7 +273,11 @@ class Manager(VisualNavigation):
         if len(instruction) > MAX_INSTRUCTION_LENGTH:
             raise ValueError(length_error)
         self._check_model_available(model)
-        arguments = {'instruction': instruction.strip(), 'model': model}
+        if not isinstance(explore, bool):
+            raise ValueError('explore must be true or false')
+        # With explore, the robot visits unexplored parts of the map whenever the
+        # model has no forward move to follow.
+        arguments = {'instruction': instruction.strip(), 'model': model, 'explore': explore}
         # Optional: a measured destination, used by evaluations.
         if goal_x is not None or goal_y is not None:
             tolerance = finite(goal_tolerance, 'goal_tolerance')
@@ -280,6 +292,14 @@ class Manager(VisualNavigation):
                 'tolerance': tolerance,
             }
         task = self._start('visual', arguments, timeout_s)
+        return task.view(time.monotonic())
+
+    def tool_explore(self, timeout_s=300.0):
+        """Explore the map without a model: drive to one frontier after another.
+
+        The maze rules give 5 minutes for a quick map and 15 for a comprehensive one.
+        """
+        task = self._start('explore', {}, timeout_s)
         return task.view(time.monotonic())
 
     def tool_get_task(self, task_id):
