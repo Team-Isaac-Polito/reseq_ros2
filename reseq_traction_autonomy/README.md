@@ -59,12 +59,13 @@ ros2 run reseq_traction_autonomy traction_tool navigate_to_pose \
   '{"x": 0.5, "y": 0.0, "frame": "map", "timeout_s": 30}'
 ros2 run reseq_traction_autonomy traction_tool get_task '{"task_id": "TASK_ID"}'
 ros2 run reseq_traction_autonomy traction_tool cancel_task '{"task_id": "TASK_ID"}'
+ros2 run reseq_traction_autonomy traction_tool explore '{"timeout_s": 300}'
 ros2 run reseq_traction_autonomy traction_tool stop
 ```
 
 `traction_tool` posts JSON to `http://127.0.0.1:8765/tools/TOOL_NAME`. The API only listens on localhost; forward port 8765 over SSH for remote use.
 
-For an MCP client, run `bash src/reseq_traction_autonomy/scripts/run_mcp.sh`. It exposes the same seven tools (the six above and `start_visual_navigation`) with a `traction.` prefix.
+For an MCP client, run `bash src/reseq_traction_autonomy/scripts/run_mcp.sh`. It exposes the same eight tools (the seven above and `start_visual_navigation`) with a `traction.` prefix.
 
 `navigate_to_pose` also takes `zone_qr`. The task then succeeds only if the camera reads that QR text after arriving. This needs the `computer_vision` detector, which does not run in this simulation.
 
@@ -80,7 +81,34 @@ ros2 run reseq_traction_autonomy traction_eval my_course.yaml --legs forward
 
 For each leg it reports the true distance to the goal, the SLAM estimate of that distance, SLAM drift, path length and time. Results, including the true trajectory, are saved as JSON under `~/.local/state/reseq/traction/eval/`.
 
-A course file lists legs with a goal in the map frame. Visual legs also take `kind: visual`, `instruction` and `model`; their goal is only used for measuring, and the model never sees it.
+A course file lists legs with a goal in the map frame. Visual legs also take `kind: visual`, `instruction` and `model`; their goal is only used for measuring, and the model never sees it. `config/maze_victim_course.yaml` sends LightNav to the victim doll in `rescue_maze.world`. The robot stays by the doll afterwards, so restart the simulation before each run.
+
+### Maze exploration
+
+The RoboCup maze gives 5 minutes for a quick map and 15 for a comprehensive one, with a 5x multiplier when the robot explores, maps and detects objects on its own. The `explore` tool drives to one frontier of the map after another, without a model, while SLAM and the team's mapping and detection nodes do their part. It finishes when no frontier is left, and records the mapped free area as `free_area_m2`. `config/maze_explore_course.yaml` times it like the rules:
+
+```bash
+ros2 run reseq_traction_autonomy traction_eval \
+  src/reseq_traction_autonomy/config/maze_explore_course.yaml --legs quick_map
+```
+
+### Replay a visual task
+
+A live visual run is never exactly repeatable, because the model and the simulation run at their own pace. `traction_replay` gives a repeatable check instead. It replays a task's recorded predictions through subgoal selection, on a map built from the world file, and counts how many became a drivable goal, with and without turn arcs. It needs no ROS, simulation or model server:
+
+```bash
+ros2 run reseq_traction_autonomy traction_replay \
+  ~/.local/state/reseq/traction/TASK_ID src/reseq_traction_autonomy/worlds/rescue_maze.world
+```
+
+Use it before and after changing subgoal selection. The same record always gives the same numbers.
+
+`traction_explore_check` does the same for exploration settings. It runs frontier exploration on the world file: the robot sees only what a lidar would from where it stands, picks a frontier, jumps there and looks again. It prints how much is explored after each step and when the camera would first see a target point:
+
+```bash
+ros2 run reseq_traction_autonomy traction_explore_check \
+  src/reseq_traction_autonomy/worlds/rescue_maze.world --target 5.2 3.0
+```
 
 ### Mobility lane
 
@@ -111,8 +139,11 @@ Then call `start_visual_navigation` with `instruction` and `"model": "lightnav"`
 - The manager streams a camera frame every `frame_period_s` (0.25 s, the spacing the model was trained on) and asks for a prediction every `model_period_s` (1 s).
 - A prediction is a short list of `[forward, lateral, yaw]` poses relative to where the robot was when the image was taken. The manager sends the farthest reachable one, at most `max_subgoal_distance_m` away, to Nav2.
 - A newer prediction replaces the Nav2 subgoal after `subgoal_refresh_s` (3 s), so the model stays in charge.
-- If no pose is reachable, for example when the model only turns in place, the prediction is skipped. After `escape_after_unreachable` (2) skipped predictions or failed subgoals, the robot backs up `backup_distance_m` (0.3 m) and the model looks again. A failed subgoal does not end the task.
+- Rese.Q cannot turn on the spot, but LightNav often asks for that. Then the manager drives a `turn_arc_length_m` (0.8 m) arc that turns the same way, by at most `turn_arc_max_rad` (0.8 rad). If there is no room ahead it reverses along the arc instead, like the first leg of a three-point turn. Each arc is logged as a `turn_arc` event. A newer prediction replaces an arc only after `arc_refresh_s` (12 s): cut off halfway, an arc leaves the robot swinging in place.
+- If still no pose is reachable, the prediction is skipped. After `escape_after_unreachable` (2) skipped predictions or failed subgoals, the robot backs up `backup_distance_m` (0.3 m) and the model looks again. A failed subgoal does not end the task.
 - LightNav's `stop` flag sometimes appears for a single frame. The task ends only after `stop_confirmations` (3) stops in a row, reported as "Model stop claim; destination not measured".
+- With `"explore": true`, the task also explores. When the model only turns or has nothing drivable, the manager sends the robot to the best frontier instead: an edge of the mapped area, such as a doorway into an unseen room, nearest and largest first, skipping ones already tried. The robot faces the frontier, so the camera looks into the new area. A frontier goal is kept for `frontier_refresh_s` (20 s). LightNav alone has no memory of where it has been; this gives the search a plan.
+- LightNav also says stop when it has nothing to do, for example with the camera against a wall. A stop is ignored while the map shows a wall within `stop_wall_distance_m` (0.6 m) ahead, and counts like a prediction the robot cannot follow, so the robot backs up. A person lying on the floor is below the lidar, so it never counts as a wall.
 
 ### Foresight
 
@@ -137,7 +168,7 @@ Model pages: [LightNav-0](https://huggingface.co/LightOriginsHQ/LightNav-0), [Fo
 - One task runs at a time. Starting a second one fails until the first ends.
 - Nav2's output goes to `/traction/nav2/candidate`. The gate forwards it to `/cmd_vel_nav` only while the task has an accepted Nav2 goal, a recent Nav2 command and, for visual tasks, a recent model answer.
 - The traction stack turns right for positive `angular.z`, while Nav2 uses the ROS convention (positive turns left). The gate flips the sign (`traction_turn_sign`). Joystick driving does not pass through the gate.
-- The manager publishes the robot outline, built from the three chassis transforms, to both Nav2 costmaps, and checks goals against the map with the same outline. The outline extends 0.25 m ahead of the front module (`camera_standoff_m`) so walls stay beyond the arm camera's near clip.
+- The manager publishes the robot outline to both Nav2 costmaps. Rese.Q follows the leader: the rear modules drive along the head's path. A rigid outline of the whole bent body made every turn into a doorway look like a collision, so driving forward Nav2 gets only the head module, and goals are checked with the head only. Reversing, Nav2 gets the hull of all three modules, built from the chassis transforms. `footprint_head_only: false` uses the whole body everywhere. The head outline extends 0.25 m ahead of the front module (`camera_standoff_m`) so walls stay beyond the arm camera's near clip.
 - `cloud_decimator` keeps every 8th pixel of the depth cloud. At full size most clouds were lost in transport and the collision monitor kept stopping the robot.
 - `config/nav2_overrides.yaml` holds this package's Nav2 changes on top of the shared `nav2_params.yaml`.
 - Stop, cancel, timeout and failure all send a zero command, cancel the Nav2 goal and switch autonomy off, so the joystick works normally again. Moving the joystick past the mux deadband cancels the task.
@@ -150,7 +181,8 @@ Parameters and their defaults are listed in `reseq_traction_autonomy/parameters.
 
 - Steering responds late when driving forward. The rear modules follow the head's past path, and in Gazebo their bending outweighs the head's own tracks, so after a steering change the robot keeps turning the old way for about one module length. Tight turns swing wide.
 - The wheel odometry heading is mirrored: `diff_controller1/odom` reports a left turn when the robot turns right, and the EKF follows it. Only SLAM recovers the true heading. This probably affects the real robot too.
-- Nav2 refuses goals where the tail would swing into a wall.
+- Driving forward, Nav2 checks only the head. On a tight turn the rear modules could clip a corner; Nav2's inflation keeps paths away from walls, but contact has not been measured yet.
+- LightNav's stop is unreliable: it also stops in front of empty rooms. A separate check for a person in view is the next step.
 - `simple_course.world` is small for a 1.3 m robot. Straight legs end within 0.1 m of the goal; the turning leg ends about 0.3 m away.
 - Nothing has run on the real robot or on the Orin yet.
 
