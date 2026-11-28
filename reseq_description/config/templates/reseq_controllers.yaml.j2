@@ -42,11 +42,19 @@ controller_manager:
 {% endif %}
     joint_group_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
-{% if use_sim_time %}
 
     beak_controller:
       type: forward_command_controller/ForwardCommandController
+{% if not use_sim_time %}
+
+    led_controller:
+      type: forward_command_controller/ForwardCommandController
 {% endif %}
+{% endif %}
+
+{% if torque_controller %}
+    torque_controller:
+      type: forward_command_controller/ForwardCommandController
 {% endif %}
 
 {% if body_controllers %}
@@ -106,14 +114,34 @@ joint_group_velocity_controller:
       - mod1__wrist_pitch_arm_joint
       - mod1__wrist_roll_arm_joint
     interface_name: velocity
-{% if use_sim_time %}
 
+# Sim: beak joint position. Hardware: ARM_ROLL_6_SETPOINT (0x5B), 0=close / 1=open.
 beak_controller:
   ros__parameters:
     joints:
       - mod1__beak
     interface_name: position
+{% if not use_sim_time %}
+
+# LED_HP_BRIGHTNESS (0x75) on MOD1, commands: [brightness 0-255]
+led_controller:
+  ros__parameters:
+    joints:
+      - mod1__led
+    interface_name: brightness
 {% endif %}
+{% endif %}
+
+{% if torque_controller %}
+# TORQUE_ENABLE_DISABLE (0x74) joint motors (bits 2-3) of MOD2..N, commands: [1=enable, 0=disable] per module
+torque_controller:
+  ros__parameters:
+    joints:
+{% for i in range(num_modules - 1) %}
+      - mod{{ i + 2 }}__torque
+{% endfor %}
+    interface_name: joint
+
 {% endif %}
 
 {% if yaw_controllers %}

@@ -16,6 +16,21 @@
                 <xacro:control_joint_factory id="${module}" />
             </xacro:if>
 
+              <!-- MK2 MOD2/MOD3 torque enable control (0x74) -->
+            <xacro:if value="${module != 1 and '$(arg version)' == 'mk2'}">
+                <xacro:unless value="$(arg sim_mode)">
+                    <gpio name="mod${module}__torque">
+                        <command_interface name="joint" />
+                        <command_interface name="traction">
+                            <param name="initial_value">1</param>
+                        </command_interface>
+                        <command_interface name="roll">
+                            <param name="initial_value">0</param>
+                        </command_interface>
+                    </gpio>
+                </xacro:unless>
+            </xacro:if>
+
             <!-- IMU sensor hardware interfaces.
                  Sim: GazeboSimSystem reads the Gazebo IMU sensor and exposes these state interfaces.
                  Hardware: ReseqHardware reads CAN messages 0x92 (accel) and 0x93 (gyro)

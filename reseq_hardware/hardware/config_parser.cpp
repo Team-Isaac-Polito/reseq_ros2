@@ -1,5 +1,6 @@
 #include "reseq_hardware/config_parser.hpp"
 #include <stdint.h>                         // for uint8_t
+#include <string>
 #include <yaml-cpp/yaml.h>                  // for Node, LoadFile, ...
 #include <rclcpp/logger.hpp>                // for get_logger
 #include <rclcpp/logging.hpp>               // for RCLCPP_INFO
@@ -7,6 +8,7 @@
 #include <stdexcept>                        // for runtime_error
 #include <vector>                           // for vector
 #include "reseq_hardware/canbus.hpp"        // for CanID
+#include "reseq_hardware/payload_codec.hpp" // for parse_data_type, data_type_size
 #include "reseq_hardware/reseq.hpp"         // for PayloadFieldMapping, CanM...
 
 namespace reseq_hardware
@@ -15,7 +17,6 @@ namespace reseq_hardware
 namespace
 {
 constexpr size_t CAN_FD_MAX_PAYLOAD = 64;
-constexpr size_t FLOAT32_SIZE = sizeof(float);
 
 std::runtime_error mapping_error(
   const std::string & filename, uint8_t msg_id, uint8_t mod_id, const std::string & reason)
@@ -50,6 +51,8 @@ MappingType parse_type(const std::string & type_str)
     return MappingType::JOINT_STATE;
   } else if (type_str == "command") {
     return MappingType::JOINT_COMMAND;
+  } else if (type_str == "gpio_command") {
+    return MappingType::GPIO_COMMAND;
   } else if (type_str == "telemetry") {
     return MappingType::TOPIC_TELEMETRY;
   } else {
@@ -83,6 +86,16 @@ std::map<CanID, CanMessageMapping> parse_can_config_file(
       msg_mapping.id.msg_id = mapping["msg_id"].as<uint8_t>();
       msg_mapping.length = mapping["length"].as<uint8_t>(4);
       msg_mapping.is_command = mapping["is_command"].as<bool>(false);
+      const std::string send_mode = mapping["send_mode"].as<std::string>("cyclic");
+      if (send_mode == "cyclic") {
+        msg_mapping.send_mode = SendMode::CYCLIC;
+      } else if (send_mode == "on_change") {
+        msg_mapping.send_mode = SendMode::ON_CHANGE;
+      } else {
+        throw mapping_error(
+                filename, msg_mapping.id.msg_id, msg_mapping.id.mod_id,
+                "unknown send_mode '" + send_mode + "' (expected cyclic or on_change)");
+      }
       if (msg_mapping.length > CAN_FD_MAX_PAYLOAD) {
         throw mapping_error(
                 filename, msg_mapping.id.msg_id, msg_mapping.id.mod_id,
@@ -108,14 +121,36 @@ std::map<CanID, CanMessageMapping> parse_can_config_file(
         field_mapping.offset = field["offset"].as<uint8_t>(0);
         field_mapping.scale = field["scale"].as<double>(1.0);
         field_mapping.bias = field["bias"].as<double>(0.0);
-        if (field_mapping.data_type == "float32" &&
-          static_cast<size_t>(field_mapping.offset) + FLOAT32_SIZE > msg_mapping.length)
-        {
+        field_mapping.bitmask = field["bitmask"].as<uint32_t>(0);
+        field_mapping.min = field["min"].as<double>(field_mapping.min);
+        field_mapping.max = field["max"].as<double>(field_mapping.max);
+
+        field_mapping.type = parse_data_type(field_mapping.data_type);
+        const size_t type_size = data_type_size(field_mapping.type);
+        if (type_size == 0) {
           throw mapping_error(
                   filename, msg_mapping.id.msg_id, msg_mapping.id.mod_id,
-                  "float32 field at offset " + std::to_string(field_mapping.offset) +
+                  "unsupported data_type '" + field_mapping.data_type + "'");
+        }
+        if (static_cast<size_t>(field_mapping.offset) + type_size > msg_mapping.length) {
+          throw mapping_error(
+                  filename, msg_mapping.id.msg_id, msg_mapping.id.mod_id,
+                  field_mapping.data_type + " field at offset " +
+                  std::to_string(field_mapping.offset) +
                   " exceeds the configured payload length of " +
                   std::to_string(msg_mapping.length));
+        }
+        if (field_mapping.bitmask != 0) {
+          const uint64_t type_max = (uint64_t{1} << (8 * type_size)) - 1;
+          if (field_mapping.type == FieldDataType::FLOAT32 || field_mapping.bitmask > type_max) {
+            throw mapping_error(
+                    filename, msg_mapping.id.msg_id, msg_mapping.id.mod_id,
+                    "bitmask requires an integer data_type wide enough for the mask");
+          }
+        }
+        if (field_mapping.scale == 0.0) {
+          throw mapping_error(
+                  filename, msg_mapping.id.msg_id, msg_mapping.id.mod_id, "scale must be non-zero");
         }
 
         msg_mapping.fields.push_back(field_mapping);

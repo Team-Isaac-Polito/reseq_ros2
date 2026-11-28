@@ -1,10 +1,13 @@
 #include "reseq_hardware/reseq.hpp"
-#include <cmath>                                 // for M_PI
+#include <cmath>                                 // for M_PI, isnan
+#include <algorithm>                             // for clamp
+#include <limits>                                // for numeric_limits
 #include <stddef.h>                              // for size_t
 #include <ratio>                                 // for ratio
 #include <rclcpp/clock.hpp>                      // for Clock::SharedPtr
 #include <rclcpp/logger.hpp>                     // for get_logger
 #include <rclcpp/logging.hpp>                    // for RCLCPP_ERROR, RCLCPP...
+#include <string>
 #include <type_traits>                           // for add_const<>::type
 #include <utility>                               // for pair
 #include "hardware_interface/handle.hpp"         // for CommandInterface
@@ -16,6 +19,19 @@ namespace rclcpp_lifecycle { class State; }
 
 namespace reseq_hardware
 {
+
+namespace
+{
+/// Converts a command value (ROS units) into the raw value to encode and writes it.
+void encode_field(uint8_t * data, const PayloadFieldMapping & field, double value)
+{
+  double raw = (value - field.bias) / field.scale;
+  if (!std::isnan(raw)) {
+    raw = std::clamp(raw, field.min, field.max);
+  }
+  encode_value(data, field.offset, field.type, raw, field.bitmask);
+}
+}  // namespace
 
 // LIFECYCLE NODE INTERFACE METHODS
 
@@ -75,8 +91,59 @@ hardware_interface::CallbackReturn ReseqHardware::on_init(
     joint_info_[joint.name] = JointInfo{i, cmd_ifs, state_ifs};
   }
 
+  // Parse GPIO command interfaces (non-joint commands such as LED brightness or torque enable).
+  // Their names are "gpio_name/interface_name"; an optional initial_value is the command used
+  // until a controller writes one, otherwise the command is NaN and nothing is sent.
+  gpio_command_index_.clear();
+  gpio_commands_.clear();
+  for (const auto & gpio : info.gpios) {
+    for (const auto & cmd_if : gpio.command_interfaces) {
+      double initial = std::numeric_limits<double>::quiet_NaN();
+      if (!cmd_if.initial_value.empty()) {
+        initial = std::stod(cmd_if.initial_value);
+      }
+      gpio_command_index_[gpio.name + "/" + cmd_if.name] = gpio_commands_.size();
+      gpio_commands_.push_back(initial);
+    }
+  }
+
   // Parse configuration file for CAN mappings
   parse_config_file(config_file_);
+
+  // Joints commanded by ON_CHANGE messages (e.g. the beak) carry discrete actions, not
+  // setpoints: they start with no command (NaN) and are never seeded from feedback.
+  // ON_CHANGE messages referencing an interface missing from the URDF are dropped.
+  joint_event_commanded_.assign(num_joints, 0);
+  for (auto it = can_mappings_.begin(); it != can_mappings_.end(); ) {
+    CanMessageMapping & mapping = it->second;
+    if (!mapping.is_command || mapping.send_mode != SendMode::ON_CHANGE) {
+      ++it;
+      continue;
+    }
+    bool resolved = true;
+    for (const PayloadFieldMapping & field : mapping.fields) {
+      if (field.mapping_type != MappingType::JOINT_COMMAND &&
+        field.mapping_type != MappingType::GPIO_COMMAND)
+      {
+        continue;
+      }
+      if (!get_command_buffer_ptr(field)) {
+        RCLCPP_WARN(
+          rclcpp::get_logger("ReseqHardware"),
+          "CAN 0x%02X%02X disabled: command interface '%s/%s' is not declared in the URDF",
+          mapping.id.msg_id, mapping.id.mod_id, field.name.c_str(), field.mode.c_str());
+        resolved = false;
+        break;
+      }
+      if (field.mapping_type == MappingType::JOINT_COMMAND) {
+        const size_t idx = joint_info_.at(field.name).index;
+        joint_event_commanded_[idx] = 1;
+        *get_command_buffer_ptr(field) = std::numeric_limits<double>::quiet_NaN();
+      }
+    }
+    it = resolved ? std::next(it) : can_mappings_.erase(it);
+  }
+  last_sent_payload_.clear();
 
   // Parse IMU sensors declared in the ros2_control URDF block
   // Expected sensor names: "imu1", "imu2", etc. (1-based module index)
@@ -164,6 +231,8 @@ hardware_interface::CallbackReturn ReseqHardware::on_cleanup(
   }
   canbus_.reset();
   recv_buffer_.clear();
+  // The firmware may have rebooted: resend every ON_CHANGE command after reconfiguration
+  last_sent_payload_.clear();
   ready_ = false;
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -223,7 +292,7 @@ hardware_interface::return_type ReseqHardware::read(
   // In our case we read all messages from the CAN bus buffer and update the joint state buffers accordingly
   auto now = std::chrono::steady_clock::now();
 
-  for (const auto & snap : recv_buffer_.get_all()) {
+  for (const ParsedMessage & snap : recv_buffer_.get_all()) {
     // Stale messages are ignored, but we use them to detect communication issues
     if (now - snap.timestamp > std::chrono::milliseconds(500)) {
       const uint8_t mod_idx = (snap.id.mod_id - static_cast<uint8_t>(mk_version_ * 0x10)) & 0x0F;
@@ -284,10 +353,10 @@ hardware_interface::return_type ReseqHardware::read(
       continue;
     }
 
-    const auto & mapping = map_it->second;
+    const CanMessageMapping & mapping = map_it->second;
 
     // Decode each field in the mapping
-    for (const auto & field : mapping.fields) {
+    for (const PayloadFieldMapping & field : mapping.fields) {
       if (field.mapping_type != MappingType::JOINT_STATE) {
         continue;  // TODO: handle TOPICS (TELEMETRY)
 
@@ -301,7 +370,7 @@ hardware_interface::return_type ReseqHardware::read(
           "CAN mapping references unknown joint: %s", field.name.c_str());
         continue;
       }
-      const auto & jinfo = jit->second;
+      const JointInfo & jinfo = jit->second;
 
       double * buffer_ptr = get_state_buffer_ptr(field.mode, jinfo.index);
 
@@ -309,20 +378,24 @@ hardware_interface::return_type ReseqHardware::read(
         continue;
       }
 
-      double value = 0.0;
-      if (field.data_type == "float32") {
-        value = read_value<float>(snap.data, field.offset);
-      } else {
-        RCLCPP_ERROR(
-          rclcpp::get_logger(
-            "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
+      if (static_cast<size_t>(field.offset) + data_type_size(field.type) > snap.size) {
+        RCLCPP_WARN_THROTTLE(
+          rclcpp::get_logger("ReseqHardware"),
+          *clock_,
+          THROTTLE_WARN,
+          "CAN message %02X%02X too short for field %s", snap.id.mod_id, snap.id.msg_id,
+          field.name.c_str());
         continue;
       }
+      const double value = decode_value(snap.data, field.offset, field.type, field.bitmask);
       const double scaled_value = value * field.scale + field.bias;
       *buffer_ptr = scaled_value;
       // Seed the position command buffer from actual hardware feedback
       // on first receive, so the arm doesn't jump to 0 on startup.
-      if (field.mode == "position" && !joint_buffers_.command_position_seeded[jinfo.index]) {
+      // Event-driven joints (ON_CHANGE) are excluded: their command is an action, not a setpoint.
+      if (field.mode == "position" && !joint_buffers_.command_position_seeded[jinfo.index] &&
+        !joint_event_commanded_[jinfo.index])
+      {
         joint_buffers_.command[jinfo.index] = scaled_value;
         joint_buffers_.command_position_seeded[jinfo.index] = 1;
       }
@@ -357,7 +430,7 @@ hardware_interface::return_type ReseqHardware::write(
   last_write_time_ = now;
 
   for (const auto & [can_id, mapping] : can_mappings_) {
-    if (!mapping.is_command) {
+    if (!mapping.is_command || mapping.send_mode != SendMode::CYCLIC) {
       continue;
     }
 
@@ -365,7 +438,16 @@ hardware_interface::return_type ReseqHardware::write(
     // The length determines how many bytes are transmitted below.
     uint8_t data[64] = {0};
     bool send_message = true;
-    for (const auto & field : mapping.fields) {
+    for (const PayloadFieldMapping & field : mapping.fields) {
+      if (field.mapping_type == MappingType::GPIO_COMMAND) {
+        const double * gpio_ptr = get_command_buffer_ptr(field);
+        if (!gpio_ptr || std::isnan(*gpio_ptr)) {
+          send_message = false;  // no command yet (or undeclared interface)
+          break;
+        }
+        encode_field(data, field, *gpio_ptr);
+        continue;
+      }
       if (field.mapping_type != MappingType::JOINT_COMMAND) {
         continue;
       }
@@ -379,7 +461,7 @@ hardware_interface::return_type ReseqHardware::write(
           "CAN mapping references unknown joint: %s", field.name.c_str());
         continue;
       }
-      const auto & jinfo = jit->second;
+      const JointInfo & jinfo = jit->second;
 
       // Skip sending position commands that haven't been seeded from
       // hardware feedback yet. This prevents the arm from jumping to 0
@@ -405,23 +487,62 @@ hardware_interface::return_type ReseqHardware::write(
       } else {
         value = joint_buffers_.command[jinfo.index];
       }
-      value = (value - field.bias) / field.scale;
-
-      if (field.data_type == "float32") {
-        write_value<float>(data, field.offset, value);
-      } else {
-        RCLCPP_ERROR(
-          rclcpp::get_logger(
-            "ReseqHardware"), "Unsupported data type: %s", field.data_type.c_str());
-        continue;
-      }
+      encode_field(data, field, value);
     }
 
     if (send_message) {
       canbus_->send(can_id, data, mapping.length);
     }
   }
+
+  write_on_change_messages();
   return hardware_interface::return_type::OK;
+}
+
+void ReseqHardware::write_on_change_messages()
+{
+  for (const auto & [can_id, mapping] : can_mappings_) {
+    if (!mapping.is_command || mapping.send_mode != SendMode::ON_CHANGE) {
+      continue;
+    }
+
+    std::vector<uint8_t> payload(mapping.length, 0);
+    bool complete = true;
+    for (const PayloadFieldMapping & field : mapping.fields) {
+      if (field.mapping_type != MappingType::JOINT_COMMAND &&
+        field.mapping_type != MappingType::GPIO_COMMAND)
+      {
+        continue;
+      }
+      // Resolved in on_init, unresolved mappings were removed
+      const double value = *get_command_buffer_ptr(field);
+      if (!std::isfinite(value)) {
+        complete = false;  // no command yet: do not send a partially defined payload
+        break;
+      }
+      encode_field(payload.data(), field, value);
+    }
+    if (!complete) {
+      continue;
+    }
+
+    const auto last_it = last_sent_payload_.find(can_id);
+    if (last_it != last_sent_payload_.end() && last_it->second == payload) {
+      continue;
+    }
+
+    if (canbus_->send(can_id, payload.data(), payload.size())) {
+      last_sent_payload_[can_id] = payload;
+      RCLCPP_INFO(
+        rclcpp::get_logger("ReseqHardware"), "Sent CAN 0x%02X%02X (%zu B)",
+        can_id.msg_id, can_id.mod_id, payload.size());
+    } else {
+      // Keep the previous payload as "last sent" so the command is retried next cycle
+      RCLCPP_ERROR_THROTTLE(
+        rclcpp::get_logger("ReseqHardware"), *clock_, THROTTLE_WARN,
+        "Failed to send CAN 0x%02X%02X, retrying", can_id.msg_id, can_id.mod_id);
+    }
+  }
 }
 
 std::vector<hardware_interface::StateInterface> ReseqHardware::export_state_interfaces()
@@ -429,7 +550,7 @@ std::vector<hardware_interface::StateInterface> ReseqHardware::export_state_inte
   // Create state interfaces for each joint and supported state mode
   std::vector<hardware_interface::StateInterface> state_ifs;
   for (const auto & [joint_name, jinfo] : joint_info_) {
-    for (const auto & state_mode : jinfo.state_modes) {
+    for (const std::string & state_mode : jinfo.state_modes) {
       double * buffer_ptr = get_state_buffer_ptr(state_mode, jinfo.index);
       if (!buffer_ptr) {
         continue;  // Unknown state_mode, skip
@@ -478,7 +599,36 @@ std::vector<hardware_interface::CommandInterface> ReseqHardware::export_command_
           joint_name, cmd_mode, buffer_ptr));
     }
   }
+  // GPIO command interfaces (e.g. mod1__led/brightness, mod2__torque/joint)
+  for (const auto & [full_name, idx] : gpio_command_index_) {
+    const auto slash = full_name.find('/');
+    cmd_ifs.emplace_back(
+      hardware_interface::CommandInterface(
+        full_name.substr(0, slash), full_name.substr(slash + 1), &gpio_commands_[idx]));
+  }
   return cmd_ifs;
+}
+
+double * ReseqHardware::get_command_buffer_ptr(const PayloadFieldMapping & field)
+{
+  if (field.mapping_type == MappingType::JOINT_COMMAND) {
+    const auto jit = joint_info_.find(field.name);
+    if (jit == joint_info_.end()) {
+      return nullptr;
+    }
+    const std::vector<std::string> & modes = jit->second.cmd_modes;
+    if (std::find(modes.begin(), modes.end(), field.mode) == modes.end()) {
+      return nullptr;
+    }
+    return field.mode == "velocity" ?
+           &joint_buffers_.command_velocity[jit->second.index] :
+           &joint_buffers_.command[jit->second.index];
+  }
+  if (field.mapping_type == MappingType::GPIO_COMMAND) {
+    const auto git = gpio_command_index_.find(field.name + "/" + field.mode);
+    return git == gpio_command_index_.end() ? nullptr : &gpio_commands_[git->second];
+  }
+  return nullptr;
 }
 
 double * ReseqHardware::get_state_buffer_ptr(const std::string & state_mode, size_t index)

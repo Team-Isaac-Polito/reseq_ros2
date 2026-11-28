@@ -156,6 +156,8 @@ def generate_controllers_config(
         'yaw_controllers': not no_body_controllers,
         'pitch_controllers': not no_body_controllers,
         'arm_controller': not no_arm_controllers and version == 'mk2',
+        # Hardware-only (CAN gpio): inter-module joint torque on MOD2..N
+        'torque_controller': not no_body_controllers and not use_sim_time and version == 'mk2',
         'num_modules': 0,
         'wheel_separation': 0.0,
         'wheel_radius': 0.0,
@@ -171,6 +173,7 @@ def generate_controllers_config(
             ftl_controller_config = yaml.safe_load(file)
 
         context['num_modules'] = generic_config['num_modules']
+        context['torque_controller'] = context['torque_controller'] and context['num_modules'] > 1
         context['wheel_separation'] = ftl_controller_config['ftl_controller_consts']['d']
         context['wheel_radius'] = ftl_controller_config['ftl_controller_consts']['r_eq']
 
