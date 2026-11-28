@@ -161,9 +161,7 @@
 #   ]
 # }
 
-# Arm J6 beak setpoint — int32: 0=close (grip), 1=open. The firmware restarts its grip state
-# machine on every frame, so it is sent on change only. Command via beak_controller:
-# mod1__beak/position, rounded and clamped to {0, 1}.
+# Arm J6 beak setpoint — int32: 0=closed, 1=open; sent on change.
 - {
   msg_id: 0x5B,
   modules: "only_first",
@@ -228,14 +226,8 @@
 #   length: 7,
 #   fields: []
 # }
-# Torque enable/disable — uint16 bitfield, 1=enable / 0=disable per motor (STM32LowLevel main.cpp):
-#   bit 0 right traction, bit 1 left traction                      — all modules
-#   bits 2-8 arm J1a, J1b, J2, J3, J4, J5, J6 (beak)                — MOD1 (MODC_ARM)
-#   bits 2-4 joint J1-left, J1-right (differential pitch/yaw), J2 roll — MOD2/MOD3 (MODC_JOINT)
-# The frame always carries every bit, so each motor group is a separate gpio command and the
-# remote only owns the group it controls (mod<N>__torque/joint). Traction and roll start from the
-# URDF initial_value (traction enabled, roll disabled as at firmware boot); the frame is not sent
-# until mod<N>__torque/joint receives its first command.
+
+# Torque enable/disable bitfield (1=enable, 0=disable): traction 0x0003; joint 0x000C; roll 0x0010.
 - {
   msg_id: 0x74,
   modules: "skip_first",
@@ -248,10 +240,9 @@
     { name: "torque", type: "gpio_command", mode: "roll",     data_type: "uint16", bitmask: 0x0010 },
   ]
 }
-# MOD1 (arm) torque is not exposed yet. If needed, add a "only_first" mapping with
-# { mode: "traction", bitmask: 0x0003 } and { mode: "arm", bitmask: 0x01FC } and the matching gpio.
+# MOD1 arm torque is not exposed yet.
 
-# LED HP board brightness — uint8, 0=off … 255=max. Handled by MOD1 firmware built with MODC_ARM.
+# LED brightness (0–255), MOD1 HP board.
 - {
   msg_id: 0x75,
   modules: "only_first",
